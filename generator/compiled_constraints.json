@@ -10325,15 +10325,23 @@
     "notes": "IS NOT NULL"
    },
    "encounterDatetime": {
-    "kind": "schema_column",
-    "table": "encounter",
-    "column": "encounter_datetime",
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "orders",
+     "local_column": "encounter_id"
+    },
+    "result_table": "encounter",
+    "result_column": "encounter_datetime",
     "notes": "joined via orders.encounter_id; exposed directly, replacing encounterDatetimeAfterDateActivated"
    },
    "encounterDatetimeSet": {
-    "kind": "null_check",
-    "table": "encounter",
-    "column": "encounter_datetime",
+    "kind": "join_null_check",
+    "via": {
+     "local_table": "orders",
+     "local_column": "encounter_id"
+    },
+    "result_table": "encounter",
+    "result_column": "encounter_datetime",
     "notes": "joined via orders.encounter_id; IS NOT NULL"
    }
   },
@@ -14635,9 +14643,13 @@
     "column": "patient_id"
    },
    "visitPatientId": {
-    "kind": "schema_column",
-    "table": "visit",
-    "column": "patient_id",
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "patient_id",
     "notes": "joined via encounter.visit_id = visit.visit_id; exposed as an ID-equality test, replacing visitPatientMismatch (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -14773,9 +14785,13 @@
     "notes": "IS NOT NULL"
    },
    "visitStartDatetime": {
-    "kind": "schema_column",
-    "table": "visit",
-    "column": "date_started",
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "date_started",
     "notes": "joined via encounter.visit_id"
    }
   },
@@ -14855,9 +14871,13 @@
     "notes": "IS NOT NULL"
    },
    "visitStopDatetime": {
-    "kind": "schema_column",
-    "table": "visit",
-    "column": "date_stopped",
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "date_stopped",
     "notes": "joined via encounter.visit_id"
    }
   },

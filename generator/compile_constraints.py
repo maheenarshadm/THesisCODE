@@ -324,6 +324,33 @@ def classify_derived(row):
     if agg:
         return agg
 
+    # "joined via X.Y" is checked before the plain existence check below,
+    # not after -- several facts' notes contain both ("joined via
+    # orders.encounter_id; IS NOT NULL", encounterDatetimeSet), and the
+    # join form carries strictly more information a plain null_check would
+    # lose: the *source* table (the FK holder), which matters for FK
+    # closure correctness. fk_closure() only walks FKs forward (a table's
+    # own declared targets), so seeding it with only the *target* table
+    # ("encounter") would never discover "orders" pointing at it -- only
+    # capturing both ends via join_lookup/join_null_check gets this right.
+    # Also applies regardless of how many pairs true_pairs() found in the
+    # schema field -- a join fact's source column usually only appears in
+    # the prose, while the schema field itself names just the target, so
+    # this is very often exactly 1 pair, not 2 (an earlier version gated
+    # this on len(pairs) >= 2 and so missed every single-pair join fact,
+    # e.g. OpenMRS's visitPatientId/visitStartDatetime/visitStopDatetime).
+    if pairs:
+        m = _JOINED_VIA_RE.search(notes)
+        if m:
+            local_table, local_column = m.group(1).split('.')
+            target_table, target_column = pairs[-1]  # the last-mentioned pair is the joined-to fact, by convention of how these notes are written
+            node = {'kind': 'join_lookup',
+                    'via': {'local_table': local_table, 'local_column': local_column},
+                    'result_table': target_table, 'result_column': target_column, 'notes': notes}
+            if _EXISTENCE_WORDS.search(notes):
+                node['kind'] = 'join_null_check'
+            return node
+
     # Existence checks apply the same way regardless of how many candidate
     # columns ground truth recorded -- a schema field like "concept_numeric
     # .hi_absolute (or concept_reference_range.hi_absolute)" names two
@@ -361,16 +388,6 @@ def classify_derived(row):
         if _ANY_OF_WORDS.search(notes):
             return {'kind': 'any_not_null', 'columns': [{'table': t, 'column': c} for t, c in pairs],
                     'notes': notes}
-        m = _JOINED_VIA_RE.search(notes)
-        if m and len(pairs) >= 1:
-            local_table, local_column = m.group(1).split('.')
-            target_table, target_column = pairs[-1]  # the last-mentioned pair is the joined-to fact, by convention of how these notes are written
-            node = {'kind': 'join_lookup',
-                    'via': {'local_table': local_table, 'local_column': local_column},
-                    'result_table': target_table, 'result_column': target_column, 'notes': notes}
-            if _EXISTENCE_WORDS.search(notes):
-                node['kind'] = 'join_null_check'
-            return node
         if _EXISTS_ROW_WORDS.search(notes):
             return {'kind': 'exists', 'candidate_tables': sorted({t for t, _ in pairs}),
                      'candidate_columns': [{'table': t, 'column': c} for t, c in pairs], 'notes': notes}
