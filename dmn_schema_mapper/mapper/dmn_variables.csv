@@ -9,27 +9,28 @@ FLEX2,Academic_Standing.dmn,Course Load Limit,input,newWarningCount,number,,New 
 FLEX2,Academic_Standing.dmn,Course Load Limit,output,maxCoursesAllowed,number,,Max Courses Allowed
 FLEX2,Academic_Standing.dmn,Course Load Limit,output,courseLoadBasis,string,,Course Load Basis
 FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,newWarningCount,number,,New Warning Count
-FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,maxDurationExceeded,boolean,,Max Duration Exceeded
-FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,suspendedRegistrationNotRestored,boolean,,Suspended Registration Not Restored
+FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,yearsSinceProgramStart,number,,Years Since Program Start
+FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,regStatus,string,...;ACTIVE;SUSPENDED_NOT_RESTORED,Registration Status
 FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,input,newAdmissionEligibilityNotMet,boolean,,New-Admission Eligibility Not Met
 FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,output,admissionStatus,string,,Admission Status
 FLEX2,Academic_Standing.dmn,Admission Closure Eligibility,output,closureReason,string,,Closure Reason
-FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,allPrerequisitesPassed,boolean,,All Pre-requisites Passed
+FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,unmetPrerequisiteCount,number,,Unmet Prerequisite Count
 FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,newWarningCount,number,,New Warning Count
-FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,isMandatoryReregistration,boolean,,Is Mandatory Re-registration
+FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,previousGradeInCourse,string,...;C;C-;D;D+;F,Previous Grade In This Course
 FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,projectedTotalCoursesThisRegistration,number,,Projected Total Courses This Registration
 FLEX2,Academic_Standing.dmn,Course Registration Eligibility,input,maxCoursesAllowed,number,,Max Courses Allowed
 FLEX2,Academic_Standing.dmn,Course Registration Eligibility,output,canRegisterCourse,boolean,,Can Register Course
 FLEX2,Academic_Standing.dmn,Course Registration Eligibility,output,reason,string,,Reason
-FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,degreeRequirementsCompletedOrCompletingThisSemester,boolean,,Degree Requirements Completed Or Completing This Semester
+FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,creditsEarned,number,,Credits Earned
+FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,degreeTotalCredits,number,,Degree Total Credits
 FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,gradeInCourseToReplace,string,F,Grade In Course To Replace
 FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,courseOfferedInFollowingSemesters,boolean,,Course Offered In Following Semesters
 FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,replacingCoursePassedAtLeastOneSemesterAfter,boolean,,Replacing Course Passed At Least One Semester After
-FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,isCoreCourse,boolean,,Is Core Course
+FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,input,courseTypeId,string,...;CORE;ELECTIVE,Course Type
 FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,output,eligibleForReplacement,boolean,,Eligible For Replacement
 FLEX2,Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,output,reason,string,,Reason
 FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,input,cumulativeExemptedCreditPercentIfGranted,number,,Cumulative Exempted Credit Percent If Granted
-FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,input,prerequisiteCourseAlsoPassed,boolean,,Pre-requisite Course Also Passed
+FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,input,unmetPrerequisiteAlsoPassedCount,number,,Unmet Prerequisite-Also-Passed Count
 FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,output,exemptionGranted,boolean,,Exemption Granted
 FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,output,creditGivenForPrerequisite,boolean,,Credit Given For Prerequisite
 FLEX2,Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,output,countsTowardCGPA,boolean,,Counts Toward CGPA
@@ -50,12 +51,12 @@ FLEX2,Graduation_Eligibility.dmn,Graduation Eligibility,input,semestersElapsed,n
 FLEX2,Graduation_Eligibility.dmn,Graduation Eligibility,input,yearsElapsed,number,,Years Elapsed
 FLEX2,Graduation_Eligibility.dmn,Graduation Eligibility,output,eligibleToGraduate,boolean,,Eligible To Graduate
 FLEX2,Graduation_Eligibility.dmn,Graduation Eligibility,output,reason,string,,Reason
-FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,isResearchCourseOrProject,boolean,,Is Research Course Or Project
-FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,isNewCourseRequest,boolean,,Is New Course Request
+FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,courseTypeId,string,...;REGULAR;RESEARCH,Course Type
+FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,priorRegistrationCount,number,,"Prior Registration Count (this student, this course)"
 FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,isElectiveTaughtByVisitingScholarUnavailableOtherwise,boolean,,Is Elective Taught By Unavailable-Otherwise Visiting Scholar
 FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,isNeededToGraduateThisSummer,boolean,,Is Needed To Graduate This Summer
 FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,repeatCourseCountRequested,number,,Repeat Course Count Requested
-FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,minimumTenStudentsEnrolled,boolean,,Minimum Ten Students Enrolled
+FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,input,enrolledStudentCount,number,,Enrolled Student Count
 FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,output,registrationAllowed,boolean,,Registration Allowed
 FLEX2,Summer_Semester_Registration.dmn,Summer Semester Registration,output,reason,string,,Reason
 OpenMRS,Concept_and_Observation_Validation.dmn,Obs Value Required By Datatype,input,isObsGroup,boolean,,Is Obs Group
@@ -70,9 +71,9 @@ OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Precision Validity,input,
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Precision Validity,output,precisionValid,boolean,,Precision Valid
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Precision Validity,output,reasonCode,string,,Reason Code
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,hiAbsoluteSet,boolean,,Hi Absolute Set
+OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,lowAbsoluteSet,boolean,,Low Absolute Set
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,valueNumeric,number,,Value Numeric
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,hiAbsolute,number,,Hi Absolute
-OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,lowAbsoluteSet,boolean,,Low Absolute Set
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,input,lowAbsolute,number,,Low Absolute
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,output,absoluteRangeValid,boolean,,Absolute Range Valid
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Absolute Range Validity,output,reasonCode,string,,Reason Code
@@ -83,25 +84,28 @@ OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Interpretation Classifica
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Interpretation Classification,input,lowNormal,number,,Low Normal
 OpenMRS,Concept_and_Observation_Validation.dmn,Numeric Interpretation Classification,output,interpretation,string,,Interpretation
 OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,input,localePreferred,boolean,,Locale Preferred
-OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,input,conceptNameType,string,FULLY_SPECIFIED;INDEX_TERM;SHORT,Concept Name Type
+OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,input,isIndexTerm,boolean,,Is Index Term
+OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,input,isShortName,boolean,,Is Short Name
 OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,input,voided,boolean,,Voided
 OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,output,preferredNameValid,boolean,,Preferred Name Valid
 OpenMRS,Concept_and_Observation_Validation.dmn,Concept Preferred Name Validity,output,reasonCode,string,,Reason Code
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,dateActivatedSet,boolean,,Date Activated Set
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,dateActivated,date,,Date Activated
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,dateStoppedSet,boolean,,Date Stopped Set
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,dateStopped,date,,Date Stopped
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,autoExpireDateSet,boolean,,Auto Expire Date Set
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,autoExpireDate,date,,Auto Expire Date
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,encounterDatetimeSet,boolean,,Encounter Datetime Set
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,encounterDatetime,date,,Encounter Datetime
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,output,dateActivatedValid,boolean,,Date Activated Valid
-OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,output,reasonCode,string,,Reason Code
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,dateActivatedSet,boolean,,Date Activated Set
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,dateActivated,date,,Date Activated
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,evaluationTime,date,,Evaluation Time
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,dateStoppedSet,boolean,,Date Stopped Set
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,dateStopped,date,,Date Stopped
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,autoExpireDateSet,boolean,,Auto Expire Date Set
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,autoExpireDate,date,,Auto Expire Date
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,encounterDatetimeSet,boolean,,Encounter Datetime Set
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,input,encounterDatetime,date,,Encounter Datetime
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency Violations,output,violationReasons,string,,Violation Reason
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,output,dateActivatedValid,boolean,,
+OpenMRS,Order_Validation.dmn,Order Date Activated Consistency,input,violationReasons,,,
 OpenMRS,Order_Validation.dmn,Order Scheduled Date Urgency Consistency,input,scheduledDateSet,boolean,,Scheduled Date Set
 OpenMRS,Order_Validation.dmn,Order Scheduled Date Urgency Consistency,input,urgency,string,ON_SCHEDULED_DATE;ROUTINE;STAT,Urgency
 OpenMRS,Order_Validation.dmn,Order Scheduled Date Urgency Consistency,output,scheduledDateUrgencyValid,boolean,,Scheduled Date Urgency Valid
 OpenMRS,Order_Validation.dmn,Order Scheduled Date Urgency Consistency,output,reasonCode,string,,Reason Code
-OpenMRS,Patient_Identifier_Validation.dmn,Preferred Identifier Requirement,input,anyPreferredFlagged,boolean,,Any Preferred Flagged
+OpenMRS,Patient_Identifier_Validation.dmn,Preferred Identifier Requirement,input,preferredIdentifierCount,number,,Preferred Identifier Count
 OpenMRS,Patient_Identifier_Validation.dmn,Preferred Identifier Requirement,input,identifierCount,number,,Identifier Count
 OpenMRS,Patient_Identifier_Validation.dmn,Preferred Identifier Requirement,output,preferredIdentifierValid,boolean,,Preferred Identifier Valid
 OpenMRS,Patient_Identifier_Validation.dmn,Preferred Identifier Requirement,output,reasonCode,string,,Reason Code
@@ -114,14 +118,13 @@ OpenMRS,Patient_Identifier_Validation.dmn,Identifier Uniqueness Check,input,inUs
 OpenMRS,Patient_Identifier_Validation.dmn,Identifier Uniqueness Check,input,duplicateWithinSamePatient,boolean,,Duplicate Within Same Patient At Same Or Null Location
 OpenMRS,Patient_Identifier_Validation.dmn,Identifier Uniqueness Check,output,identifierUniquenessValid,boolean,,Identifier Uniqueness Valid
 OpenMRS,Patient_Identifier_Validation.dmn,Identifier Uniqueness Check,output,reasonCode,string,,Reason Code
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,input,identifierBlank,boolean,,Identifier Blank
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,input,formatSet,boolean,,Format Set
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,input,identifierMatchesFormat,boolean,,Identifier Matches Format
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,input,validatorSet,boolean,,Validator Set
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,input,checkDigitValid,boolean,,Check Digit Valid
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,output,identifierFormatValid,boolean,,Identifier Format Valid
-OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format And Check-Digit Validity,output,reasonCode,string,,Reason Code
+OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format Validity,input,identifierBlank,boolean,,Identifier Blank
+OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format Validity,input,formatSet,boolean,,Format Set
+OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format Validity,input,identifierMatchesFormat,boolean,,Identifier Matches Format
+OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format Validity,output,identifierFormatValid,boolean,,Identifier Format Valid
+OpenMRS,Patient_Identifier_Validation.dmn,Identifier Format Validity,output,reasonCode,string,,Reason Code
 OpenMRS,Person_Demographics_Validation.dmn,Birthdate Validity,input,birthdate,date,,Birthdate
+OpenMRS,Person_Demographics_Validation.dmn,Birthdate Validity,input,evaluationTime,date,,Evaluation Time
 OpenMRS,Person_Demographics_Validation.dmn,Birthdate Validity,input,yearsSinceBirthdate,number,,Years Since Birthdate
 OpenMRS,Person_Demographics_Validation.dmn,Birthdate Validity,output,birthdateValid,boolean,,Birthdate Valid
 OpenMRS,Person_Demographics_Validation.dmn,Birthdate Validity,output,reasonCode,string,,Reason Code
@@ -130,163 +133,145 @@ OpenMRS,Person_Demographics_Validation.dmn,Death Record Consistency,input,causeO
 OpenMRS,Person_Demographics_Validation.dmn,Death Record Consistency,input,causeOfDeathNonCodedSet,boolean,,Cause Of Death Non Coded Set
 OpenMRS,Person_Demographics_Validation.dmn,Death Record Consistency,output,deathRecordValid,boolean,,Death Record Valid
 OpenMRS,Person_Demographics_Validation.dmn,Death Record Consistency,output,reasonCode,string,,Reason Code
-OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,input,deathDateSet,boolean,,Death Date Set
-OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,input,deathDate,date,,Death Date
-OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,input,birthdate,date,,Birthdate
-OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,output,deathDateValid,boolean,,Death Date Valid
-OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,output,reasonCode,string,,Reason Code
-OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,input,dateEnrolled,date,,Date Enrolled
-OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,input,dateCompletedSet,boolean,,Date Completed Set
-OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,input,dateCompleted,date,,Date Completed
-OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,output,enrollmentDatesValid,boolean,,Enrollment Dates Valid
-OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,output,reasonCode,string,,Reason Code
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency Violations,input,deathDateSet,boolean,,Death Date Set
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency Violations,input,deathDate,date,,Death Date
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency Violations,input,evaluationTime,date,,Evaluation Time
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency Violations,input,birthdate,date,,Birthdate
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency Violations,output,violationReasons,string,,Violation Reason
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,output,deathDateValid,boolean,,
+OpenMRS,Person_Demographics_Validation.dmn,Death Date Consistency,input,violationReasons,,,
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency Violations,input,dateEnrolled,date,,Date Enrolled
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency Violations,input,evaluationTime,date,,Evaluation Time
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency Violations,input,dateCompletedSet,boolean,,Date Completed Set
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency Violations,input,dateCompleted,date,,Date Completed
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency Violations,output,violationReasons,string,,Violation Reason
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,output,enrollmentDatesValid,boolean,,
+OpenMRS,Program_Enrollment_Validation.dmn,Program Enrollment Date Consistency,input,violationReasons,,,
 OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,input,startDateSet,boolean,,Start Date Set
-OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,input,startDate,date,,Start Date
 OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,input,endDateSet,boolean,,End Date Set
+OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,input,startDate,date,,Start Date
 OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,input,endDate,date,,End Date
 OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,output,patientStateDatesValid,boolean,,Patient State Dates Valid
 OpenMRS,Program_Enrollment_Validation.dmn,Patient State Date Validity,output,reasonCode,string,,Reason Code
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,input,startDateSet,boolean,,Start Date Set
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,input,startDate,date,,Start Date
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,input,endDateSet,boolean,,End Date Set
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,input,endDate,date,,End Date
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,output,relationshipDatesValid,boolean,,Relationship Dates Valid
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,output,reasonCode,string,,Reason Code
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,visitPatientMismatch,boolean,,Visit Patient Mismatch
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,encounterDatetime,date,,Encounter Datetime
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,visitSet,boolean,,Visit Set
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,visitStart,date,,Visit Start
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,visitStop,date,,Visit Stop
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,output,encounterDatetimeValid,boolean,,Encounter Datetime Valid
-OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,output,reasonCode,string,,Reason Code
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Notification Needed,input,nextShipDateKnown,boolean,,Next Ship Date Known
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Notification Needed,input,nextShipDateAfterPromisedDate,boolean,,Next Ship Date After Promised Date
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Notification Needed,input,promisedDateApproaching,boolean,,Promised Date Approaching
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Notification Needed,output,notifyCustomerNeeded,boolean,,Notify Customer Needed
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Auto-Cancel Decision,input,notifyCustomerNeeded,boolean,,Notify Customer Needed
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Auto-Cancel Decision,input,nextShipDateKnown,boolean,,Next Ship Date Known
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Auto-Cancel Decision,input,nextShipDateMoreThan30DaysPastPromised,boolean,,Next Ship Date More Than 30 Days Past Promised
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Auto-Cancel Decision,input,isSecondNotificationForSamePromise,boolean,,Is Second Notification For Same Promise
-OFBiz,Inventory_and_Backorder_Validation.dmn,Backorder Auto-Cancel Decision,output,needToCancel,boolean,,Need To Cancel
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Status Transition Validity,input,currentStatusId,string,PRUN_CLOSED;PRUN_COMPLETED;PRUN_CREATED;PRUN_DOC_PRINTED;PRUN_RUNNING;PRUN_SCHEDULED,Current Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Status Transition Validity,input,requestedStatusId,string,PRUN_CLOSED;PRUN_COMPLETED;PRUN_DOC_PRINTED;PRUN_RUNNING;PRUN_SCHEDULED,Requested Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Status Transition Validity,input,allMandatoryPredecessorsCompleted,boolean,,All Mandatory Predecessors Completed
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Status Transition Validity,output,transitionAllowed,boolean,,Transition Allowed
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Status Transition Validity,output,resultingStatusId,string,,Resulting Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,input,currentTaskStatusId,string,PRUN_CREATED;PRUN_DOC_PRINTED;PRUN_SCHEDULED,Current Task Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,input,requestedStatusId,string,PRUN_RUNNING,Requested Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,input,allPrecedingTasksCompletedOrRunning,boolean,,All Preceding Tasks Completed Or Running
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,input,productionRunHeaderStatusId,string,PRUN_CREATED;PRUN_DOC_PRINTED;PRUN_RUNNING;PRUN_SCHEDULED,Production Run Header Status Id
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,output,taskStartAllowed,boolean,,Task Start Allowed
-OFBiz,Manufacturing_Production_Run_Validation.dmn,Production Run Task Start Eligibility,output,reasonCode,string,,Reason Code
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Cancelable Quantity,input,orderTypeId,string,PURCHASE_ORDER;SALES_ORDER,Order Type Id
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Cancelable Quantity,input,requestedCancelQuantitySet,boolean,,Requested Cancel Quantity Set
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Cancelable Quantity,output,fulfilledQuantityColumn,string,,Fulfilled Quantity Column
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Cancelable Quantity,output,defaultCancelQuantitySource,string,,Default Cancel Quantity Source
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Returnability,input,productReturnable,string,N;Y,Product Returnable
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Returnability,input,supportDiscontinuationDateSet,boolean,,Support Discontinuation Date Set
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Returnability,input,supportDiscontinuationDate,date,,Support Discontinuation Date
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Returnability,input,itemStatus,string,ITEM_APPROVED;ITEM_COMPLETED,Item Status
-OFBiz,Order_Item_Lifecycle.dmn,Order Item Returnability,output,returnable,boolean,,Returnable
-OFBiz,Order_Item_Lifecycle.dmn,Returnable Quantity Calculation,input,returnable,boolean,,Returnable
-OFBiz,Order_Item_Lifecycle.dmn,Returnable Quantity Calculation,input,alreadyReturnedQtyGeOrderQty,boolean,,Already Returned Quantity Ge Order Quantity
-OFBiz,Order_Item_Lifecycle.dmn,Returnable Quantity Calculation,output,returnableQuantityFormula,string,,Returnable Quantity Formula
-OFBiz,Order_Item_Lifecycle.dmn,Return Item Completion Classification,input,itemStatus,string,RETURN_CANCELLED;RETURN_COMPLETED,Item Status
-OFBiz,Order_Item_Lifecycle.dmn,Return Item Completion Classification,input,returnHeaderStatus,string,RETURN_ACCEPTED;RETURN_COMPLETED;RETURN_RECEIVED;RETURN_REQUESTED,Return Header Status
-OFBiz,Order_Item_Lifecycle.dmn,Return Item Completion Classification,input,productIsPhysical,boolean,,Product Is Physical
-OFBiz,Order_Item_Lifecycle.dmn,Return Item Completion Classification,output,itemCountsAsCompleted,boolean,,Item Counts As Completed
-OFBiz,Order_Item_Lifecycle.dmn,Return Header Next Status,input,currentStatus,string,RETURN_ACCEPTED;RETURN_CANCELLED;RETURN_COMPLETED;RETURN_RECEIVED,Current Status
-OFBiz,Order_Item_Lifecycle.dmn,Return Header Next Status,input,allItemsComplete,boolean,,All Items Complete
-OFBiz,Order_Item_Lifecycle.dmn,Return Header Next Status,output,nextStatus,string,,Next Status
-OFBiz,Order_Item_Lifecycle.dmn,Refund Amount Validity,input,returnAmount,number,,Return Amount
-OFBiz,Order_Item_Lifecycle.dmn,Refund Amount Validity,input,orderGrandTotal,number,,Order Grand Total
-OFBiz,Order_Item_Lifecycle.dmn,Refund Amount Validity,output,refundAmountValid,boolean,,Refund Amount Valid
-OFBiz,Order_Item_Lifecycle.dmn,Refund Amount Validity,output,reasonCode,string,,Reason Code
-OFBiz,Payment_Authorization_Validation.dmn,Payment Authorization Result Status,input,authResult,boolean,,Auth Result
-OFBiz,Payment_Authorization_Validation.dmn,Payment Authorization Result Status,output,newStatusId,string,,New Status Id
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,input,resultNsf,boolean,,Result Nsf
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,input,isAutoOrder,boolean,,Is Auto Order
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,input,productStoreAllowsNsfRetry,boolean,,Product Store Allows Nsf Retry
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,input,maxRetriesConfigured,boolean,,Max Retries Configured
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,input,failedNsfTriesUnderMax,boolean,,Failed Nsf Tries Under Max
-OFBiz,Payment_Authorization_Validation.dmn,Auto-Order NSF Retry Eligibility,output,needsNsfRetry,boolean,,Needs Nsf Retry
-OFBiz,Shipment_Cost_Estimation.dmn,Shipment Cost Estimate Applicability,input,geoRestrictionSet,boolean,,Geo Restriction Set
-OFBiz,Shipment_Cost_Estimation.dmn,Shipment Cost Estimate Applicability,input,shipAddressKnown,boolean,,Ship Address Known
-OFBiz,Shipment_Cost_Estimation.dmn,Shipment Cost Estimate Applicability,input,shipAddressMatchesGeo,boolean,,Ship Address Matches Geo
-OFBiz,Shipment_Cost_Estimation.dmn,Shipment Cost Estimate Applicability,input,allConfiguredQuantityBreaksSatisfied,boolean,,All Configured Quantity Breaks Satisfied
-OFBiz,Shipment_Cost_Estimation.dmn,Shipment Cost Estimate Applicability,output,estimateApplicable,boolean,,Estimate Applicable
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Non-Combinability Resolution,input,bothRestrictNonCombinable,boolean,,Both Restrict Non-Combinable
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Non-Combinability Resolution,input,explicitlyDeclaredCombinable,boolean,,Explicitly Declared Combinable
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Non-Combinability Resolution,input,existingRulePriority,number,,Existing Rule Priority
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Non-Combinability Resolution,input,thisRulePriority,number,,This Rule Priority
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Non-Combinability Resolution,output,outcome,string,,Outcome
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Product Rule Group Satisfaction,input,productRuleGroupType,string,all_product_rules;at_least_one_product_rule,Product Rule Group Type
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Product Rule Group Satisfaction,input,anyProductRuleFailed,boolean,,Any Product Rule Failed
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Product Rule Group Satisfaction,input,allProductRulesFailed,boolean,,All Product Rules Failed
-PrestaShop,Cart_Rule_Combinability_and_Product_Scope.dmn,Cart Rule Product Rule Group Satisfaction,output,groupSatisfied,boolean,,Group Satisfied
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,active,boolean,,Active
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,quantitySet,boolean,,Quantity Set
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,quantity,number,,Quantity
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,dateFrom,date,,Date From
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,dateToSet,boolean,,Date To Set
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,input,dateTo,date,,Date To
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,output,valid,boolean,,Valid
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Basic Availability,output,reasonCode,string,,Reason Code
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Per-Customer Usage Limit,input,customerIdentified,boolean,,Customer Identified
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Per-Customer Usage Limit,input,quantityPerUserConfigured,boolean,,Quantity Per User Configured
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Per-Customer Usage Limit,input,quantityUsedExceedsLimit,boolean,,Quantity Used Exceeds Limit
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Per-Customer Usage Limit,output,usageLimitValid,boolean,,Usage Limit Valid
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,groupRestrictionActive,boolean,,Group Restriction Active
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,groupMatchFound,boolean,,Group Match Found
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,countryRestrictionActive,boolean,,Country Restriction Active
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,deliveryAddressKnown,boolean,,Delivery Address Known
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,countryMatchFound,boolean,,Country Match Found
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,carrierRestrictionActive,boolean,,Carrier Restriction Active
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,carrierChosen,boolean,,Carrier Chosen
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,input,carrierMatchFound,boolean,,Carrier Match Found
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,output,validAgainstRestrictions,boolean,,Valid Against Restrictions
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Restriction Scope Validity,output,violatedRestrictionReason,string,,Violated Restriction Reason
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Minimum Amount Validity,input,minimumAmount,number,,Minimum Amount
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Minimum Amount Validity,input,cartTotalBelowMinimumAmount,boolean,,Cart Total Below Minimum Amount
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Minimum Amount Validity,output,minimumAmountValid,boolean,,Minimum Amount Valid
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductConfigured,boolean,,Gift Product Configured
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductExists,boolean,,Gift Product Exists
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductAvailableForOrder,boolean,,Gift Product Available For Order
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,minimalQuantity,number,,Minimal Quantity
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductRequiresCustomization,boolean,,Gift Product Requires Customization
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductQuantityAvailable,number,,Gift Product Quantity Available
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,input,giftProductOutOfStockDenies,boolean,,Gift Product Out Of Stock Denies
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,output,giftProductValid,boolean,,Gift Product Valid
-PrestaShop,Cart_Rule_Validity.dmn,Cart Rule Gift Product Eligibility,output,reasonCode,string,,Reason Code
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,idShop,number,,Id Shop
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,contextShopId,number,,Context Shop Id
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,idCurrency,number,,Id Currency
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,contextCurrencyId,number,,Context Currency Id
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,idCountry,number,,Id Country
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,contextCountryId,number,,Context Country Id
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,idGroup,number,,Id Group
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,contextGroupId,number,,Context Group Id
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,quantityThresholdMet,boolean,,Quantity Threshold Met
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,input,dateWindowActive,boolean,,Date Window Active
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Row Applicability,output,rowApplicable,boolean,,Row Applicable
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Selection Precedence Tier,input,hasProductAttributeMatch,boolean,,Has Product Attribute Match
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Selection Precedence Tier,input,isCartSpecific,boolean,,Is Cart Specific
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Selection Precedence Tier,input,fromQuantity,number,,From Quantity
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Selection Precedence Tier,input,isGeneratedByCatalogPriceRule,boolean,,Is Generated By Catalog Price Rule
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Specific Price Selection Precedence Tier,output,precedenceTier,string,,Precedence Tier
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Rule Row Accumulation And Method Selection,input,isFirstMatchedRow,boolean,,Is First Matched Row
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Rule Row Accumulation And Method Selection,input,rowBehavior,string,COMBINE_METHOD;ONE_AFTER_ANOTHER_METHOD;ONE_TAX_ONLY_METHOD,Row Behavior
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Rule Row Accumulation And Method Selection,output,recordAsCalculatorMethod,boolean,,Record As Calculator Method
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Rule Row Accumulation And Method Selection,output,continueToNextRow,boolean,,Continue To Next Row
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Total Rate Calculation Method,input,computationMethod,string,COMBINE_METHOD;ONE_AFTER_ANOTHER_METHOD;ONE_TAX_ONLY_METHOD,Computation Method
-PrestaShop,Specific_Price_and_Tax_Rules.dmn,Tax Total Rate Calculation Method,output,rateFormula,string,,Rate Formula
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Product Orderability When Stock Depleted,input,quantityAvailable,number,,Quantity Available
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Product Orderability When Stock Depleted,input,outOfStockSetting,string,ALLOW;DEFAULT;DENY,Out Of Stock Setting
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Product Orderability When Stock Depleted,input,globalOutOfStockConfigDenies,boolean,,Global Out Of Stock Config Denies
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Product Orderability When Stock Depleted,output,canOrder,boolean,,Can Order
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order Return Requested Quantity Validity,input,requestedQuantityProvidedForLine,boolean,,Requested Quantity Provided For Line
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order Return Requested Quantity Validity,input,requestedQuantityExceedsRemainingOrderedQuantity,boolean,,Requested Quantity Exceeds Remaining Ordered Quantity
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order Return Requested Quantity Validity,output,returnLineRequestValid,boolean,,Return Line Request Valid
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order State Invoice Availability,input,globalInvoiceFeatureEnabled,boolean,,Global Invoice Feature Enabled
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order State Invoice Availability,input,orderStateInvoiceFlag,boolean,,Order State Invoice Flag
-PrestaShop,Stock_and_Order_Fulfillment_Rules.dmn,Order State Invoice Availability,output,invoiceAvailable,boolean,,Invoice Available
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,input,startDateSet,boolean,,Start Date Set
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,input,endDateSet,boolean,,End Date Set
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,input,startDate,date,,Start Date
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,input,evaluationTime,date,,Evaluation Time
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,input,endDate,date,,End Date
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity Violations,output,violationReasons,string,,Violation Reason
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,output,relationshipDatesValid,boolean,,
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Relationship Date Validity,input,violationReasons,,,
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,visitPatientId,string,,Visit Patient Id
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,encounterPatientId,string,,Encounter Patient Id
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,encounterDatetime,date,,Encounter Datetime
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,evaluationTime,date,,Evaluation Time
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,visitSet,boolean,,Visit Set
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,visitStartDatetime,date,,Visit Start Datetime
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,input,visitStopDatetime,date,,Visit Stop Datetime
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity Violations,output,violationReasons,string,,Violation Reason
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,output,encounterDatetimeValid,boolean,,
+OpenMRS,Relationship_and_Encounter_Validation.dmn,Encounter Datetime Validity,input,violationReasons,,,
+Spree,Customer_Segment_Eligibility.dmn,Customer Group Match Count,input,customerGroupIds,,,
+Spree,Customer_Segment_Eligibility.dmn,Customer Group Match Count,input,promotionTargetGroupIds,,,
+Spree,Customer_Segment_Eligibility.dmn,Promotion Customer Group Eligibility,input,customerIdPresent,boolean,,order.customer_id present?
+Spree,Customer_Segment_Eligibility.dmn,Promotion Customer Group Eligibility,input,promotionTargetGroupsConfigured,boolean,,promotion targets >=1 customer group?
+Spree,Customer_Segment_Eligibility.dmn,Promotion Customer Group Eligibility,input,matchingCustomerGroupCount,number,,Customer Group Match Count (upstream)
+Spree,Customer_Segment_Eligibility.dmn,Promotion Customer Group Eligibility,output,customerGroupEligible,boolean,,Customer-group rule eligible
+Spree,Customer_Segment_Eligibility.dmn,Prior Completed Order Count,input,currentOrder,,,
+Spree,Customer_Segment_Eligibility.dmn,Prior Completed Order Count,input,customer,,,
+Spree,Customer_Segment_Eligibility.dmn,Prior Completed Order Count,input,email,,,
+Spree,Customer_Segment_Eligibility.dmn,Prior Completed Order Count,input,store,,,
+Spree,Customer_Segment_Eligibility.dmn,First-Order Promotion Eligibility,input,userOrEmailPresent,boolean,,customer or email identified?
+Spree,Customer_Segment_Eligibility.dmn,First-Order Promotion Eligibility,input,priorCompletedOrderCount,number,,Prior Completed Order Count (upstream)
+Spree,Customer_Segment_Eligibility.dmn,First-Order Promotion Eligibility,output,firstOrderEligible,boolean,,First-order rule eligible
+Spree,Customer_Segment_Eligibility.dmn,One-Use-Per-User Promotion Eligibility,input,customerPresent,boolean,,order.customer present?
+Spree,Customer_Segment_Eligibility.dmn,One-Use-Per-User Promotion Eligibility,input,priorPromotionUsageCount,number,,Prior uses of this promotion by this customer
+Spree,Customer_Segment_Eligibility.dmn,One-Use-Per-User Promotion Eligibility,output,oneUsePerUserEligible,boolean,,One-use-per-user rule eligible
+Spree,Promotion_Order_Level_Eligibility.dmn,Effective Minimum Amount Threshold,input,amountMin,,,
+Spree,Promotion_Order_Level_Eligibility.dmn,Effective Minimum Amount Threshold,input,operatorMin,,,
+Spree,Promotion_Order_Level_Eligibility.dmn,Effective Maximum Amount Threshold,input,amountMax,,,
+Spree,Promotion_Order_Level_Eligibility.dmn,Effective Maximum Amount Threshold,input,operatorMax,,,
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Item Total Eligibility,input,itemTotal,number,,Order item total
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Item Total Eligibility,input,amountMaxSet,boolean,,Maximum amount configured?
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Item Total Eligibility,output,itemTotalEligible,boolean,,Item-total rule eligible
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Temporal Availability,input,evaluationTime,date and time,,Time of eligibility check
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Temporal Availability,input,startsAt,date and time,,Promotion starts_at
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Temporal Availability,input,expiresAtSet,boolean,,expires_at configured?
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Temporal Availability,input,expiresAt,date and time,,Promotion expires_at
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Temporal Availability,output,availabilityStatus,string,,Availability status
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Usage Limit Exceeded,input,usageLimitSet,boolean,,usage_limit configured?
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Usage Limit Exceeded,input,usageLimit,number,,Configured usage limit
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Usage Limit Exceeded,input,adjustedCreditsCount,number,,Credits already used (adjusted)
+Spree,Promotion_Order_Level_Eligibility.dmn,Promotion Usage Limit Exceeded,output,usageLimitExceeded,boolean,,Usage limit exceeded
+Spree,Volume_and_Tiered_Pricing.dmn,Promotion Tiered Percent Discount Selection,input,orderAmount,number,,Amount the calculator computes against
+Spree,Volume_and_Tiered_Pricing.dmn,Promotion Tiered Percent Discount Selection,output,discountPercent,number,,Percent applied by TieredPercent calculator
+Spree,Volume_and_Tiered_Pricing.dmn,Price List Volume Adjustment Tier Selection,input,purchaseQuantity,number,,Quantity being priced
+Spree,Volume_and_Tiered_Pricing.dmn,Price List Volume Adjustment Tier Selection,output,adjustmentPercentage,number,,Percentage adjustment applied to base price
+Spree,Volume_and_Tiered_Pricing.dmn,Price Adjustment Tier Validity Violations,input,minQuantity,number,,Tier min_quantity
+Spree,Volume_and_Tiered_Pricing.dmn,Price Adjustment Tier Validity Violations,input,percentage,number,,Tier percentage
+Spree,Volume_and_Tiered_Pricing.dmn,Price Adjustment Tier Validity Violations,input,siblingTierCount,number,,Other tiers already on this list
+Spree,Volume_and_Tiered_Pricing.dmn,Price Adjustment Tier Validity Violations,output,invalidReason,string,,Validation failure reason
+Spree,Volume_and_Tiered_Pricing.dmn,Price Adjustment Tier Validity,input,invalidReasons,,,
+jBilling,Ageing_and_Dunning.dmn,Is Ageing Required,input,expiryDate,date,,Expiry Date
+jBilling,Ageing_and_Dunning.dmn,Is Ageing Required,output,ageingRequired,boolean,,Ageing Required
+jBilling,Ageing_and_Dunning.dmn,Invoice Overdue Check,input,dueDatePlusGrace,date,,Invoice Due Date Plus Grace
+jBilling,Ageing_and_Dunning.dmn,Invoice Overdue Check,output,invoiceOverdue,boolean,,Invoice Overdue
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Advancement,input,currentStatusIsActive,boolean,,Current Status Is Active
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Advancement,input,ageingStepConfigFound,boolean,,Ageing Step Config Found
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Advancement,input,ageingRequired,boolean,,Ageing Required
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Advancement,output,advanceToNextStep,boolean,,Advance To Next Step
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Advancement,output,advancementReason,string,,Advancement Reason
+jBilling,Ageing_and_Dunning.dmn,Ageing Status Change Order Action,input,newStatusIsDeleted,boolean,,New Status Is Deleted
+jBilling,Ageing_and_Dunning.dmn,Ageing Status Change Order Action,input,oldStatusCanLogin,boolean,,Old Status Can Login
+jBilling,Ageing_and_Dunning.dmn,Ageing Status Change Order Action,input,newStatusCanLogin,boolean,,New Status Can Login
+jBilling,Ageing_and_Dunning.dmn,Ageing Status Change Order Action,output,orderAction,string,,Order Action
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,statusIsActive,boolean,,Status Is Active
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,statusIsDeleted,boolean,,Status Is Deleted
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,isLastSelectedStep,boolean,,Is Last Selected Step
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,inUse,boolean,,In Use
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,welcomeMessagePresent,boolean,,Welcome Message Present
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,input,days,number,,Days
+jBilling,Ageing_and_Dunning.dmn,Ageing Step Config Validation,output,validationResult,string,,Validation Result
+jBilling,Currency_Exchange_Rules.dmn,Currency Exchange Rate Source,input,hasEntitySpecificExchange,boolean,,Entity-Specific Exchange Rate Exists
+jBilling,Currency_Exchange_Rules.dmn,Currency Exchange Rate Source,input,hasSystemDefaultExchange,boolean,,System Default Exchange Rate Exists (entity_id = 0)
+jBilling,Currency_Exchange_Rules.dmn,Currency Exchange Rate Source,output,exchangeRateSource,string,,Exchange Rate Source
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,eventType,string,NEW_ACTIVE_UNTIL;NEW_QUANTITY,Event Type
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,newActiveUntilProvided,boolean,,New Active-Until Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,oldActiveUntilProvided,boolean,,Old Active-Until Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,newActiveUntil,date,,New Active-Until
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,oldActiveUntil,date,,Old Active-Until
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,newQuantity,number,,New Quantity
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,input,oldQuantity,number,,Old Quantity
+jBilling,Order_Cancellation_and_Validity.dmn,Cancellation Fee Eligibility,output,processCancellationFee,boolean,,Process Cancellation Fee
+jBilling,Order_Cancellation_and_Validity.dmn,Order Period Already Invoiced,input,candidateDateProvided,boolean,,Candidate Date Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Order Period Already Invoiced,input,nextBillableDayProvided,boolean,,Next Billable Day Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Order Period Already Invoiced,input,candidateDate,date,,Candidate Date
+jBilling,Order_Cancellation_and_Validity.dmn,Order Period Already Invoiced,input,nextBillableDay,date,,Next Billable Day
+jBilling,Order_Cancellation_and_Validity.dmn,Order Period Already Invoiced,output,periodAlreadyInvoiced,boolean,,Period Already Invoiced
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,input,parseOrAccessError,boolean,,Reflection/Parse Error Occurred
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,input,startDateProvided,boolean,,Start Date Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,input,endDateProvided,boolean,,End Date Provided
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,input,startDate,date,,Start Date
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,input,endDate,date,,End Date
+jBilling,Order_Cancellation_and_Validity.dmn,Order Date Range Valid,output,dateRangeValid,boolean,,Date Range Valid
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Outcome Resolution,input,processorUnavailable,boolean,,Processor Unavailable After All Tasks Tried
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Outcome Resolution,input,paymentResultId,number,,"Last Task Payment Result Id (1=OK,2=FAIL,3=UNAVAILABLE,4=ENTERED)"
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Outcome Resolution,output,resultCode,number,,Resolved Result Code
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Balance Assignment,input,resultCode,number,,Resolved Result Code
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Balance Assignment,input,paymentAmount,number,,Payment Amount
+jBilling,Payment_Authorization_and_Blacklist.dmn,Payment Balance Assignment,output,balance,number,,Balance
+jBilling,Payment_Authorization_and_Blacklist.dmn,Blacklist Filter Enabled,input,blacklistPluginId,number,,Blacklist Plug-in Id (entity preference PREFERENCE_USE_BLACKLIST=43)
+jBilling,Payment_Authorization_and_Blacklist.dmn,Blacklist Filter Enabled,output,blacklistEnabled,boolean,,Blacklist Filtering Enabled
+jBilling,Proration_and_Tax.dmn,Cycle Start Source,input,hasNextBillableDay,boolean,,Order Has Next Billable Day Set
+jBilling,Proration_and_Tax.dmn,Cycle Start Source,input,hasCycleStarts,boolean,,Order Has Cycle Starts Date Set
+jBilling,Proration_and_Tax.dmn,Cycle Start Source,output,cycleStartDateSource,string,,Resolved Cycle Start Date Source
+jBilling,Proration_and_Tax.dmn,Daily Pro-Rate Amount,input,daysInCycle,number,,Days In Cycle
+jBilling,Proration_and_Tax.dmn,Daily Pro-Rate Amount,input,daysInPeriod,number,,Days In Period
+jBilling,Proration_and_Tax.dmn,Daily Pro-Rate Amount,input,fullPrice,number,,Full Price
+jBilling,Proration_and_Tax.dmn,Daily Pro-Rate Amount,output,proratedAmount,number,,Prorated Amount
+jBilling,Proration_and_Tax.dmn,Tax Calculation Needed,input,customContactFieldConfigured,boolean,,Customer-Exemption Custom Field Configured
+jBilling,Proration_and_Tax.dmn,Tax Calculation Needed,input,primaryContactFound,boolean,,Customer Has Primary Contact
+jBilling,Proration_and_Tax.dmn,Tax Calculation Needed,input,matchingFieldValue,string,EXEMPT_VALUE;OTHER,Matching Contact Field Value
+jBilling,Proration_and_Tax.dmn,Tax Calculation Needed,output,taxCalculationNeeded,boolean,,Tax Calculation Needed
+jBilling,Proration_and_Tax.dmn,Tax Calculation Mode,input,taxItemHasPercentage,boolean,,Tax Item Has Percentage Set
+jBilling,Proration_and_Tax.dmn,Tax Calculation Mode,output,taxCalculationMode,string,,Tax Calculation Mode

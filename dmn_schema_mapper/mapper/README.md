@@ -4,9 +4,104 @@ A generic tool that takes any case study's DMN decision files plus its
 schema source and automatically produces a `variable_to_schema_mapping.csv`
 — the file the generator (§6 of the design doc) reads as its input, so the
 manual DMN↔schema lookup step (§5.2) does not have to be repeated by hand
-again. Built and validated 2026-09-08 against all four case studies already
-in the project (FLEX2, OpenMRS, OFBiz, PrestaShop), using their existing
-291 hand-built mapping rows as ground truth.
+again. Originally built and validated 2026-09-08 against the case studies
+in the project at the time (FLEX2, OpenMRS, OFBiz, PrestaShop), using
+their existing 291 hand-built mapping rows as ground truth.
+
+## Fixed 2026-09-11 — the tool was stale and, in one script, entirely broken
+
+Checked directly against this repository rather than assumed current: this
+package had fallen out of sync with two case-study swaps (OFBiz→Spree,
+PrestaShop→jBilling, design doc §7e/§13.1) that happened after it was
+built, and one of its three pipeline scripts didn't run at all.
+
+- **`schema_extract.py` raised `ModuleNotFoundError` on import** — it
+  pulled `parse_oracle_mysql_ddl` from a `paper_supplementary/scripts/`
+  directory that does not exist anywhere in this repository. Its cached
+  `schema_columns.csv` also only ever covered `FLEX2, OFBiz, OpenMRS,
+  PrestaShop` — neither Spree nor jBilling, the two case studies that
+  actually replaced them, appeared in it at all — and contained visibly
+  corrupted rows (stray fragments like `'301'`, `)"` sitting where a
+  case-study name should be) from whatever produced it.
+- **`dmn_extract.py`'s `CASE_STUDY_DIRS`** pointed at a different session's
+  scratchpad layout (`flex2_dmn/dmn`, `ofbiz_dmn/dmn`, ... directly under
+  this script's own parent directory) — none of those paths exist here,
+  and two of the four case studies they named are no longer in the active
+  program regardless.
+- **`validate_mapper.py`'s `GT_FILES`** hard-coded absolute paths into yet
+  another session's scratchpad (`/tmp/claude-0/-home-claude/...`), again
+  naming the pre-swap case-study set.
+- **OpenMRS's and Spree's own DMN packages weren't in this repository at
+  all** (only FLEX2's and jBilling's were) — added in a separate commit
+  before this fix, validated against the design doc's current numbers
+  (24 decisions/71 rules and 14 decisions/32 rules respectively) before
+  this tool was pointed at them.
+
+**What was changed**: `schema_extract.py` now reads `all_schema_extraction`'s
+already-working, already-validated per-case-study JSON (FLEX2, OpenMRS,
+Spree, jBilling) instead of re-parsing raw DDL itself — one documented
+fidelity trade-off from this (`fk_target_table` is now a table-level,
+deduplicated target list rather than a true per-column resolution) costs
+nothing in practice, since `mapper.py`'s own scoring never reads that field
+(grep-confirmed) — it was always carried through as documentation only.
+`dmn_extract.py` and `validate_mapper.py` now point at this repo's actual
+package locations and the current four-case-study set. `dmn_extract.py`'s
+literal-expression identifier extraction was also hardened: it previously
+only excluded `and/or/not/true/false`, which was enough for FLEX2's and
+OpenMRS's plain arithmetic formulas but leaked FEEL keywords
+(`if/then/else/for/in/where`), built-in function names (`count`,
+`intersection`), and a `for x in ...` loop's own bound variable as if they
+were real input variables once Spree's more complex FEEL (list
+filters/comprehensions) was in scope — now excludes all three properly and
+collapses dotted-path references (`order.customer`) to their root
+identifier.
+
+OFBiz and PrestaShop are out of scope for this tool now, matching the
+current program (§13.1/§7e) — both are backup case studies, and neither
+has a schema JSON in `all_schema_extraction/` to read from; re-adding them
+would mean writing new parsers, not just repointing this one.
+
+**Re-validated end to end** (`schema_extract.py` → `dmn_extract.py` →
+`mapper.py` → `validate_mapper.py`), against the current, correct ground
+truth (274 rows across the current four case studies' own
+`variable_to_schema_mapping.csv` files):
+
+| Case study | Not-persisted accuracy | Top-1 (of grounded) | Top-3 hit rate | Derived-fact recall |
+|---|---|---|---|---|
+| FLEX2 | 100.0% (n=4) | 17.2% (n=29) | 37.9% | 39.1% (n=23) |
+| OpenMRS | 100.0% (n=41) | 42.4% (n=66) | 69.7% | 11.8% (n=34) |
+| jBilling | 89.7% (n=29) | 21.4% (n=28) | 50.0% | 3.2% (n=31) |
+| Spree | 88.9% (n=9) | 29.2% (n=24) | 45.8% | 38.5% (n=13) |
+| **Overall** | **95.2% (n=83)** | **31.3% (n=147)** | **55.8%** | **18.8% (n=101)** |
+
+Same broad shape as the original pre-swap numbers (89.0%/31.6%/53.1%/24.5%)
+— the headline "not-persisted detection is strong, top-1 alone isn't
+trustworthy unattended, top-3 is the more honest usefulness measure,
+derived-fact recall is the weakest link" reading from §5.5 of the design
+doc still holds, now computed against the case studies actually in the
+program rather than the retired ones.
+
+**A residual, bounded extraction mismatch, left as documented rather than
+chased further**: `dmn_extract.py` and each case study's hand-built ground
+truth disagree on a small number of rows (OpenMRS: 5; Spree: 5 one way,
+8 the other; `validate_mapper.py` reports these as `unmatch` and simply
+excludes them from every metric above, rather than silently mis-scoring
+them). Two distinct, inspected causes, neither an extractor bug:
+1. **DRD-substitution pseudo-inputs** (OpenMRS's 5, one of Spree's) — a
+   downstream literal-expression decision's FEEL text references an
+   upstream COLLECT decision's own output (e.g. `count(violationReasons) =
+   0`); the extractor correctly reports `violationReasons` as a free
+   identifier, but the hand-built mapping CSV doesn't re-list it under the
+   downstream decision since it already has its own row under the
+   decision that actually produces it. Same category the FLEX2 README
+   already documents for `Attendance Percentage`.
+2. **A handful of Spree literal-expression decisions have no `<variable
+   name=...>` element in the DMN XML at all** (confirmed by direct
+   inspection, e.g. `Customer Group Match Count`) — the hand-built mapping
+   CSV documents a conceptual output name (`matchingCustomerGroupCount`,
+   `effectiveMaxThreshold`, ...) that simply isn't discoverable from the
+   XML by any extractor, since it was never written into it. A genuine gap
+   in that package's own authoring, not something to paper over here.
 
 ## Pipeline
 
@@ -107,9 +202,11 @@ majority of outputs in this program are decision verdicts/control-flow
 values (§7b: 6/291 variables are write-back targets, the rest are
 not-persisted by design).
 
-## Validation against the 291 hand-built ground-truth rows
+## Validation against the 291 hand-built ground-truth rows *(superseded 2026-09-11 — see the table near the top of this README for the current, correct numbers against the current four case studies)*
 
-`validate_mapper.py` compares `mapping_auto.csv` against all four existing
+Kept below as the historical record of the original 2026-09-08 validation
+run, against the case-study set active at the time (FLEX2, OpenMRS, OFBiz,
+PrestaShop). `validate_mapper.py` compares `mapping_auto.csv` against all four existing
 `variable_to_schema_mapping.csv` files (parsing each one's free-text 5th
 column for `table.column`-shaped references as the ground truth).
 
@@ -182,17 +279,17 @@ python3 validate_mapper.py --auto mapping_auto.csv
   enum-shaped) rather than an actual value-set comparison. This is the
   single biggest reason top-1 accuracy is capped where it is; it would
   improve meaningfully with even one seed/test dataset per case study.
-- **OFBiz's field-type → abstract-type mapping is a naming-convention
-  heuristic**, not a real type system read from a DDL (OFBiz's entity
-  model declares logical field types like `very-long`/`indicator`, not SQL
-  types directly) — spot-checked but not exhaustively verified against
-  `fieldtypemysql.xml`'s actual column-type mapping.
+- **(No longer applicable — OFBiz is out of scope, §7e/§13.1)** OFBiz's
+  field-type → abstract-type mapping was a naming-convention heuristic, not
+  a real type system read from a DDL; kept as a historical note only since
+  OFBiz isn't part of the active four-case-study program this tool now
+  targets.
 - **The derived-fact heuristic is a fixed keyword list.** Per §5.4, the
   natural next step is an LLM-assisted second pass — restricted to the
   rows this tool already marked `needs review`/`likely derived`, choosing
   only among the pre-generated top-3 candidates (never inventing a column
   name), majority-voted across repeated calls — evaluated against the same
-  291-row ground truth this prototype was validated against.
+  274-row ground truth this prototype is now validated against.
 - **Multi-column/join/aggregate facts are only flagged, never resolved.**
   This tool intentionally does not attempt to construct a join path or
   aggregate formula automatically — §7b's construct taxonomy shows this
