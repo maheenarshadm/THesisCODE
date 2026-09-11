@@ -253,31 +253,156 @@ def load_case_study_ground_truth(cs):
 
 AGGREGATE_RECIPE_RE = re.compile(
     r'\b(COUNT|SUM|AVG|MIN|MAX)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)', re.I)
+# The reversed word order actually seen in several case studies' notes,
+# e.g. "spree_price_adjustment_tiers (COUNT WHERE price_list_id = ...)" --
+# same information, table named before the aggregate function instead of
+# after it.
+AGGREGATE_RECIPE_REVERSED_RE = re.compile(
+    r'\b([A-Za-z_][A-Za-z0-9_.]*)\s*\(\s*(COUNT|SUM|AVG|MIN|MAX)\b', re.I)
 
 
 def _try_extract_aggregate_recipe(text):
-    """Best-effort structured recipe extraction for the one common,
-    mechanically-recognizable derived-fact shape actually seen in the
-    hand-curated notes/schema-field text: "COUNT(TABLE) WHERE <filter>"
-    (§6.1's own worked example resolves lecturesAttended/
-    lecturesHeldForOffering exactly this way). This is deliberately not a
-    general WHERE-clause parser -- the filter text is kept verbatim for a
-    human (or a later, more targeted pass) to turn into the design doc's
-    fully structured {"filter": [...]} shape; extracting the aggregate
-    function and target table mechanically is what turns an otherwise
-    'unresolved' block into the richer 'derived_aggregate' resolution the
-    design doc's own example uses, without inventing filter semantics this
-    script has no case-study-specific knowledge to get right."""
+    """Best-effort structured recipe extraction for the two mechanically-
+    recognizable aggregate shapes actually seen in the hand-curated
+    notes/schema-field text: "COUNT(TABLE) WHERE <filter>" (§6.1's own
+    worked example resolves lecturesAttended/lecturesHeldForOffering
+    exactly this way) and "TABLE (COUNT WHERE <filter>)" (the reversed
+    word order several other case studies' notes happen to use). This is
+    deliberately not a general WHERE-clause parser -- the filter text is
+    kept verbatim for a human (or a later, more targeted pass) to turn
+    into the design doc's fully structured {"filter": [...]} shape;
+    extracting the aggregate function and target table mechanically is
+    what turns an otherwise unresolved/generic-derived block into the
+    richer 'derived_aggregate' resolution the design doc's own example
+    uses, without inventing filter semantics this script has no
+    case-study-specific knowledge to get right."""
     if not text:
         return None
     m = AGGREGATE_RECIPE_RE.search(text)
-    if not m:
-        return None
-    aggregate, table = m.group(1).upper(), m.group(2)
+    if m:
+        aggregate, table = m.group(1).upper(), m.group(2)
+    else:
+        m = AGGREGATE_RECIPE_REVERSED_RE.search(text)
+        if not m:
+            return None
+        table, aggregate = m.group(1), m.group(2).upper()
     where_idx = text.upper().find('WHERE', m.end())
-    filter_text = text[where_idx + len('WHERE'):].strip() if where_idx != -1 else None
+    filter_text = text[where_idx + len('WHERE'):].rstrip(') ').strip() if where_idx != -1 else None
     return {'kind': 'derived_aggregate', 'aggregate': aggregate, 'table': table,
             'filter_text': filter_text, 'source_text': text}
+
+
+_EXISTENCE_WORDS = re.compile(
+    r'\b(IS NOT NULL|IS NULL|existence check|null-check|null check)\b', re.I)
+_ANY_OF_WORDS = re.compile(r'\b(OR of|either|any of|either populated)\b', re.I)
+_EXISTS_ROW_WORDS = re.compile(
+    r'\bexistence of\b|\(existence\)|\bEXISTS\(|self-join', re.I)
+_JOINED_VIA_RE = re.compile(r'joined via ([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)', re.I)
+_CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)')
+
+
+def classify_derived(row):
+    """The general classifier for a 'derived'-bucketed ground-truth row --
+    replaces a narrow aggregate-only check with pattern rules covering
+    every shape a direct survey of all 83 program-wide 'derived' facts
+    actually turned up (generator/README.md's own accounting). Ground
+    truth's free-text notes/schema-field were never designed to be
+    machine-structured, so this stays a set of targeted, individually
+    justified pattern rules -- never a general NLP parse -- and anything
+    that matches none of them is left exactly as before (a generic
+    'derived' node with table_hints), not forced into a wrong shape.
+
+    Order matters: more specific / more information-preserving checks
+    first, since e.g. an aggregate mention should win over a same-text
+    "existence" mention (COUNT ... WHERE existence-flavored language can
+    co-occur).
+    """
+    notes, raw = row['notes'] or '', row['raw_schema_field'] or ''
+    pairs = row['schema_pairs']
+
+    agg = _try_extract_aggregate_recipe(notes) or _try_extract_aggregate_recipe(raw)
+    if agg:
+        return agg
+
+    # Existence checks apply the same way regardless of how many candidate
+    # columns ground truth recorded -- a schema field like "concept_numeric
+    # .hi_absolute (or concept_reference_range.hi_absolute)" names two
+    # *alternative* real locations for the same IS-NOT-NULL fact, not an
+    # OR-of-several-columns condition (that's _ANY_OF_WORDS, a genuinely
+    # different shape, checked separately below). Use the first as the
+    # primary target, same graceful-degradation convention the 'direct'
+    # bucket already uses for its own multi-pair rows.
+    if pairs and _EXISTENCE_WORDS.search(notes) and not _ANY_OF_WORDS.search(notes):
+        table, column = pairs[0]
+        node = {'kind': 'null_check', 'table': table, 'column': column, 'notes': notes}
+        if len(pairs) > 1:
+            node['also_valid_in'] = pairs[1:]
+        return node
+
+    # A regex/pattern match between two named columns (§7b's own "Pattern/
+    # Regex Match" construct category -- not portable branch-distance
+    # comparable, but a real, structured fact a SQL validation pass (§6.7)
+    # can still express via an engine's REGEXP operator).
+    if len(pairs) == 2 and re.search(r'\bregex\b', notes, re.I):
+        (t1, c1), (t2, c2) = pairs
+        return {'kind': 'regex_match', 'value_column': {'table': t1, 'column': c1},
+                'pattern_column': {'table': t2, 'column': c2}, 'notes': notes}
+
+    if len(pairs) == 1:
+        table, column = pairs[0]
+        m = _CONSTANT_RE.search(notes)
+        node = {'kind': 'schema_column', 'table': table, 'column': column}
+        if m:
+            node['compared_to_named_constant'] = {'name': m.group(1), 'value': int(m.group(2))}
+        node['notes'] = notes
+        return node
+
+    if len(pairs) >= 2:
+        if _ANY_OF_WORDS.search(notes):
+            return {'kind': 'any_not_null', 'columns': [{'table': t, 'column': c} for t, c in pairs],
+                    'notes': notes}
+        m = _JOINED_VIA_RE.search(notes)
+        if m and len(pairs) >= 1:
+            local_table, local_column = m.group(1).split('.')
+            target_table, target_column = pairs[-1]  # the last-mentioned pair is the joined-to fact, by convention of how these notes are written
+            node = {'kind': 'join_lookup',
+                    'via': {'local_table': local_table, 'local_column': local_column},
+                    'result_table': target_table, 'result_column': target_column, 'notes': notes}
+            if _EXISTENCE_WORDS.search(notes):
+                node['kind'] = 'join_null_check'
+            return node
+        if _EXISTS_ROW_WORDS.search(notes):
+            return {'kind': 'exists', 'candidate_tables': sorted({t for t, _ in pairs}),
+                     'candidate_columns': [{'table': t, 'column': c} for t, c in pairs], 'notes': notes}
+        # Nothing more specific matched, but ground truth still named two or
+        # more real candidate columns for this fact (e.g. "base_user
+        # .status_id / generic_status.id" for a comparison-against-constant
+        # style fact with no single clean target) -- picking the first as
+        # primary, same graceful-degradation convention as above, beats
+        # leaving a row with real column names attached fully unresolved.
+        table, column = pairs[0]
+        return {'kind': 'schema_column', 'table': table, 'column': column,
+                'also_valid_in': pairs[1:], 'notes': notes}
+
+    if _EXISTS_ROW_WORDS.search(notes) or _EXISTS_ROW_WORDS.search(raw):
+        # A table named (often via "(existence)") but no clean column --
+        # still worth surfacing the table for FK-closure/materialization
+        # purposes even though the exact key columns need a human. If even
+        # the table name can't be mechanically extracted, this adds no
+        # more information than the generic fallback -- fall through to it
+        # instead of returning a hollow, falsely-"resolved"-looking node.
+        m = re.match(r'\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(', raw)
+        if m:
+            return {'kind': 'exists', 'candidate_tables': [m.group(1)],
+                     'candidate_columns': [], 'notes': notes, 'raw_schema_field': raw}
+
+    if raw.strip().lower() == 'n/a' and not pairs:
+        return {'kind': 'code_external', 'notes': notes,
+                'reason': 'no schema field was ever recorded for this fact -- genuinely computed by '
+                          'application code (a Java constant, a UI-only transient value, a runtime '
+                          'calculation over other derived facts), not read from any table at all'}
+
+    return None  # nothing matched -- caller keeps the existing generic 'derived' fallback
 
 
 def resolve_variable(cs, gt, decision_name, var_name, io='input'):
@@ -316,9 +441,9 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
         return {'kind': 'unresolved', 'reason': "labeled 'direct' but no table.column parsed from its schema field",
                 'raw_schema_field': row['raw_schema_field']}
     if bucket == 'derived':
-        recipe = _try_extract_aggregate_recipe(row['notes']) or _try_extract_aggregate_recipe(row['raw_schema_field'])
-        if recipe:
-            return recipe
+        classified = classify_derived(row)
+        if classified:
+            return classified
         return {'kind': 'derived', 'notes': row['notes'], 'table_hints': row['schema_pairs']}
     return {'kind': 'unresolved', 'reason': f'unrecognized ground-truth mapping_type bucket {bucket!r}'}
 
@@ -495,7 +620,7 @@ def find_blocking_issues(var_name, node, out=None):
     out = [] if out is None else out
     if not isinstance(node, dict):
         return out
-    if node.get('kind') in ('unresolved', 'schema_gap', 'chained_decision_output'):
+    if node.get('kind') in ('unresolved', 'schema_gap', 'chained_decision_output', 'code_external'):
         out.append((var_name, node['kind'], node.get('reason') or node.get('notes') or node.get('note', '')))
     elif node.get('kind') == 'substituted_decision':
         for fv, sub in node.get('free_variable_resolutions', {}).items():
@@ -515,6 +640,22 @@ def collect_tables_from_resolution(node, tables):
             tables.add(t)
     elif node.get('kind') == 'derived_aggregate':
         tables.add(node['table'])
+    elif node.get('kind') == 'null_check':
+        tables.add(node['table'])
+    elif node.get('kind') == 'any_not_null':
+        for c in node.get('columns', []):
+            tables.add(c['table'])
+    elif node.get('kind') in ('join_lookup', 'join_null_check'):
+        tables.add(node['via']['local_table'])
+        tables.add(node['result_table'])
+    elif node.get('kind') == 'exists':
+        for t in node.get('candidate_tables', []):
+            tables.add(t)
+        for c in node.get('candidate_columns', []):
+            tables.add(c['table'])
+    elif node.get('kind') == 'regex_match':
+        tables.add(node['value_column']['table'])
+        tables.add(node['pattern_column']['table'])
     elif node.get('kind') == 'substituted_decision':
         for sub in node.get('free_variable_resolutions', {}).values():
             collect_tables_from_resolution(sub, tables)

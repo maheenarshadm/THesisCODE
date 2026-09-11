@@ -1,8 +1,8 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 45,
-   "blocked": 10
+   "compiled": 46,
+   "blocked": 9
   },
   "OpenMRS": {
    "compiled": 71,
@@ -13,19 +13,20 @@
    "blocked": 5
   },
   "jBilling": {
-   "compiled": 50,
-   "blocked": 3
+   "compiled": 39,
+   "blocked": 14
   }
  },
- "total_compiled": 193,
- "total_blocked": 18,
+ "total_compiled": 183,
+ "total_blocked": 28,
  "blocked_reason_counts": {
-  "unresolved_variable": 18
+  "unresolved_variable": 28
  },
  "blocking_variable_kind_counts": {
   "chained_decision_output": 9,
-  "unresolved": 9,
-  "schema_gap": 6
+  "unresolved": 8,
+  "schema_gap": 6,
+  "code_external": 12
  },
  "blocked_records": [
   {
@@ -137,18 +138,6 @@
    "case_study": "FLEX2"
   },
   {
-   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "repeatCourseCountRequested",
-     "kind": "unresolved",
-     "detail": "labeled 'direct' but no table.column parsed from its schema field"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
    "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2",
    "reason": "unresolved_variable",
    "blocking_variables": [
@@ -239,6 +228,18 @@
    "case_study": "Spree"
   },
   {
+   "record_id": "jBilling::Is Ageing Required::Decision_IsAgeingRequired_Rule_1",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "expiryDate",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
    "record_id": "jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_3",
    "reason": "unresolved_variable",
    "blocking_variables": [
@@ -263,6 +264,102 @@
    "case_study": "jBilling"
   },
   {
+   "record_id": "jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_3",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "isLastSelectedStep",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_4",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "isLastSelectedStep",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_1",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_2",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_3",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_4",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_5",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_6",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "eventType",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
    "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1",
    "reason": "unresolved_variable",
    "blocking_variables": [
@@ -270,6 +367,35 @@
      "variable": "resultCode",
      "kind": "chained_decision_output",
      "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_1",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "daysInCycle",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    }
+   ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_2",
+   "reason": "unresolved_variable",
+   "blocking_variables": [
+    {
+     "variable": "daysInCycle",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+    },
+    {
+     "variable": "daysInPeriod",
+     "kind": "code_external",
+     "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
     }
    ],
    "case_study": "jBilling"

@@ -1279,14 +1279,10 @@
   },
   "variable_resolution": {
    "yearsSinceProgramStart": {
-    "kind": "derived",
-    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "student_program",
-      "created_date"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -1617,14 +1613,10 @@
   },
   "variable_resolution": {
    "unmetPrerequisiteCount": {
-    "kind": "derived",
-    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "course_registration",
-      "grade"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -2298,14 +2290,10 @@
   },
   "variable_resolution": {
    "cumulativeExemptedCreditPercentIfGranted": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": [
-     [
-      "course",
-      "credit_hrs"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "course",
+    "column": "credit_hrs",
+    "notes": ""
    }
   },
   "fk_closure_tables": [
@@ -5742,14 +5730,10 @@
   },
   "variable_resolution": {
    "yearsElapsed": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": [
-     [
-      "student_program",
-      "created_date"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": ""
    }
   },
   "fk_closure_tables": [
@@ -5909,6 +5893,173 @@
    "D_COURSE_LEVEL",
    "D_COURSE_TYPE",
    "D_DEPT_TYPE"
+  ],
+  "cross_variable_reference": false
+ },
+ {
+  "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Summer_Semester_Registration.dmn",
+  "decision_name": "Summer Semester Registration",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_SummerSemesterRegistration_Rule_3",
+  "source_citation": "Rule 6.6",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "not",
+     "clause": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "courseTypeId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "RESEARCH",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "repeatCourseCountRequested"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 2,
+      "type": "number"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "registrationAllowed": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reason": {
+    "kind": "literal",
+    "value": "Maximum of 2 repeat courses (with associated labs) allowed in summer",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_SummerSemesterRegistration_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "courseTypeId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "RESEARCH",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_SummerSemesterRegistration_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "not",
+        "clause": {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "courseTypeId"
+         },
+         "right": {
+          "kind": "literal",
+          "value": "RESEARCH",
+          "type": "string"
+         }
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "priorRegistrationCount"
+        },
+        "right": {
+         "kind": "literal",
+         "value": 0,
+         "type": "number"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isElectiveTaughtByVisitingScholarUnavailableOtherwise"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isNeededToGraduateThisSummer"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "repeatCourseCountRequested": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "REPEAT_COURSE",
+    "filter_text": null,
+    "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+   }
+  },
+  "fk_closure_tables": [
+   "APPUSER",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "COURSE_OFFER",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_SHIFT",
+   "EMPLOYEE",
+   "REPEAT_COURSE",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER"
   ],
   "cross_variable_reference": false
  },
@@ -6352,14 +6503,10 @@
   },
   "variable_resolution": {
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -6465,14 +6612,10 @@
     ]
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -6610,14 +6753,10 @@
     ]
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -6799,14 +6938,10 @@
     ]
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -7020,14 +7155,10 @@
     ]
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -7273,14 +7404,10 @@
     ]
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)"
    }
   },
   "fk_closure_tables": [
@@ -7364,48 +7491,44 @@
   },
   "variable_resolution": {
    "anyValueFieldSet": {
-    "kind": "derived",
-    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept",
-    "table_hints": [
-     [
-      "obs",
-      "value_coded"
-     ],
-     [
-      "obs",
-      "value_complex"
-     ],
-     [
-      "obs",
-      "value_datetime"
-     ],
-     [
-      "obs",
-      "value_drug"
-     ],
-     [
-      "obs",
-      "value_modifier"
-     ],
-     [
-      "obs",
-      "value_numeric"
-     ],
-     [
-      "obs",
-      "value_text"
-     ]
-    ]
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "same as above",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
    }
   },
   "fk_closure_tables": [
@@ -7522,48 +7645,44 @@
   },
   "variable_resolution": {
    "anyValueFieldSet": {
-    "kind": "derived",
-    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept",
-    "table_hints": [
-     [
-      "obs",
-      "value_coded"
-     ],
-     [
-      "obs",
-      "value_complex"
-     ],
-     [
-      "obs",
-      "value_datetime"
-     ],
-     [
-      "obs",
-      "value_drug"
-     ],
-     [
-      "obs",
-      "value_modifier"
-     ],
-     [
-      "obs",
-      "value_numeric"
-     ],
-     [
-      "obs",
-      "value_text"
-     ]
-    ]
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "same as above",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
    }
   },
   "fk_closure_tables": [
@@ -7712,48 +7831,44 @@
   },
   "variable_resolution": {
    "anyValueFieldSet": {
-    "kind": "derived",
-    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept",
-    "table_hints": [
-     [
-      "obs",
-      "value_coded"
-     ],
-     [
-      "obs",
-      "value_complex"
-     ],
-     [
-      "obs",
-      "value_datetime"
-     ],
-     [
-      "obs",
-      "value_drug"
-     ],
-     [
-      "obs",
-      "value_modifier"
-     ],
-     [
-      "obs",
-      "value_numeric"
-     ],
-     [
-      "obs",
-      "value_text"
-     ]
-    ]
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "same as above",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
    }
   },
   "fk_closure_tables": [
@@ -7934,48 +8049,44 @@
   },
   "variable_resolution": {
    "anyValueFieldSet": {
-    "kind": "derived",
-    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept",
-    "table_hints": [
-     [
-      "obs",
-      "value_coded"
-     ],
-     [
-      "obs",
-      "value_complex"
-     ],
-     [
-      "obs",
-      "value_datetime"
-     ],
-     [
-      "obs",
-      "value_drug"
-     ],
-     [
-      "obs",
-      "value_modifier"
-     ],
-     [
-      "obs",
-      "value_numeric"
-     ],
-     [
-      "obs",
-      "value_text"
-     ]
-    ]
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
    },
    "isObsGroup": {
-    "kind": "derived",
-    "notes": "same as above",
-    "table_hints": [
-     [
-      "obs",
-      "obs_group_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
    }
   },
   "fk_closure_tables": [
@@ -8132,14 +8243,10 @@
     "column": "allow_decimal"
    },
    "valueNumericHasFraction": {
-    "kind": "derived",
-    "notes": "MOD(value_numeric, 1) <> 0",
-    "table_hints": [
-     [
-      "obs",
-      "value_numeric"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric",
+    "notes": "MOD(value_numeric, 1) <> 0"
    }
   },
   "fk_closure_tables": [
@@ -8277,14 +8384,10 @@
     "column": "allow_decimal"
    },
    "valueNumericHasFraction": {
-    "kind": "derived",
-    "notes": "MOD(value_numeric, 1) <> 0",
-    "table_hints": [
-     [
-      "obs",
-      "value_numeric"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric",
+    "notes": "MOD(value_numeric, 1) <> 0"
    }
   },
   "fk_closure_tables": [
@@ -8379,13 +8482,11 @@
     ]
    },
    "hiAbsoluteSet": {
-    "kind": "derived",
+    "kind": "null_check",
+    "table": "concept_numeric",
+    "column": "hi_absolute",
     "notes": "IS NOT NULL; OpenMRS >=2.7 prefers a matching concept_reference_range row when criteria matches the person",
-    "table_hints": [
-     [
-      "concept_numeric",
-      "hi_absolute"
-     ],
+    "also_valid_in": [
      [
       "concept_reference_range",
       "hi_absolute"
@@ -8523,13 +8624,11 @@
     ]
    },
    "lowAbsoluteSet": {
-    "kind": "derived",
+    "kind": "null_check",
+    "table": "concept_numeric",
+    "column": "low_absolute",
     "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "concept_numeric",
-      "low_absolute"
-     ],
+    "also_valid_in": [
      [
       "concept_reference_range",
       "low_absolute"
@@ -9235,14 +9334,10 @@
   },
   "variable_resolution": {
    "isIndexTerm": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'INDEX_TERM'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'INDEX_TERM'"
    },
    "localePreferred": {
     "kind": "schema_column",
@@ -9374,24 +9469,16 @@
   },
   "variable_resolution": {
    "isIndexTerm": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'INDEX_TERM'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'INDEX_TERM'"
    },
    "isShortName": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'SHORT'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'SHORT'"
    },
    "localePreferred": {
     "kind": "schema_column",
@@ -9579,24 +9666,16 @@
   },
   "variable_resolution": {
    "isIndexTerm": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'INDEX_TERM'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'INDEX_TERM'"
    },
    "isShortName": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'SHORT'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'SHORT'"
    },
    "localePreferred": {
     "kind": "schema_column",
@@ -9845,24 +9924,16 @@
   },
   "variable_resolution": {
    "isIndexTerm": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'INDEX_TERM'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'INDEX_TERM'"
    },
    "isShortName": {
-    "kind": "derived",
-    "notes": "concept_name_type = 'SHORT'",
-    "table_hints": [
-     [
-      "concept_name",
-      "concept_name_type"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "concept_name",
+    "column": "concept_name_type",
+    "notes": "concept_name_type = 'SHORT'"
    },
    "localePreferred": {
     "kind": "schema_column",
@@ -9938,14 +10009,10 @@
     "column": "date_activated"
    },
    "dateActivatedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "date_activated"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
    },
    "evaluationTime": {
     "kind": "not_persisted"
@@ -10040,14 +10107,10 @@
     "column": "date_activated"
    },
    "dateActivatedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "date_activated"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
    },
    "dateStopped": {
     "kind": "schema_column",
@@ -10055,14 +10118,10 @@
     "column": "date_stopped"
    },
    "dateStoppedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "date_stopped"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_stopped",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -10154,14 +10213,10 @@
     "column": "auto_expire_date"
    },
    "autoExpireDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "auto_expire_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "auto_expire_date",
+    "notes": "IS NOT NULL"
    },
    "dateActivated": {
     "kind": "schema_column",
@@ -10169,14 +10224,10 @@
     "column": "date_activated"
    },
    "dateActivatedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "date_activated"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -10268,34 +10319,22 @@
     "column": "date_activated"
    },
    "dateActivatedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "date_activated"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
    },
    "encounterDatetime": {
-    "kind": "derived",
-    "notes": "joined via orders.encounter_id; exposed directly, replacing encounterDatetimeAfterDateActivated",
-    "table_hints": [
-     [
-      "encounter",
-      "encounter_datetime"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "encounter",
+    "column": "encounter_datetime",
+    "notes": "joined via orders.encounter_id; exposed directly, replacing encounterDatetimeAfterDateActivated"
    },
    "encounterDatetimeSet": {
-    "kind": "derived",
-    "notes": "joined via orders.encounter_id; IS NOT NULL",
-    "table_hints": [
-     [
-      "encounter",
-      "encounter_datetime"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "encounter",
+    "column": "encounter_datetime",
+    "notes": "joined via orders.encounter_id; IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -10376,14 +10415,10 @@
   },
   "variable_resolution": {
    "scheduledDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "scheduled_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "scheduled_date",
+    "notes": "IS NOT NULL"
    },
    "urgency": {
     "kind": "schema_column",
@@ -10502,14 +10537,10 @@
   },
   "variable_resolution": {
    "scheduledDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "scheduled_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "scheduled_date",
+    "notes": "IS NOT NULL"
    },
    "urgency": {
     "kind": "schema_column",
@@ -10660,14 +10691,10 @@
   },
   "variable_resolution": {
    "scheduledDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "scheduled_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "scheduled_date",
+    "notes": "IS NOT NULL"
    },
    "urgency": {
     "kind": "schema_column",
@@ -10850,14 +10877,10 @@
   },
   "variable_resolution": {
    "scheduledDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "orders",
-      "scheduled_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "orders",
+    "column": "scheduled_date",
+    "notes": "IS NOT NULL"
    },
    "urgency": {
     "kind": "schema_column",
@@ -10926,14 +10949,10 @@
   },
   "variable_resolution": {
    "preferredIdentifierCount": {
-    "kind": "derived",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "preferred"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "patient_identifier",
+    "column": "preferred",
+    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11026,14 +11045,10 @@
     "column": "patient_id"
    },
    "preferredIdentifierCount": {
-    "kind": "derived",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "preferred"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "patient_identifier",
+    "column": "preferred",
+    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11158,14 +11173,10 @@
     "column": "patient_id"
    },
    "preferredIdentifierCount": {
-    "kind": "derived",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "preferred"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "patient_identifier",
+    "column": "preferred",
+    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11220,14 +11231,10 @@
   },
   "variable_resolution": {
    "locationSet": {
-    "kind": "derived",
-    "notes": "location_id IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "location_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "location_id",
+    "notes": "location_id IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -11320,14 +11327,10 @@
     "column": "location_behavior"
    },
    "locationSet": {
-    "kind": "derived",
-    "notes": "location_id IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "location_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "location_id",
+    "notes": "location_id IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -11452,14 +11455,10 @@
     "column": "location_behavior"
    },
    "locationSet": {
-    "kind": "derived",
-    "notes": "location_id IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "location_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "location_id",
+    "notes": "location_id IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -11582,22 +11581,25 @@
   },
   "variable_resolution": {
    "inUseByAnotherPatient": {
-    "kind": "derived",
-    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier",
-      "identifier_type"
-     ],
-     [
-      "patient_identifier",
-      "patient_id"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "identifier_type"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_id"
+     }
+    ],
+    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    }
   },
   "fk_closure_tables": [
@@ -11700,40 +11702,46 @@
   },
   "variable_resolution": {
    "duplicateWithinSamePatient": {
-    "kind": "derived",
-    "notes": "self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier",
-      "location_id"
-     ],
-     [
-      "patient_identifier",
-      "patient_identifier_id"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "location_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_identifier_id"
+     }
+    ],
+    "notes": "self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)"
    },
    "inUseByAnotherPatient": {
-    "kind": "derived",
-    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier",
-      "identifier_type"
-     ],
-     [
-      "patient_identifier",
-      "patient_id"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "identifier_type"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_id"
+     }
+    ],
+    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    }
   },
   "fk_closure_tables": [
@@ -11868,40 +11876,46 @@
   },
   "variable_resolution": {
    "duplicateWithinSamePatient": {
-    "kind": "derived",
-    "notes": "self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier",
-      "location_id"
-     ],
-     [
-      "patient_identifier",
-      "patient_identifier_id"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "location_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_identifier_id"
+     }
+    ],
+    "notes": "self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)"
    },
    "inUseByAnotherPatient": {
-    "kind": "derived",
-    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier",
-      "identifier_type"
-     ],
-     [
-      "patient_identifier",
-      "patient_id"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "identifier_type"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_id"
+     }
+    ],
+    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    }
   },
   "fk_closure_tables": [
@@ -11956,14 +11970,10 @@
   },
   "variable_resolution": {
    "identifierBlank": {
-    "kind": "derived",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "identifier",
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
    }
   },
   "fk_closure_tables": [
@@ -12063,38 +12073,28 @@
   },
   "variable_resolution": {
    "formatSet": {
-    "kind": "derived",
-    "notes": "format IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier_type",
-      "format"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier_type",
+    "column": "format",
+    "notes": "format IS NOT NULL"
    },
    "identifierBlank": {
-    "kind": "derived",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "identifier",
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
    },
    "identifierMatchesFormat": {
-    "kind": "derived",
-    "notes": "regex match of identifier against format (application-level, format is a regex string column)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier_type",
-      "format"
-     ]
-    ]
+    "kind": "regex_match",
+    "value_column": {
+     "table": "patient_identifier",
+     "column": "identifier"
+    },
+    "pattern_column": {
+     "table": "patient_identifier_type",
+     "column": "format"
+    },
+    "notes": "regex match of identifier against format (application-level, format is a regex string column)"
    }
   },
   "fk_closure_tables": [
@@ -12238,38 +12238,28 @@
   },
   "variable_resolution": {
    "formatSet": {
-    "kind": "derived",
-    "notes": "format IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier_type",
-      "format"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier_type",
+    "column": "format",
+    "notes": "format IS NOT NULL"
    },
    "identifierBlank": {
-    "kind": "derived",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "identifier",
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
    },
    "identifierMatchesFormat": {
-    "kind": "derived",
-    "notes": "regex match of identifier against format (application-level, format is a regex string column)",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ],
-     [
-      "patient_identifier_type",
-      "format"
-     ]
-    ]
+    "kind": "regex_match",
+    "value_column": {
+     "table": "patient_identifier",
+     "column": "identifier"
+    },
+    "pattern_column": {
+     "table": "patient_identifier_type",
+     "column": "format"
+    },
+    "notes": "regex match of identifier against format (application-level, format is a regex string column)"
    }
   },
   "fk_closure_tables": [
@@ -12445,24 +12435,16 @@
   },
   "variable_resolution": {
    "formatSet": {
-    "kind": "derived",
-    "notes": "format IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_identifier_type",
-      "format"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier_type",
+    "column": "format",
+    "notes": "format IS NOT NULL"
    },
    "identifierBlank": {
-    "kind": "derived",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
-    "table_hints": [
-     [
-      "patient_identifier",
-      "identifier"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_identifier",
+    "column": "identifier",
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
    }
   },
   "fk_closure_tables": [
@@ -12609,14 +12591,10 @@
     "kind": "not_persisted"
    },
    "yearsSinceBirthdate": {
-    "kind": "derived",
-    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)",
-    "table_hints": [
-     [
-      "person",
-      "birthdate"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate",
+    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)"
    }
   },
   "fk_closure_tables": [
@@ -12735,14 +12713,10 @@
     "kind": "not_persisted"
    },
    "yearsSinceBirthdate": {
-    "kind": "derived",
-    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)",
-    "table_hints": [
-     [
-      "person",
-      "birthdate"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate",
+    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)"
    }
   },
   "fk_closure_tables": [
@@ -12887,24 +12861,16 @@
   },
   "variable_resolution": {
    "causeOfDeathNonCodedSet": {
-    "kind": "derived",
-    "notes": "cause_of_death_non_coded IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death_non_coded"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death_non_coded",
+    "notes": "cause_of_death_non_coded IS NOT NULL"
    },
    "causeOfDeathSet": {
-    "kind": "derived",
-    "notes": "cause_of_death IS NOT NULL (FK to concept)",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death",
+    "notes": "cause_of_death IS NOT NULL (FK to concept)"
    },
    "dead": {
     "kind": "schema_column",
@@ -13047,24 +13013,16 @@
   },
   "variable_resolution": {
    "causeOfDeathNonCodedSet": {
-    "kind": "derived",
-    "notes": "cause_of_death_non_coded IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death_non_coded"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death_non_coded",
+    "notes": "cause_of_death_non_coded IS NOT NULL"
    },
    "causeOfDeathSet": {
-    "kind": "derived",
-    "notes": "cause_of_death IS NOT NULL (FK to concept)",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death",
+    "notes": "cause_of_death IS NOT NULL (FK to concept)"
    },
    "dead": {
     "kind": "schema_column",
@@ -13251,24 +13209,16 @@
   },
   "variable_resolution": {
    "causeOfDeathNonCodedSet": {
-    "kind": "derived",
-    "notes": "cause_of_death_non_coded IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death_non_coded"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death_non_coded",
+    "notes": "cause_of_death_non_coded IS NOT NULL"
    },
    "causeOfDeathSet": {
-    "kind": "derived",
-    "notes": "cause_of_death IS NOT NULL (FK to concept)",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death",
+    "notes": "cause_of_death IS NOT NULL (FK to concept)"
    },
    "dead": {
     "kind": "schema_column",
@@ -13499,24 +13449,16 @@
   },
   "variable_resolution": {
    "causeOfDeathNonCodedSet": {
-    "kind": "derived",
-    "notes": "cause_of_death_non_coded IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death_non_coded"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death_non_coded",
+    "notes": "cause_of_death_non_coded IS NOT NULL"
    },
    "causeOfDeathSet": {
-    "kind": "derived",
-    "notes": "cause_of_death IS NOT NULL (FK to concept)",
-    "table_hints": [
-     [
-      "person",
-      "cause_of_death"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "cause_of_death",
+    "notes": "cause_of_death IS NOT NULL (FK to concept)"
    },
    "dead": {
     "kind": "schema_column",
@@ -13586,14 +13528,10 @@
     "column": "death_date"
    },
    "deathDateSet": {
-    "kind": "derived",
-    "notes": "death_date IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "death_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "death_date",
+    "notes": "death_date IS NOT NULL"
    },
    "evaluationTime": {
     "kind": "not_persisted"
@@ -13666,14 +13604,10 @@
     "column": "death_date"
    },
    "deathDateSet": {
-    "kind": "derived",
-    "notes": "death_date IS NOT NULL",
-    "table_hints": [
-     [
-      "person",
-      "death_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "person",
+    "column": "death_date",
+    "notes": "death_date IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -13790,14 +13724,10 @@
     "column": "date_completed"
    },
    "dateCompletedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_program",
-      "date_completed"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_program",
+    "column": "date_completed",
+    "notes": "IS NOT NULL"
    },
    "evaluationTime": {
     "kind": "not_persisted"
@@ -13869,14 +13799,10 @@
     "column": "date_completed"
    },
    "dateCompletedSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_program",
-      "date_completed"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_program",
+    "column": "date_completed",
+    "notes": "IS NOT NULL"
    },
    "dateEnrolled": {
     "kind": "schema_column",
@@ -13967,14 +13893,10 @@
     "column": "end_date"
    },
    "endDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "end_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
    },
    "startDate": {
     "kind": "schema_column",
@@ -13982,14 +13904,10 @@
     "column": "start_date"
    },
    "startDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "start_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14112,24 +14030,16 @@
   },
   "variable_resolution": {
    "endDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "end_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
    },
    "startDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "start_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14300,14 +14210,10 @@
     "column": "end_date"
    },
    "endDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "end_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
    },
    "startDate": {
     "kind": "schema_column",
@@ -14315,14 +14221,10 @@
     "column": "start_date"
    },
    "startDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "start_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14503,14 +14405,10 @@
   },
   "variable_resolution": {
    "endDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "patient_state",
-      "end_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14600,14 +14498,10 @@
     "column": "end_date"
    },
    "endDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "relationship",
-      "end_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
    },
    "startDate": {
     "kind": "schema_column",
@@ -14615,14 +14509,10 @@
     "column": "start_date"
    },
    "startDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "relationship",
-      "start_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14692,14 +14582,10 @@
     "column": "start_date"
    },
    "startDateSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "relationship",
-      "start_date"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
    }
   },
   "fk_closure_tables": [
@@ -14749,14 +14635,10 @@
     "column": "patient_id"
    },
    "visitPatientId": {
-    "kind": "derived",
-    "notes": "joined via encounter.visit_id = visit.visit_id; exposed as an ID-equality test, replacing visitPatientMismatch (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "visit",
-      "patient_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "visit",
+    "column": "patient_id",
+    "notes": "joined via encounter.visit_id = visit.visit_id; exposed as an ID-equality test, replacing visitPatientMismatch (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -14885,24 +14767,16 @@
     "column": "encounter_datetime"
    },
    "visitSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "encounter",
-      "visit_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "encounter",
+    "column": "visit_id",
+    "notes": "IS NOT NULL"
    },
    "visitStartDatetime": {
-    "kind": "derived",
-    "notes": "joined via encounter.visit_id",
-    "table_hints": [
-     [
-      "visit",
-      "date_started"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "visit",
+    "column": "date_started",
+    "notes": "joined via encounter.visit_id"
    }
   },
   "fk_closure_tables": [
@@ -14975,24 +14849,16 @@
     "column": "encounter_datetime"
    },
    "visitSet": {
-    "kind": "derived",
-    "notes": "IS NOT NULL",
-    "table_hints": [
-     [
-      "encounter",
-      "visit_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "encounter",
+    "column": "visit_id",
+    "notes": "IS NOT NULL"
    },
    "visitStopDatetime": {
-    "kind": "derived",
-    "notes": "joined via encounter.visit_id",
-    "table_hints": [
-     [
-      "visit",
-      "date_stopped"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "visit",
+    "column": "date_stopped",
+    "notes": "joined via encounter.visit_id"
    }
   },
   "fk_closure_tables": [
@@ -15044,14 +14910,10 @@
   },
   "variable_resolution": {
    "customerIdPresent": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL); column renamed from user_id",
-    "table_hints": [
-     [
-      "spree_orders",
-      "customer_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL); column renamed from user_id"
    }
   },
   "fk_closure_tables": [
@@ -15235,18 +15097,18 @@
   },
   "variable_resolution": {
    "userOrEmailPresent": {
-    "kind": "derived",
-    "notes": "existence check (either populated)",
-    "table_hints": [
-     [
-      "spree_orders",
-      "customer_id"
-     ],
-     [
-      "spree_orders",
-      "email"
-     ]
-    ]
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "spree_orders",
+      "column": "customer_id"
+     },
+     {
+      "table": "spree_orders",
+      "column": "email"
+     }
+    ],
+    "notes": "existence check (either populated)"
    }
   },
   "fk_closure_tables": [
@@ -15400,14 +15262,10 @@
   },
   "variable_resolution": {
    "customerPresent": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL)",
-    "table_hints": [
-     [
-      "spree_orders",
-      "customer_id"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -15463,18 +15321,16 @@
   },
   "variable_resolution": {
    "priorPromotionUsageCount": {
-    "kind": "derived",
-    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()",
-    "table_hints": [
-     [
-      "spree_orders",
-      "customer_id"
-     ],
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "also_valid_in": [
      [
       "spree_promotion_actions",
       "promotion_id"
      ]
-    ]
+    ],
+    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
    }
   },
   "fk_closure_tables": [
@@ -15653,14 +15509,10 @@
     "column": "expires_at"
    },
    "expiresAtSet": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL)",
-    "table_hints": [
-     [
-      "spree_promotions",
-      "expires_at"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "expires_at",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -15773,14 +15625,10 @@
   },
   "variable_resolution": {
    "usageLimitSet": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL)",
-    "table_hints": [
-     [
-      "spree_promotions",
-      "usage_limit"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "usage_limit",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -15858,14 +15706,10 @@
     "column": "usage_limit"
    },
    "usageLimitSet": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL)",
-    "table_hints": [
-     [
-      "spree_promotions",
-      "usage_limit"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "usage_limit",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -15981,14 +15825,10 @@
   },
   "variable_resolution": {
    "adjustedCreditsCount": {
-    "kind": "derived",
-    "notes": "COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic",
-    "table_hints": [
-     [
-      "spree_promotion_actions",
-      "promotion_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "spree_promotion_actions",
+    "column": "promotion_id",
+    "notes": "COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
    },
    "usageLimit": {
     "kind": "schema_column",
@@ -15996,14 +15836,10 @@
     "column": "usage_limit"
    },
    "usageLimitSet": {
-    "kind": "derived",
-    "notes": "existence check (IS NOT NULL)",
-    "table_hints": [
-     [
-      "spree_promotions",
-      "usage_limit"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "usage_limit",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -16162,14 +15998,10 @@
   },
   "variable_resolution": {
    "orderAmount": {
-    "kind": "derived",
-    "notes": "the object.amount the calculator is invoked against; exact object varies by promotion action type",
-    "table_hints": [
-     [
-      "spree_orders",
-      "item_total"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total",
+    "notes": "the object.amount the calculator is invoked against; exact object varies by promotion action type"
    }
   },
   "fk_closure_tables": [
@@ -16225,14 +16057,10 @@
   },
   "variable_resolution": {
    "orderAmount": {
-    "kind": "derived",
-    "notes": "the object.amount the calculator is invoked against; exact object varies by promotion action type",
-    "table_hints": [
-     [
-      "spree_orders",
-      "item_total"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total",
+    "notes": "the object.amount the calculator is invoked against; exact object varies by promotion action type"
    }
   },
   "fk_closure_tables": [
@@ -16648,52 +16476,16 @@
   },
   "variable_resolution": {
    "siblingTierCount": {
-    "kind": "derived",
-    "notes": "count of other tiers on the same price list; cap is a fixed source constant (10)",
-    "table_hints": []
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_price_adjustment_tiers",
+    "filter_text": "price_list_id = :price_list_id AND id != self",
+    "source_text": "spree_price_adjustment_tiers (COUNT WHERE price_list_id = :price_list_id AND id != self)"
    }
   },
-  "fk_closure_tables": [],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Is Ageing Required::Decision_IsAgeingRequired_Rule_1",
-  "case_study": "jBilling",
-  "dmn_file": "Ageing_and_Dunning.dmn",
-  "decision_name": "Is Ageing Required",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_IsAgeingRequired_Rule_1",
-  "source_citation": "BasicAgeingTask.java L239-243 (mirrored in BusinessDayAgeingTask.java L89-93): expiryDate.equals(today) || expiryDate.before(today) -> ageing required (note: <=, i.e. equals-or-before)",
-  "condition": {
-   "op": "<=",
-   "left": {
-    "kind": "variable",
-    "ref": "expiryDate"
-   },
-   "right": {
-    "kind": "call",
-    "name": "today",
-    "args": []
-   }
-  },
-  "outputs": {
-   "ageingRequired": {
-    "kind": "literal",
-    "value": true,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": []
-  },
-  "variable_resolution": {
-   "expiryDate": {
-    "kind": "derived",
-    "notes": "base_user.last_status_change (fallback base_user.create_datetime, both real columns) plus ageing_entity_step.days, added as calendar days (BasicAgeingTask) or business days via BusinessDays (BusinessDayAgeingTask); no single column holds this computed date.",
-    "table_hints": []
-   }
-  },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -16771,14 +16563,10 @@
   },
   "variable_resolution": {
    "dueDatePlusGrace": {
-    "kind": "derived",
-    "notes": "invoice.due_date plus the entity process.grace_period preference (a system preference row, not a column).",
-    "table_hints": [
-     [
-      "invoice",
-      "due_date"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "invoice",
+    "column": "due_date",
+    "notes": "invoice.due_date plus the entity process.grace_period preference (a system preference row, not a column)."
    }
   },
   "fk_closure_tables": [
@@ -16872,14 +16660,10 @@
   },
   "variable_resolution": {
    "currentStatusIsActive": {
-    "kind": "derived",
-    "notes": "base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists.",
-    "table_hints": [
-     [
-      "base_user",
-      "status_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "base_user",
+    "column": "status_id",
+    "notes": "base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists."
    }
   },
   "fk_closure_tables": [
@@ -16960,22 +16744,23 @@
   },
   "variable_resolution": {
    "ageingStepConfigFound": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "ageing_entity_step"
+    ],
+    "candidate_columns": [],
     "notes": "True iff an ageing_entity_step row exists for (entity_id, status_id); existence check, boolean by deliberate exception.",
-    "table_hints": []
+    "raw_schema_field": "ageing_entity_step (existence)"
    },
    "currentStatusIsActive": {
-    "kind": "derived",
-    "notes": "base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists.",
-    "table_hints": [
-     [
-      "base_user",
-      "status_id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "base_user",
+    "column": "status_id",
+    "notes": "base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists."
    }
   },
   "fk_closure_tables": [
+   "ageing_entity_step",
    "base_user",
    "currency",
    "entity",
@@ -17015,14 +16800,10 @@
   },
   "variable_resolution": {
    "newStatusIsDeleted": {
-    "kind": "derived",
-    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.",
-    "table_hints": [
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
    }
   },
   "fk_closure_tables": [
@@ -17113,14 +16894,10 @@
     "column": "can_login"
    },
    "newStatusIsDeleted": {
-    "kind": "derived",
-    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.",
-    "table_hints": [
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
    },
    "oldStatusCanLogin": {
     "kind": "schema_column",
@@ -17260,14 +17037,10 @@
     "column": "can_login"
    },
    "newStatusIsDeleted": {
-    "kind": "derived",
-    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.",
-    "table_hints": [
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
    },
    "oldStatusCanLogin": {
     "kind": "schema_column",
@@ -17417,14 +17190,10 @@
   },
   "variable_resolution": {
    "newStatusIsDeleted": {
-    "kind": "derived",
-    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.",
-    "table_hints": [
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
    }
   },
   "fk_closure_tables": [
@@ -17465,12 +17234,21 @@
   },
   "variable_resolution": {
    "inUse": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "ageing_entity_step"
+    ],
+    "candidate_columns": [],
     "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "table_hints": []
+    "raw_schema_field": "ageing_entity_step (existence)"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "ageing_entity_step",
+   "currency",
+   "entity",
+   "language"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -17550,23 +17328,25 @@
   },
   "variable_resolution": {
    "inUse": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "ageing_entity_step"
+    ],
+    "candidate_columns": [],
     "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "table_hints": []
+    "raw_schema_field": "ageing_entity_step (existence)"
    },
    "statusIsDeleted": {
-    "kind": "derived",
-    "notes": "Same loop index compared to the STATUS_DELETED constant.",
-    "table_hints": [
-     [
-      "base_user",
-      "status_id"
-     ],
+    "kind": "schema_column",
+    "table": "base_user",
+    "column": "status_id",
+    "also_valid_in": [
      [
       "generic_status",
       "id"
      ]
-    ]
+    ],
+    "notes": "Same loop index compared to the STATUS_DELETED constant."
    },
    "welcomeMessagePresent": {
     "kind": "derived",
@@ -17575,422 +17355,12 @@
    }
   },
   "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "generic_status",
-   "generic_status_type",
-   "language"
-  ],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_3",
-  "case_study": "jBilling",
-  "dmn_file": "Ageing_and_Dunning.dmn",
-  "decision_name": "Ageing Step Config Validation",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_AgeingStepConfigValidation_Rule_3",
-  "source_citation": "AgeingBL.java L208-216: in-use, not ACTIVE, not DELETED, not last-selected step, days <= 0 -> throws config.ageing.error.zero.days",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "statusIsActive"
-     },
-     "right": {
-      "kind": "literal",
-      "value": false,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "statusIsDeleted"
-     },
-     "right": {
-      "kind": "literal",
-      "value": false,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "isLastSelectedStep"
-     },
-     "right": {
-      "kind": "literal",
-      "value": false,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "inUse"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "<=",
-     "left": {
-      "kind": "variable",
-      "ref": "days"
-     },
-     "right": {
-      "kind": "literal",
-      "value": 0,
-      "type": "number"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "validationResult": {
-    "kind": "literal",
-    "value": "ERROR_ZERO_DAYS",
-    "type": "string"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_AgeingStepConfigValidation_Rule_1",
-     "condition": {
-      "op": "=",
-      "left": {
-       "kind": "variable",
-       "ref": "inUse"
-      },
-      "right": {
-       "kind": "literal",
-       "value": false,
-       "type": "boolean"
-      }
-     }
-    },
-    {
-     "rule_id": "Decision_AgeingStepConfigValidation_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "statusIsDeleted"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "inUse"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "welcomeMessagePresent"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "days": {
-    "kind": "schema_column",
-    "table": "ageing_entity_step",
-    "column": "days"
-   },
-   "inUse": {
-    "kind": "derived",
-    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "table_hints": []
-   },
-   "isLastSelectedStep": {
-    "kind": "derived",
-    "notes": "Computed as the highest array index with inUse=true across the submitted admin-screen steps array; not a stored flag.",
-    "table_hints": []
-   },
-   "statusIsActive": {
-    "kind": "derived",
-    "notes": "Loop index over the STATUS_ACTIVE..STATUS_DELETED range, itself keyed off generic_status.id, compared to the STATUS_ACTIVE constant.",
-    "table_hints": [
-     [
-      "base_user",
-      "status_id"
-     ],
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
-   },
-   "statusIsDeleted": {
-    "kind": "derived",
-    "notes": "Same loop index compared to the STATUS_DELETED constant.",
-    "table_hints": [
-     [
-      "base_user",
-      "status_id"
-     ],
-     [
-      "generic_status",
-      "id"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
    "ageing_entity_step",
    "base_user",
    "currency",
    "entity",
    "generic_status",
    "generic_status_type",
-   "language"
-  ],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_4",
-  "case_study": "jBilling",
-  "dmn_file": "Ageing_and_Dunning.dmn",
-  "decision_name": "Ageing Step Config Validation",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_AgeingStepConfigValidation_Rule_4",
-  "source_citation": "AgeingBL.java L220-225: this row is the last-selected (highest-index in-use) step and days > 0 -> throws config.ageing.error.lastDay",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "isLastSelectedStep"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "inUse"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": ">",
-     "left": {
-      "kind": "variable",
-      "ref": "days"
-     },
-     "right": {
-      "kind": "literal",
-      "value": 0,
-      "type": "number"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "validationResult": {
-    "kind": "literal",
-    "value": "ERROR_LAST_STEP_DAYS_MUST_BE_ZERO",
-    "type": "string"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_AgeingStepConfigValidation_Rule_1",
-     "condition": {
-      "op": "=",
-      "left": {
-       "kind": "variable",
-       "ref": "inUse"
-      },
-      "right": {
-       "kind": "literal",
-       "value": false,
-       "type": "boolean"
-      }
-     }
-    },
-    {
-     "rule_id": "Decision_AgeingStepConfigValidation_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "statusIsDeleted"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "inUse"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "welcomeMessagePresent"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_AgeingStepConfigValidation_Rule_3",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "statusIsActive"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "statusIsDeleted"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "isLastSelectedStep"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "inUse"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "<=",
-        "left": {
-         "kind": "variable",
-         "ref": "days"
-        },
-        "right": {
-         "kind": "literal",
-         "value": 0,
-         "type": "number"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "days": {
-    "kind": "schema_column",
-    "table": "ageing_entity_step",
-    "column": "days"
-   },
-   "inUse": {
-    "kind": "derived",
-    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "table_hints": []
-   },
-   "isLastSelectedStep": {
-    "kind": "derived",
-    "notes": "Computed as the highest array index with inUse=true across the submitted admin-screen steps array; not a stored flag.",
-    "table_hints": []
-   }
-  },
-  "fk_closure_tables": [
-   "ageing_entity_step",
-   "currency",
-   "entity",
    "language"
   ],
   "cross_variable_reference": false
@@ -18226,12 +17596,19 @@
   },
   "variable_resolution": {
    "hasEntitySpecificExchange": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
-    "table_hints": []
+    "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "currency",
+   "currency_exchange"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -18299,17 +17676,28 @@
   },
   "variable_resolution": {
    "hasEntitySpecificExchange": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
-    "table_hints": []
+    "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    },
    "hasSystemDefaultExchange": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; nothing in the schema marks entity_id=0 as special.",
-    "table_hints": []
+    "raw_schema_field": "currency_exchange (entity_id=0, currency_id)"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "currency",
+   "currency_exchange"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -18409,1295 +17797,29 @@
   },
   "variable_resolution": {
    "hasEntitySpecificExchange": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
-    "table_hints": []
+    "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    },
    "hasSystemDefaultExchange": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; nothing in the schema marks entity_id=0 as special.",
-    "table_hints": []
-   }
-  },
-  "fk_closure_tables": [],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_1",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-  "source_citation": "CancellationFeeRulesTask.java L76-83: newActiveUntil == null -> nothing to evaluate, skip",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_ACTIVE_UNTIL",
-      "type": "string"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "newActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": false,
-      "type": "boolean"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": false,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": []
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's new active-until value, sourced from purchase_order.active_until.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
+    "raw_schema_field": "currency_exchange (entity_id=0, currency_id)"
    }
   },
   "fk_closure_tables": [
-   "base_user",
    "currency",
-   "entity",
-   "language",
-   "order_billing_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
+   "currency_exchange"
   ],
   "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_2",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_2",
-  "source_citation": "L76-83: old date exists and the new one is not earlier, so nothing was actually cancelled, skip -- exposed as a real cross-variable date comparison (oldActiveUntil <= newActiveUntil), replacing newActiveUntilBeforeOld (redesigned 2026-09-10)",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_ACTIVE_UNTIL",
-      "type": "string"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "newActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "oldActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "<=",
-     "left": {
-      "kind": "variable",
-      "ref": "oldActiveUntil"
-     },
-     "right": {
-      "kind": "variable",
-      "ref": "newActiveUntil"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": false,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newActiveUntil": {
-    "kind": "derived",
-    "notes": "exposed directly (event\u2019s new value), replacing newActiveUntilBeforeOld (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "newActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's new active-until value, sourced from purchase_order.active_until.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "oldActiveUntil": {
-    "kind": "derived",
-    "notes": "exposed directly (event\u2019s prior value, same column) for the cross-variable comparison",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "oldActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's prior active-until value (same column, earlier snapshot).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "language",
-   "order_billing_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
-  ],
-  "cross_variable_reference": true
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_3",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_3",
-  "source_citation": "L85-128 (implicit else): old date exists and new date is genuinely earlier -- a real period was cut short, proceed",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_ACTIVE_UNTIL",
-      "type": "string"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "newActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "oldActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": ">",
-     "left": {
-      "kind": "variable",
-      "ref": "oldActiveUntil"
-     },
-     "right": {
-      "kind": "variable",
-      "ref": "newActiveUntil"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": true,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "<=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newActiveUntil": {
-    "kind": "derived",
-    "notes": "exposed directly (event\u2019s new value), replacing newActiveUntilBeforeOld (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "newActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's new active-until value, sourced from purchase_order.active_until.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "oldActiveUntil": {
-    "kind": "derived",
-    "notes": "exposed directly (event\u2019s prior value, same column) for the cross-variable comparison",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "oldActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's prior active-until value (same column, earlier snapshot).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "language",
-   "order_billing_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
-  ],
-  "cross_variable_reference": true
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_4",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_4",
-  "source_citation": "L85-128 (implicit else): no old active-until to compare against, so the L76-83 guard never trips -- proceed",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_ACTIVE_UNTIL",
-      "type": "string"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "newActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": true,
-      "type": "boolean"
-     }
-    },
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "oldActiveUntilProvided"
-     },
-     "right": {
-      "kind": "literal",
-      "value": false,
-      "type": "boolean"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": true,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "<=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_3",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": ">",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's new active-until value, sourced from purchase_order.active_until.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   },
-   "oldActiveUntilProvided": {
-    "kind": "derived",
-    "notes": "Null-check on the event's prior active-until value (same column, earlier snapshot).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "active_until"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "language",
-   "order_billing_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
-  ],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_5",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_5",
-  "source_citation": "L90-92: newQuantity > oldQuantity -- quantity went up, not a cancellation, skip -- exposed as a real cross-variable comparison, replacing quantityDecreased",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_QUANTITY",
-      "type": "string"
-     }
-    },
-    {
-     "op": ">",
-     "left": {
-      "kind": "variable",
-      "ref": "newQuantity"
-     },
-     "right": {
-      "kind": "variable",
-      "ref": "oldQuantity"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": false,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "<=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_3",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": ">",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_4",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newQuantity": {
-    "kind": "derived",
-    "notes": "exposed directly, replacing quantityDecreased (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "order_line",
-      "quantity"
-     ]
-    ]
-   },
-   "oldQuantity": {
-    "kind": "derived",
-    "notes": "exposed directly (prior value, same column) for the cross-variable comparison",
-    "table_hints": [
-     [
-      "order_line",
-      "quantity"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "item",
-   "language",
-   "order_billing_type",
-   "order_line",
-   "order_line_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
-  ],
-  "cross_variable_reference": true
- },
- {
-  "record_id": "jBilling::Cancellation Fee Eligibility::Decision_CancellationFeeEligibility_Rule_6",
-  "case_study": "jBilling",
-  "dmn_file": "Order_Cancellation_and_Validity.dmn",
-  "decision_name": "Cancellation Fee Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_CancellationFeeEligibility_Rule_6",
-  "source_citation": "L94-109 (implicit else): quantity decreased or stayed the same -- build a copy of the order with the cancelled quantity and proceed",
-  "condition": {
-   "op": "and",
-   "clauses": [
-    {
-     "op": "=",
-     "left": {
-      "kind": "variable",
-      "ref": "eventType"
-     },
-     "right": {
-      "kind": "literal",
-      "value": "NEW_QUANTITY",
-      "type": "string"
-     }
-    },
-    {
-     "op": "<=",
-     "left": {
-      "kind": "variable",
-      "ref": "newQuantity"
-     },
-     "right": {
-      "kind": "variable",
-      "ref": "oldQuantity"
-     }
-    }
-   ]
-  },
-  "outputs": {
-   "processCancellationFee": {
-    "kind": "literal",
-    "value": true,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_1",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_2",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "<=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_3",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": ">",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntil"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "newActiveUntil"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_4",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_ACTIVE_UNTIL",
-         "type": "string"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "newActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": true,
-         "type": "boolean"
-        }
-       },
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "oldActiveUntilProvided"
-        },
-        "right": {
-         "kind": "literal",
-         "value": false,
-         "type": "boolean"
-        }
-       }
-      ]
-     }
-    },
-    {
-     "rule_id": "Decision_CancellationFeeEligibility_Rule_5",
-     "condition": {
-      "op": "and",
-      "clauses": [
-       {
-        "op": "=",
-        "left": {
-         "kind": "variable",
-         "ref": "eventType"
-        },
-        "right": {
-         "kind": "literal",
-         "value": "NEW_QUANTITY",
-         "type": "string"
-        }
-       },
-       {
-        "op": ">",
-        "left": {
-         "kind": "variable",
-         "ref": "newQuantity"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "oldQuantity"
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "eventType": {
-    "kind": "derived",
-    "notes": "Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.",
-    "table_hints": []
-   },
-   "newQuantity": {
-    "kind": "derived",
-    "notes": "exposed directly, replacing quantityDecreased (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": [
-     [
-      "order_line",
-      "quantity"
-     ]
-    ]
-   },
-   "oldQuantity": {
-    "kind": "derived",
-    "notes": "exposed directly (prior value, same column) for the cross-variable comparison",
-    "table_hints": [
-     [
-      "order_line",
-      "quantity"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "base_user",
-   "currency",
-   "entity",
-   "item",
-   "language",
-   "order_billing_type",
-   "order_line",
-   "order_line_type",
-   "order_period",
-   "period_unit",
-   "purchase_order"
-  ],
-  "cross_variable_reference": true
  },
  {
   "record_id": "jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_1",
@@ -19805,14 +17927,10 @@
     "kind": "not_persisted"
    },
    "nextBillableDayProvided": {
-    "kind": "derived",
-    "notes": "Null-check on purchase_order.next_billable_day (nullable date column).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Null-check on purchase_order.next_billable_day (nullable date column)."
    }
   },
   "fk_closure_tables": [
@@ -19943,14 +18061,10 @@
     "column": "next_billable_day"
    },
    "nextBillableDayProvided": {
-    "kind": "derived",
-    "notes": "Null-check on purchase_order.next_billable_day (nullable date column).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Null-check on purchase_order.next_billable_day (nullable date column)."
    }
   },
   "fk_closure_tables": [
@@ -20124,14 +18238,10 @@
     "column": "next_billable_day"
    },
    "nextBillableDayProvided": {
-    "kind": "derived",
-    "notes": "Null-check on purchase_order.next_billable_day (nullable date column).",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Null-check on purchase_order.next_billable_day (nullable date column)."
    }
   },
   "fk_closure_tables": [
@@ -20972,14 +19082,14 @@
   },
   "variable_resolution": {
    "blacklistPluginId": {
-    "kind": "derived",
-    "notes": "Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column.",
-    "table_hints": [
-     [
-      "preference",
-      "value"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "preference",
+    "column": "value",
+    "compared_to_named_constant": {
+     "name": "PREFERENCE_USE_BLACKLIST",
+     "value": 43
+    },
+    "notes": "Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column."
    }
   },
   "fk_closure_tables": [
@@ -21037,14 +19147,14 @@
   },
   "variable_resolution": {
    "blacklistPluginId": {
-    "kind": "derived",
-    "notes": "Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column.",
-    "table_hints": [
-     [
-      "preference",
-      "value"
-     ]
-    ]
+    "kind": "schema_column",
+    "table": "preference",
+    "column": "value",
+    "compared_to_named_constant": {
+     "name": "PREFERENCE_USE_BLACKLIST",
+     "value": 43
+    },
+    "notes": "Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column."
    }
   },
   "fk_closure_tables": [
@@ -21086,14 +19196,10 @@
   },
   "variable_resolution": {
    "hasNextBillableDay": {
-    "kind": "derived",
-    "notes": "Boolean derived from next_billable_day IS NOT NULL.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Boolean derived from next_billable_day IS NOT NULL."
    }
   },
   "fk_closure_tables": [
@@ -21173,24 +19279,16 @@
   },
   "variable_resolution": {
    "hasCycleStarts": {
-    "kind": "derived",
-    "notes": "Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "cycle_start"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "cycle_start",
+    "notes": "Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name."
    },
    "hasNextBillableDay": {
-    "kind": "derived",
-    "notes": "Boolean derived from next_billable_day IS NOT NULL.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Boolean derived from next_billable_day IS NOT NULL."
    }
   },
   "fk_closure_tables": [
@@ -21302,24 +19400,16 @@
   },
   "variable_resolution": {
    "hasCycleStarts": {
-    "kind": "derived",
-    "notes": "Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "cycle_start"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "cycle_start",
+    "notes": "Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name."
    },
    "hasNextBillableDay": {
-    "kind": "derived",
-    "notes": "Boolean derived from next_billable_day IS NOT NULL.",
-    "table_hints": [
-     [
-      "purchase_order",
-      "next_billable_day"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Boolean derived from next_billable_day IS NOT NULL."
    }
   },
   "fk_closure_tables": [
@@ -21333,106 +19423,6 @@
    "purchase_order"
   ],
   "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_1",
-  "case_study": "jBilling",
-  "dmn_file": "Proration_and_Tax.dmn",
-  "decision_name": "Daily Pro-Rate Amount",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_DailyProRateAmount_Rule_1",
-  "source_citation": "DailyProRateCompositionTask.java L45-47: daysInCycle == 0 means this is a one-time order amount, not a real period of time -> return fullPrice unchanged",
-  "condition": {
-   "op": "=",
-   "left": {
-    "kind": "variable",
-    "ref": "daysInCycle"
-   },
-   "right": {
-    "kind": "literal",
-    "value": 0,
-    "type": "number"
-   }
-  },
-  "outputs": {
-   "proratedAmount": {
-    "kind": "literal",
-    "value": "fullPrice",
-    "type": "string"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": []
-  },
-  "variable_resolution": {
-   "daysInCycle": {
-    "kind": "derived",
-    "notes": "Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.",
-    "table_hints": []
-   }
-  },
-  "fk_closure_tables": [],
-  "cross_variable_reference": false
- },
- {
-  "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_2",
-  "case_study": "jBilling",
-  "dmn_file": "Proration_and_Tax.dmn",
-  "decision_name": "Daily Pro-Rate Amount",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_DailyProRateAmount_Rule_2",
-  "source_citation": "L50-52: daysInCycle == daysInPeriod -> not a fraction of a period, don't prorate, return fullPrice unchanged (cell tests daysInCycle for equality against the daysInPeriod input variable)",
-  "condition": {
-   "op": "=",
-   "left": {
-    "kind": "variable",
-    "ref": "daysInCycle"
-   },
-   "right": {
-    "kind": "variable",
-    "ref": "daysInPeriod"
-   }
-  },
-  "outputs": {
-   "proratedAmount": {
-    "kind": "literal",
-    "value": "fullPrice",
-    "type": "string"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_DailyProRateAmount_Rule_1",
-     "condition": {
-      "op": "=",
-      "left": {
-       "kind": "variable",
-       "ref": "daysInCycle"
-      },
-      "right": {
-       "kind": "literal",
-       "value": 0,
-       "type": "number"
-      }
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "daysInCycle": {
-    "kind": "derived",
-    "notes": "Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.",
-    "table_hints": []
-   },
-   "daysInPeriod": {
-    "kind": "derived",
-    "notes": "Computed the same way as daysInCycle, for the actual (possibly partial) billed date range.",
-    "table_hints": []
-   }
-  },
-  "fk_closure_tables": [],
-  "cross_variable_reference": true
  },
  {
   "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_3",
@@ -21597,12 +19587,18 @@
     "kind": "not_persisted"
    },
    "primaryContactFound": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "contact"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from whether a primary contact row exists for the customer.",
-    "table_hints": []
+    "raw_schema_field": "contact (existence)"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "contact"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -21722,9 +19718,13 @@
     "column": "content"
    },
    "primaryContactFound": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "contact"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from whether a primary contact row exists for the customer.",
-    "table_hints": []
+    "raw_schema_field": "contact (existence)"
    }
   },
   "fk_closure_tables": [
@@ -21898,9 +19898,13 @@
     "column": "content"
    },
    "primaryContactFound": {
-    "kind": "derived",
+    "kind": "exists",
+    "candidate_tables": [
+     "contact"
+    ],
+    "candidate_columns": [],
     "notes": "Boolean derived from whether a primary contact row exists for the customer.",
-    "table_hints": []
+    "raw_schema_field": "contact (existence)"
    }
   },
   "fk_closure_tables": [
@@ -21945,14 +19949,10 @@
   },
   "variable_resolution": {
    "taxItemHasPercentage": {
-    "kind": "derived",
-    "notes": "Boolean derived from item.percentage IS NOT NULL for the configured tax item.",
-    "table_hints": [
-     [
-      "item",
-      "percentage"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "item",
+    "column": "percentage",
+    "notes": "Boolean derived from item.percentage IS NOT NULL for the configured tax item."
    }
   },
   "fk_closure_tables": [
@@ -22011,14 +20011,10 @@
   },
   "variable_resolution": {
    "taxItemHasPercentage": {
-    "kind": "derived",
-    "notes": "Boolean derived from item.percentage IS NOT NULL for the configured tax item.",
-    "table_hints": [
-     [
-      "item",
-      "percentage"
-     ]
-    ]
+    "kind": "null_check",
+    "table": "item",
+    "column": "percentage",
+    "notes": "Boolean derived from item.percentage IS NOT NULL for the configured tax item."
    }
   },
   "fk_closure_tables": [

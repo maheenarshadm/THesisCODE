@@ -81,22 +81,97 @@ recorded, with its exact blocking variable(s) and reason, in
 
 | Case study | Compiled | Blocked | Rate |
 |---|---|---|---|
-| FLEX2 | 45 | 10 | 81.8% |
+| FLEX2 | 46 | 9 | 83.6% |
 | OpenMRS | 71 | 0 | 100.0% |
 | Spree | 27 | 5 | 84.4% |
-| jBilling | 50 | 3 | 94.3% |
-| **Total** | **193** | **18** | **91.5%** |
+| jBilling | 39 | 14 | 73.6% |
+| **Total** | **183** | **28** | **86.7%** |
 
 **Blocking reasons, by kind** (a branch can have more than one blocking
 variable): `chained_decision_output` (9) — a decision-table-to-decision-table
 DRD edge, the one deliberate, documented scope boundary below;
-`unresolved` (9) — mostly free variables of an inlined literal-expression
+`unresolved` (8) — mostly free variables of an inlined literal-expression
 formula whose own ground-truth row couldn't be resolved to a column,
 recipe, or gap marker; `schema_gap` (6) — the branch's condition itself
 depends on a variable ground truth already flags as having no schema
 representation at all (e.g. Spree's `preferences` serialized-blob
-findings), so there is genuinely nothing to compile a generation target
-from.
+findings); `code_external` (12, new — see "Resolving derived/aggregate
+nodes" below) — the variable is genuinely computed by application code
+with no schema field ever recorded for it at all (a Java constant, a
+UI-only transient value, a runtime-only calculation), not merely a
+column this compiler failed to find.
+
+**Compiled-but-not-generator-ready dropped sharply after the
+derived/aggregate resolution pass below**: of the 211 total branches,
+**158 (74.9%) are now fully mechanical** — every variable a real schema
+column, ready for a generator today — up from 73 (34.6%) before that
+pass. Only 25 remain in the "compiled, but still needs a human/more
+automation" tier (12 `exists` with an unstructured filter, 8 generic
+`derived` notes still unclassifiable by pattern, 6 `derived_aggregate`
+with unstructured filter text), down from 120. See below for exactly how.
+
+## Resolving derived/aggregate nodes (2026-09-11, second pass)
+
+The first version of this compiler left every `derived`/`derived_aggregate`
+fact with only raw notes text or an unstructured filter string — resolved
+enough not to block compilation, but not yet actionable by an actual
+generator. Rather than hand-classify the (deduplicated) 83 distinct
+derived-bucket facts across the program one at a time, a general pattern
+classifier (`classify_derived`, `generator/compile_constraints.py`) was
+built after first surveying what shapes those 83 facts' free-text
+`notes`/`schema_field` actually take — the same survey-before-building
+discipline `feel_parser.py` used. Six new resolution kinds, each backed by
+a real, surveyed, recurring pattern rather than invented in the abstract:
+
+- **`null_check`** (`table`, `column`) — an "IS NOT NULL"/"IS NULL"
+  existence fact ground truth already names a real column for (by far the
+  most common shape: ~20 of the 83 facts, e.g. `orders.date_activated`,
+  `person.cause_of_death`, `patient_state.start_date`).
+- **`any_not_null`** (`columns: [...]`) — an OR-of-existence-checks across
+  several named columns (e.g. Spree's "customer or email present").
+- **`join_lookup` / `join_null_check`** — a fact reached by following one
+  named FK ("joined via encounter.visit_id") to a value or an existence
+  check on the target row.
+- **`regex_match`** (`value_column`, `pattern_column`) — two real, named
+  columns compared via pattern match (§7b's own "Pattern/Regex Match"
+  construct category) rather than a portable comparison; not
+  branch-distance-friendly the way a numeric threshold is, but a real,
+  structured fact a SQL validation pass (§6.7) can still express via an
+  engine's `REGEXP` operator.
+- **`exists`** — a table (and, where nameable, its key columns) an EXISTS
+  check runs against, extended from the "COUNT/SUM WHERE" aggregate
+  pattern to also catch the "TABLE (existence)" / "EXISTS(...)" / "TABLE
+  (COUNT WHERE ...)" (reversed word order) phrasings the survey actually
+  found.
+- **`code_external`** — the one new *blocking* kind, and a deliberate,
+  informative one: a fact whose `raw_schema_field` was recorded as `n/a`
+  because it genuinely has no schema representation at all — a Java
+  constant comparison, a UI-only transient boolean, a value computed at
+  runtime from other derived facts with no column of its own (jBilling's
+  `eventType`, `isLastSelectedStep`, `daysInCycle`, `daysInPeriod`,
+  `expiryDate`). **This is a correctness fix, not a regression**, even
+  though it *reduced* the raw compiled-branch count (jBilling's rate fell
+  from 94.3% to 73.6%): these five facts were previously accepted as a
+  generic `derived` node with empty `table_hints` and silently counted as
+  "compiled," which was the more dishonest state — there was nothing
+  there to generate from either way. Treating them as blocking (the same
+  way `schema_gap` already is) surfaces that plainly instead of hiding it
+  behind a technically-non-blocking label. A genuinely free-choice subset
+  of these (e.g. `eventType`, which already has declared literal values)
+  is a plausible candidate for a future, distinct `free_scenario_parameter`
+  kind the generator could pick directly without any schema at all — not
+  built here, since telling that apart mechanically from a "computed from
+  real inputs I haven't captured" case like `expiryDate` (getting it wrong
+  would let the search silently violate that formula) needs more care than
+  this pass had scope for.
+
+Every existing resolved kind (`schema_column`, `derived_aggregate`) still
+takes precedence when it applies; a fact that fits none of these patterns
+is left exactly as before — a generic `derived` node with raw notes and
+`table_hints` — never forced into a wrong shape. Verified the same way as
+the first pass: the recursive `find_blocking_issues` self-check
+(§ below) confirmed zero leaked unresolved values across all 183 compiled
+records both before and after this change.
 
 **Cross-variable comparisons**: 38 of 193 compiled records (~20%) compare
 one resolved variable against another rather than a literal — consistent
@@ -105,12 +180,13 @@ with design doc §6.3/§7a's own finding that this is a first-order case
 the fitness function (not yet built) genuinely needs the cross-variable
 distance-table extension §6.3 already flags as required.
 
-**FK-closure table counts**: 1–28 tables per branch, mean 13.0 — the
-maximum (28) lands right at §6.6's own hand-traced estimate for the
-FLEX2 attendance chain ("roughly 25–30 tables"), a real, independent
-confirmation of that worked example rather than a coincidence, since the
-28-table record *is* that same attendance branch, now computed
-programmatically instead of traced by hand.
+**FK-closure table counts**: 1–28 tables per branch, mean 12.8. Checked
+directly rather than assumed: the maximum (28, FLEX2's `Grade Points and
+Interpretation` decision) is a *different* branch from the flagship
+attendance worked example below, which computes to **25 tables** — still
+landing squarely inside §6.6's own hand-traced estimate for that exact
+chain ("roughly 25–30 tables"), a real confirmation of that worked
+example, just not from the single largest record in the run.
 
 ## The flagship worked example, validated directly against §6.1's own JSON
 
