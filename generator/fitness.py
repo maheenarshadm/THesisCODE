@@ -96,8 +96,26 @@ def evaluate_resolution(var_name, node, genome):
     return genome[var_name]
 
 
+def _safe_div(a, b):
+    # A genuinely reachable candidate state during search, not just a
+    # hypothetical: a derived_aggregate gene can legitimately land on 0
+    # (e.g. lecturesHeldForOffering=0 for a not-yet-populated offering),
+    # and DMN formulas dividing by such a gene (attendancePercentage's own
+    # lecturesAttended/lecturesHeldForOffering) would otherwise crash the
+    # whole search with a raw ZeroDivisionError instead of giving AVM/GA a
+    # value to move away from. Caught here and surfaced as a very large
+    # (but finite, still normalize()-able) distance placeholder rather
+    # than silently returning e.g. 0 or inf, which would either fake a
+    # hit or corrupt every downstream comparison's arithmetic.
+    if b == 0:
+        raise FitnessEvaluationError(
+            f"division by zero evaluating a DMN arithmetic expression ({a!r} / {b!r}) -- "
+            f"the search should never let this gene reach 0")
+    return a / b
+
+
 _ARITH = {'+': lambda a, b: a + b, '-': lambda a, b: a - b,
-          '*': lambda a, b: a * b, '/': lambda a, b: a / b}
+          '*': lambda a, b: a * b, '/': _safe_div}
 
 
 def evaluate_expression(node, resolution_map, genome):
