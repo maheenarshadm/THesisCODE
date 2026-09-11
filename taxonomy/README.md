@@ -46,28 +46,34 @@ current case studies (FLEX2, OpenMRS, Spree, jBilling — matches §13.5's
 own total exactly, and its Not-Persisted/Schema-Gap percentages exactly,
 since both are computed from the same source data).
 
-**Updated 2026-09-11, twice.** A first pass moved `semesterType` from
-category 8 (`Compound / Unclassified Derivation`) to category 5 (`Schema
-Gap`), reasoning from DDL evidence alone that FLEX2's schema had no
-semester-type column anywhere. **That conclusion was wrong** — the
-project owner's own domain knowledge confirmed `SEMESTER.TITLE` *is* the
-semester-type field (a clean 3-value categorical column: `Fall`/`Spring`/
-`Summer`, not free text), something no amount of DDL-only inspection
-could have settled either way. `semesterType` is now correctly counted
-under category 1 (`Direct Attribute Reference`) instead. See
+**Updated 2026-09-11, three times.** A first pass moved `semesterType`
+from category 8 (`Compound / Unclassified Derivation`) to category 5
+(`Schema Gap`), reasoning from DDL evidence alone that FLEX2's schema
+had no semester-type column anywhere. **That conclusion was wrong** —
+the project owner's own domain knowledge confirmed `SEMESTER.TITLE` *is*
+the semester-type field (a clean 3-value categorical column:
+`Fall`/`Spring`/`Summer`, not free text), something no amount of
+DDL-only inspection could have settled either way; `semesterType` moved
+to category 1 (`Direct Attribute Reference`). A third pass, after the
+project owner asked for the closest table for every other `Schema Gap`
+row, resolved two more (`degreeMinimumCreditHours` → category 1,
+`degreeTotalCredits` → category 6 as a real `SUM` aggregate,
+`isElectiveTaughtByVisitingScholarUnavailableOtherwise` → category 7 as
+a compound join+`NOT EXISTS` check) the same way. See
 `generator/README.md`'s "Two ground-truth fixes, one of them corrected"
-section for the full sequence.
+and "A third round" sections for the full sequence, including the wrong
+conclusions along the way, not just the corrections.
 
 | # | Category | Count | % | What it means | SQL/DDL construct a translator would emit |
 |---|---|---|---|---|---|
-| 1 | **Direct Attribute Reference** | 92 | 33.6% | The DMN input variable *is* a column value, untransformed. | Plain column reference / `SELECT column`. |
+| 1 | **Direct Attribute Reference** | 93 | 33.9% | The DMN input variable *is* a column value, untransformed. | Plain column reference / `SELECT column`. |
 | 2 | **Not-Persisted** | 82 | 29.9% | A decision's own output/verdict — never meant to be stored (§ "what is not persisted" from an earlier session). | None — by design, not a gap. |
 | 3 | **Single-Column Predicate** | 28 | 10.2% | An existence check (`IS NOT NULL`) or a comparison against a named constant, over one real column. | `WHERE column IS NOT NULL`, `column = <constant>`. |
 | 4 | **Decision Output / Write-Back Target** | 12 | 4.4% | An *output* variable that genuinely gets written back to a column (e.g. FLEX2's `newWarningCount` → `STUDENT_PROGRAM.WARNING`) — the opposite direction from category 1. | `INSERT`/`UPDATE` target, not a `SELECT`-side construct. |
-| 5 | **Schema Gap** | 11 | 4.0% | The fact has no column anywhere in the schema — not unenforced, structurally absent. | None — the genuine "cannot translate" case. |
-| 6 | **Aggregate Function** | 9 | 3.3% | A `COUNT`/`SUM`-style aggregate over related rows. | `COUNT(*)`/`SUM(...)` with `GROUP BY` or a scalar subquery. |
-| 7 | **Existence / Correlated Subquery** | 8 | 2.9% | "Does at least one related row satisfy X" — including existence reached by following one FK first. | `EXISTS (SELECT 1 FROM ... WHERE ...)`. |
-| 8 | **Compound / Unclassified Derivation** | 20 | 7.3% | The catch-all: a real derived fact whose free text didn't match any of this taxonomy's mechanical patterns — needs a human (or a future, more targeted pass) to turn into a concrete recipe. | Not determinable from this taxonomy alone. |
+| 5 | **Schema Gap** | 10 | 3.6% | The fact has no column anywhere in the schema — not unenforced, structurally absent. | None — the genuine "cannot translate" case. |
+| 6 | **Aggregate Function** | 10 | 3.6% | A `COUNT`/`SUM`-style aggregate over related rows. | `COUNT(*)`/`SUM(...)` with `GROUP BY` or a scalar subquery. |
+| 7 | **Existence / Correlated Subquery** | 9 | 3.3% | "Does at least one related row satisfy X" — including existence reached by following one FK first, and a compound join+`NOT EXISTS` check (the new `raw_sql_boolean` resolution kind). | `EXISTS (SELECT 1 FROM ... WHERE ...)`, or a hand-worked-out correlated `NOT EXISTS`. |
+| 8 | **Compound / Unclassified Derivation** | 18 | 6.6% | The catch-all: a real derived fact whose free text didn't match any of this taxonomy's mechanical patterns — needs a human (or a future, more targeted pass) to turn into a concrete recipe. | Not determinable from this taxonomy alone. |
 | 9 | **Cross-Table Join** | 4 | 1.5% | The fact lives on a different table, reached by walking one named FK. | `INNER/LEFT JOIN`. |
 | 10 | **Multi-Column Existence (any-of)** | 2 | 0.7% | An OR-of-existence-checks across several named columns (e.g. "customer or email present"). | `WHERE col_a IS NOT NULL OR col_b IS NOT NULL`. |
 | 11 | **Code-External (no schema representation)** | 5 | 1.8% | Genuinely computed by application code — a Java constant, a UI-only transient value, a runtime-only calculation — never a column at all, not even an unenforced one. New category; the original taxonomy's design didn't need it since it predates this finding (§13.11). | None — but for a reason distinct from Schema Gap: this was never meant to be a column, vs. Schema Gap's "should be a column, isn't." |
@@ -80,27 +86,29 @@ A genuinely new axis the original design doc's own §7b never had access
 to, since it requires the parsed condition trees this program didn't have
 until `generator/compile_constraints.py` was built:
 
-| Usage shape | Count | % of 239 compiled branches |
+| Usage shape | Count | % of 242 compiled branches |
 |---|---|---|
-| Plain single comparison | 149 | 62.3% |
-| Cross-variable comparison (right-hand side is another variable, not a literal) | 57 | 23.8% |
-| Negation (`not(...)`) | 54 | 22.6% |
-| Set-membership (`IN (...)`) | 9 | 3.8% |
+| Plain single comparison | 149 | 61.6% |
+| Cross-variable comparison (right-hand side is another variable, not a literal) | 59 | 24.4% |
+| Negation (`not(...)`) | 55 | 22.7% |
+| Set-membership (`IN (...)`) | 9 | 3.7% |
 
-(These are the original chained-decision-output-expansion figures,
-confirmed unchanged after the `semesterType` correction restored
-`Course Load Limit`/`Course Registration Eligibility`'s expanded
-variants to the compiled set. A first, mistaken fix to `semesterType`
-had briefly removed those variants — dropping negation's share back to
-8.2% — but that fix was wrong, per `generator/README.md`'s "Two
-ground-truth fixes, one of them corrected" section, and correcting it
-brought this table back to its pre-mistake state. Negation's 22.6% share
-reflects a real, understood construct: every expanded record's compound
+(These are close to the original chained-decision-output-expansion
+figures, confirmed to have survived both the `semesterType` correction
+and the third round's own fixes intact — the 3 newly-compiled FLEX2
+branches (`degreeMinimumCreditHours`/`degreeTotalCredits`/visiting-
+scholar facts) added a small amount to the plain/cross-variable/negation
+counts without changing the overall shape. A first, mistaken fix to
+`semesterType` had briefly removed the chained-expansion variants —
+dropping negation's share back to 8.2% — but that fix was wrong, per
+`generator/README.md`'s "Two ground-truth fixes, one of them corrected"
+section, and correcting it brought this table back to its pre-mistake
+state. Negation's ~23% share reflects a real, understood construct: every expanded record's compound
 condition literally encodes its upstream rule's FIRST/UNIQUE hit-policy
 suppression as `{"op": "not", ...}` clauses — "this upstream rule fires
 AND NOT any earlier upstream rule" — not classifier drift.)
 
-The cross-variable share (23.8%) is consistent with — in the same range
+The cross-variable share (24.4%) is consistent with — in the same range
 as — the design doc's own program-wide estimate of ~17–19% of decisions
 using this pattern (§7a/§13.4), a useful independent cross-check from a
 completely different measurement method (parsed condition trees vs.

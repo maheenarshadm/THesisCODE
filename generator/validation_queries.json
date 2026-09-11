@@ -1300,6 +1300,27 @@
   "clean": true
  },
  {
+  "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((SELECT STUDENT_PROGRAM.credits_earned FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < (SELECT SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=:program AND PROGRAM_COURSE.BATCH_NO=:batch)) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "batch",
+    "batch"
+   ],
+   [
+    "program",
+    "program"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4",
   "case_study": "FLEX2",
   "sql": "SELECT (NULL /* UNRESOLVED DERIVED FACT -- see notes in compiled_constraints.json */ = TRUE) AS branch_holds;",
@@ -1653,6 +1674,27 @@
   "clean": true
  },
  {
+  "record_id": "FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((SELECT STUDENT_PROGRAM.credits_earned FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < (SELECT BATCH_PROGRAM.min_cr_hrs FROM BATCH_PROGRAM WHERE BATCH_PROGRAM.BATCH_NO = :batch_program_batch_no AND BATCH_PROGRAM.PROG_ID = :batch_program_prog_id)) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "batch_program_batch_no",
+    "BATCH_PROGRAM.BATCH_NO of the specific candidate row"
+   ],
+   [
+    "batch_program_prog_id",
+    "BATCH_PROGRAM.PROG_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
   "record_id": "FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_2",
   "case_study": "FLEX2",
   "sql": "SELECT ((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AS branch_holds;",
@@ -1708,6 +1750,34 @@
   ],
   "warnings": [],
   "clean": true
+ },
+ {
+  "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((NOT ((SELECT COURSE.course_type_id FROM COURSE WHERE COURSE.COURSE_ID = :course_course_id) = 'RESEARCH')) AND ((SELECT COUNT(*) FROM COURSE_REGISTRATION /* NEEDS MANUAL WHERE CLAUSE:  */) = 0) AND ((CASE WHEN (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = :this_course_offering) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = :this_course_offering_2) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = :this_course_offering_3) AND DT2.TITLE <> 'Visiting') THEN TRUE ELSE FALSE END) = FALSE) AND (NULL /* UNRESOLVED DERIVED FACT -- see notes in compiled_constraints.json */ = FALSE)) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "course_course_id",
+    "COURSE.COURSE_ID of the specific candidate row"
+   ],
+   [
+    "this_course_offering",
+    "this course offering"
+   ],
+   [
+    "this_course_offering_2",
+    "this course offering"
+   ],
+   [
+    "this_course_offering_3",
+    "this course offering"
+   ]
+  ],
+  "warnings": [
+   "COURSE_REGISTRATION's aggregate filter is prose, not SQL -- needs manual completion: ''",
+   "an unclassified 'derived' fact was left as a NULL placeholder: ''"
+  ],
+  "clean": false
  },
  {
   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3",

@@ -68,6 +68,7 @@ FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibi
 FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4,Course Registration Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_1,Course Replacement Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_2,Course Replacement Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3,Course Replacement Eligibility,FIRST,cross-variable comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4,Course Replacement Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_5,Course Replacement Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_6,Course Replacement Eligibility,FIRST,plain single comparison
@@ -91,11 +92,13 @@ FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretat
 FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_13,Grade Points and Interpretation,UNIQUE,plain single comparison
 FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_14,Grade Points and Interpretation,UNIQUE,plain single comparison
 FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_15,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1,Graduation Eligibility,FIRST,cross-variable comparison
 FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_2,Graduation Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_3,Graduation Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_4,Graduation Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_5,Graduation Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_1,Summer Semester Registration,FIRST,plain single comparison
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2,Summer Semester Registration,FIRST,negation (NOT)
 FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3,Summer Semester Registration,FIRST,negation (NOT)
 FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_4,Summer Semester Registration,FIRST,negation (NOT)
 FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_5,Summer Semester Registration,FIRST,negation (NOT)

@@ -101,6 +101,14 @@ def categorize(io, resolution):
         return 'Cross-Table Join'
     if kind in ('exists', 'join_null_check'):
         return 'Existence / Correlated Subquery'
+    if kind == 'raw_sql_boolean':
+        # A hand-worked-out compound boolean (join lookup AND a NOT EXISTS
+        # correlated subquery -- FLEX2's isElectiveTaughtByVisitingScholar-
+        # UnavailableOtherwise, 2026-09-11). Folded into the closest
+        # existing category rather than given a 14th one-off bucket for a
+        # single occurrence: its defining construct is the correlated
+        # NOT EXISTS subquery, same family as the plain 'exists' kind.
+        return 'Existence / Correlated Subquery'
     if kind == 'any_not_null':
         return 'Multi-Column Existence (any-of)'
     if kind == 'regex_match':

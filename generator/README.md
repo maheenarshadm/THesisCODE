@@ -77,29 +77,30 @@ attempted, a blocked one is omitted from `compiled_constraints.json` and
 recorded, with its exact blocking variable(s) and reason, in
 `compile_report.json`.
 
-## Result, current run (post semesterType/projectedTotalCoursesThisRegistration ground-truth fixes, and the semesterType correction — see below)
+## Result, current run (post domain-knowledge-driven ground-truth fixes — see below)
 
 | Case study | Compiled | Blocked | Rate |
 |---|---|---|---|
-| FLEX2 | 100 | 3 | 97.1% |
+| FLEX2 | 103 | 0 | 100.0% |
 | OpenMRS | 71 | 0 | 100.0% |
 | Spree | 27 | 5 | 84.4% |
 | jBilling | 41 | 13 | 75.9% |
-| **Total** | **239** | **21** | **91.9%** |
+| **Total** | **242** | **18** | **93.1%** |
 
-**These are the same 260-total/239-compiled/91.9% figures the
-chained-decision-output expansion pass (below) originally produced.**
-They dipped briefly to 222/196/88.3% after a first, *mistaken* fix to
-`semesterType` (reclassifying it `schema_gap` from DDL evidence alone),
-then came back once that mistake was corrected with real domain
-knowledge the DDL genuinely could not supply. See "Two ground-truth
-fixes, one of them corrected" below for the full, honest sequence —
-including the wrong conclusion, not just the right one.
+FLEX2 is now fully compiled (0 blocked), up from the 239/260 (91.9%)
+figures the chained-decision-output expansion pass (below) originally
+produced — themselves reached only after correcting an earlier, mistaken
+`semesterType` fix (see "Two ground-truth fixes, one of them corrected"
+below for that full sequence). The further gain to 242/260 (93.1%) comes
+from a *third* round of domain-knowledge-driven fixes, prompted directly
+by the project owner after the `semesterType` correction — see "A third
+round" further below for the full accounting, including one real
+compiler bug this round surfaced but did not fix.
 
 **Blocking reasons, by kind** (a branch can have more than one blocking
-variable): `unresolved` (8) — mostly free variables of an inlined
+variable): `unresolved` (6) — mostly free variables of an inlined
 literal-expression formula whose own ground-truth row couldn't be
-resolved to a column, recipe, or gap marker; `schema_gap` (6) — the
+resolved to a column, recipe, or gap marker; `schema_gap` (5) — the
 branch's condition itself depends on a variable ground truth already
 flags as having no schema representation at all (e.g. Spree's
 `preferences` serialized-blob findings); `code_external` (12) — the
@@ -387,6 +388,132 @@ zero leaks, `semesterType` now resolves to a plain `schema_column`
 (`semester.title`), and the flagship attendance worked example (unrelated
 to either fix) was re-diffed and still matches exactly.
 
+## A third round: the project owner asked for the remaining Schema Gap variables' closest tables (2026-09-11, sixth pass)
+
+After the `semesterType` correction, the project owner asked directly:
+since domain knowledge had already solved one `Schema Gap` row, name the
+closest candidate table for every *other* one so they could supply the
+real mapping the same way. All 11 `Schema Gap`-bucketed ground-truth rows
+(`taxonomy/construct_taxonomy.csv`) were re-examined against the real
+DDL rather than re-stating the existing notes, surfacing two more things
+this compiler had gotten wrong on its own, and one genuine limitation
+that domain knowledge alone couldn't close.
+
+**Resolved without needing to ask (DDL confirmed it directly)**:
+- jBilling's `resultCode` (Payment Outcome Resolution) had been filed as
+  `Schema Gap` on the strength of only reading `PaymentBL.java`, never
+  the DDL. `payment.result_id` is a real FK to `payment_result.id` (data
+  has codes `1,2,3,4`). **This was never actually the same kind of gap as
+  `semesterType`** — the note's "SCHEMA GAP" concern is genuinely about
+  something else (whether the Java code ever writes the computed value
+  back onto the row, a write-back-path question `PaymentBL.java` itself
+  couldn't settle either way) — corrected the framing in ground truth
+  rather than claiming a fix that isn't one.
+- jBilling's `taxCalculationMode` (Tax Calculation Mode): re-verified
+  directly against the `item` table's real columns (`id,
+  internal_number, entity_id, percentage, deleted, has_decimals,
+  optlock, gl_code, price_manual`) — genuinely no discriminator column
+  exists. This one **stands**, now confirmed rather than merely asserted.
+
+**Needed the project owner's domain knowledge, same workflow as
+`semesterType`**:
+- FLEX2's `degreeMinimumCreditHours`/`degreeTotalCredits`: `PROGRAM`
+  itself turned out to have **no credit-hour column at all** (the old
+  ground-truth note claiming one existed had never actually been
+  checked either — the same under-investigation pattern as
+  `semesterType`, caught this time before being asserted as fact rather
+  than after). Closest real candidate was `BATCH_PROGRAM.MIN_CR_HRS`.
+  Confirmed: `degreeMinimumCreditHours` **is** `BATCH_PROGRAM.MIN_CR_HRS`
+  directly; `degreeTotalCredits` is a genuinely different figure, a
+  `SUM(COURSE.CREDIT_HRS)` aggregate over every course linked to the
+  program/batch via `PROGRAM_COURSE`, not a stored scalar at all.
+- FLEX2's `isElectiveTaughtByVisitingScholarUnavailableOtherwise`:
+  closest path was `COURSE_OFFER.EMP_ID → EMPLOYEE.EMP_TYPE_ID →
+  D_EMP_TYPE.TITLE` — the same coded-dimension shape as `semesterType`.
+  Confirmed: the visiting-faculty `TITLE` value is `'Visiting'`, and the
+  fact means "this offering's own instructor is Visiting-type AND no
+  other offering of the same course this semester has a non-Visiting
+  instructor" — a compound join-plus-negated-existence check, not
+  expressible in any of this compiler's existing structured resolution
+  shapes.
+- jBilling's `resultCode` meaning: confirmed codes `1=approved,
+  2=declined, 3=incorrect (data), 4=reject` — recorded as documentation
+  even though (per above) it doesn't change this variable's compilation
+  status.
+
+**Two new general resolution shapes, built rather than hacked
+one-off, since a genuinely new *kind* of fact showed up twice**:
+- `derived_aggregate` gained an optional `value_column` field, extracted
+  by a new dotted-aggregate regex (`SUM(TABLE.COLUMN)`, optionally with
+  an explicit `FROM <tables>` before the `WHERE`) — `degreeTotalCredits`
+  is the first real fact needing an aggregate over a *named* column
+  reached via a join, rather than the existing `COUNT(*)`-shaped facts.
+  `sql_compiler.py`'s `aggregate_subquery` now compiles a real
+  `SUM(COURSE.CREDIT_HRS)` when a `value_column` is present, instead of
+  always falling back to the `SUM(1)` placeholder — a strictly additive
+  change, verified not to touch any of the 9 pre-existing aggregate
+  facts (none use the dotted form).
+- A new `raw_sql_boolean` resolution kind (`RAW_SQL:`/`TABLES:` marker in
+  a ground-truth row's notes) — a deliberate escape hatch, not a hack
+  narrowly named for this one variable, for a fact too bespoke for any
+  structured shape to express (`isElectiveTaughtByVisitingScholar-
+  UnavailableOtherwise`'s compound join-plus-NOT-EXISTS check). Its own
+  SQL template still goes through the exact same `<placeholder>`-
+  substitution and prose-shape checks as every other filter text before
+  being trusted — never accepted blindly. Folded into the taxonomy's
+  existing "Existence / Correlated Subquery" category rather than given
+  a 14th one-off bucket, since a correlated `NOT EXISTS` subquery is its
+  defining construct.
+- **A real bug found while wiring the aggregate fix, fixed immediately**:
+  `degreeTotalCredits`' own `notes` field described the aggregate in
+  English using the same `SUM(COURSE.CREDIT_HRS)` text as the schema
+  field's structured recipe — and since `classify_derived` tries `notes`
+  before `raw_schema_field`, the prose match (no `FROM`/`WHERE` to find)
+  won and the real recipe was never reached, silently producing a
+  `filter_text: null` aggregate. Fixed by rewording the notes prose to
+  describe the aggregate in words rather than repeating the literal
+  `AGG(...)` call text — a caution now documented directly in
+  `_try_extract_aggregate_recipe`'s own docstring for future ground-truth
+  authors, not just fixed silently.
+
+**Investigated but left genuinely unresolved, honestly, rather than
+guessed at further**:
+- Spree's other 5 `preferences`-blob facts (`operatorMin`, `amountMin`,
+  `operatorMax`, `amountMax`, `promotionTargetGroupIds`, `basePercent`):
+  per the project owner's instruction to assume the best domain answer,
+  the real serialized preference keys were confirmed directly against
+  Spree's own source (`operator_min`/`amount_min`/`operator_max`/
+  `amount_max` on `Promotion::Rules::ItemTotal`, `base_percent`/`tiers`
+  on `Calculator::TieredPercent`, likely `customer_group_ids` on
+  `Promotion::Rules::CustomerGroup`) and recorded in ground truth. **Not
+  wired into an actual SQL extraction**, though: these are genuinely
+  serialized YAML/text blobs, not JSON columns, and no real sample row
+  was available in this repository to confirm the exact serialization
+  format a `SUBSTRING`/`REGEXP` pull would need to match — inventing one
+  would be exactly the kind of guess this whole exercise exists to avoid.
+  `amountMaxSet`/`promotionTargetGroupsConfigured` stay unresolved for a
+  *further* reason even with the keys known: `ItemTotal` declares
+  `amount_min`/`amount_max` with hard non-null defaults, so "is the key
+  present" can't be what these booleans test, and what they actually
+  distinguish isn't recoverable without a real sample row.
+- **A real compiler bug found, not fixed this pass**: `effectiveMin-
+  Threshold`/`effectiveMaxThreshold` show up as "unresolved: not found in
+  ground truth" rather than correctly chaining into the blob-preference
+  facts above, even though the DRD edges from `Promotion Item Total
+  Eligibility` to `Effective Minimum/Maximum Amount Threshold` are
+  present and correct in the DMN XML. Root cause, traced directly: both
+  upstream decisions are literal expressions with **no `<variable
+  name="...">` element declared at all**, so `Decision.own_variable`
+  stays `None` and `resolve_and_substitute`'s DRD-priority check
+  (`var_name not in produced_names`) never matches, falling through to a
+  flat ground-truth lookup under the wrong decision name. A safe general
+  fix needs a way to infer the intended variable name for an unnamed
+  literal-expression decision without misattributing it when a decision
+  has more than one such upstream edge (this one has exactly two, Min
+  and Max, so a naive "just accept it" fallback would pick the wrong one
+  half the time) — judged out of scope for a same-day fix and left
+  documented here rather than patched speculatively.
+
 ## `sql_compiler.py` — the JSON→SQL validation compiler (§6.7, built 2026-09-11)
 
 Closes §12 item 7's second prerequisite artifact. §6.7's own framing:
@@ -435,19 +562,21 @@ comment, and records a warning — never silently guessing at what a
 human-written note meant, and never emitting broken SQL as if it were
 runnable.
 
-**Result (updated after both the semesterType correction and the
-projectedTotalCoursesThisRegistration fix above)**: 216 of 239 compiled
-branches (90.4%) produce a fully clean validation query with zero
-warnings — OpenMRS 97.2%, Spree 92.6%, FLEX2 91.0%, jBilling 75.6%.
-FLEX2's clean rate rose sharply from the original 48.0% baseline to
-91.0% — better than the 84.2% the *mistaken* `schema_gap` reclassification
-produced along the way, since that version's apparent gain was partly an
-artifact of shrinking the denominator (blocking branches outright rather
-than compiling them cleanly). With `semesterType` correctly resolving to
-`SEMESTER.TITLE` as a real equality-comparable column, those branches now
-compile *and* compile clean, which is the genuine improvement;
-`projectedTotalCoursesThisRegistration`'s real filter clause independently
-removes its own "prose, not SQL" warning. The flagship attendance branch still
+**Result (updated after every ground-truth pass above, including the
+third round)**: 218 of 242 compiled branches (90.1%) produce a fully
+clean validation query with zero warnings — OpenMRS 97.2%, Spree 92.6%,
+FLEX2 90.3%, jBilling 75.6%. FLEX2's clean rate rose sharply from the
+original 48.0% baseline to 90.3% — better than the 84.2% the *mistaken*
+`schema_gap` reclassification produced along the way, since that
+version's apparent gain was partly an artifact of shrinking the
+denominator (blocking branches outright rather than compiling them
+cleanly). With `semesterType` correctly resolving to `SEMESTER.TITLE` as
+a real equality-comparable column, and the third round's
+`degreeMinimumCreditHours`/`degreeTotalCredits`/visiting-scholar facts
+now compiling clean too, those branches genuinely compile *and* compile
+clean rather than just stop blocking; `projectedTotalCoursesThisRegistration`'s
+real filter clause independently removes its own "prose, not SQL"
+warning. The flagship attendance branch still
 compiles to `(SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID =
 :this_course_offering)` for `lecturesHeldForOffering` — structurally
 identical to §6.1's own hand-written `(SELECT COUNT(*) FROM LECTURE WHERE

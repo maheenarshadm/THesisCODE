@@ -1,8 +1,8 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 100,
-   "blocked": 3
+   "compiled": 103,
+   "blocked": 0
   },
   "OpenMRS": {
    "compiled": 71,
@@ -17,54 +17,18 @@
    "blocked": 13
   }
  },
- "total_compiled": 239,
- "total_blocked": 21,
+ "total_compiled": 242,
+ "total_blocked": 18,
  "blocked_reason_counts": {
-  "unresolved_variable": 19,
+  "unresolved_variable": 16,
   "chained_dependency_unexpandable": 2
  },
  "blocking_variable_kind_counts": {
-  "unresolved": 8,
-  "schema_gap": 6,
+  "schema_gap": 5,
+  "unresolved": 6,
   "code_external": 12
  },
  "blocked_records": [
-  {
-   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "degreeTotalCredits",
-     "kind": "unresolved",
-     "detail": "labeled 'direct' but no table.column parsed from its schema field"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "degreeMinimumCreditHours",
-     "kind": "unresolved",
-     "detail": "labeled 'direct' but no table.column parsed from its schema field"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "isElectiveTaughtByVisitingScholarUnavailableOtherwise",
-     "kind": "schema_gap",
-     "detail": "no direct 'visiting-only availability' flag"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
   {
    "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2",
    "reason": "unresolved_variable",
@@ -72,7 +36,7 @@
     {
      "variable": "promotionTargetGroupsConfigured",
      "kind": "schema_gap",
-     "detail": "existence check over the same blob as promotionTargetGroupIds"
+     "detail": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row."
     }
    ],
    "case_study": "Spree"
@@ -84,7 +48,7 @@
     {
      "variable": "amountMaxSet",
      "kind": "schema_gap",
-     "detail": "existence check, unchanged by the redesign"
+     "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
      "variable": "effectiveMinThreshold",
@@ -101,7 +65,7 @@
     {
      "variable": "amountMaxSet",
      "kind": "schema_gap",
-     "detail": "existence check, unchanged by the redesign"
+     "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
      "variable": "effectiveMinThreshold",
@@ -118,7 +82,7 @@
     {
      "variable": "amountMaxSet",
      "kind": "schema_gap",
-     "detail": "existence check, unchanged by the redesign"
+     "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
      "variable": "effectiveMaxThreshold",
@@ -140,7 +104,7 @@
     {
      "variable": "amountMaxSet",
      "kind": "schema_gap",
-     "detail": "existence check, unchanged by the redesign"
+     "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
      "variable": "effectiveMaxThreshold",

@@ -18993,6 +18993,113 @@
   "cross_variable_reference": false
  },
  {
+  "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Course_Replacement_Eligibility.dmn",
+  "decision_name": "Course Replacement Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_CourseReplacementEligibility_Rule_3",
+  "source_citation": "Rule 4.27(a) -- exposed as a real cross-variable comparison (creditsEarned < degreeTotalCredits), replacing degreeRequirementsCompletedOrCompletingThisSemester",
+  "condition": {
+   "op": "<",
+   "left": {
+    "kind": "variable",
+    "ref": "creditsEarned"
+   },
+   "right": {
+    "kind": "variable",
+    "ref": "degreeTotalCredits"
+   }
+  },
+  "outputs": {
+   "eligibleForReplacement": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reason": {
+    "kind": "literal",
+    "value": "Student has not completed / is not completing degree requirements this semester",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_CourseReplacementEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "courseTypeId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "CORE",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_CourseReplacementEligibility_Rule_2",
+     "condition": {
+      "op": "not",
+      "clause": {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "gradeInCourseToReplace"
+       },
+       "right": {
+        "kind": "literal",
+        "value": "F",
+        "type": "string"
+       }
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "creditsEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeTotalCredits": {
+    "kind": "derived_aggregate",
+    "aggregate": "SUM",
+    "table": "PROGRAM_COURSE, COURSE",
+    "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "value_column": "COURSE.CREDIT_HRS"
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "PROGRAM_COURSE",
+   "SCHOOL",
+   "SECTION",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
+  "cross_variable_reference": true
+ },
+ {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4",
   "case_study": "FLEX2",
   "dmn_file": "Course_Replacement_Eligibility.dmn",
@@ -22569,6 +22676,70 @@
   "cross_variable_reference": false
  },
  {
+  "record_id": "FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1",
+  "case_study": "FLEX2",
+  "dmn_file": "Graduation_Eligibility.dmn",
+  "decision_name": "Graduation Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_GraduationEligibility_Rule_1",
+  "source_citation": "Rule 1.25",
+  "condition": {
+   "op": "<",
+   "left": {
+    "kind": "variable",
+    "ref": "creditHoursEarned"
+   },
+   "right": {
+    "kind": "variable",
+    "ref": "degreeMinimumCreditHours"
+   }
+  },
+  "outputs": {
+   "eligibleToGraduate": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reason": {
+    "kind": "literal",
+    "value": "Credit hours earned below the program's required minimum",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "creditHoursEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeMinimumCreditHours": {
+    "kind": "schema_column",
+    "table": "batch_program",
+    "column": "min_cr_hrs"
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "BATCH_PROGRAM",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
+  "cross_variable_reference": true
+ },
+ {
   "record_id": "FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_2",
   "case_study": "FLEX2",
   "dmn_file": "Graduation_Eligibility.dmn",
@@ -22980,6 +23151,160 @@
    "D_COURSE_LEVEL",
    "D_COURSE_TYPE",
    "D_DEPT_TYPE"
+  ],
+  "cross_variable_reference": false
+ },
+ {
+  "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Summer_Semester_Registration.dmn",
+  "decision_name": "Summer Semester Registration",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_SummerSemesterRegistration_Rule_2",
+  "source_citation": "Rule 6.4 -- exposed as a real count (priorRegistrationCount = 0, i.e. no prior COURSE_REGISTRATION row), replacing isNewCourseRequest",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "not",
+     "clause": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "courseTypeId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "RESEARCH",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "priorRegistrationCount"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 0,
+      "type": "number"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isElectiveTaughtByVisitingScholarUnavailableOtherwise"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isNeededToGraduateThisSummer"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "registrationAllowed": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reason": {
+    "kind": "literal",
+    "value": "New (non-exempt) course registration is not allowed in summer",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_SummerSemesterRegistration_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "courseTypeId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "RESEARCH",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting')",
+    "tables": [
+     "COURSE_OFFER",
+     "EMPLOYEE",
+     "D_EMP_TYPE"
+    ],
+    "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
+   },
+   "isNeededToGraduateThisSummer": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
+   },
+   "priorRegistrationCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": null,
+    "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false
  },

@@ -204,10 +204,18 @@ def join_subquery(res, ctx):
 def aggregate_subquery(res, ctx):
     table = res['table']
     agg = res['aggregate']
-    fn = f"{agg}(*)" if agg == 'COUNT' else f"{agg}(1)"
-    if agg != 'COUNT':
-        ctx.warn(f"{agg}({table}) has no target column identified in its filter text -- "
-                  f"used {agg}(1) as a placeholder; needs a real column")
+    value_column = res.get('value_column')
+    if value_column:
+        # A real named target column (e.g. SUM(COURSE.CREDIT_HRS), FLEX2's
+        # degreeTotalCredits) -- compiles to the actual aggregate, not a
+        # placeholder, and needs no warning: this is exactly as clean as
+        # a COUNT(*).
+        fn = f"{agg}({value_column})"
+    else:
+        fn = f"{agg}(*)" if agg == 'COUNT' else f"{agg}(1)"
+        if agg != 'COUNT':
+            ctx.warn(f"{agg}({table}) has no target column identified in its filter text -- "
+                      f"used {agg}(1) as a placeholder; needs a real column")
     filter_sql, ok = sqlify_filter_text(res.get('filter_text'), ctx)
     if not ok:
         ctx.warn(f"{table}'s aggregate filter is prose, not SQL -- needs manual completion: "
@@ -273,6 +281,19 @@ def compile_resolution_as_value(res, ctx, var_name=None):
         right = scalar_column_subquery(res['pattern_column']['table'], res['pattern_column']['column'], ctx)
         ctx.warn("REGEXP is not portable SQL -- MySQL/MariaDB syntax used here (§7b's own 'not portable' finding)")
         return scalar_boolean_as_value(f"{left} REGEXP {right}")
+    if kind == 'raw_sql_boolean':
+        # A fully hand-worked-out boolean SQL expression a ground-truth row
+        # named directly (RAW_SQL:/TABLES: marker, compile_constraints.py)
+        # for a fact too bespoke for any structured shape -- still put
+        # through the same <placeholder>-substitution and prose-shape
+        # checks as every other filter text, never trusted blindly.
+        sql, ok = sqlify_filter_text(res['sql_template'], ctx)
+        if not ok:
+            ctx.warn(f"a raw_sql_boolean fact's template didn't pass the SQL-shape check -- "
+                      f"needs manual completion: {res['sql_template'][:100]!r}")
+            escaped = res['sql_template'].replace('*/', '* /')
+            return f"NULL /* NEEDS MANUAL RAW SQL: {escaped} */"
+        return scalar_boolean_as_value(sql)
     if kind == 'literal_via_upstream_branch':
         return compile_value_expr(res['value'], ctx, {})
     if kind == 'substituted_decision':

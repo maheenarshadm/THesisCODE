@@ -260,37 +260,75 @@ AGGREGATE_RECIPE_RE = re.compile(
 # after it.
 AGGREGATE_RECIPE_REVERSED_RE = re.compile(
     r'\b([A-Za-z_][A-Za-z0-9_.]*)\s*\(\s*(COUNT|SUM|AVG|MIN|MAX)\b', re.I)
+# A third shape, added for FLEX2's degreeTotalCredits (2026-09-11): the
+# aggregate's own target is a real dotted TABLE.COLUMN, e.g.
+# "SUM(COURSE.CREDIT_HRS)" -- distinct from the bare-table shapes above,
+# which always implicitly aggregate whole rows (COUNT(*), or SUM(1) as a
+# placeholder when no column is nameable). Checked first since it's the
+# more specific/information-preserving match.
+AGGREGATE_RECIPE_DOTTED_RE = re.compile(
+    r'\b(COUNT|SUM|AVG|MIN|MAX)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*\)', re.I)
+# An explicit "FROM <table list>" naming the FROM clause when it differs
+# from the aggregated column's own table (e.g. a join is needed to reach
+# it) -- optional; when absent, the aggregated column's own table is used
+# as a single-table FROM, same as the bare-table shapes above.
+AGGREGATE_FROM_RE = re.compile(r'\bFROM\s+(.+?)\s+WHERE\b', re.I | re.S)
 
 
 def _try_extract_aggregate_recipe(text):
-    """Best-effort structured recipe extraction for the two mechanically-
+    """Best-effort structured recipe extraction for the mechanically-
     recognizable aggregate shapes actually seen in the hand-curated
     notes/schema-field text: "COUNT(TABLE) WHERE <filter>" (§6.1's own
     worked example resolves lecturesAttended/lecturesHeldForOffering
-    exactly this way) and "TABLE (COUNT WHERE <filter>)" (the reversed
-    word order several other case studies' notes happen to use). This is
-    deliberately not a general WHERE-clause parser -- the filter text is
-    kept verbatim for a human (or a later, more targeted pass) to turn
-    into the design doc's fully structured {"filter": [...]} shape;
-    extracting the aggregate function and target table mechanically is
-    what turns an otherwise unresolved/generic-derived block into the
-    richer 'derived_aggregate' resolution the design doc's own example
-    uses, without inventing filter semantics this script has no
-    case-study-specific knowledge to get right."""
+    exactly this way), "TABLE (COUNT WHERE <filter>)" (the reversed word
+    order several other case studies' notes happen to use), and
+    "SUM(TABLE.COLUMN) [FROM <tables>] WHERE <filter>" (an aggregate over
+    a real named column, optionally reached via an explicit FROM/join
+    list -- FLEX2's degreeTotalCredits, a SUM over COURSE.CREDIT_HRS
+    joined in through PROGRAM_COURSE). This is deliberately not a general
+    WHERE-clause parser -- the filter text is kept verbatim for a human
+    (or a later, more targeted pass) to turn into the design doc's fully
+    structured {"filter": [...]} shape; extracting the aggregate function
+    and target table (and, where named, the real target column) is what
+    turns an otherwise unresolved/generic-derived block into the richer
+    'derived_aggregate' resolution the design doc's own example uses,
+    without inventing filter semantics this script has no case-study-
+    specific knowledge to get right.
+
+    Caller note (found while adding degreeTotalCredits, 2026-09-11):
+    classify_derived() tries `notes` before `raw_schema_field`, so if a
+    ground-truth row's `notes` prose happens to *also* mention the
+    aggregate call (e.g. explaining it in English) but without the
+    schema field's full FROM/WHERE recipe, the notes' incomplete match
+    wins and the real recipe in the schema field is never reached.
+    Ground-truth authors should keep the literal "AGG(...)" call text
+    out of `notes` prose (describe it in words instead) when the schema
+    field already carries the full structured recipe."""
     if not text:
         return None
-    m = AGGREGATE_RECIPE_RE.search(text)
+    value_column = None
+    m = AGGREGATE_RECIPE_DOTTED_RE.search(text)
     if m:
-        aggregate, table = m.group(1).upper(), m.group(2)
+        aggregate, value_table, col = m.group(1).upper(), m.group(2), m.group(3)
+        value_column = f'{value_table}.{col}'
+        from_m = AGGREGATE_FROM_RE.search(text, m.end())
+        table = from_m.group(1).strip() if from_m else value_table
     else:
-        m = AGGREGATE_RECIPE_REVERSED_RE.search(text)
-        if not m:
-            return None
-        table, aggregate = m.group(1), m.group(2).upper()
+        m = AGGREGATE_RECIPE_RE.search(text)
+        if m:
+            aggregate, table = m.group(1).upper(), m.group(2)
+        else:
+            m = AGGREGATE_RECIPE_REVERSED_RE.search(text)
+            if not m:
+                return None
+            table, aggregate = m.group(1), m.group(2).upper()
     where_idx = text.upper().find('WHERE', m.end())
     filter_text = text[where_idx + len('WHERE'):].rstrip(') ').strip() if where_idx != -1 else None
-    return {'kind': 'derived_aggregate', 'aggregate': aggregate, 'table': table,
+    node = {'kind': 'derived_aggregate', 'aggregate': aggregate, 'table': table,
             'filter_text': filter_text, 'source_text': text}
+    if value_column:
+        node['value_column'] = value_column
+    return node
 
 
 _EXISTENCE_WORDS = re.compile(
@@ -300,6 +338,32 @@ _EXISTS_ROW_WORDS = re.compile(
     r'\bexistence of\b|\(existence\)|\bEXISTS\(|self-join', re.I)
 _JOINED_VIA_RE = re.compile(r'joined via ([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)', re.I)
 _CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)')
+# An escape hatch for a genuinely bespoke boolean fact that doesn't fit any
+# of the structured shapes above -- added for FLEX2's
+# isElectiveTaughtByVisitingScholarUnavailableOtherwise (2026-09-11), a
+# compound "this offering's instructor is of a named type AND no other
+# offering of the same course this semester has a different-typed
+# instructor" fact that a single table.column or join can't express. A
+# general marker, not a one-off hack: any ground-truth row this specific
+# can name its own fully-worked-out SQL boolean expression directly,
+# rather than either forcing it into a shape that loses information or
+# leaving it an unresolved placeholder when a human already knows exactly
+# what query answers it. RAW_SQL:'s own text still goes through the same
+# <placeholder>-substitution and prose-shape checks as every other filter
+# text (sql_compiler.py's sqlify_filter_text) -- never trusted blindly.
+_RAW_SQL_RE = re.compile(
+    r'RAW_SQL:\s*(.+?)\s*TABLES:\s*([A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_]*)*)\s*$',
+    re.I | re.S)
+
+
+def _try_extract_raw_sql_boolean(text):
+    if not text:
+        return None
+    m = _RAW_SQL_RE.search(text)
+    if not m:
+        return None
+    tables = [t.strip() for t in m.group(2).split(',') if t.strip()]
+    return {'kind': 'raw_sql_boolean', 'sql_template': m.group(1).strip(), 'tables': tables}
 
 
 def classify_derived(row):
@@ -324,6 +388,11 @@ def classify_derived(row):
     agg = _try_extract_aggregate_recipe(notes) or _try_extract_aggregate_recipe(raw)
     if agg:
         return agg
+
+    raw_sql = _try_extract_raw_sql_boolean(notes) or _try_extract_raw_sql_boolean(raw)
+    if raw_sql:
+        raw_sql['notes'] = notes
+        return raw_sql
 
     # "joined via X.Y" is checked before the plain existence check below,
     # not after -- several facts' notes contain both ("joined via
@@ -657,7 +726,16 @@ def collect_tables_from_resolution(node, tables):
         for t, _c in node.get('table_hints', []):
             tables.add(t)
     elif node.get('kind') == 'derived_aggregate':
-        tables.add(node['table'])
+        # 'table' is usually a single name, but can be an explicit
+        # comma-joined FROM list (e.g. "PROGRAM_COURSE, COURSE" for a SUM
+        # reached via a join, FLEX2's degreeTotalCredits) -- split rather
+        # than adding the whole string as one bogus table name.
+        for t in node['table'].split(','):
+            t = t.strip().split()[0] if t.strip() else ''
+            if t:
+                tables.add(t)
+        if node.get('value_column'):
+            tables.add(node['value_column'].split('.')[0])
     elif node.get('kind') == 'null_check':
         tables.add(node['table'])
     elif node.get('kind') == 'any_not_null':
@@ -677,6 +755,9 @@ def collect_tables_from_resolution(node, tables):
     elif node.get('kind') == 'substituted_decision':
         for sub in node.get('free_variable_resolutions', {}).values():
             collect_tables_from_resolution(sub, tables)
+    elif node.get('kind') == 'raw_sql_boolean':
+        for t in node.get('tables', []):
+            tables.add(t)
 
 
 def build_rule_condition(decision, rule):
