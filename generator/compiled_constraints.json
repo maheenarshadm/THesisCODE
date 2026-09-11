@@ -5970,6 +5970,11 @@
     "kind": "schema_column",
     "table": "semester",
     "column": "title"
+   },
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
    }
   },
   "fk_closure_tables": [
@@ -7289,6 +7294,11 @@
     "table": "student_program",
     "column": "created_date",
     "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
    }
   },
   "fk_closure_tables": [
@@ -7379,6 +7389,17 @@
     "kind": "schema_column",
     "table": "student_program",
     "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -7484,9 +7505,39 @@
     "kind": "derived",
     "notes": "admission-module cross-reference",
     "table_hints": []
+   },
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -7578,8 +7629,44 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "derived",
+    "notes": "admission-module cross-reference",
+    "table_hints": []
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -7815,6 +7902,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -8048,6 +8141,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -8313,6 +8412,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -8610,6 +8715,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -8939,6 +9050,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -9300,6 +9417,12 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -9560,6 +9683,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -9857,6 +9992,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -10186,6 +10333,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -10547,6 +10706,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -10940,6 +11111,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11365,6 +11548,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11662,6 +11857,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -11996,6 +12203,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -12362,6 +12581,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -12760,6 +12991,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -13190,6 +13433,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -13652,6 +13907,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -13981,6 +14248,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -14347,6 +14626,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -14745,6 +15036,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -15175,6 +15478,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -15637,6 +15952,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -16131,6 +16458,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -16475,6 +16814,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -16856,6 +17207,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -17269,6 +17632,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -17714,6 +18089,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -18191,6 +18578,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -18700,6 +19099,18 @@
       "warning"
      ]
     ]
+   },
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -18846,8 +19257,65 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "unmetPrerequisiteCount": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "chained_decision_output",
+    "from_decision": "Academic Warning Status",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   },
+   "previousGradeInCourse": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade",
+    "notes": "exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "projectedTotalCoursesThisRegistration": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+   },
+   "maxCoursesAllowed": {
+    "kind": "chained_decision_output",
+    "from_decision": "Course Load Limit",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -18960,6 +19428,11 @@
     "kind": "schema_column",
     "table": "course_registration",
     "column": "grade"
+   },
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
    }
   },
   "fk_closure_tables": [
@@ -19073,6 +19546,16 @@
     "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "value_column": "COURSE.CREDIT_HRS"
+   },
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "gradeInCourseToReplace": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade"
    }
   },
   "fk_closure_tables": [
@@ -19081,19 +19564,26 @@
    "CITY",
    "COUNTRY",
    "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
    "D_COURSE_RELATION",
    "D_COURSE_TYPE",
    "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
    "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
    "D_SHIFT",
    "D_STUDENT_REG_STATUS",
    "D_STUDENT_STATUS",
+   "EMPLOYEE",
    "PROGRAM",
    "PROGRAM_COURSE",
    "SCHOOL",
    "SECTION",
+   "SEMESTER",
    "STUDENT_PERSONAL_INFO",
    "STUDENT_PROGRAM"
   ],
@@ -19187,9 +19677,60 @@
     "kind": "derived",
     "notes": "",
     "table_hints": []
+   },
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "gradeInCourseToReplace": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade"
+   },
+   "creditsEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeTotalCredits": {
+    "kind": "derived_aggregate",
+    "aggregate": "SUM",
+    "table": "PROGRAM_COURSE, COURSE",
+    "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "value_column": "COURSE.CREDIT_HRS"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "PROGRAM_COURSE",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -19295,6 +19836,34 @@
     "kind": "schema_column",
     "table": "course_registration",
     "column": "is_replaced"
+   },
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "gradeInCourseToReplace": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade"
+   },
+   "creditsEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeTotalCredits": {
+    "kind": "derived_aggregate",
+    "aggregate": "SUM",
+    "table": "PROGRAM_COURSE, COURSE",
+    "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "value_column": "COURSE.CREDIT_HRS"
+   },
+   "courseOfferedInFollowingSemesters": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
    }
   },
   "fk_closure_tables": [
@@ -19319,6 +19888,7 @@
    "D_STUDENT_STATUS",
    "EMPLOYEE",
    "PROGRAM",
+   "PROGRAM_COURSE",
    "SCHOOL",
    "SECTION",
    "SEMESTER",
@@ -19433,8 +20003,70 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "courseTypeId": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "course_type_id"
+   },
+   "gradeInCourseToReplace": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "grade"
+   },
+   "creditsEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeTotalCredits": {
+    "kind": "derived_aggregate",
+    "aggregate": "SUM",
+    "table": "PROGRAM_COURSE, COURSE",
+    "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
+    "value_column": "COURSE.CREDIT_HRS"
+   },
+   "courseOfferedInFollowingSemesters": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
+   },
+   "replacingCoursePassedAtLeastOneSemesterAfter": {
+    "kind": "schema_column",
+    "table": "course_registration",
+    "column": "is_replaced"
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "PROGRAM_COURSE",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -19565,9 +20197,21 @@
     "kind": "derived",
     "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
     "table_hints": []
+   },
+   "cumulativeExemptedCreditPercentIfGranted": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "credit_hrs",
+    "notes": ""
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "COURSE",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -19651,9 +20295,21 @@
     "kind": "derived",
     "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
     "table_hints": []
+   },
+   "cumulativeExemptedCreditPercentIfGranted": {
+    "kind": "schema_column",
+    "table": "course",
+    "column": "credit_hrs",
+    "notes": ""
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "COURSE",
+   "DEPARTMENT",
+   "D_COURSE_LEVEL",
+   "D_COURSE_TYPE",
+   "D_DEPT_TYPE"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -22794,10 +23450,21 @@
     "kind": "schema_column",
     "table": "student_program",
     "column": "cgpa"
+   },
+   "creditHoursEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeMinimumCreditHours": {
+    "kind": "schema_column",
+    "table": "batch_program",
+    "column": "min_cr_hrs"
    }
   },
   "fk_closure_tables": [
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -22885,10 +23552,26 @@
     "table": "STUDENT_SEMESTER",
     "filter_text": null,
     "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
+   },
+   "creditHoursEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeMinimumCreditHours": {
+    "kind": "schema_column",
+    "table": "batch_program",
+    "column": "min_cr_hrs"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa"
    }
   },
   "fk_closure_tables": [
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -22992,10 +23675,33 @@
     "table": "student_program",
     "column": "created_date",
     "notes": ""
+   },
+   "creditHoursEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeMinimumCreditHours": {
+    "kind": "schema_column",
+    "table": "batch_program",
+    "column": "min_cr_hrs"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa"
+   },
+   "semestersElapsed": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "STUDENT_SEMESTER",
+    "filter_text": null,
+    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
    }
   },
   "fk_closure_tables": [
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -23006,8 +23712,10 @@
    "PROGRAM",
    "SCHOOL",
    "SECTION",
+   "SEMESTER",
    "STUDENT_PERSONAL_INFO",
-   "STUDENT_PROGRAM"
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false
  },
@@ -23099,8 +23807,54 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "creditHoursEarned": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "credits_earned"
+   },
+   "degreeMinimumCreditHours": {
+    "kind": "schema_column",
+    "table": "batch_program",
+    "column": "min_cr_hrs"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa"
+   },
+   "semestersElapsed": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "STUDENT_SEMESTER",
+    "filter_text": null,
+    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
+   },
+   "yearsElapsed": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": ""
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "BATCH_PROGRAM",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -23451,27 +24205,59 @@
     "filter_text": null,
     "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
     "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+   },
+   "priorRegistrationCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": null,
+    "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
+   },
+   "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting')",
+    "tables": [
+     "COURSE_OFFER",
+     "EMPLOYEE",
+     "D_EMP_TYPE"
+    ],
+    "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
+   },
+   "isNeededToGraduateThisSummer": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
    }
   },
   "fk_closure_tables": [
    "APPUSER",
+   "BATCH",
    "CAMPUS",
    "CITY",
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
    "D_COURSE_TYPE",
    "D_DEPT_TYPE",
    "D_EMP_DESIGNATION",
    "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
    "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
    "EMPLOYEE",
+   "PROGRAM",
    "REPEAT_COURSE",
    "SCHOOL",
    "SECTION",
-   "SEMESTER"
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false
  },
@@ -23652,9 +24438,40 @@
     "table": "COURSE_REGISTRATION",
     "filter_text": null,
     "source_text": "COUNT(COURSE_REGISTRATION) for OFFER_ID"
+   },
+   "priorRegistrationCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": null,
+    "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
+   },
+   "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting')",
+    "tables": [
+     "COURSE_OFFER",
+     "EMPLOYEE",
+     "D_EMP_TYPE"
+    ],
+    "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
+   },
+   "isNeededToGraduateThisSummer": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
+   },
+   "repeatCourseCountRequested": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "REPEAT_COURSE",
+    "filter_text": null,
+    "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
    }
   },
   "fk_closure_tables": [
+   "APPUSER",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -23676,6 +24493,7 @@
    "D_STUDENT_STATUS",
    "EMPLOYEE",
    "PROGRAM",
+   "REPEAT_COURSE",
    "SCHOOL",
    "SECTION",
    "SEMESTER",
@@ -23872,14 +24690,74 @@
     "kind": "schema_column",
     "table": "course",
     "column": "course_type_id"
+   },
+   "priorRegistrationCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": null,
+    "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
+   },
+   "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting')",
+    "tables": [
+     "COURSE_OFFER",
+     "EMPLOYEE",
+     "D_EMP_TYPE"
+    ],
+    "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
+   },
+   "isNeededToGraduateThisSummer": {
+    "kind": "derived",
+    "notes": "",
+    "table_hints": []
+   },
+   "repeatCourseCountRequested": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "REPEAT_COURSE",
+    "filter_text": null,
+    "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+   },
+   "enrolledStudentCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "COURSE_REGISTRATION",
+    "filter_text": null,
+    "source_text": "COUNT(COURSE_REGISTRATION) for OFFER_ID"
    }
   },
   "fk_closure_tables": [
+   "APPUSER",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
    "COURSE",
+   "COURSE_OFFER",
+   "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
    "D_COURSE_TYPE",
-   "D_DEPT_TYPE"
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "REPEAT_COURSE",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false
  },
@@ -26051,6 +26929,29 @@
     "kind": "schema_column",
     "table": "obs",
     "column": "value_numeric"
+   },
+   "hiAbsoluteSet": {
+    "kind": "null_check",
+    "table": "concept_numeric",
+    "column": "hi_absolute",
+    "notes": "IS NOT NULL; OpenMRS >=2.7 prefers a matching concept_reference_range row when criteria matches the person",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "hi_absolute"
+     ]
+    ]
+   },
+   "hiAbsolute": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_absolute",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "hi_absolute"
+     ]
+    ]
    }
   },
   "fk_closure_tables": [
@@ -26173,8 +27074,86 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "hiAbsoluteSet": {
+    "kind": "null_check",
+    "table": "concept_numeric",
+    "column": "hi_absolute",
+    "notes": "IS NOT NULL; OpenMRS >=2.7 prefers a matching concept_reference_range row when criteria matches the person",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "hi_absolute"
+     ]
+    ]
+   },
+   "valueNumeric": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric"
+   },
+   "hiAbsolute": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_absolute",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "hi_absolute"
+     ]
+    ]
+   },
+   "lowAbsoluteSet": {
+    "kind": "null_check",
+    "table": "concept_numeric",
+    "column": "low_absolute",
+    "notes": "IS NOT NULL",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "low_absolute"
+     ]
+    ]
+   },
+   "lowAbsolute": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "low_absolute",
+    "also_valid_in": [
+     [
+      "concept_reference_range",
+      "low_absolute"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "concept_numeric",
+   "concept_reference_range",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -26300,6 +27279,11 @@
     "kind": "schema_column",
     "table": "obs",
     "column": "value_numeric"
+   },
+   "hiCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_critical"
    }
   },
   "fk_closure_tables": [
@@ -26398,6 +27382,16 @@
     "kind": "schema_column",
     "table": "obs",
     "column": "value_numeric"
+   },
+   "hiCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_critical"
+   },
+   "hiNormal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_normal"
    }
   },
   "fk_closure_tables": [
@@ -26510,6 +27504,21 @@
     "kind": "schema_column",
     "table": "obs",
     "column": "value_numeric"
+   },
+   "hiCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_critical"
+   },
+   "hiNormal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_normal"
+   },
+   "lowCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "low_critical"
    }
   },
   "fk_closure_tables": [
@@ -26620,8 +27629,59 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "valueNumeric": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric"
+   },
+   "hiCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_critical"
+   },
+   "hiNormal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "hi_normal"
+   },
+   "lowCritical": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "low_critical"
+   },
+   "lowNormal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "low_normal"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "concept_numeric",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -29020,6 +30080,11 @@
      }
     ],
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
+   },
+   "uniquenessBehavior": {
+    "kind": "schema_column",
+    "table": "patient_identifier_type",
+    "column": "uniqueness_behavior"
    }
   },
   "fk_closure_tables": [
@@ -29162,6 +30227,11 @@
      }
     ],
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
+   },
+   "uniquenessBehavior": {
+    "kind": "schema_column",
+    "table": "patient_identifier_type",
+    "column": "uniqueness_behavior"
    }
   },
   "fk_closure_tables": [
@@ -29336,6 +30406,11 @@
      }
     ],
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
+   },
+   "uniquenessBehavior": {
+    "kind": "schema_column",
+    "table": "patient_identifier_type",
+    "column": "uniqueness_behavior"
    }
   },
   "fk_closure_tables": [
@@ -29865,6 +30940,18 @@
     "table": "patient_identifier",
     "column": "identifier",
     "notes": "identifier IS NULL OR TRIM(identifier) = ''"
+   },
+   "identifierMatchesFormat": {
+    "kind": "regex_match",
+    "value_column": {
+     "table": "patient_identifier",
+     "column": "identifier"
+    },
+    "pattern_column": {
+     "table": "patient_identifier_type",
+     "column": "format"
+    },
+    "notes": "regex match of identifier against format (application-level, format is a regex string column)"
    }
   },
   "fk_closure_tables": [
@@ -31460,6 +32547,16 @@
     "table": "patient_state",
     "column": "start_date",
     "notes": "IS NOT NULL"
+   },
+   "endDate": {
+    "kind": "schema_column",
+    "table": "patient_state",
+    "column": "end_date"
+   },
+   "startDate": {
+    "kind": "schema_column",
+    "table": "patient_state",
+    "column": "start_date"
    }
   },
   "fk_closure_tables": [
@@ -31829,6 +32926,22 @@
     "table": "patient_state",
     "column": "end_date",
     "notes": "IS NOT NULL"
+   },
+   "startDateSet": {
+    "kind": "null_check",
+    "table": "patient_state",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
+   },
+   "endDate": {
+    "kind": "schema_column",
+    "table": "patient_state",
+    "column": "end_date"
+   },
+   "startDate": {
+    "kind": "schema_column",
+    "table": "patient_state",
+    "column": "start_date"
    }
   },
   "fk_closure_tables": [
@@ -32419,9 +33532,27 @@
     "kind": "derived",
     "notes": "substituted from Customer Group Match Count per DRD edge",
     "table_hints": []
+   },
+   "customerIdPresent": {
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL); column renamed from user_id"
+   },
+   "promotionTargetGroupsConfigured": {
+    "kind": "schema_gap",
+    "notes": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row.",
+    "hinted_pairs": [
+     [
+      "spree_promotion_rules",
+      "preferences"
+     ]
+    ]
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_orders"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -32493,8 +33624,32 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "customerIdPresent": {
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL); column renamed from user_id"
+   },
+   "promotionTargetGroupsConfigured": {
+    "kind": "schema_gap",
+    "notes": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row.",
+    "hinted_pairs": [
+     [
+      "spree_promotion_rules",
+      "preferences"
+     ]
+    ]
+   },
+   "matchingCustomerGroupCount": {
+    "kind": "derived",
+    "notes": "substituted from Customer Group Match Count per DRD edge",
+    "table_hints": []
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -32599,9 +33754,25 @@
     "kind": "derived",
     "notes": "substituted from Prior Completed Order Count per DRD edge",
     "table_hints": []
+   },
+   "userOrEmailPresent": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "spree_orders",
+      "column": "customer_id"
+     },
+     {
+      "table": "spree_orders",
+      "column": "email"
+     }
+    ],
+    "notes": "existence check (either populated)"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_orders"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -32658,8 +33829,30 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "userOrEmailPresent": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "spree_orders",
+      "column": "customer_id"
+     },
+     {
+      "table": "spree_orders",
+      "column": "email"
+     }
+    ],
+    "notes": "existence check (either populated)"
+   },
+   "priorCompletedOrderCount": {
+    "kind": "derived",
+    "notes": "substituted from Prior Completed Order Count per DRD edge",
+    "table_hints": []
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -32763,6 +33956,12 @@
      ]
     ],
     "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+   },
+   "customerPresent": {
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL)"
    }
   },
   "fk_closure_tables": [
@@ -32825,8 +34024,30 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "customerPresent": {
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "notes": "existence check (IS NOT NULL)"
+   },
+   "priorPromotionUsageCount": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "customer_id",
+    "also_valid_in": [
+     [
+      "spree_promotion_actions",
+      "promotion_id"
+     ]
+    ],
+    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_actions"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -32945,6 +34166,14 @@
     "table": "spree_promotions",
     "column": "expires_at",
     "notes": "existence check (IS NOT NULL)"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
+   "startsAt": {
+    "kind": "schema_column",
+    "table": "spree_promotions",
+    "column": "starts_at"
    }
   },
   "fk_closure_tables": [
@@ -33021,8 +34250,30 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
+   "startsAt": {
+    "kind": "schema_column",
+    "table": "spree_promotions",
+    "column": "starts_at"
+   },
+   "expiresAtSet": {
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "expires_at",
+    "notes": "existence check (IS NOT NULL)"
+   },
+   "expiresAt": {
+    "kind": "schema_column",
+    "table": "spree_promotions",
+    "column": "expires_at"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_promotions"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -33394,8 +34645,29 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "usageLimitSet": {
+    "kind": "null_check",
+    "table": "spree_promotions",
+    "column": "usage_limit",
+    "notes": "existence check (IS NOT NULL)"
+   },
+   "usageLimit": {
+    "kind": "schema_column",
+    "table": "spree_promotions",
+    "column": "usage_limit"
+   },
+   "adjustedCreditsCount": {
+    "kind": "schema_column",
+    "table": "spree_promotion_actions",
+    "column": "promotion_id",
+    "notes": "COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_promotion_actions",
+   "spree_promotions"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -33554,8 +34826,17 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "orderAmount": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total",
+    "notes": "the object.amount the calculator is invoked against; exact object varies by promotion action type"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -33704,7 +34985,11 @@
     }
    ]
   },
-  "variable_resolution": {},
+  "variable_resolution": {
+   "purchaseQuantity": {
+    "kind": "not_persisted"
+   }
+  },
   "fk_closure_tables": [],
   "cross_variable_reference": false
  },
@@ -33959,7 +35244,13 @@
     }
    ]
   },
-  "variable_resolution": {},
+  "variable_resolution": {
+   "expiryDate": {
+    "kind": "code_external",
+    "notes": "base_user.last_status_change (fallback base_user.create_datetime, both real columns) plus ageing_entity_step.days, added as calendar days (BasicAgeingTask) or business days via BusinessDays (BusinessDayAgeingTask); no single column holds this computed date.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   }
+  },
   "fk_closure_tables": [],
   "cross_variable_reference": false
  },
@@ -34051,8 +35342,23 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "dueDatePlusGrace": {
+    "kind": "schema_column",
+    "table": "invoice",
+    "column": "due_date",
+    "notes": "invoice.due_date plus the entity process.grace_period preference (a system preference row, not a column)."
+   }
+  },
+  "fk_closure_tables": [
+   "billing_process",
+   "currency",
+   "entity",
+   "invoice",
+   "language",
+   "paper_invoice_batch",
+   "period_unit"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -34626,6 +35932,16 @@
     "table": "generic_status",
     "column": "id",
     "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
+   },
+   "oldStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
+   },
+   "newStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
    }
   },
   "fk_closure_tables": [
@@ -34992,8 +36308,65 @@
     }
    ]
   },
-  "variable_resolution": {},
-  "fk_closure_tables": [],
+  "variable_resolution": {
+   "inUse": {
+    "kind": "exists",
+    "candidate_tables": [
+     "ageing_entity_step"
+    ],
+    "candidate_columns": [],
+    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
+    "raw_schema_field": "ageing_entity_step (existence)"
+   },
+   "statusIsDeleted": {
+    "kind": "schema_column",
+    "table": "base_user",
+    "column": "status_id",
+    "also_valid_in": [
+     [
+      "generic_status",
+      "id"
+     ]
+    ],
+    "notes": "Same loop index compared to the STATUS_DELETED constant."
+   },
+   "welcomeMessagePresent": {
+    "kind": "derived",
+    "notes": "Reads from a generic i18n description mechanism keyed by \"welcome_message\", not a direct column on ageing_entity_step.",
+    "table_hints": []
+   },
+   "statusIsActive": {
+    "kind": "schema_column",
+    "table": "base_user",
+    "column": "status_id",
+    "also_valid_in": [
+     [
+      "generic_status",
+      "id"
+     ]
+    ],
+    "notes": "Loop index over the STATUS_ACTIVE..STATUS_DELETED range, itself keyed off generic_status.id, compared to the STATUS_ACTIVE constant."
+   },
+   "isLastSelectedStep": {
+    "kind": "code_external",
+    "notes": "Computed as the highest array index with inUse=true across the submitted admin-screen steps array; not a stored flag.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   },
+   "days": {
+    "kind": "schema_column",
+    "table": "ageing_entity_step",
+    "column": "days"
+   }
+  },
+  "fk_closure_tables": [
+   "ageing_entity_step",
+   "base_user",
+   "currency",
+   "entity",
+   "generic_status",
+   "generic_status_type",
+   "language"
+  ],
   "cross_variable_reference": false
  },
  {
@@ -36648,7 +38021,13 @@
     }
    ]
   },
-  "variable_resolution": {},
+  "variable_resolution": {
+   "resultCode": {
+    "kind": "chained_decision_output",
+    "from_decision": "Payment Outcome Resolution",
+    "note": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
+   }
+  },
   "fk_closure_tables": [],
   "cross_variable_reference": false
  },
@@ -37079,7 +38458,18 @@
     }
    ]
   },
-  "variable_resolution": {},
+  "variable_resolution": {
+   "daysInCycle": {
+    "kind": "code_external",
+    "notes": "Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   },
+   "daysInPeriod": {
+    "kind": "code_external",
+    "notes": "Computed the same way as daysInCycle, for the actual (possibly partial) billed date range.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   }
+  },
   "fk_closure_tables": [],
   "cross_variable_reference": false
  },

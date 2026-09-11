@@ -1019,6 +1019,25 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                             continue
                         hit_policy_context['earlier_rows'].append(
                             {'rule_id': decision.rules[earlier_idx]['id'], 'condition': earlier_condition})
+                        # An earlier row can reference free variables this
+                        # rule's own condition never does (a FIRST/UNIQUE
+                        # decision's rows commonly test different declared
+                        # inputs row to row) -- resolve and merge those in
+                        # too, or a downstream consumer needing the full
+                        # suppression term (fitness.py's own FIRST/UNIQUE
+                        # suppression distance, §6.3) has no way to
+                        # evaluate it at all. Never causes this record to
+                        # newly block: an earlier row's own variable being
+                        # itself unresolved/schema_gap/etc. is recorded
+                        # here as-is (not silently dropped), the same
+                        # honesty this record's own condition variables
+                        # already get -- a consumer that actually needs to
+                        # evaluate that specific suppression term is where
+                        # it should surface, not here.
+                        for var in find_all_variable_refs(earlier_condition):
+                            if var not in variant_resolution:
+                                variant_resolution[var] = resolve_and_substitute(
+                                    cs, gt, decision, var, by_id, by_name)
 
                 tables = set()
                 for res in variant_resolution.values():
