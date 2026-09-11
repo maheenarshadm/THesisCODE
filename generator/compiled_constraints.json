@@ -1182,9 +1182,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -1366,9 +1381,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -1582,9 +1612,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -1830,9 +1875,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -2110,9 +2170,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -2422,9 +2497,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_6"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -2602,9 +2692,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -2819,9 +2924,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -3068,9 +3188,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -3349,9 +3484,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -3662,9 +3812,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -4007,9 +4172,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_6"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -4219,9 +4399,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -4468,9 +4663,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -4749,9 +4959,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -5062,9 +5287,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -5407,9 +5647,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -5784,9 +6039,24 @@
     "from_rule_id": "Decision_AcademicWarningStatus_Rule_6"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -5967,9 +6237,24 @@
   },
   "variable_resolution": {
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "chained_decision_output",
@@ -9648,9 +9933,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -9957,9 +10257,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -10298,9 +10613,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -10671,9 +11001,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -11076,9 +11421,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -11513,9 +11873,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -11822,9 +12197,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -12168,9 +12558,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -12546,9 +12951,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -12956,9 +13376,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -13398,9 +13833,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -13872,9 +14322,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -14213,9 +14678,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -14591,9 +15071,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -15001,9 +15496,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -15443,9 +15953,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -15917,9 +16442,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -16423,9 +16963,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -16779,9 +17334,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -17172,9 +17742,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -17597,9 +18182,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -18054,9 +18654,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -18543,9 +19158,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -19064,9 +19694,24 @@
     "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
    },
    "semesterType": {
-    "kind": "schema_column",
-    "table": "semester",
-    "column": "title"
+    "kind": "derived_case",
+    "table": "SEMESTER",
+    "column": "TITLE",
+    "cases": [
+     [
+      "Fall",
+      "Regular"
+     ],
+     [
+      "Spring",
+      "Regular"
+     ],
+     [
+      "Summer",
+      "Summer"
+     ]
+    ],
+    "notes": "Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",

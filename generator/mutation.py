@@ -45,7 +45,7 @@ from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  
 BOOLEAN_LEAF_KINDS = {'null_check', 'any_not_null', 'join_null_check', 'exists',
                       'regex_match', 'raw_sql_boolean'}
 FIELD_LEAF_KINDS = {'schema_column', 'null_check', 'any_not_null', 'join_lookup',
-                    'join_null_check', 'regex_match'}
+                    'join_null_check', 'regex_match', 'derived_case'}
 AGGREGATE_LEAF_KINDS = {'derived_aggregate', 'exists'}
 
 _SCHEMA_CACHE = {}
@@ -194,6 +194,22 @@ def _apply_field_mutation(node, value, candidate, focal):
         if table.upper() not in {t for t in candidate.as_dict()} or row not in candidate.rows(table):
             candidate.add_row(table, row)
         row[column] = value
+    elif kind == 'derived_case':
+        # `value` is a *derived* category (e.g. 'Regular') the branch
+        # condition compares against -- never write that string itself
+        # into the real column (that's exactly the bug found testing
+        # this operator: TITLE never really holds 'Regular'). Invert
+        # CASE_MAP to a real input value that produces this output.
+        table, column = node['table'], node['column']
+        real_value = next((k for k, v in node['cases'] if v == value), None)
+        if real_value is None:
+            raise FitnessEvaluationError(
+                f"{value!r} is not a reachable output of this derived_case's CASE_MAP "
+                f"({node['cases']}) -- refusing to write an unmappable value")
+        row = focal.setdefault(table.upper(), {})
+        if row not in candidate.rows(table):
+            candidate.add_row(table, row)
+        row[column] = real_value
     elif kind == 'null_check':
         table, column = node['table'], node['column']
         row = focal.setdefault(table.upper(), {})
@@ -416,3 +432,28 @@ if __name__ == '__main__':
     assert all(history[i] >= history[i + 1] for i in range(len(history) - 1)), \
         "fitness must be monotonically non-increasing across accepted mutations"
     print("Mutation operator converged correctly and monotonically. Self-check passed.")
+
+    print()
+    print("derived_case regression check (semesterType, found while first testing this module):")
+    load_rec = next(r for r in data if r['record_id'] == 'FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4')
+    case_node = load_rec['variable_resolution']['semesterType']
+    assert case_node['kind'] == 'derived_case', "semesterType should no longer be a plain schema_column"
+
+    c_fall = Candidate()
+    row_fall = {'SEM_ID': 7, 'TITLE': 'Fall'}
+    c_fall.add_row('SEMESTER', row_fall)
+    apply_mutation(load_rec, c_fall, {'SEMESTER': row_fall}, {}, 'semesterType', case_node, 'Summer', 'Regular')
+    assert c_fall.rows('SEMESTER')[0]['TITLE'] == 'Summer', \
+        "mutating toward 'Summer' must write the real value 'Summer', not the label itself"
+
+    c_summer = Candidate()
+    row_summer = {'SEM_ID': 7, 'TITLE': 'Summer'}
+    c_summer.add_row('SEMESTER', row_summer)
+    apply_mutation(load_rec, c_summer, {'SEMESTER': row_summer}, {}, 'semesterType', case_node, 'Regular', 'Summer')
+    written = c_summer.rows('SEMESTER')[0]['TITLE']
+    assert written in ('Fall', 'Spring'), (
+        f"mutating toward 'Regular' must write a REAL value that maps to it (Fall/Spring), "
+        f"never the impossible literal 'Regular' itself -- got {written!r}")
+    print(f"  Confirmed: mutation never writes an impossible category label into SEMESTER.TITLE "
+          f"(wrote {written!r} for the 'Regular' target, 'Summer' for the 'Summer' target).")
+    print("All derived_case self-checks passed.")

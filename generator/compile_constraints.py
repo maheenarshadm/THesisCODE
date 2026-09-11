@@ -366,6 +366,41 @@ def _try_extract_raw_sql_boolean(text):
     return {'kind': 'raw_sql_boolean', 'sql_template': m.group(1).strip(), 'tables': tables}
 
 
+# A second escape hatch, found necessary while building mutation.py
+# (2026-09-11): semesterType was mapped as a plain schema_column
+# passthrough of SEMESTER.TITLE, but the DMN rules that consume it
+# compare it against 'Regular'/'Summer' -- a *different*, two-category
+# vocabulary than TITLE's own three real values ('Fall'/'Spring'/
+# 'Summer'). A raw passthrough can never equal 'Regular' for any real
+# row, so mutation.py's own operator "solved" the branch by writing an
+# impossible value (TITLE='Regular') straight into a candidate row --
+# fitness said 0, the row was fiction. `CASE_MAP:` names an explicit,
+# *exhaustive* enumeration of every real column value and what derived
+# category it maps to (deliberately not an ELSE/default -- an unlisted
+# real value should surface as a hard "we don't know how to categorize
+# this," not silently fall through to a guess), so both directions stay
+# honest: sql_compiler.py/candidate.py read the real value and map
+# forward; mutation.py inverts the same table to write a real value back.
+_CASE_MAP_RE = re.compile(
+    r'CASE_MAP:\s*([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.+)$',
+    re.I | re.S)
+_CASE_MAP_ENTRY_RE = re.compile(r"'([^']*)'\s*->\s*'([^']*)'")
+
+
+def _try_extract_case_map(text):
+    if not text:
+        return None
+    m = _CASE_MAP_RE.search(text)
+    if not m:
+        return None
+    table, column, rest = m.group(1), m.group(2), m.group(3)
+    cases = _CASE_MAP_ENTRY_RE.findall(rest)
+    if not cases:
+        return None
+    return {'kind': 'derived_case', 'table': table, 'column': column,
+            'cases': [[k, v] for k, v in cases]}
+
+
 def classify_derived(row):
     """The general classifier for a 'derived'-bucketed ground-truth row --
     replaces a narrow aggregate-only check with pattern rules covering
@@ -388,6 +423,11 @@ def classify_derived(row):
     agg = _try_extract_aggregate_recipe(notes) or _try_extract_aggregate_recipe(raw)
     if agg:
         return agg
+
+    case_map = _try_extract_case_map(notes) or _try_extract_case_map(raw)
+    if case_map:
+        case_map['notes'] = notes
+        return case_map
 
     raw_sql = _try_extract_raw_sql_boolean(notes) or _try_extract_raw_sql_boolean(raw)
     if raw_sql:
@@ -758,6 +798,8 @@ def collect_tables_from_resolution(node, tables):
     elif node.get('kind') == 'raw_sql_boolean':
         for t in node.get('tables', []):
             tables.add(t)
+    elif node.get('kind') == 'derived_case':
+        tables.add(node['table'])
 
 
 def build_rule_condition(decision, rule):

@@ -281,6 +281,19 @@ def compile_resolution_as_value(res, ctx, var_name=None):
         right = scalar_column_subquery(res['pattern_column']['table'], res['pattern_column']['column'], ctx)
         ctx.warn("REGEXP is not portable SQL -- MySQL/MariaDB syntax used here (§7b's own 'not portable' finding)")
         return scalar_boolean_as_value(f"{left} REGEXP {right}")
+    if kind == 'derived_case':
+        # A real column value mapped through an *exhaustive* CASE_MAP
+        # enumeration (compile_constraints.py) into a different derived
+        # vocabulary than the column's own real values -- e.g. FLEX2's
+        # semesterType: SEMESTER.TITLE holds 'Fall'/'Spring'/'Summer',
+        # but the DMN rules compare against 'Regular'/'Summer'. Compiled
+        # as a real SQL CASE expression, not a passthrough -- deliberately
+        # no ELSE branch (NULL if none match) so a real column value this
+        # mapping doesn't cover surfaces as an unmatched case, not a
+        # silent wrong category.
+        col = scalar_column_subquery(res['table'], res['column'], ctx)
+        whens = ' '.join(f"WHEN {col} = '{k}' THEN '{v}'" for k, v in res['cases'])
+        return f"(CASE {whens} END)"
     if kind == 'raw_sql_boolean':
         # A fully hand-worked-out boolean SQL expression a ground-truth row
         # named directly (RAW_SQL:/TABLES: marker, compile_constraints.py)

@@ -237,6 +237,15 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
         return len(candidate.rows(table)) > 0
     if kind == 'raw_sql_boolean':
         return _raw_sql_boolean_value(node, candidate, scenario, warnings)
+    if kind == 'derived_case':
+        real_value = _lookup(focal, node['table'], node['column'])
+        for k, v in node['cases']:
+            if real_value == k:
+                return v
+        raise FitnessEvaluationError(
+            f"{var_name!r}: real value {real_value!r} in {node['table']}.{node['column']} "
+            f"isn't covered by any CASE_MAP case ({node['cases']}) -- an unmapped real value, "
+            f"not silently defaulted to one of the known categories")
     if kind == 'not_persisted':
         if var_name not in scenario:
             raise FitnessEvaluationError(
@@ -409,6 +418,8 @@ if __name__ == '__main__':
                 for t in node['tables']:
                     cols = set(re.findall(r'\b\w+\.(\w+)\b', node['sql_template']))
                     auto.add_row(t, {col: 1 for col in cols} or {'X': 1})
+            elif kind == 'derived_case':
+                ensure_row(node['table'], node['column'], node['cases'][0][0])
             elif kind == 'not_persisted':
                 auto_scenario[var] = 1
         try:

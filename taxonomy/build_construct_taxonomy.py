@@ -109,6 +109,16 @@ def categorize(io, resolution):
         # single occurrence: its defining construct is the correlated
         # NOT EXISTS subquery, same family as the plain 'exists' kind.
         return 'Existence / Correlated Subquery'
+    if kind == 'derived_case':
+        # A real column value mapped through an exhaustive CASE_MAP
+        # enumeration into a different vocabulary the DMN rule actually
+        # compares against (FLEX2's semesterType: SEMESTER.TITLE's real
+        # 'Fall'/'Spring'/'Summer' collapsed into 'Regular'/'Summer',
+        # found 2026-09-11 while testing mutation.py). Folded into
+        # Single-Column Predicate rather than a 15th one-off bucket: it
+        # still decomposes to one real column compared against a named
+        # constant, just with a CASE expression in between.
+        return 'Single-Column Predicate'
     if kind == 'any_not_null':
         return 'Multi-Column Existence (any-of)'
     if kind == 'regex_match':
