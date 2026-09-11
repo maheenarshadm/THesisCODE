@@ -52,6 +52,7 @@ import csv
 import json
 import re
 import argparse
+import itertools
 from collections import deque, Counter
 from xml.etree import ElementTree as ET
 
@@ -678,6 +679,160 @@ def collect_tables_from_resolution(node, tables):
             collect_tables_from_resolution(sub, tables)
 
 
+def build_rule_condition(decision, rule):
+    """Shared by the main per-rule loop and the chained-dependency
+    expansion below (previously duplicated inline in both places). Returns
+    (condition, parse_errors, column_predicates) -- parse_errors non-empty
+    means condition is meaningless and must not be used."""
+    column_predicates = []
+    parse_errors = []
+    for (col_var, _typeref), text in zip(decision.inputs, rule['input_texts']):
+        try:
+            node = parse_unary_test(text, col_var)
+        except UnsupportedFeelConstruct as e:
+            parse_errors.append(f"{col_var}: {e}")
+            node = None
+        if node is not None:
+            column_predicates.append(node)
+    if parse_errors:
+        return None, parse_errors, column_predicates
+    if not column_predicates:
+        condition = {'kind': 'literal', 'value': True, 'type': 'boolean'}
+    elif len(column_predicates) == 1:
+        condition = column_predicates[0]
+    else:
+        condition = {'op': 'and', 'clauses': column_predicates}
+    return condition, [], column_predicates
+
+
+def parse_output_value(text):
+    """Shared literal-output-cell parser (previously duplicated inline)."""
+    text = (text or '').strip()
+    if text.startswith('"') and text.endswith('"'):
+        return {'kind': 'literal', 'value': text[1:-1], 'type': 'string'}
+    if text in ('true', 'false'):
+        return {'kind': 'literal', 'value': text == 'true', 'type': 'boolean'}
+    if re.match(r'^-?\d+(\.\d+)?$', text):
+        return {'kind': 'literal', 'value': float(text) if '.' in text else int(text), 'type': 'number'}
+    return {'kind': 'literal', 'value': text, 'type': 'string'}
+
+
+def build_hit_policy_truth_condition(decision, row_idx):
+    """A single boolean predicate that is true exactly when `decision`'s
+    rule `row_idx` is the one that actually fires, given its hit policy --
+    for FIRST/UNIQUE, that rule's own condition AND NOT(every earlier
+    rule's own condition), the same suppression logic §6.3's fitness
+    function needs, expressed here as a literal formula for inlining into
+    a downstream branch rather than as a search-time distance term (see
+    `hit_policy_context` for that use). Not meaningful for COLLECT (no
+    single rule "wins" -- not needed for this repo's actual chained-
+    dependency cases, none of which currently have a COLLECT upstream).
+    Returns (condition, ok) -- ok=False if any rule involved fails to
+    parse, so the caller can skip this option rather than guess."""
+    own_condition, parse_errors, _ = build_rule_condition(decision, decision.rules[row_idx])
+    if parse_errors:
+        return None, False
+    clauses = [own_condition]
+    if decision.hit_policy in ('FIRST', 'UNIQUE'):
+        for earlier_idx in range(row_idx):
+            earlier_condition, earlier_errors, _ = build_rule_condition(decision, decision.rules[earlier_idx])
+            if earlier_errors:
+                return None, False
+            clauses.append({'op': 'not', 'clause': earlier_condition})
+    if len(clauses) == 1:
+        return clauses[0], True
+    return {'op': 'and', 'clauses': clauses}, True
+
+
+def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, by_name, seen):
+    """The actual resolution of `chained_decision_output` (generator/README.md's
+    documented scope boundary): rather than silently pick one of
+    `upstream_decision`'s rules as "the" answer, or leave the dependency
+    unresolved, enumerate every rule of `upstream_decision` that produces
+    `wanted_var`, each becoming a self-contained "grounding option" --
+    §6.1's own self-contained-record requirement means this has to happen
+    at compile time, not deferred to the search loop (which would need
+    extra machinery to solve one target before another, exactly what
+    inlining exists to avoid).
+
+    A grounding option is only offered if EVERY variable its own truth
+    condition depends on resolves cleanly -- recursively, including
+    further chained_decision_output dependencies (multi-level DRD chains,
+    e.g. FLEX2's Academic Warning Status -> Course Load Limit ->
+    Course Registration Eligibility) -- via the same cross-product
+    expansion this function applies to itself. A dependency that can't be
+    fully grounded is dropped from the option list rather than silently
+    included half-resolved; if that empties the list entirely, the caller
+    (compile_case_study) leaves the downstream branch blocked, same as
+    before this function existed.
+
+    Returns a list of {'value', 'condition', 'extra_resolutions',
+    'source_rule_id', 'source_decision'} dicts, one per fully-grounded
+    upstream rule (or per further-chained combination beneath it)."""
+    key = (upstream_decision.name, wanted_var)
+    if key in seen:
+        return []  # circular DRD dependency guard
+    seen = seen | {key}
+
+    out_names = [o for o, _ in upstream_decision.outputs]
+    if wanted_var not in out_names:
+        return []
+    out_idx = out_names.index(wanted_var)
+
+    options = []
+    for row_idx, rule in enumerate(upstream_decision.rules):
+        value_node = parse_output_value(rule['output_texts'][out_idx])
+        truth_condition, ok = build_hit_policy_truth_condition(upstream_decision, row_idx)
+        if not ok:
+            continue
+
+        referenced = sorted(set(find_all_variable_refs(truth_condition)))
+        base_resolutions = {}
+        chained_vars = []  # [(var_name, [further grounding options]), ...]
+        clean = True
+        for var in referenced:
+            res = resolve_and_substitute(cs, gt, upstream_decision, var, by_id, by_name)
+            issues = find_blocking_issues(var, res)
+            if not issues:
+                base_resolutions[var] = res
+                continue
+            if any(k != 'chained_decision_output' for _v, k, _d in issues):
+                clean = False  # a genuine schema_gap/unresolved dependency -- no way to ground this option
+                break
+            further_upstream = by_name.get(res['from_decision'])
+            further_options = enumerate_upstream_groundings(cs, gt, further_upstream, var, by_id, by_name, seen)
+            if not further_options:
+                clean = False
+                break
+            chained_vars.append((var, further_options))
+        if not clean:
+            continue
+
+        if not chained_vars:
+            options.append({'value': value_node, 'condition': truth_condition,
+                             'extra_resolutions': dict(base_resolutions),
+                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name})
+            continue
+
+        var_names = [v for v, _ in chained_vars]
+        option_lists = [opts for _, opts in chained_vars]
+        for combo in itertools.product(*option_lists):
+            combo_clauses = [truth_condition]
+            combo_resolutions = dict(base_resolutions)
+            for var_name, sub_opt in zip(var_names, combo):
+                combo_resolutions[var_name] = {
+                    'kind': 'literal_via_upstream_branch', 'value': sub_opt['value'],
+                    'from_decision': sub_opt['source_decision'], 'from_rule_id': sub_opt['source_rule_id']}
+                combo_clauses.append(sub_opt['condition'])
+                combo_resolutions.update(sub_opt['extra_resolutions'])
+            combined_condition = combo_clauses[0] if len(combo_clauses) == 1 \
+                else {'op': 'and', 'clauses': combo_clauses}
+            options.append({'value': value_node, 'condition': combined_condition,
+                             'extra_resolutions': combo_resolutions,
+                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name})
+    return options
+
+
 def compile_case_study(cs, mapping_source='ground_truth'):
     by_id, by_name = load_case_study_decisions(cs)
     gt = load_case_study_ground_truth(cs)
@@ -687,33 +842,28 @@ def compile_case_study(cs, mapping_source='ground_truth'):
     records = []
     blocked = []
 
+    def cross_variable_reference_flag(column_predicates):
+        return any(
+            isinstance(node, dict) and node.get('kind') == 'variable'
+            for pred in column_predicates
+            for node in (pred.get('right'), pred.get('low'), pred.get('high'))
+            if isinstance(pred, dict)
+        ) or any(
+            isinstance(v, dict) and v.get('kind') == 'variable'
+            for pred in column_predicates if isinstance(pred, dict)
+            for v in pred.get('values', [])
+        )
+
     for decision in by_name.values():
         if not decision.is_table:
             continue  # literal-expression decisions are only ever inlined via substitution, never their own branch target
 
         for row_idx, rule in enumerate(decision.rules):
             record_id = f"{cs}::{decision.name}::{rule['id']}"
-            column_predicates = []
-            parse_errors = []
-            for (col_var, _typeref), text in zip(decision.inputs, rule['input_texts']):
-                try:
-                    node = parse_unary_test(text, col_var)
-                except UnsupportedFeelConstruct as e:
-                    parse_errors.append(f"{col_var}: {e}")
-                    node = None
-                if node is not None:
-                    column_predicates.append(node)
-
+            condition, parse_errors, column_predicates = build_rule_condition(decision, rule)
             if parse_errors:
                 blocked.append({'record_id': record_id, 'reason': 'feel_parse_error', 'detail': parse_errors})
                 continue
-
-            if not column_predicates:
-                condition = {'kind': 'literal', 'value': True, 'type': 'boolean'}  # all-wildcard row
-            elif len(column_predicates) == 1:
-                condition = column_predicates[0]
-            else:
-                condition = {'op': 'and', 'clauses': column_predicates}
 
             referenced_vars = sorted(set(find_all_variable_refs(condition)))
             variable_resolution = {}
@@ -723,82 +873,95 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                 variable_resolution[var] = res
                 blocking.extend(find_blocking_issues(var, res))
 
-            if blocking:
+            # A rule blocked ONLY by chained_decision_output dependencies
+            # is not a dead end -- enumerate_upstream_groundings expands
+            # each such dependency into every upstream rule that could
+            # produce it (generator/README.md's documented resolution for
+            # this scope boundary), producing one self-contained "variant"
+            # record per combination rather than leaving the branch
+            # unresolved. A mix of chained + genuinely unresolved/
+            # schema_gap blocking still blocks outright -- expansion can't
+            # fix those.
+            chained_blocking = [b for b in blocking if b[1] == 'chained_decision_output']
+            other_blocking = [b for b in blocking if b[1] != 'chained_decision_output']
+
+            if other_blocking:
                 blocked.append({'record_id': record_id, 'reason': 'unresolved_variable',
                                  'blocking_variables': [{'variable': v, 'kind': k, 'detail': d}
                                                          for v, k, d in blocking]})
                 continue
 
-            outputs = {}
-            for (out_name, _typeref), out_text in zip(decision.outputs, rule['output_texts']):
-                out_text = (out_text or '').strip()
-                if out_text.startswith('"') and out_text.endswith('"'):
-                    outputs[out_name] = {'kind': 'literal', 'value': out_text[1:-1], 'type': 'string'}
-                elif out_text in ('true', 'false'):
-                    outputs[out_name] = {'kind': 'literal', 'value': out_text == 'true', 'type': 'boolean'}
-                elif re.match(r'^-?\d+(\.\d+)?$', out_text):
-                    outputs[out_name] = {'kind': 'literal',
-                                          'value': float(out_text) if '.' in out_text else int(out_text),
-                                          'type': 'number'}
-                else:
-                    outputs[out_name] = {'kind': 'literal', 'value': out_text, 'type': 'string'}
+            variants = [(condition, variable_resolution, [])]  # (condition, variable_resolution, provenance_suffix)
+            if chained_blocking:
+                per_var_options = []
+                expandable = True
+                for var, _kind, _detail in chained_blocking:
+                    upstream = by_name.get(variable_resolution[var]['from_decision'])
+                    opts = enumerate_upstream_groundings(cs, gt, upstream, var, by_id, by_name, set())
+                    if not opts:
+                        expandable = False
+                        break
+                    per_var_options.append((var, opts))
+                if not expandable:
+                    blocked.append({'record_id': record_id, 'reason': 'chained_dependency_unexpandable',
+                                     'blocking_variables': [{'variable': v, 'kind': k, 'detail': d}
+                                                             for v, k, d in blocking]})
+                    continue
+                variants = []
+                var_names = [v for v, _ in per_var_options]
+                option_lists = [opts for _, opts in per_var_options]
+                for combo in itertools.product(*option_lists):
+                    vr = dict(variable_resolution)
+                    extra_clauses = [condition]
+                    suffix = []
+                    for var_name, opt in zip(var_names, combo):
+                        vr[var_name] = {'kind': 'literal_via_upstream_branch', 'value': opt['value'],
+                                         'from_decision': opt['source_decision'], 'from_rule_id': opt['source_rule_id']}
+                        vr.update(opt['extra_resolutions'])
+                        extra_clauses.append(opt['condition'])
+                        suffix.append(f"{opt['source_decision']}::{opt['source_rule_id']}")
+                    combined = extra_clauses[0] if len(extra_clauses) == 1 else {'op': 'and', 'clauses': extra_clauses}
+                    variants.append((combined, vr, suffix))
 
-            hit_policy_context = {'earlier_rows': []}
-            if decision.hit_policy in ('FIRST', 'UNIQUE'):
-                for earlier_idx in range(row_idx):
-                    earlier_rule = decision.rules[earlier_idx]
-                    earlier_preds = []
-                    ok = True
-                    for (col_var, _t), text in zip(decision.inputs, earlier_rule['input_texts']):
-                        try:
-                            n = parse_unary_test(text, col_var)
-                        except UnsupportedFeelConstruct:
-                            ok = False
-                            break
-                        if n is not None:
-                            earlier_preds.append(n)
-                    if not ok:
-                        continue
-                    if not earlier_preds:
-                        earlier_cond = {'kind': 'literal', 'value': True, 'type': 'boolean'}
-                    elif len(earlier_preds) == 1:
-                        earlier_cond = earlier_preds[0]
-                    else:
-                        earlier_cond = {'op': 'and', 'clauses': earlier_preds}
-                    hit_policy_context['earlier_rows'].append(
-                        {'rule_id': earlier_rule['id'], 'condition': earlier_cond})
+            for variant_condition, variant_resolution, provenance_suffix in variants:
+                variant_id = record_id if not provenance_suffix else f"{record_id}::via::{'+'.join(provenance_suffix)}"
 
-            tables = set()
-            for res in variable_resolution.values():
-                collect_tables_from_resolution(res, tables)
-            fk_tables = fk_closure(tables, fk_graph, all_tables)
+                outputs = {}
+                for (out_name, _typeref), out_text in zip(decision.outputs, rule['output_texts']):
+                    outputs[out_name] = parse_output_value(out_text)
 
-            cross_variable_reference = any(
-                isinstance(node, dict) and node.get('kind') == 'variable'
-                for pred in column_predicates
-                for node in (pred.get('right'), pred.get('low'), pred.get('high'))
-                if isinstance(pred, dict)
-            ) or any(
-                isinstance(v, dict) and v.get('kind') == 'variable'
-                for pred in column_predicates if isinstance(pred, dict)
-                for v in pred.get('values', [])
-            )
+                hit_policy_context = {'earlier_rows': []}
+                if decision.hit_policy in ('FIRST', 'UNIQUE'):
+                    for earlier_idx in range(row_idx):
+                        earlier_condition, earlier_errors, _ = build_rule_condition(decision, decision.rules[earlier_idx])
+                        if earlier_errors:
+                            continue
+                        hit_policy_context['earlier_rows'].append(
+                            {'rule_id': decision.rules[earlier_idx]['id'], 'condition': earlier_condition})
 
-            records.append({
-                'record_id': record_id,
-                'case_study': cs,
-                'dmn_file': decision.dmn_file,
-                'decision_name': decision.name,
-                'hit_policy': decision.hit_policy,
-                'rule_id': rule['id'],
-                'source_citation': citations.get(decision.name, rule.get('description', '')),
-                'condition': condition,
-                'outputs': outputs,
-                'hit_policy_context': hit_policy_context,
-                'variable_resolution': variable_resolution,
-                'fk_closure_tables': fk_tables,
-                'cross_variable_reference': cross_variable_reference,
-            })
+                tables = set()
+                for res in variant_resolution.values():
+                    collect_tables_from_resolution(res, tables)
+                fk_tables = fk_closure(tables, fk_graph, all_tables)
+
+                record = {
+                    'record_id': variant_id,
+                    'case_study': cs,
+                    'dmn_file': decision.dmn_file,
+                    'decision_name': decision.name,
+                    'hit_policy': decision.hit_policy,
+                    'rule_id': rule['id'],
+                    'source_citation': citations.get(decision.name, rule.get('description', '')),
+                    'condition': variant_condition,
+                    'outputs': outputs,
+                    'hit_policy_context': hit_policy_context,
+                    'variable_resolution': variant_resolution,
+                    'fk_closure_tables': fk_tables,
+                    'cross_variable_reference': cross_variable_reference_flag(column_predicates),
+                }
+                if provenance_suffix:
+                    record['grounded_upstream_branches'] = provenance_suffix
+                records.append(record)
 
     return records, blocked
 

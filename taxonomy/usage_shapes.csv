@@ -5,12 +5,66 @@ FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Acad
 FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Academic Warning Status,UNIQUE,plain single comparison
 FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Academic Warning Status,UNIQUE,plain single comparison
 FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
 FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Admission Closure Eligibility,FIRST,negation (NOT)
 FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2,Admission Closure Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3,Admission Closure Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4,Admission Closure Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5,Admission Closure Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_1,Course Registration Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
 FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4,Course Registration Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_1,Course Replacement Eligibility,FIRST,plain single comparison
 FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_2,Course Replacement Eligibility,FIRST,negation (NOT)
@@ -169,6 +223,8 @@ jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_4,O
 jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_5,Order Date Range Valid,FIRST,cross-variable comparison
 jBilling,jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1,Payment Outcome Resolution,FIRST,plain single comparison
 jBilling,jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2,Payment Outcome Resolution,FIRST,plain single comparison
+jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1,Payment Balance Assignment,FIRST,set-membership (IN)
+jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2,Payment Balance Assignment,FIRST,negation (NOT); set-membership (IN)
 jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_2,Payment Balance Assignment,FIRST,plain single comparison
 jBilling,jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_1,Blacklist Filter Enabled,UNIQUE,plain single comparison
 jBilling,jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_2,Blacklist Filter Enabled,UNIQUE,plain single comparison

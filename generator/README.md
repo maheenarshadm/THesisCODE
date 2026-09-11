@@ -77,37 +77,46 @@ attempted, a blocked one is omitted from `compiled_constraints.json` and
 recorded, with its exact blocking variable(s) and reason, in
 `compile_report.json`.
 
-## Result, current run
+## Result, current run (post chained-decision-output expansion — see below)
 
 | Case study | Compiled | Blocked | Rate |
 |---|---|---|---|
-| FLEX2 | 46 | 9 | 83.6% |
+| FLEX2 | 100 | 3 | 97.1% |
 | OpenMRS | 71 | 0 | 100.0% |
 | Spree | 27 | 5 | 84.4% |
-| jBilling | 39 | 14 | 73.6% |
-| **Total** | **183** | **28** | **86.7%** |
+| jBilling | 41 | 13 | 75.9% |
+| **Total** | **239** | **21** | **91.9%** |
+
+Total target-branch count (260, up from 211) is higher than earlier runs
+because the chained-decision-output expansion below multiplies certain
+rules into several self-contained variants rather than resolving a fixed
+set — see "Chained decision output" below for why, and for the historical
+183/28 numbers from before that pass.
 
 **Blocking reasons, by kind** (a branch can have more than one blocking
-variable): `chained_decision_output` (9) — a decision-table-to-decision-table
-DRD edge, the one deliberate, documented scope boundary below;
-`unresolved` (8) — mostly free variables of an inlined literal-expression
-formula whose own ground-truth row couldn't be resolved to a column,
-recipe, or gap marker; `schema_gap` (6) — the branch's condition itself
-depends on a variable ground truth already flags as having no schema
-representation at all (e.g. Spree's `preferences` serialized-blob
-findings); `code_external` (12, new — see "Resolving derived/aggregate
-nodes" below) — the variable is genuinely computed by application code
-with no schema field ever recorded for it at all (a Java constant, a
-UI-only transient value, a runtime-only calculation), not merely a
-column this compiler failed to find.
+variable): `unresolved` (8) — mostly free variables of an inlined
+literal-expression formula whose own ground-truth row couldn't be
+resolved to a column, recipe, or gap marker; `schema_gap` (6) — the
+branch's condition itself depends on a variable ground truth already
+flags as having no schema representation at all (e.g. Spree's
+`preferences` serialized-blob findings); `code_external` (12) — the
+variable is genuinely computed by application code with no schema field
+ever recorded for it at all (a Java constant, a UI-only transient value,
+a runtime-only calculation), not merely a column this compiler failed to
+find; `chained_dependency_unexpandable` (2, new) — a decision-table DRD
+dependency where *every* upstream rule is itself blocked by something
+this compiler can't resolve (jBilling's `Ageing Step Advancement`, see
+below) — a genuine dead end, not a missed case.
 
 **Compiled-but-not-generator-ready dropped sharply after the
-derived/aggregate resolution pass below**: of the 211 total branches,
-**158 (74.9%) are now fully mechanical** — every variable a real schema
-column, ready for a generator today — up from 73 (34.6%) before that
-pass. Only 25 remain in the "compiled, but still needs a human/more
-automation" tier (12 `exists` with an unstructured filter, 8 generic
-`derived` notes still unclassifiable by pattern, 6 `derived_aggregate`
+derived/aggregate resolution pass below** (figures as of that pass, before
+the chained-decision-output expansion further below changed the total
+branch count again): of the 211 total branches at that point, **158
+(74.9%) were fully mechanical** — every variable a real schema column,
+ready for a generator today — up from 73 (34.6%) before that pass. Only 25
+remained in the "compiled, but still needs a human/more automation" tier
+(12 `exists` with an unstructured filter, 8 generic `derived` notes still
+unclassifiable by pattern, 6 `derived_aggregate`
 with unstructured filter text), down from 120. See below for exactly how.
 
 ## Resolving derived/aggregate nodes (2026-09-11, second pass)
@@ -243,19 +252,74 @@ node's own `notes` field, rather than either trusting the wrong label
 (which would have surfaced as an unusable "direct" resolution with no
 actual table.column pair) or quietly relabeling the source CSV.
 
+## Chained decision output — resolved via branch enumeration (2026-09-11, third pass)
+
+The first two passes left `chained_decision_output` as a documented dead
+end: a decision table's output depends on which of its own rules fires,
+which isn't a single closed-form expression to inline the way a
+literal-expression decision's formula is, so 9 branches across FLEX2 and
+jBilling were blocked rather than guessed at. §6.1's own requirement —
+a compiled record must be self-contained and "never trigger a runtime
+lookup into another decision" — settles which of the three ways to fix
+this is actually correct: not deferring resolution to the search loop
+(which would need extra machinery to solve one target before another,
+exactly what inlining exists to avoid), and not silently picking one
+upstream branch as *the* answer (wrong by construction). The only option
+consistent with the self-contained-record contract is **enumeration**:
+for each upstream rule that could produce the needed variable, emit a
+separate, fully self-contained compiled record — the downstream rule's
+own condition **AND** that upstream rule's own "this is the one that
+fires" condition (its own predicates plus, for FIRST/UNIQUE, the same
+suppression-against-earlier-rows logic `hit_policy_context` already
+computes, just expressed here as a literal boolean formula rather than a
+search-time distance term).
+
+**Built as three new functions in `compile_constraints.py`** (not a
+separate script — the same source of truth every other artifact in this
+program reuses): `build_rule_condition`/`parse_output_value` (factored out
+of what was previously duplicated inline logic), `build_hit_policy_truth_condition`
+("is this specific rule the one that wins"), and
+`enumerate_upstream_groundings` — the actual recursive enumeration. It
+handles **multi-level chains** (FLEX2's `Academic Warning Status → Course
+Load Limit → Course Registration Eligibility` is 3 decisions deep) by
+calling itself on any further chained dependency it finds inside an
+upstream rule's own truth condition, then taking the cross-product; a
+grounding option is only ever offered once *every* variable it depends on
+resolves cleanly, recursively — never a half-resolved option presented as
+safe.
+
+**Result**: 56 new self-contained records where 9 blocked rule-slots used
+to be (some multiply — FLEX2's `Course Registration Eligibility::Rule_3`
+is a genuine 2-level chain, 4 `Course Load Limit` rules × 6 `Academic
+Warning Status` rules = 24 variants, each independently generatable, no
+cross-decision lookup needed at search time). 2 of the original 9 remain
+correctly blocked (jBilling's `Ageing Step Advancement`, both rules) —
+not a bug, a genuine dead end: its upstream `Is Ageing Required` decision
+itself depends on `expiryDate`, already found to be `code_external` (no
+schema representation at all, §13.11) — no upstream rule can be grounded,
+so `enumerate_upstream_groundings` correctly returns nothing and the
+branch stays honestly blocked (`chained_dependency_unexpandable`) rather
+than pretending otherwise.
+
+**Program totals moved again**, since expansion multiplies the branch
+count itself, not just resolves a fixed set: 260 total target branches
+(up from 211), 239 compiled (up from 183), 21 blocked (down from 28).
+"Fully mechanical" rose to 172/260 (66.2%) — the raw percentage looks
+lower than the pre-expansion 74.9% only because expansion multiplied
+*every* variable resolution in the affected rules, including the ones
+still in the "needs more work" tier (e.g. FLEX2's `semesterType`, still
+an unclassified `derived` note) — the same underlying facts appearing
+across more record variants, not new quality problems.
+
+**Verified the same way as every previous pass**: the recursive
+`find_blocking_issues` self-check confirmed zero leaked unresolved values
+across all 239 compiled records (including every expanded variant), and
+the flagship attendance worked example (untouched by this change, no
+DRD chain through a decision table) was re-diffed and still matches
+exactly.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
-- **`chained_decision_output` is a deliberate, documented non-goal, not a
-  bug**: a decision table's output depends on which of its own rules
-  fires, which isn't a single closed-form expression to inline the way a
-  literal-expression decision's formula is — inlining it would mean
-  either picking one arbitrary upstream branch (silently wrong) or
-  exploding into one compiled record per upstream-branch combination
-  (a combinatorial blow-up outside this script's scope). §6.1's own
-  worked example never attempts this case either. A generator consuming
-  these records needs to run the upstream decision's own branches first
-  and treat this as a genuine dependency, not a variable to solve for
-  directly.
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
   structured `{"filter": [{"column", "op", "value"}, ...]}` array.**
   Extracting the aggregate function and target table mechanically (via a

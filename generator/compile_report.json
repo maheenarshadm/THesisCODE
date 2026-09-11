@@ -1,8 +1,8 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 46,
-   "blocked": 9
+   "compiled": 100,
+   "blocked": 3
   },
   "OpenMRS": {
    "compiled": 71,
@@ -13,94 +13,22 @@
    "blocked": 5
   },
   "jBilling": {
-   "compiled": 39,
-   "blocked": 14
+   "compiled": 41,
+   "blocked": 13
   }
  },
- "total_compiled": 183,
- "total_blocked": 28,
+ "total_compiled": 239,
+ "total_blocked": 21,
  "blocked_reason_counts": {
-  "unresolved_variable": 28
+  "unresolved_variable": 19,
+  "chained_dependency_unexpandable": 2
  },
  "blocking_variable_kind_counts": {
-  "chained_decision_output": 9,
   "unresolved": 8,
   "schema_gap": 6,
   "code_external": 12
  },
  "blocked_records": [
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "maxCoursesAllowed",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
   {
    "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
    "reason": "unresolved_variable",
@@ -241,7 +169,7 @@
   },
   {
    "record_id": "jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_3",
-   "reason": "unresolved_variable",
+   "reason": "chained_dependency_unexpandable",
    "blocking_variables": [
     {
      "variable": "ageingRequired",
@@ -253,7 +181,7 @@
   },
   {
    "record_id": "jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_4",
-   "reason": "unresolved_variable",
+   "reason": "chained_dependency_unexpandable",
    "blocking_variables": [
     {
      "variable": "ageingRequired",
@@ -355,18 +283,6 @@
      "variable": "eventType",
      "kind": "code_external",
      "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
-    }
-   ],
-   "case_study": "jBilling"
-  },
-  {
-   "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "resultCode",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
     }
    ],
    "case_study": "jBilling"

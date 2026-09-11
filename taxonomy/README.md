@@ -68,36 +68,52 @@ A genuinely new axis the original design doc's own §7b never had access
 to, since it requires the parsed condition trees this program didn't have
 until `generator/compile_constraints.py` was built:
 
-| Usage shape | Count | % of 183 compiled branches |
+| Usage shape | Count | % of 239 compiled branches |
 |---|---|---|
-| Plain single comparison | 145 | 79.2% |
-| Cross-variable comparison (right-hand side is another variable, not a literal) | 33 | 18.0% |
-| Negation (`not(...)`) | 4 | 2.2% |
-| Set-membership (`IN (...)`) | 1 | 0.5% |
+| Plain single comparison | 149 | 62.3% |
+| Cross-variable comparison (right-hand side is another variable, not a literal) | 57 | 23.8% |
+| Negation (`not(...)`) | 54 | 22.6% |
+| Set-membership (`IN (...)`) | 9 | 3.8% |
 
-The cross-variable share (18.0%) is consistent with — slightly below,
-since this counts compiled branches rather than all drafted decisions —
-the design doc's own program-wide estimate of ~17–19% of decisions using
-this pattern (§7a/§13.4), a useful independent cross-check from a
-completely different measurement method (parsed condition trees vs.
-manual decision-level counting).
+(Regenerated after `generator/`'s chained-decision-output expansion pass
+added 56 new compiled records — see its README's "Chained decision
+output" section. Negation's share jumped sharply, from 2.2% to 22.6% of a
+larger total: every expanded record's compound condition literally
+encodes its upstream rule's FIRST/UNIQUE hit-policy suppression as
+`{"op": "not", ...}` clauses — "this upstream rule fires AND NOT any
+earlier upstream rule" — so this reflects a real, newly-visible construct
+these branches actually need, not drift in the classifier.)
+
+The cross-variable share (23.8%, up from 18.0% pre-expansion for the same
+reason) is consistent with — in the same range as — the design doc's own
+program-wide estimate of ~17–19% of decisions using this pattern
+(§7a/§13.4), a useful independent cross-check from a completely different
+measurement method (parsed condition trees vs. manual decision-level
+counting).
 
 ## Known limitation: "Chained Decision Output" reads as zero here
 
-This is real and not a bug: `generator/compile_report.json` currently
-shows 9 blocking occurrences of `chained_decision_output` (a decision
-whose branch depends on another decision *table's* output, which isn't
-inlined — §generator/README.md's own documented scope boundary). This
-taxonomy shows zero because it classifies each ground-truth row using
-`resolve_variable` directly, keyed only by that row's own
-`(decision_name, variable_name)` — the same call `compile_constraints.py`
-makes for a decision's *own* declared inputs. `chained_decision_output`
-is a property of the *resolution walk* (`resolve_and_substitute`,
-DRD-aware), not of a row in isolation; it only shows up when
-`compile_constraints.py` is actually resolving a specific branch's
-dependency, with that branch's own DRD edges in view. Measuring the
-program's real chained-dependency structure means reading
-`generator/compile_report.json`, not this file.
+This is real and not a bug, and still true after `generator/`'s
+chained-decision-output resolution pass (2026-09-11): this taxonomy
+classifies each ground-truth row using `resolve_variable` directly, keyed
+only by that row's own `(decision_name, variable_name)` — the same call
+`compile_constraints.py` makes for a decision's *own* declared inputs.
+`chained_decision_output` is a property of the *resolution walk*
+(`resolve_and_substitute`, DRD-aware), not of a row in isolation; it only
+shows up when `compile_constraints.py` is actually resolving a specific
+branch's dependency, with that branch's own DRD edges in view.
+
+**Note this no longer means the dependency is unresolved, though** —
+`generator/compile_constraints.py`'s `enumerate_upstream_groundings`
+(added the same day) now expands almost every such dependency into
+several fully self-contained compiled records (one per upstream branch
+that could produce the needed value), rather than leaving it blocked. Of
+the original 9 occurrences, 7 were successfully expanded (56 new records)
+and 2 remain genuinely blocked (jBilling's `Ageing Step Advancement` — its
+own upstream dependency is itself `code_external`, a true dead end, not a
+missed case). Measuring the program's real chained-dependency structure
+and its resolution means reading `generator/compile_report.json` and
+`generator/README.md`'s "Chained decision output" section, not this file.
 
 ## Regenerating
 
