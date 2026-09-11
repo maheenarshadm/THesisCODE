@@ -144,7 +144,16 @@ def evaluate_expression(node, resolution_map, genome):
         cond_true = distance_to_true(node['cond'], resolution_map, genome) == 0
         branch = node['then'] if cond_true else node['else']
         return evaluate_expression(branch, resolution_map, genome)
-    raise FitnessEvaluationError(f"expression node with unhandled op {op!r}: {node!r}")
+    if op is not None:
+        # A comparison/logical node (=, <, and, in, IS NULL's own '=' form,
+        # ...) used in a *value* position -- e.g. CHECK's own "(a IS NULL)
+        # <> (b IS NULL)", where each side is itself a boolean sub-
+        # expression being XOR'd via '<>', not a number to add/subtract.
+        # Evaluated as True/False via whether its own distance-to-true is
+        # already zero, then fed back through the ordinary comparison
+        # machinery by whichever caller wanted a value here.
+        return distance_to_true(node, resolution_map, genome) == 0
+    raise FitnessEvaluationError(f"expression node with unhandled shape: {node!r}")
 
 
 def _leaf_value(node, resolution_map, genome):
@@ -292,6 +301,218 @@ def branch_fitness(record, genome):
     return normalize(own) + suppression
 
 
+# ---------------------------------------------------------------------------
+# 4. Schema/DB constraint terms (§6.3's "combining with database integrity
+#    constraints" section) -- the same base distance table, applied to a
+#    *candidate row set* instead of a DMN condition tree. This is a
+#    genuinely different shape of input than the DMN term needs: NOT NULL
+#    is about one row in isolation, but UNIQUE/PK and FK are properties of
+#    a row *against the rest of the candidate*, so these functions take
+#    `candidate_rows: {table_name: [ {column: value, ...}, ... ]}` rather
+#    than the flat genome dict branch_fitness uses. Building both views
+#    consistent with each other (the genome's variable values matching up
+#    with specific columns in candidate_rows) is a materialization-time
+#    concern (§6.5), not this module's.
+#
+# Scope, stated plainly: needs `fk_columns` (local column -> ref
+# table.column) and accurate `null_false` in the case-study's schema JSON
+# (all_schema_extraction/.../output/<cs>_schema_full.json). As of
+# 2026-09-11 this is only true for FLEX2 -- its own parser was fixed
+# while building this (NOT NULL was being missed entirely, and per-column
+# FK detail was being discarded down to just target-table names, exactly
+# like the other three case studies' parsers still do). OpenMRS/Spree/
+# jBilling's FK-distance term isn't computable yet for that reason; NOT
+# NULL and UNIQUE terms work for them already (their own `null_false`/
+# `pk`/`indexes` data was never broken the way FLEX2's was).
+# ---------------------------------------------------------------------------
+
+def not_null_distance(row, table, schema):
+    """Sum, over every column this table declares NOT NULL, the boolean
+    base-table distance (§6.3: "boolean flag -- K if not the desired
+    value") for that column actually being non-null in this one
+    candidate row."""
+    info = schema.get(table, {})
+    return sum(K for col, meta in info.get('columns', {}).items()
+               if meta.get('null_false') and row.get(col) is None)
+
+
+def _unique_key_sets(schema, table):
+    info = schema.get(table, {})
+    keys = []
+    pk = info.get('pk')
+    if pk:
+        keys.append(pk if isinstance(pk, list) else [pk])
+    for idx in info.get('indexes', []):
+        if idx.get('unique'):
+            keys.append(idx['cols'])
+    return keys
+
+
+def unique_distance(rows, table, schema):
+    """UNIQUE/PK distance across every row this table's candidate proposes:
+    §6.3 calls this "a distance against existing/sibling row values." A
+    row with a NULL in the key is never a collision (standard SQL
+    semantics -- NULLs are never equal to each other for uniqueness
+    purposes); each extra row sharing an otherwise-identical key beyond
+    the first contributes one K, the same boolean-mismatch unit the base
+    table already uses elsewhere, rather than a fabricated numeric
+    distance a duplicate key has no natural graduated form for."""
+    d = 0.0
+    for cols in _unique_key_sets(schema, table):
+        seen = {}
+        for row in rows:
+            key = tuple(row.get(c) for c in cols)
+            if any(v is None for v in key):
+                continue
+            seen[key] = seen.get(key, 0) + 1
+        d += sum(K * (count - 1) for count in seen.values() if count > 1)
+    return d
+
+
+def fk_distance(row, table, schema, candidate_rows):
+    """FK distance for one row: §6.3 -- "a distance measuring whether the
+    value exists in the parent table," checked against the candidate's
+    own in-memory rows (§6.5: no live DB needed during search). A NULL FK
+    column is never a violation on its own (a nullable FK left unset is
+    valid unless a separate NOT NULL constraint also applies -- that's
+    not_null_distance's job, not this one's, so the two terms don't
+    double-count the same gap)."""
+    info = schema.get(table, {})
+    fk_cols = info.get('fk_columns')
+    if fk_cols is None:
+        raise FitnessEvaluationError(
+            f"{table!r}'s schema entry has no 'fk_columns' detail -- FK distance isn't "
+            f"computable for this case study yet (see this module's own scope note)")
+    d = 0.0
+    for fk in fk_cols:
+        val = row.get(fk['column'])
+        if val is None:
+            continue
+        parent_values = {r.get(fk['ref_column']) for r in candidate_rows.get(fk['ref_table'], [])}
+        if val not in parent_values:
+            d += K
+    return d
+
+
+# --- CHECK constraints: a minimal parser for the SQL boolean grammar
+# actually surveyed across the program's own declared CHECK bodies
+# (Spree's 3: "amount <= 0", "amount >= 0", "(line_item_id IS NULL) <>
+# (fulfillment_id IS NULL)") -- deliberately not a general SQL expression
+# parser, the same targeted-not-general discipline feel_parser.py used
+# for FEEL. Reuses distance_to_true/distance_to_false directly once
+# parsed into this module's own node vocabulary -- no new distance logic
+# needed, since a CHECK constraint is structurally the same kind of
+# boolean tree a DMN condition is.
+_CHECK_TOKEN_RE = __import__('re').compile(
+    r"'[^']*'|<=|>=|<>|!=|=|<|>|\(|\)|\bIS\s+NOT\s+NULL\b|\bIS\s+NULL\b|\bAND\b|\bOR\b|[\w.]+",
+    __import__('re').I)
+
+
+def parse_check_expression(text):
+    """CHECK body -> this module's condition-node vocabulary. Supports
+    exactly what's been surveyed: `column OP literal`, `column IS [NOT]
+    NULL`, parenthesized sub-expressions, and AND/OR/<>/!= combining them.
+    Raises FitnessEvaluationError (not a silent guess) on anything else."""
+    tokens = [t for t in _CHECK_TOKEN_RE.findall(text) if t.strip()]
+    pos = [0]
+
+    def peek():
+        return tokens[pos[0]] if pos[0] < len(tokens) else None
+
+    def advance():
+        t = tokens[pos[0]]
+        pos[0] += 1
+        return t
+
+    def parse_atom():
+        t = peek()
+        if t is None:
+            raise FitnessEvaluationError(f"unexpected end of CHECK expression: {text!r}")
+        if t == '(':
+            advance()
+            node = parse_or()
+            if peek() != ')':
+                raise FitnessEvaluationError(f"unbalanced parens in CHECK expression: {text!r}")
+            advance()
+            return node
+        advance()
+        if t.upper() in ('IS NULL', 'IS NOT NULL'):
+            raise FitnessEvaluationError(f"'IS [NOT] NULL' with no preceding operand: {text!r}")
+        # a column reference or a literal
+        if t.startswith("'"):
+            return {'kind': 'literal', 'value': t.strip("'"), 'type': 'string'}
+        try:
+            return {'kind': 'literal', 'value': float(t) if '.' in t else int(t), 'type': 'number'}
+        except ValueError:
+            return {'kind': 'variable', 'ref': t}
+
+    def parse_comparison():
+        left = parse_atom()
+        t = peek()
+        if t and t.upper() in ('IS NULL', 'IS NOT NULL'):
+            advance()
+            node = {'op': '=', 'left': left, 'right': {'kind': 'literal', 'value': None, 'type': 'null'}}
+            return node if t.upper() == 'IS NULL' else {'op': 'not', 'clause': node}
+        if t in ('=', '<', '>', '<=', '>=', '<>', '!='):
+            advance()
+            right = parse_atom()
+            return {'op': '!=' if t == '<>' else t, 'left': left, 'right': right}
+        return left  # a bare boolean-valued reference, no comparison
+
+    def parse_and():
+        node = parse_comparison()
+        while peek() and peek().upper() == 'AND':
+            advance()
+            node = {'op': 'and', 'clauses': [node, parse_comparison()]}
+        return node
+
+    def parse_or():
+        node = parse_and()
+        while peek() and peek().upper() == 'OR':
+            advance()
+            node = {'op': 'or', 'clauses': [node, parse_and()]}
+        return node
+
+    result = parse_or()
+    if pos[0] != len(tokens):
+        raise FitnessEvaluationError(f"trailing tokens in CHECK expression: {text!r} -> {tokens[pos[0]:]}")
+    return result
+
+
+def check_distance(row, table, schema):
+    """Sum, over every CHECK constraint this table declares, the distance
+    for that row's own values to satisfy it -- the same distance_to_true
+    the DMN term uses, since a CHECK body is just another boolean tree."""
+    info = schema.get(table, {})
+    d = 0.0
+    genome = {k: v for k, v in row.items()}
+    resolution_map = {k: {'kind': 'schema_column'} for k in row}
+    for check_text in info.get('checks', []):
+        node = parse_check_expression(check_text)
+        d += distance_to_true(node, resolution_map, genome)
+    return d
+
+
+def candidate_constraint_fitness(candidate_rows, schema):
+    """The full §6.3 constraint term across an entire candidate: every
+    row's NOT NULL and CHECK distance, plus each table's UNIQUE/PK
+    distance across its own rows, plus each row's FK distance against the
+    candidate's own parent rows -- normalized per-term and summed, the
+    same convention branch_fitness uses for the DMN term. Meant to be
+    added directly to branch_fitness's own return value once a genome and
+    a materialized candidate_rows view of it coexist (§6.5's job, not
+    yet built) to get §6.3's full combined score."""
+    total = 0.0
+    for table, rows in candidate_rows.items():
+        for row in rows:
+            total += normalize(not_null_distance(row, table, schema))
+            total += normalize(check_distance(row, table, schema))
+            if schema.get(table, {}).get('fk_columns') is not None:
+                total += normalize(fk_distance(row, table, schema, candidate_rows))
+        total += normalize(unique_distance(rows, table, schema))
+    return total
+
+
 if __name__ == '__main__':
     # A tiny self-check against the flagship attendance worked example
     # (design doc §6.3's own hand-computed numbers), run directly rather
@@ -347,3 +568,31 @@ if __name__ == '__main__':
 
     print(f"Full branch_fitness(Rule_2, 40/45) = {f40:.4f}, (Rule_2, 35/45) = {f35:.4f} -- both consistent.")
     print("All flagship worked-example self-checks passed.")
+
+    # Constraint-term self-check, against FLEX2's real, verified DDL
+    # (schemas/flex2/Flex1.sql) and Spree's real declared CHECK bodies.
+    flex2_schema = json.load(open(os.path.join(
+        HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'flex2_schema_full.json')))
+    spree_schema = json.load(open(os.path.join(
+        HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'spree_schema_full.json')))
+
+    complete_row = {'OFFER_ID': 501, 'CAMP_ID': 1, 'SEM_ID': None, 'COURSE_ID': 10, 'SECTION_ID': 2}
+    assert not_null_distance(complete_row, 'COURSE_OFFER', flex2_schema) == K
+    assert not_null_distance(dict(complete_row, SEM_ID=7), 'COURSE_OFFER', flex2_schema) == 0
+    assert unique_distance(
+        [{'LECTURE_ID': 101, 'ROLL_NO': 1}, {'LECTURE_ID': 101, 'ROLL_NO': 1}],
+        'STUDENT_ATTENDANCE', flex2_schema) == K
+    assert unique_distance(
+        [{'LECTURE_ID': 101, 'ROLL_NO': 1}, {'LECTURE_ID': 102, 'ROLL_NO': 1}],
+        'STUDENT_ATTENDANCE', flex2_schema) == 0
+    assert fk_distance({'SEM_ID': 999}, 'COURSE_OFFER', flex2_schema,
+                        {'SEMESTER': [{'SEM_ID': 999}]}) == 0
+    assert fk_distance({'SEM_ID': 999}, 'COURSE_OFFER', flex2_schema,
+                        {'SEMESTER': [{'SEM_ID': 5}]}) == K
+    assert check_distance({'amount': -3}, 'spree_discounts', spree_schema) == 0
+    assert check_distance({'amount': 5}, 'spree_discounts', spree_schema) > 0
+    assert check_distance({'line_item_id': 1, 'fulfillment_id': None},
+                           'spree_commission_lines', spree_schema) == 0
+    assert check_distance({'line_item_id': 1, 'fulfillment_id': 2},
+                           'spree_commission_lines', spree_schema) == K
+    print("All schema-constraint self-checks (NOT NULL/UNIQUE/FK/CHECK, real FLEX2+Spree data) passed.")
