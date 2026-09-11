@@ -22,6 +22,13 @@
     "fks": [
       "base_user"
     ],
+    "fk_columns": [
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -51,6 +58,13 @@
     },
     "fks": [
       "entity"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -112,6 +126,23 @@
       "entity",
       "language"
     ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "language_id",
+        "ref_table": "language",
+        "ref_column": "id"
+      },
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -159,6 +190,23 @@
       "entity",
       "paper_invoice_batch",
       "period_unit"
+    ],
+    "fk_columns": [
+      {
+        "column": "period_unit_id",
+        "ref_table": "period_unit",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "paper_invoice_batch_id",
+        "ref_table": "paper_invoice_batch",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -247,6 +295,18 @@
       "entity",
       "period_unit"
     ],
+    "fk_columns": [
+      {
+        "column": "period_unit_id",
+        "ref_table": "period_unit",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -298,6 +358,18 @@
       "base_user",
       "entity"
     ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -322,6 +394,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -354,6 +427,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -402,6 +476,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -429,6 +504,18 @@
       "contact",
       "contact_field_type"
     ],
+    "fk_columns": [
+      {
+        "column": "contact_id",
+        "ref_table": "contact",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "contact_field_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -454,6 +541,13 @@
     },
     "fks": [
       "entity"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -491,6 +585,23 @@
       "contact_type",
       "jbilling_table"
     ],
+    "fk_columns": [
+      {
+        "column": "table_id",
+        "ref_table": "jbilling_table",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "contact_type",
+        "ref_column": "id"
+      },
+      {
+        "column": "contact_id",
+        "ref_table": "contact",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -517,6 +628,13 @@
     "fks": [
       "entity"
     ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -529,6 +647,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -557,6 +676,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -573,6 +693,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -591,6 +712,18 @@
     "fks": [
       "currency",
       "entity"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -621,6 +754,13 @@
     },
     "fks": [
       "currency"
+    ],
+    "fk_columns": [
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -698,6 +838,23 @@
       "invoice_delivery_method",
       "partner"
     ],
+    "fk_columns": [
+      {
+        "column": "invoice_delivery_method_id",
+        "ref_table": "invoice_delivery_method",
+        "ref_column": "id"
+      },
+      {
+        "column": "partner_id",
+        "ref_table": "partner",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -729,6 +886,18 @@
       "currency",
       "language"
     ],
+    "fk_columns": [
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "language_id",
+        "ref_table": "language",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -747,6 +916,18 @@
     "fks": [
       "entity",
       "invoice_delivery_method"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "method_id",
+        "ref_table": "invoice_delivery_method",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -767,6 +948,18 @@
       "entity",
       "payment_method"
     ],
+    "fk_columns": [
+      {
+        "column": "payment_method_id",
+        "ref_table": "payment_method",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -785,6 +978,18 @@
     "fks": [
       "entity",
       "report"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "report_id",
+        "ref_table": "report",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -852,6 +1057,38 @@
       "event_log_module",
       "jbilling_table"
     ],
+    "fk_columns": [
+      {
+        "column": "module_id",
+        "ref_table": "event_log_module",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      },
+      {
+        "column": "table_id",
+        "ref_table": "jbilling_table",
+        "ref_column": "id"
+      },
+      {
+        "column": "message_id",
+        "ref_table": "event_log_message",
+        "ref_column": "id"
+      },
+      {
+        "column": "affected_user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -864,6 +1101,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -876,6 +1114,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -916,6 +1155,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -936,6 +1176,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -952,6 +1193,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -974,6 +1216,13 @@
     "fks": [
       "generic_status_type"
     ],
+    "fk_columns": [
+      {
+        "column": "dtype",
+        "ref_table": "generic_status_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -981,6 +1230,7 @@
     "pk": "id",
     "columns": {},
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1007,6 +1257,13 @@
     },
     "fks": [
       "language"
+    ],
+    "fk_columns": [
+      {
+        "column": "language_id",
+        "ref_table": "language",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1089,6 +1346,28 @@
       "invoice",
       "paper_invoice_batch"
     ],
+    "fk_columns": [
+      {
+        "column": "billing_process_id",
+        "ref_table": "billing_process",
+        "ref_column": "id"
+      },
+      {
+        "column": "paper_invoice_batch_id",
+        "ref_table": "paper_invoice_batch",
+        "ref_column": "id"
+      },
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "delegated_invoice_id",
+        "ref_table": "invoice",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1101,6 +1380,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1145,6 +1425,23 @@
       "invoice_line_type",
       "item"
     ],
+    "fk_columns": [
+      {
+        "column": "invoice_id",
+        "ref_table": "invoice",
+        "ref_column": "id"
+      },
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "invoice_line_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1161,6 +1458,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1195,6 +1493,13 @@
     "fks": [
       "entity"
     ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1221,6 +1526,18 @@
     "fks": [
       "currency",
       "item"
+    ],
+    "fk_columns": [
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1252,6 +1569,13 @@
     "fks": [
       "entity"
     ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1274,6 +1598,18 @@
       "item",
       "item_type"
     ],
+    "fk_columns": [
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "item_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1293,6 +1629,18 @@
       "item",
       "item_type"
     ],
+    "fk_columns": [
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "item_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1305,6 +1653,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1317,6 +1666,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1329,6 +1679,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1363,6 +1714,13 @@
     "fks": [
       "pluggable_task"
     ],
+    "fk_columns": [
+      {
+        "column": "pluggable_task_id",
+        "ref_table": "pluggable_task",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1391,6 +1749,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1409,6 +1768,18 @@
     "fks": [
       "mediation_process",
       "purchase_order"
+    ],
+    "fk_columns": [
+      {
+        "column": "mediation_process_id",
+        "ref_table": "mediation_process",
+        "ref_column": "id"
+      },
+      {
+        "column": "order_id",
+        "ref_table": "purchase_order",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1444,6 +1815,13 @@
     "fks": [
       "mediation_cfg"
     ],
+    "fk_columns": [
+      {
+        "column": "configuration_id",
+        "ref_table": "mediation_cfg",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1474,6 +1852,18 @@
     "fks": [
       "generic_status",
       "mediation_process"
+    ],
+    "fk_columns": [
+      {
+        "column": "mediation_process_id",
+        "ref_table": "mediation_process",
+        "ref_column": "id"
+      },
+      {
+        "column": "status_id",
+        "ref_table": "generic_status",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1506,6 +1896,18 @@
       "mediation_record",
       "order_line"
     ],
+    "fk_columns": [
+      {
+        "column": "mediation_record_id",
+        "ref_table": "mediation_record",
+        "ref_column": "id"
+      },
+      {
+        "column": "order_line_id",
+        "ref_table": "order_line",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1518,6 +1920,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1554,6 +1957,23 @@
       "language",
       "notification_message_type"
     ],
+    "fk_columns": [
+      {
+        "column": "language_id",
+        "ref_table": "language",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "notification_message_type",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1582,6 +2002,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1608,6 +2029,13 @@
     "fks": [
       "notification_message_arch"
     ],
+    "fk_columns": [
+      {
+        "column": "message_archive_id",
+        "ref_table": "notification_message_arch",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1629,6 +2057,13 @@
     },
     "fks": [
       "notification_message_section"
+    ],
+    "fk_columns": [
+      {
+        "column": "message_section_id",
+        "ref_table": "notification_message_section",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1656,6 +2091,13 @@
     "fks": [
       "notification_message"
     ],
+    "fk_columns": [
+      {
+        "column": "message_id",
+        "ref_table": "notification_message",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1678,6 +2120,13 @@
     "fks": [
       "notification_category"
     ],
+    "fk_columns": [
+      {
+        "column": "category_id",
+        "ref_table": "notification_category",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1690,6 +2139,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1742,6 +2192,23 @@
       "order_line_type",
       "purchase_order"
     ],
+    "fk_columns": [
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      },
+      {
+        "column": "order_id",
+        "ref_table": "purchase_order",
+        "ref_column": "id"
+      },
+      {
+        "column": "type_id",
+        "ref_table": "order_line_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1758,6 +2225,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1788,6 +2256,18 @@
     "fks": [
       "entity",
       "period_unit"
+    ],
+    "fk_columns": [
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      },
+      {
+        "column": "unit_id",
+        "ref_table": "period_unit",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1839,6 +2319,13 @@
     "fks": [
       "purchase_order"
     ],
+    "fk_columns": [
+      {
+        "column": "order_id",
+        "ref_table": "purchase_order",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1867,6 +2354,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1919,6 +2407,28 @@
       "currency",
       "period_unit"
     ],
+    "fk_columns": [
+      {
+        "column": "period_unit_id",
+        "ref_table": "period_unit",
+        "ref_column": "id"
+      },
+      {
+        "column": "fee_currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "related_clerk",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1953,6 +2463,13 @@
     "fks": [
       "partner"
     ],
+    "fk_columns": [
+      {
+        "column": "partner_id",
+        "ref_table": "partner",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1981,6 +2498,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2068,6 +2586,38 @@
       "payment_method",
       "payment_result"
     ],
+    "fk_columns": [
+      {
+        "column": "ach_id",
+        "ref_table": "ach",
+        "ref_column": "id"
+      },
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "payment_id",
+        "ref_table": "payment",
+        "ref_column": "id"
+      },
+      {
+        "column": "credit_card_id",
+        "ref_table": "credit_card",
+        "ref_column": "id"
+      },
+      {
+        "column": "result_id",
+        "ref_table": "payment_result",
+        "ref_column": "id"
+      },
+      {
+        "column": "method_id",
+        "ref_table": "payment_method",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2094,6 +2644,13 @@
     "fks": [
       "payment"
     ],
+    "fk_columns": [
+      {
+        "column": "payment_id",
+        "ref_table": "payment",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2119,6 +2676,13 @@
     },
     "fks": [
       "payment"
+    ],
+    "fk_columns": [
+      {
+        "column": "payment_id",
+        "ref_table": "payment",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2151,6 +2715,18 @@
       "invoice",
       "payment"
     ],
+    "fk_columns": [
+      {
+        "column": "invoice_id",
+        "ref_table": "invoice",
+        "ref_column": "id"
+      },
+      {
+        "column": "payment_id",
+        "ref_table": "payment",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2163,6 +2739,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2175,6 +2752,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2187,6 +2765,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2209,6 +2788,13 @@
     "fks": [
       "permission_type"
     ],
+    "fk_columns": [
+      {
+        "column": "type_id",
+        "ref_table": "permission_type",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2228,6 +2814,18 @@
       "permission",
       "role"
     ],
+    "fk_columns": [
+      {
+        "column": "role_id",
+        "ref_table": "role",
+        "ref_column": "id"
+      },
+      {
+        "column": "permission_id",
+        "ref_table": "permission",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2240,6 +2838,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2266,6 +2865,18 @@
     "fks": [
       "base_user",
       "permission"
+    ],
+    "fk_columns": [
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      },
+      {
+        "column": "permission_id",
+        "ref_table": "permission",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2298,6 +2909,18 @@
       "entity",
       "pluggable_task_type"
     ],
+    "fk_columns": [
+      {
+        "column": "type_id",
+        "ref_table": "pluggable_task_type",
+        "ref_column": "id"
+      },
+      {
+        "column": "entity_id",
+        "ref_table": "entity",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2324,6 +2947,13 @@
     "fks": [
       "pluggable_task"
     ],
+    "fk_columns": [
+      {
+        "column": "task_id",
+        "ref_table": "pluggable_task",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2346,6 +2976,13 @@
     "fks": [
       "pluggable_task_type_category"
     ],
+    "fk_columns": [
+      {
+        "column": "category_id",
+        "ref_table": "pluggable_task_type_category",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2358,6 +2995,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2385,6 +3023,18 @@
       "jbilling_table",
       "preference_type"
     ],
+    "fk_columns": [
+      {
+        "column": "type_id",
+        "ref_table": "preference_type",
+        "ref_column": "id"
+      },
+      {
+        "column": "table_id",
+        "ref_table": "jbilling_table",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2397,6 +3047,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2444,6 +3095,18 @@
       "billing_process",
       "generic_status"
     ],
+    "fk_columns": [
+      {
+        "column": "process_id",
+        "ref_table": "billing_process",
+        "ref_column": "id"
+      },
+      {
+        "column": "status_id",
+        "ref_table": "generic_status",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2471,6 +3134,18 @@
       "currency",
       "process_run"
     ],
+    "fk_columns": [
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "process_run_id",
+        "ref_table": "process_run",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2496,6 +3171,13 @@
     },
     "fks": [
       "payment_method"
+    ],
+    "fk_columns": [
+      {
+        "column": "payment_method_id",
+        "ref_table": "payment_method",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2532,6 +3214,18 @@
       "base_user",
       "process_run"
     ],
+    "fk_columns": [
+      {
+        "column": "process_run_id",
+        "ref_table": "process_run",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2562,6 +3256,13 @@
     "fks": [
       "item"
     ],
+    "fk_columns": [
+      {
+        "column": "item_id",
+        "ref_table": "item",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2580,6 +3281,18 @@
     "fks": [
       "base_user",
       "promotion"
+    ],
+    "fk_columns": [
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      },
+      {
+        "column": "promotion_id",
+        "ref_table": "promotion",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2690,6 +3403,33 @@
       "order_billing_type",
       "order_period"
     ],
+    "fk_columns": [
+      {
+        "column": "currency_id",
+        "ref_table": "currency",
+        "ref_column": "id"
+      },
+      {
+        "column": "billing_type_id",
+        "ref_table": "order_billing_type",
+        "ref_column": "id"
+      },
+      {
+        "column": "period_id",
+        "ref_table": "order_period",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      },
+      {
+        "column": "created_by",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2714,6 +3454,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2734,6 +3475,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2750,6 +3492,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2766,6 +3509,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2778,6 +3522,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2802,6 +3547,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2818,6 +3564,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2836,6 +3583,18 @@
     "fks": [
       "base_user",
       "role"
+    ],
+    "fk_columns": [
+      {
+        "column": "role_id",
+        "ref_table": "role",
+        "ref_column": "id"
+      },
+      {
+        "column": "user_id",
+        "ref_table": "base_user",
+        "ref_column": "id"
+      }
     ],
     "indexes": [],
     "checks": []

@@ -34,6 +34,16 @@ KNOWN LIMITATIONS:
   - Multiple changelog files are processed in the order given on the command
     line; if a later file alters a table defined in an earlier one (addColumn,
     dropColumn, etc.), file order matters and should match real deployment order.
+
+FIXED 2026-09-11 (while extending generator/fitness.py's FK constraint
+distance term to OpenMRS, matching the same fix already applied to
+FLEX2's parser): `addForeignKeyConstraint`'s own `baseColumnNames`/
+`referencedColumnNames` attributes -- already named in this docstring's
+own element description above -- were being read off the element and
+then dropped, keeping only the target table name. Insufficient for a
+real per-column FK distance, which needs to know *which* column to
+check. Now preserved as `fk_columns` (local column -> ref table.column),
+one entry per local/ref column pair for composite FKs.
 """
 import argparse
 import json
@@ -54,7 +64,7 @@ def local(tag):
 
 def ensure_table(tables, name):
     if name not in tables:
-        tables[name] = {'pk': None, 'columns': {}, 'fks': set(), 'indexes': [], 'checks': []}
+        tables[name] = {'pk': None, 'columns': {}, 'fks': set(), 'fk_columns': [], 'indexes': [], 'checks': []}
     return tables[name]
 
 
@@ -130,8 +140,13 @@ def parse_file(path, tables):
                 tname = el.get('baseTableName')
                 ref = el.get('referencedTableName')
                 if tname and ref:
-                    ensure_table(tables, tname)['fks'].add(ref)
+                    t = ensure_table(tables, tname)
+                    t['fks'].add(ref)
                     RAW_FK_COUNT[0] += 1
+                    base_cols = [c.strip() for c in (el.get('baseColumnNames') or '').split(',') if c.strip()]
+                    ref_cols = [c.strip() for c in (el.get('referencedColumnNames') or '').split(',') if c.strip()]
+                    for local_col, ref_col in zip(base_cols, ref_cols):
+                        t['fk_columns'].append({'column': local_col, 'ref_table': ref, 'ref_column': ref_col})
 
             elif tag == 'addUniqueConstraint':
                 tname = el.get('tableName')
@@ -165,6 +180,7 @@ def main():
             'pk': t['pk'],
             'columns': t['columns'],
             'fks': sorted(t['fks']),
+            'fk_columns': t['fk_columns'],
             'indexes': t['indexes'],
             'checks': t['checks'],
         }
@@ -177,12 +193,14 @@ def main():
     n_tables = len(export)
     n_pk = sum(1 for t in export.values() if t['pk'])
     n_fk_relationships = sum(len(t['fks']) for t in export.values())
+    n_fk_columns = sum(len(t['fk_columns']) for t in export.values())
     n_unique = sum(1 for t in export.values() for idx in t['indexes'] if idx['unique'])
     n_checks = sum(len(t['checks']) for t in export.values())
     print(f"Tables: {n_tables}")
     print(f"Tables with PK: {n_pk}")
     print(f"Raw FK constraint declarations (addForeignKeyConstraint elements): {RAW_FK_COUNT[0]}")
     print(f"Distinct table-to-table FK relationships (deduplicated): {n_fk_relationships}")
+    print(f"Per-column FK entries (local column -> ref table.column, 'fk_columns'): {n_fk_columns}")
     print(f"Total UNIQUE constraints (inline column unique=\"true\" + addUniqueConstraint): {n_unique}")
     print(f"Total CHECK constraints: {n_checks}")
     print(f"Wrote {args.out}")

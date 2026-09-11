@@ -317,13 +317,18 @@ def branch_fitness(record, genome):
 # Scope, stated plainly: needs `fk_columns` (local column -> ref
 # table.column) and accurate `null_false` in the case-study's schema JSON
 # (all_schema_extraction/.../output/<cs>_schema_full.json). As of
-# 2026-09-11 this is only true for FLEX2 -- its own parser was fixed
-# while building this (NOT NULL was being missed entirely, and per-column
-# FK detail was being discarded down to just target-table names, exactly
-# like the other three case studies' parsers still do). OpenMRS/Spree/
-# jBilling's FK-distance term isn't computable yet for that reason; NOT
-# NULL and UNIQUE terms work for them already (their own `null_false`/
-# `pk`/`indexes` data was never broken the way FLEX2's was).
+# 2026-09-11 this is true for all four case studies: FLEX2's parser was
+# fixed while building this (NOT NULL was being missed entirely, and
+# per-column FK detail discarded down to just target-table names), then
+# OpenMRS's and jBilling's own parsers were fixed the same way the same
+# day (both already had `baseColumnNames`/`referencedColumnNames`, or the
+# FK regex's own captured groups, sitting right there and discarded).
+# Spree's original migration-history source is not available in this
+# environment at all (only the derived JSON survived from a prior
+# session) -- its `fk_columns` were instead added by a small dedicated
+# script (`add_spree_fk_columns.py`) parsing `schemas/spree_schema.rb`'s
+# 6 real `add_foreign_key` declarations directly, each verified against
+# the target table's own real columns before being trusted.
 # ---------------------------------------------------------------------------
 
 def not_null_distance(row, table, schema):
@@ -575,6 +580,10 @@ if __name__ == '__main__':
         HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'flex2_schema_full.json')))
     spree_schema = json.load(open(os.path.join(
         HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'spree_schema_full.json')))
+    openmrs_schema = json.load(open(os.path.join(
+        HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'openmrs_schema_full.json')))
+    jbilling_schema = json.load(open(os.path.join(
+        HERE, '..', 'all_schema_extraction', 'all_schema_extraction', 'output', 'jbilling_schema_full.json')))
 
     complete_row = {'OFFER_ID': 501, 'CAMP_ID': 1, 'SEM_ID': None, 'COURSE_ID': 10, 'SECTION_ID': 2}
     assert not_null_distance(complete_row, 'COURSE_OFFER', flex2_schema) == K
@@ -595,4 +604,14 @@ if __name__ == '__main__':
                            'spree_commission_lines', spree_schema) == 0
     assert check_distance({'line_item_id': 1, 'fulfillment_id': 2},
                            'spree_commission_lines', spree_schema) == K
-    print("All schema-constraint self-checks (NOT NULL/UNIQUE/FK/CHECK, real FLEX2+Spree data) passed.")
+    # FK distance across all four case studies (not just FLEX2) --
+    # OpenMRS/jBilling/Spree's own parsers were fixed the same day.
+    assert fk_distance({'patient_id': 5}, 'encounter', openmrs_schema, {'patient': [{'patient_id': 5}]}) == 0
+    assert fk_distance({'patient_id': 5}, 'encounter', openmrs_schema, {'patient': [{'patient_id': 9}]}) == K
+    assert fk_distance({'result_id': 1}, 'payment', jbilling_schema, {'payment_result': [{'id': 1}]}) == 0
+    assert fk_distance({'result_id': 1}, 'payment', jbilling_schema, {'payment_result': [{'id': 2}]}) == K
+    assert fk_distance({'spree_taxon_id': 7}, 'spree_category_translations', spree_schema,
+                        {'spree_taxon': [{'id': 7}]}) == 0
+    assert fk_distance({'spree_taxon_id': 7}, 'spree_category_translations', spree_schema,
+                        {'spree_taxon': [{'id': 8}]}) == K
+    print("All schema-constraint self-checks (NOT NULL/UNIQUE/FK/CHECK, all 4 case studies' real data) passed.")
