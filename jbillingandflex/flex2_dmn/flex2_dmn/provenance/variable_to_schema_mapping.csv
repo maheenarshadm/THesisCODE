@@ -1,0 +1,61 @@
+dmn_file,decision_name,variable_name,io,flex2_table_column,mapping_type,notes
+Academic_Standing.dmn,Academic Warning Status,cumulativeGPA,input,STUDENT_PROGRAM.CGPA (also STUDENT_SEMESTER.CGPA per-semester),direct,
+Academic_Standing.dmn,Academic Warning Status,priorWarningCount,input,STUDENT_PROGRAM.WARNING (also STUDENT_SEMESTER.WARNING),direct,
+Academic_Standing.dmn,Academic Warning Status,newWarningCount,output,STUDENT_PROGRAM.WARNING,direct,written back after each semester's processing
+Academic_Standing.dmn,Academic Warning Status,admissionStatus,output,STUDENT_PROGRAM.PROG_STATUS via D_STUDENT_STATUS,direct-coded,Active/Closed must be mapped to the real STATUS_ID values in D_STUDENT_STATUS (not visible in this DDL-only export - no seed data)
+Academic_Standing.dmn,Academic Warning Status,warningAction,output,(none),not-persisted,Workflow/notification text only - no matching column found
+Academic_Standing.dmn,Course Load Limit,semesterType,input,SEMESTER (Regular/Summer classification),derived,exact column not confirmed from DDL alone - SEMESTER table structure not inspected in this pass
+Academic_Standing.dmn,Course Load Limit,newWarningCount,input,STUDENT_PROGRAM.WARNING,direct,fed from Academic Warning Status decision (DRD edge)
+Academic_Standing.dmn,Course Load Limit,maxCoursesAllowed,output,(none - runtime check),derived,validated against COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID at registration time
+Academic_Standing.dmn,Course Load Limit,courseLoadBasis,output,(none),not-persisted,explanatory text only
+Academic_Standing.dmn,Admission Closure Eligibility,newWarningCount,input,STUDENT_PROGRAM.WARNING,direct,fed from Academic Warning Status decision (DRD edge)
+Academic_Standing.dmn,Admission Closure Eligibility,newAdmissionEligibilityNotMet,input,ADM_OFFER_SUMMARY / ADM_MERIT_LIST,derived,admission-module cross-reference
+Academic_Standing.dmn,Admission Closure Eligibility,admissionStatus,output,STUDENT_PROGRAM.PROG_STATUS,direct,
+Academic_Standing.dmn,Admission Closure Eligibility,closureReason,output,STUDENT_REMARKS_HISTORY,direct,table exists specifically for this purpose
+Academic_Standing.dmn,Course Registration Eligibility,newWarningCount,input,STUDENT_PROGRAM.WARNING,direct,fed from Academic Warning Status (DRD edge)
+Academic_Standing.dmn,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,derived COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID,derived,
+Academic_Standing.dmn,Course Registration Eligibility,maxCoursesAllowed,input,(none - runtime),direct,fed from Course Load Limit (DRD edge)
+Academic_Standing.dmn,Course Registration Eligibility,canRegisterCourse,output,gates COURSE_REGISTRATION insert (REG_STATUS/REG_APPROVAL_DATE),derived,
+Academic_Standing.dmn,Course Registration Eligibility,reason,output,EXCEPTION_DETAIL,direct,table exists specifically for this purpose
+Grading_and_Attendance.dmn,Attendance Percentage,lecturesHeldForOffering,input,COUNT(LECTURE) WHERE OFFER_ID = <this course offering>,direct - aggregate,"Course-wise and duration-driven: LECTURE holds one row per session actually held for that COURSE_OFFER, so this count varies per course/semester (credit hours, weekly frequency, COURSE_OFFER.START_DATE/END_DATE) instead of a fixed lecture count for every course."
+Grading_and_Attendance.dmn,Attendance Percentage,lecturesAttended,input,COUNT(STUDENT_ATTENDANCE) WHERE ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y',direct - aggregate,Raw attended-session count for this student in this course offering.
+Grading_and_Attendance.dmn,Attendance Percentage,attendancePercentage,output,(computed - not a stored column),derived,attendancePercentage = (lecturesAttended / lecturesHeldForOffering) * 100; feeds Attendance Eligibility For Final Exam via the DRD.
+Grading_and_Attendance.dmn,Attendance Eligibility For Final Exam,attendancePercentage,input,derived aggregate of STUDENT_ATTENDANCE.ATTEND_FLAG,derived,"Now computed by the upstream ""Attendance Percentage"" literal-expression decision (see its rows below) rather than assumed pre-computed."
+Grading_and_Attendance.dmn,Attendance Eligibility For Final Exam,eligibleForFinalExam,output,gates TENT_GRADE / COURSE_REGISTRATION.GRADE,derived,
+Grading_and_Attendance.dmn,Attendance Eligibility For Final Exam,assignedGradeOverride,output,COURSE_REGISTRATION.GRADE (set to 'FA'),direct,
+Grading_and_Attendance.dmn,Grade Points and Interpretation,letterGrade,input,COURSE_REGISTRATION.GRADE / TENT_GRADE.CORRECTION_GRADE,direct,
+Grading_and_Attendance.dmn,Grade Points and Interpretation,gradePoints,output,GRADE.GRADE_POINT,direct - exact match,this decision is effectively a DMN mirror of the GRADE reference table; can be validated/generated directly from it once seed data is available
+Grading_and_Attendance.dmn,Grade Points and Interpretation,interpretation,output,(none),not-persisted,GRADE table has no interpretation text column; sourced purely from policy doc rule 2.2
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,gradeInCourseToReplace,input,COURSE_REGISTRATION.GRADE,direct,
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,courseOfferedInFollowingSemesters,input,derived from COURSE_OFFER history for COURSE_ID across SEM_ID,derived,
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,replacingCoursePassedAtLeastOneSemesterAfter,input,COURSE_REGISTRATION.IS_REPLACED / REPLACED_WITH,direct - exact match,schema has dedicated columns for exactly this
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,eligibleForReplacement,output,COURSE_REGISTRATION.IS_REPLACED,direct,
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,reason,output,EXCEPTION_DETAIL / STUDENT_REMARKS_HISTORY,derived,
+Graduation_Eligibility.dmn,Graduation Eligibility,creditHoursEarned,input,STUDENT_PROGRAM.CREDITS_EARNED,direct,
+Graduation_Eligibility.dmn,Graduation Eligibility,degreeMinimumCreditHours,input,PROGRAM (credit-hour requirement column),direct - column name to confirm,PROGRAM table's full column list was not inspected in this pass
+Graduation_Eligibility.dmn,Graduation Eligibility,cumulativeGPA,input,STUDENT_PROGRAM.CGPA,direct,
+Graduation_Eligibility.dmn,Graduation Eligibility,semestersElapsed,input,derived COUNT(STUDENT_SEMESTER) for ROLL_NO,derived,
+Graduation_Eligibility.dmn,Graduation Eligibility,yearsElapsed,input,derived from STUDENT_PROGRAM.CREATED_DATE vs current date,derived,
+Graduation_Eligibility.dmn,Graduation Eligibility,eligibleToGraduate,output,gates STUDENT_PROGRAM.PROG_STATUS = Graduated,derived,
+Graduation_Eligibility.dmn,Graduation Eligibility,reason,output,STUDENT_REMARKS_HISTORY / EXCEPTION_DETAIL,derived,
+Summer_Semester_Registration.dmn,Summer Semester Registration,isElectiveTaughtByVisitingScholarUnavailableOtherwise,input,EMPLOYEE / D_EMP_TYPE cross-ref with COURSE_OFFER instructor,SCHEMA GAP (partial),no direct 'visiting-only availability' flag
+Summer_Semester_Registration.dmn,Summer Semester Registration,isNeededToGraduateThisSummer,input,derived (same logic as Graduation Eligibility decision),derived,
+Summer_Semester_Registration.dmn,Summer Semester Registration,repeatCourseCountRequested,input,REPEAT_COURSE (COUNT per USER_ID/semester),direct - exact match,table exists specifically for this purpose
+Summer_Semester_Registration.dmn,Summer Semester Registration,registrationAllowed,output,gates COURSE_REGISTRATION insert,derived,
+Summer_Semester_Registration.dmn,Summer Semester Registration,reason,output,EXCEPTION_DETAIL,direct,
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,cumulativeExemptedCreditPercentIfGranted,input,derived aggregate over EXEMPTED_COURSES join COURSE.CREDIT_HRS vs PROGRAM total,derived,
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,exemptionGranted,output,EXEMPTED_COURSES row insertion,direct,
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,creditGivenForPrerequisite,output,EXEMPTED_COURSES row insertion (for the prerequisite course),direct,
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,countsTowardCGPA,output,(none - always false by rule 3.12),not-persisted,"enforced by exclusion logic in CGPA calculation, not a stored flag"
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,reason,output,EXEMPTED_COURSES.REMARKS,direct - exact match,column is literally intended for this
+Academic_Standing.dmn,Admission Closure Eligibility,yearsSinceProgramStart,input,derived from STUDENT_PROGRAM.CREATED_DATE vs current date,derived,"exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Academic_Standing.dmn,Admission Closure Eligibility,regStatus,input,STUDENT_PROGRAM.REG_STATUS via D_STUDENT_REG_STATUS,direct-coded,"exposed as a real status-code test, replacing suspendedRegistrationNotRestored; specific code value unconfirmed (Flex1.sql has no seed data), same caveat as other coded values in this schema (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Academic_Standing.dmn,Course Registration Eligibility,unmetPrerequisiteCount,input,COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE,derived-aggregate,"exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Academic_Standing.dmn,Course Registration Eligibility,previousGradeInCourse,input,COURSE_REGISTRATION.GRADE history for this COURSE_ID+ROLL_NO,derived,"exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,creditsEarned,input,STUDENT_PROGRAM.CREDITS_EARNED,direct,"exposed directly, replacing degreeRequirementsCompletedOrCompletingThisSemester (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,degreeTotalCredits,input,PROGRAM (degree total credits column),direct,exposed directly for the cross-variable comparison (creditsEarned < degreeTotalCredits)
+Course_Replacement_Eligibility.dmn,Course Replacement Eligibility,courseTypeId,input,COURSE.COURSE_TYPE_ID via D_COURSE_TYPE,direct-coded,"exposed as a real category test (= ""CORE""), replacing isCoreCourse (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Summer_Semester_Registration.dmn,Summer Semester Registration,courseTypeId,input,COURSE.COURSE_TYPE_ID via D_COURSE_TYPE,direct-coded,"exposed as a real category test (= ""RESEARCH""), replacing isResearchCourseOrProject (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Summer_Semester_Registration.dmn,Summer Semester Registration,priorRegistrationCount,input,COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID,derived-aggregate,"exposed as a count (=0 means new request), replacing isNewCourseRequest (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Summer_Semester_Registration.dmn,Summer Semester Registration,enrolledStudentCount,input,COUNT(COURSE_REGISTRATION) for OFFER_ID,derived-aggregate,"exposed as a count (<10 blocks), replacing minimumTenStudentsEnrolled (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+Credit_Transfer_Exemption.dmn,Credit Transfer Exemption,unmetPrerequisiteAlsoPassedCount,input,COUNT via COURSE_PREREQ join COURSE_REGISTRATION,derived-aggregate,"exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"

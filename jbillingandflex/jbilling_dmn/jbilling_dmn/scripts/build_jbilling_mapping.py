@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""
+Builds provenance/variable_to_schema_mapping.csv for the jBilling DMN case
+study, against the real jBilling schema (scratchpad/schemas/jbilling/sql/jbilling_test.sql).
+
+IMPORTANT: always open CSV files with newline='' (see FLEX2 postmortem on
+CSV corruption from omitting this).
+"""
+import csv
+import os
+
+OUT_PATH = os.path.join(os.path.dirname(__file__), '..', 'provenance', 'variable_to_schema_mapping.csv')
+
+# Each row: (dmn_file, decision_name, variable_name, io, jbilling_column, mapping_type, notes)
+ROWS = [
+    # --- Ageing_and_Dunning.dmn ---
+    ('Ageing_and_Dunning.dmn', 'Is Ageing Required', 'expiryDate', 'input', 'n/a', 'derived',
+     'base_user.last_status_change (fallback base_user.create_datetime, both real columns) plus '
+     'ageing_entity_step.days, added as calendar days (BasicAgeingTask) or business days via BusinessDays '
+     '(BusinessDayAgeingTask); no single column holds this computed date.'),
+    ('Ageing_and_Dunning.dmn', 'Is Ageing Required', 'ageingRequired', 'output', 'n/a', 'not-persisted',
+     'Transient boolean computed per review pass; not written back to ageing_entity_step or base_user.'),
+
+    ('Ageing_and_Dunning.dmn', 'Invoice Overdue Check', 'dueDatePlusGrace', 'input', 'invoice.due_date', 'derived',
+     'invoice.due_date plus the entity process.grace_period preference (a system preference row, not a column).'),
+    ('Ageing_and_Dunning.dmn', 'Invoice Overdue Check', 'invoiceOverdue', 'output', 'n/a', 'not-persisted',
+     'Transient result used only to decide whether to advance ageing in the excluded set-level review loop.'),
+
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Advancement', 'currentStatusIsActive', 'input', 'base_user.status_id', 'derived',
+     'base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Advancement', 'ageingStepConfigFound', 'input', 'ageing_entity_step (existence)', 'derived',
+     'True iff an ageing_entity_step row exists for (entity_id, status_id); existence check, boolean by deliberate exception.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Advancement', 'ageingRequired', 'input', 'n/a', 'not-persisted',
+     "Consumed directly from Is Ageing Required's output -- this is the DRD chain edge."),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Advancement', 'advanceToNextStep', 'output', 'n/a', 'not-persisted',
+     'Drives a subsequent write to base_user.status_id and base_user.last_status_change; the flag itself is never stored.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Advancement', 'advancementReason', 'output', 'n/a', 'not-persisted',
+     "Synthetic label for DMN readability; the Java code has no reason-code variable or column of its own."),
+
+    ('Ageing_and_Dunning.dmn', 'Ageing Status Change Order Action', 'newStatusIsDeleted', 'input', 'generic_status.id', 'derived',
+     'generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Status Change Order Action', 'oldStatusCanLogin', 'input', 'generic_status.can_login', 'direct - exact match',
+     "Read off the entity's PREVIOUS status row; generic_status.can_login is a real smallint column (dtype='user_status')."),
+    ('Ageing_and_Dunning.dmn', 'Ageing Status Change Order Action', 'newStatusCanLogin', 'input', 'generic_status.can_login', 'direct - exact match',
+     'Same column, read off the NEW status row being transitioned to.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Status Change Order Action', 'orderAction', 'output', 'n/a', 'not-persisted',
+     'Drives order_line status writes (ORDER_STATUS_SUSPENDED_AGEING / ORDER_STATUS_ACTIVE) and/or user deletion; the '
+     'action label itself is implicit in which if-block ran, not a stored value.'),
+
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'statusIsActive', 'input', 'base_user.status_id / generic_status.id', 'derived',
+     'Loop index over the STATUS_ACTIVE..STATUS_DELETED range, itself keyed off generic_status.id, compared to the STATUS_ACTIVE constant.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'statusIsDeleted', 'input', 'base_user.status_id / generic_status.id', 'derived',
+     'Same loop index compared to the STATUS_DELETED constant.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'isLastSelectedStep', 'input', 'n/a', 'derived',
+     'Computed as the highest array index with inUse=true across the submitted admin-screen steps array; not a stored flag.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'inUse', 'input', 'ageing_entity_step (existence)', 'derived',
+     'A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use '
+     'column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'welcomeMessagePresent', 'input', 'ageing_entity_step description (welcome_message)', 'derived',
+     'Reads from a generic i18n description mechanism keyed by "welcome_message", not a direct column on ageing_entity_step.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'days', 'input', 'ageing_entity_step.days', 'direct - exact match',
+     'ageing_entity_step.days is a real NOT NULL integer column.'),
+    ('Ageing_and_Dunning.dmn', 'Ageing Step Config Validation', 'validationResult', 'output', 'n/a', 'not-persisted',
+     'Validation is either a thrown exception (with an error-message code) or a silent pass; there is no stored '
+     'validation-result column -- this is a synthetic aggregation of which exception (if any) is thrown.'),
+
+    # --- Payment_Authorization_and_Blacklist.dmn ---
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Outcome Resolution', 'processorUnavailable', 'input', 'n/a', 'not-persisted',
+     'Transient loop flag in PaymentBL.processPayment; never written to any table column.'),
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Outcome Resolution', 'paymentResultId', 'input', 'payment.result_id', 'derived',
+     'Read from the last pluggable payment task attempt, before any persistence step visible in this file.'),
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Outcome Resolution', 'resultCode', 'output', 'payment.result_id', 'SCHEMA GAP',
+     "This decision computes the authoritative outcome, but PaymentBL.java never shows it being saved back onto the "
+     "payment entity created earlier (create(info) runs before the pluggable-task loop) -- the save-back path, if any, "
+     "is outside this file."),
+
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Balance Assignment', 'resultCode', 'input', 'payment.result_id', 'derived',
+     "Consumed as-is from Payment Outcome Resolution's output (requires chain)."),
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Balance Assignment', 'paymentAmount', 'input', 'payment.amount', 'direct - exact match',
+     'payment.amount is a NOT NULL numeric(22,10) column.'),
+    ('Payment_Authorization_and_Blacklist.dmn', 'Payment Balance Assignment', 'balance', 'output', 'payment.balance', 'direct - exact match',
+     'Written directly onto the payment.balance numeric(22,10) column.'),
+
+    ('Payment_Authorization_and_Blacklist.dmn', 'Blacklist Filter Enabled', 'blacklistPluginId', 'input', 'preference.value', 'derived',
+     'Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), '
+     'not a dedicated blacklist-config column.'),
+    ('Payment_Authorization_and_Blacklist.dmn', 'Blacklist Filter Enabled', 'blacklistEnabled', 'output', 'n/a', 'not-persisted',
+     'Returned directly to callers (payment processing / filter instantiation); never stored anywhere.'),
+
+    # --- Order_Cancellation_and_Validity.dmn ---
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'eventType', 'input', 'n/a', 'derived',
+     'Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'newActiveUntilProvided', 'input', 'purchase_order.active_until', 'derived',
+     "Null-check on the event's new active-until value, sourced from purchase_order.active_until."),
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'oldActiveUntilProvided', 'input', 'purchase_order.active_until', 'derived',
+     "Null-check on the event's prior active-until value (same column, earlier snapshot)."),
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'newActiveUntilBeforeOld', 'input', 'purchase_order.active_until', 'derived',
+     'Date comparison between the same column\'s old and new values.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'quantityDecreased', 'input', 'order_line.quantity', 'derived',
+     'Comparison of old/new quantities, sourced from order_line.quantity numeric(22,10).'),
+    ('Order_Cancellation_and_Validity.dmn', 'Cancellation Fee Eligibility', 'processCancellationFee', 'output', 'n/a', 'not-persisted',
+     'Gates whether a fee-order-generation routine runs; the decision result itself is not stored, only its side '
+     'effect (a new one-time fee order row) is.'),
+
+    ('Order_Cancellation_and_Validity.dmn', 'Order Period Already Invoiced', 'candidateDateProvided', 'input', 'n/a', 'not-persisted',
+     'Null-check on a transient Date parameter (either "now", or a proposed new purchase_order.active_until).'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Period Already Invoiced', 'nextBillableDayProvided', 'input', 'purchase_order.next_billable_day', 'derived',
+     'Null-check on purchase_order.next_billable_day (nullable date column).'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Period Already Invoiced', 'candidateDateBeforeNextBillableDay', 'input', 'purchase_order.next_billable_day', 'derived',
+     'Date comparison of the candidate date against purchase_order.next_billable_day.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Period Already Invoiced', 'periodAlreadyInvoiced', 'output', 'n/a', 'not-persisted',
+     'Gates whether a period-cancelled event fires and whether a refund order is generated; never itself persisted.'),
+
+    ('Order_Cancellation_and_Validity.dmn', 'Order Date Range Valid', 'parseOrAccessError', 'input', 'n/a', 'not-persisted',
+     'Boolean by deliberate exception: collapses several reflection/parsing exception types into one technical '
+     'failure flag, not a business comparison.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Date Range Valid', 'startDateProvided', 'input', 'n/a', 'not-persisted',
+     'Generic @DateRange bean-validation annotation resolves the field name per use-site via reflection; no single '
+     'fixed schema column applies.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Date Range Valid', 'endDateProvided', 'input', 'n/a', 'not-persisted',
+     'Same as startDateProvided -- annotation-parameterized field name, not a fixed column.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Date Range Valid', 'startBeforeEnd', 'input', 'n/a', 'not-persisted',
+     'Date comparison of whichever two DTO fields the @DateRange(start=,end=) annotation names at each use site.'),
+    ('Order_Cancellation_and_Validity.dmn', 'Order Date Range Valid', 'dateRangeValid', 'output', 'n/a', 'not-persisted',
+     'Bean-validation pass/fail result, never stored -- only used to accept or reject the incoming request.'),
+
+    # --- Proration_and_Tax.dmn ---
+    ('Proration_and_Tax.dmn', 'Cycle Start Source', 'hasNextBillableDay', 'input', 'purchase_order.next_billable_day', 'derived',
+     'Boolean derived from next_billable_day IS NOT NULL.'),
+    ('Proration_and_Tax.dmn', 'Cycle Start Source', 'hasCycleStarts', 'input', 'purchase_order.cycle_start', 'derived',
+     'Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name.'),
+    ('Proration_and_Tax.dmn', 'Cycle Start Source', 'cycleStartDateSource', 'output', 'n/a', 'not-persisted',
+     'A string label naming which real column/parameter supplies the winning date, not itself a stored value.'),
+
+    ('Proration_and_Tax.dmn', 'Daily Pro-Rate Amount', 'daysInCycle', 'input', 'n/a', 'derived',
+     'Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.'),
+    ('Proration_and_Tax.dmn', 'Daily Pro-Rate Amount', 'daysInPeriod', 'input', 'n/a', 'derived',
+     'Computed the same way as daysInCycle, for the actual (possibly partial) billed date range.'),
+    ('Proration_and_Tax.dmn', 'Daily Pro-Rate Amount', 'fullPrice', 'input', 'item_price.price', 'derived',
+     "Traces back to the item's full-period price, passed down through the composition-task pipeline rather than "
+     "read directly from the column in this decision."),
+    ('Proration_and_Tax.dmn', 'Daily Pro-Rate Amount', 'proratedAmount', 'output', 'order_line.amount', 'derived',
+     'The returned value is what an invoice/order line eventually persists as order_line.amount, via construction '
+     'code outside this decision.'),
+
+    ('Proration_and_Tax.dmn', 'Tax Calculation Needed', 'customContactFieldConfigured', 'input', 'n/a (plugin param custom_contact_field_id)', 'not-persisted',
+     'A pluggable_task_parameter configuration value, not a row in a business table.'),
+    ('Proration_and_Tax.dmn', 'Tax Calculation Needed', 'primaryContactFound', 'input', 'contact (existence)', 'derived',
+     'Boolean derived from whether a primary contact row exists for the customer.'),
+    ('Proration_and_Tax.dmn', 'Tax Calculation Needed', 'matchingFieldValue', 'input', 'contact_field.content', 'direct - exact match',
+     'contact_field.content, tested case-insensitively against "yes"/"true".'),
+    ('Proration_and_Tax.dmn', 'Tax Calculation Needed', 'taxCalculationNeeded', 'output', 'n/a', 'not-persisted',
+     "Runtime gate for whether a tax invoice line is added; no column records this decision's outcome."),
+
+    ('Proration_and_Tax.dmn', 'Tax Calculation Mode', 'taxItemHasPercentage', 'input', 'item.percentage', 'derived',
+     'Boolean derived from item.percentage IS NOT NULL for the configured tax item.'),
+    ('Proration_and_Tax.dmn', 'Tax Calculation Mode', 'taxCalculationMode', 'output', 'n/a', 'SCHEMA GAP',
+     'No explicit tax-type/discriminator column exists on item; PERCENTAGE vs. FLAT is entirely implied by the '
+     'nullability of the single percentage column.'),
+
+    # --- Currency_Exchange_Rules.dmn ---
+    ('Currency_Exchange_Rules.dmn', 'Currency Exchange Rate Source', 'hasEntitySpecificExchange', 'input', 'currency_exchange (entity_id, currency_id)', 'derived',
+     'Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.'),
+    ('Currency_Exchange_Rules.dmn', 'Currency Exchange Rate Source', 'hasSystemDefaultExchange', 'input', 'currency_exchange (entity_id=0, currency_id)', 'derived',
+     'Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; '
+     'nothing in the schema marks entity_id=0 as special.'),
+    ('Currency_Exchange_Rules.dmn', 'Currency Exchange Rate Source', 'exchangeRateSource', 'output', 'n/a', 'not-persisted',
+     'Which row wins is decided at read time; the winning currency_exchange.rate value is a direct column read, but '
+     'which source won is never itself recorded.'),
+]
+
+
+def build():
+    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+    with open(OUT_PATH, 'w', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerow(['dmn_file', 'decision_name', 'variable_name', 'io', 'jbilling_column', 'mapping_type', 'notes'])
+        for row in ROWS:
+            w.writerow(row)
+    print(f'wrote {OUT_PATH} ({len(ROWS)} rows)')
+
+
+if __name__ == '__main__':
+    build()

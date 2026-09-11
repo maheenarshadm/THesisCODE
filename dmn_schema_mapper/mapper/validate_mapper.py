@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""
+Validates mapper.py's output against the four hand-built
+variable_to_schema_mapping.csv ground-truth files (291 rows total) that
+were produced manually across the whole case-study program.
+
+Ground truth's 5th column (name varies per case study: flex2_table_column /
+openmrs_table_column / ofbiz_entity_field / prestashop_table_column) is
+free text, not a strict schema -- it can be "table.column", multiple
+comma-separated "table.column" pairs, "n/a", "not-persisted", or a prose
+description of a derived/aggregate fact. We extract every "word.word" token
+pair from it as the set of true (table, column) references, case-insensitive.
+
+Metrics reported, per case study and overall:
+  - Not-persisted / schema-gap classification accuracy (did the mapper
+    correctly predict 'not-persisted' for ground-truth not-persisted rows,
+    and NOT predict it for ground-truth-grounded rows?)
+  - Top-1 exact match rate (predicted table.column == a true pair), among
+    ground-truth rows that DO have a real column reference
+  - Top-3 hit rate (true pair appears anywhere in the top-3 candidates)
+  - Derived-fact detection recall (did the mapper flag a variable as
+    'derived'/'likely derived' when ground truth's mapping_type was
+    'derived' or its notes describe a multi-column/aggregate/join fact?)
+
+This is the number that answers "is this actually usable as an input to
+the generator, or does someone still have to check every row" -- reported
+honestly, not rounded up.
+"""
+import csv
+import re
+import argparse
+from collections import defaultdict
+
+GT_FILES = {
+    'FLEX2': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/flex2_dmn/provenance/variable_to_schema_mapping.csv', 'flex2_table_column'),
+    'OpenMRS': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/openmrs_dmn/provenance/variable_to_schema_mapping.csv', 'openmrs_table_column'),
+    'OFBiz': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/ofbiz_dmn/provenance/variable_to_schema_mapping.csv', 'ofbiz_entity_field'),
+    'PrestaShop': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/prestashop_dmn/provenance/variable_to_schema_mapping.csv', 'prestashop_table_column'),
+}
+
+PAIR_RE = re.compile(r'\b([A-Za-z][A-Za-z0-9_]*)\.([A-Za-z][A-Za-z0-9_]*)\b')
+
+
+def true_pairs(text):
+    return {(t.lower(), c.lower()) for t, c in PAIR_RE.findall(text or '')}
+
+
+def is_gt_not_persisted(mapping_type, schema_field_text):
+    mt = (mapping_type or '').lower()
+    txt = (schema_field_text or '').strip().lower()
+    return 'not-persisted' in mt or txt in ('n/a', 'not-persisted', '')
+
+
+def is_gt_derived(mapping_type, notes):
+    mt = (mapping_type or '').lower()
+    return 'derived' in mt or 'schema gap' in mt.lower() and 'derived' in (notes or '').lower()
+
+
+def load_ground_truth(cs):
+    path, colname = GT_FILES[cs]
+    rows = {}
+    with open(path, encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            key = (row['dmn_file'], row['decision_name'], row['variable_name'], row['io'])
+            rows[key] = {
+                'mapping_type': row['mapping_type'],
+                'schema_field': row[colname],
+                'notes': row.get('notes', ''),
+                'true_pairs': true_pairs(row[colname]),
+            }
+    return rows
+
+
+def load_predictions(path):
+    preds = {}
+    with open(path, encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            key = (row['dmn_file'], row['decision_name'], row['variable_name'], row['io'])
+            top3 = set()
+            for part in row['top3_candidates'].split(';'):
+                m = re.match(r'\s*([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)', part)
+                if m:
+                    top3.add((m.group(1).lower(), m.group(2).lower()))
+            preds[key] = {
+                'predicted_table': row['predicted_table'],
+                'predicted_column': row['predicted_column'],
+                'predicted_mapping_type': row['predicted_mapping_type'],
+                'top3': top3,
+            }
+    return preds
+
+
+def evaluate(cs, gt, preds):
+    n_total = 0
+    n_np_correct = n_np_total = 0
+    n_grounded_total = 0
+    n_top1 = 0
+    n_top3 = 0
+    n_derived_gt = n_derived_caught = 0
+    unmatched_keys = 0
+
+    for key, g in gt.items():
+        n_total += 1
+        p = preds.get(key)
+        if p is None:
+            unmatched_keys += 1
+            continue
+
+        gt_np = is_gt_not_persisted(g['mapping_type'], g['schema_field'])
+        pred_np = 'not-persisted' in p['predicted_mapping_type'].lower() or \
+                  'needs review' in p['predicted_mapping_type'].lower()
+        if gt_np:
+            n_np_total += 1
+            if pred_np:
+                n_np_correct += 1
+        else:
+            if g['true_pairs']:
+                n_grounded_total += 1
+                pred_pair = (p['predicted_table'].lower(), p['predicted_column'].lower()) \
+                    if p['predicted_table'] else None
+                if pred_pair and pred_pair in g['true_pairs']:
+                    n_top1 += 1
+                if p['top3'] & g['true_pairs']:
+                    n_top3 += 1
+
+        if is_gt_derived(g['mapping_type'], g['notes']):
+            n_derived_gt += 1
+            if 'derived' in p['predicted_mapping_type'].lower():
+                n_derived_caught += 1
+
+    return {
+        'case_study': cs, 'n_total': n_total, 'unmatched_keys': unmatched_keys,
+        'not_persisted_accuracy': (n_np_correct / n_np_total) if n_np_total else None,
+        'n_not_persisted': n_np_total,
+        'grounded_top1_rate': (n_top1 / n_grounded_total) if n_grounded_total else None,
+        'grounded_top3_rate': (n_top3 / n_grounded_total) if n_grounded_total else None,
+        'n_grounded': n_grounded_total,
+        'derived_recall': (n_derived_caught / n_derived_gt) if n_derived_gt else None,
+        'n_derived_gt': n_derived_gt,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--auto', default='mapping_auto.csv')
+    args = ap.parse_args()
+
+    preds = load_predictions(args.auto)
+
+    all_results = []
+    for cs in GT_FILES:
+        gt = load_ground_truth(cs)
+        res = evaluate(cs, gt, preds)
+        all_results.append(res)
+
+    print(f"{'Case study':<12} {'N':>4} {'unmatch':>7} {'NP-acc':>7} {'NP-n':>5} "
+          f"{'Top1':>6} {'Top3':>6} {'Grnd-n':>6} {'DerivRec':>8} {'Der-n':>5}")
+    for r in all_results:
+        def fmt(x):
+            return f'{x:.1%}' if x is not None else 'n/a'
+        print(f"{r['case_study']:<12} {r['n_total']:>4} {r['unmatched_keys']:>7} "
+              f"{fmt(r['not_persisted_accuracy']):>7} {r['n_not_persisted']:>5} "
+              f"{fmt(r['grounded_top1_rate']):>6} {fmt(r['grounded_top3_rate']):>6} "
+              f"{r['n_grounded']:>6} {fmt(r['derived_recall']):>8} {r['n_derived_gt']:>5}")
+
+    # overall
+    tot_np_c = sum((r['not_persisted_accuracy'] or 0) * r['n_not_persisted'] for r in all_results)
+    tot_np_n = sum(r['n_not_persisted'] for r in all_results)
+    tot_t1 = sum((r['grounded_top1_rate'] or 0) * r['n_grounded'] for r in all_results)
+    tot_t3 = sum((r['grounded_top3_rate'] or 0) * r['n_grounded'] for r in all_results)
+    tot_gr = sum(r['n_grounded'] for r in all_results)
+    tot_dr = sum((r['derived_recall'] or 0) * r['n_derived_gt'] for r in all_results)
+    tot_dn = sum(r['n_derived_gt'] for r in all_results)
+    print(f"\nOverall: not-persisted-accuracy={tot_np_c/tot_np_n:.1%} (n={tot_np_n}), "
+          f"top1={tot_t1/tot_gr:.1%} (n={tot_gr}), top3={tot_t3/tot_gr:.1%}, "
+          f"derived-recall={tot_dr/tot_dn:.1%} (n={tot_dn})")
+
+
+if __name__ == '__main__':
+    main()
