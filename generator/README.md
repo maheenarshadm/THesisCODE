@@ -318,6 +318,86 @@ the flagship attendance worked example (untouched by this change, no
 DRD chain through a decision table) was re-diffed and still matches
 exactly.
 
+## `sql_compiler.py` — the JSON→SQL validation compiler (§6.7, built 2026-09-11)
+
+Closes §12 item 7's second prerequisite artifact. §6.7's own framing:
+*"the search loop runs on the JSON predicate; SQL is compiled from that
+same JSON afterward, purely for validation."* This compiler is that
+translation — one SQL boolean expression per compiled branch
+(`SELECT (...) AS branch_holds;`), re-evaluating the branch's condition
+against real materialized rows, the "DMN semantic re-check, compiled to
+SQL rather than re-implemented in the host language" pass §6.7 designs.
+Mechanical, not novel design work, since §7b's construct taxonomy already
+enumerates which SQL construct each variable category needs.
+
+**Design choice, matching §6.1's own worked example's idiom**: every
+resolved variable compiles to an **independent scalar subquery**,
+parameterized by a bind variable per referenced table's own primary key
+(looked up from the schema JSON, composite keys handled), rather than one
+flat query with a shared join graph across the whole branch — mirroring
+how the branches themselves are independent per §6.1's own contract, and
+needing no assumption about how a validation harness lays out candidate
+rows beyond "you can bind a value for this table's PK."
+
+**Every resolution kind `compile_constraints.py` produces gets a
+translation**: `schema_column` → a PK-bound scalar subquery;
+`null_check`/`join_null_check` → `IS NOT NULL`/`IS NULL` (with a
+dedicated simplification for the common `var = true/false` DMN pattern,
+so it compiles directly to the null check rather than a clunky
+boolean-round-trip); `any_not_null` → OR'd `IS NOT NULL` checks;
+`join_lookup` → a real `JOIN`; `derived_aggregate` → `COUNT`/`SUM`/etc.
+with `GROUP BY`-equivalent scalar-subquery semantics; `exists` →
+`EXISTS (SELECT 1 FROM ... WHERE ...)`; `regex_match` → an engine
+`REGEXP` operator, flagged non-portable exactly as §7b's own construct
+taxonomy already characterizes it; `literal_via_upstream_branch`/
+`substituted_decision` → recursively compiled, the same DRD inlining
+`compile_constraints.py` already did; `not_persisted` → a bind parameter
+(see the bug note below for why this needed fixing, not assuming).
+
+**Honesty over completeness where the source notes don't support more**:
+a `derived_aggregate`/`exists` fact's filter is often free prose
+("`LECTURE_ID IN (LECTURE for that OFFER_ID)`", not valid SQL) rather
+than a clean WHERE clause. `sqlify_filter_text` only emits a filter when
+a mechanical check (placeholder substitution + a small, targeted
+prose-marker blocklist, itself surveyed from this program's own real
+filter strings) finds it SQL-shaped; otherwise it emits a
+syntactically-valid placeholder subquery with the raw text preserved as a
+comment, and records a warning — never silently guessing at what a
+human-written note meant, and never emitting broken SQL as if it were
+runnable.
+
+**Result**: 173 of 239 compiled branches (72.4%) produce a fully clean
+validation query with zero warnings — OpenMRS 97.2%, Spree 92.6%,
+jBilling 75.6%, FLEX2 48.0% (lower only because the chained-decision-
+output expansion above multiplied a handful of still-unresolved `derived`
+facts, like `semesterType`, across dozens of variants — the same
+underlying gaps repeated, not new ones). The flagship attendance branch
+now compiles to `(SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID =
+:this_course_offering)` for `lecturesHeldForOffering` — structurally
+identical to §6.1's own hand-written `(SELECT COUNT(*) FROM LECTURE WHERE
+OFFER_ID=:offer_id)` — while `lecturesAttended`'s messier filter text
+(a genuine prose fragment, "`LECTURE_ID IN (LECTURE for that
+OFFER_ID)`") is honestly left as a flagged placeholder rather than forced
+through as broken SQL.
+
+**Two real bugs found and fixed while validating against that same
+flagship example** (not swept away):
+1. `not_persisted` was assumed to never reach the compiler as an input
+   (compile_constraints.py never blocks on it, but the assumption was
+   still "it's always an output verdict"). It's actually also used, by
+   ground truth's own deliberate design, for a genuine runtime/scenario
+   parameter with no stored column at all (OpenMRS's `evaluationTime` —
+   "time of validation, not a stored column"). Fixed to compile to a bind
+   parameter, exactly the right answer for that case; this alone raised
+   the clean rate from 61.5% to 72.4% before the second fix below.
+2. The prose-marker check ran on a filter's raw text *before* `<placeholder>`
+   substitution, so an English phrase *inside* the brackets — content
+   that's specifically headed for a bind parameter, not literal SQL, e.g.
+   `<this course offering>` — could disqualify an otherwise perfectly
+   clean filter. Fixed to mask placeholder spans before the prose check
+   runs, which is exactly what recovered `lecturesHeldForOffering`'s
+   clean compilation above.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
