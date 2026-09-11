@@ -77,53 +77,39 @@ attempted, a blocked one is omitted from `compiled_constraints.json` and
 recorded, with its exact blocking variable(s) and reason, in
 `compile_report.json`.
 
-## Result, current run (post semesterType/projectedTotalCoursesThisRegistration ground-truth fixes — see below)
+## Result, current run (post semesterType/projectedTotalCoursesThisRegistration ground-truth fixes, and the semesterType correction — see below)
 
 | Case study | Compiled | Blocked | Rate |
 |---|---|---|---|
-| FLEX2 | 57 | 8 | 87.7% |
+| FLEX2 | 100 | 3 | 97.1% |
 | OpenMRS | 71 | 0 | 100.0% |
 | Spree | 27 | 5 | 84.4% |
 | jBilling | 41 | 13 | 75.9% |
-| **Total** | **196** | **26** | **88.3%** |
+| **Total** | **239** | **21** | **91.9%** |
 
-Total target-branch count (222, down from 260) is **lower** than the
-previous run, and that drop is the honest and expected consequence of one
-of the two ground-truth fixes below, not a regression: reclassifying
-`semesterType` from a vague `derived` guess to a genuine `schema_gap`
-correctly blocks every rule of FLEX2's `Course Load Limit` decision (it
-was never really resolvable — see below), which in turn removes the
-upstream groundings that used to let `enumerate_upstream_groundings`
-expand `Course Registration Eligibility`'s `maxCoursesAllowed` dependency
-into several variants. Fewer compiled branches, but every one of them
-now reflects something real rather than a placeholder the earlier
-`derived` bucket let slip through. See "Two ground-truth fixes" below for
-the full accounting.
+**These are the same 260-total/239-compiled/91.9% figures the
+chained-decision-output expansion pass (below) originally produced.**
+They dipped briefly to 222/196/88.3% after a first, *mistaken* fix to
+`semesterType` (reclassifying it `schema_gap` from DDL evidence alone),
+then came back once that mistake was corrected with real domain
+knowledge the DDL genuinely could not supply. See "Two ground-truth
+fixes, one of them corrected" below for the full, honest sequence —
+including the wrong conclusion, not just the right one.
 
 **Blocking reasons, by kind** (a branch can have more than one blocking
 variable): `unresolved` (8) — mostly free variables of an inlined
 literal-expression formula whose own ground-truth row couldn't be
-resolved to a column, recipe, or gap marker; `schema_gap` (10, up from 6)
-— the branch's condition itself depends on a variable ground truth
-already flags as having no schema representation at all (e.g. Spree's
-`preferences` serialized-blob findings, and now FLEX2's `semesterType`
-and its one direct dependent, `isElectiveTaughtByVisitingScholarUnavailableOtherwise`);
-`code_external` (12) — the variable is genuinely computed by application
-code with no schema field ever recorded for it at all (a Java constant, a
-UI-only transient value, a runtime-only calculation), not merely a column
-this compiler failed to find; `chained_dependency_unexpandable` (3, up
-from 2) — a decision-table DRD dependency where *every* upstream rule is
-itself blocked by something this compiler can't resolve (jBilling's
-`Ageing Step Advancement`, and now FLEX2's `Course Registration
-Eligibility` Rule 3 via `maxCoursesAllowed` ← `Course Load Limit`, all
-four of whose rules are blocked by `semesterType`'s schema gap) — a
+resolved to a column, recipe, or gap marker; `schema_gap` (6) — the
+branch's condition itself depends on a variable ground truth already
+flags as having no schema representation at all (e.g. Spree's
+`preferences` serialized-blob findings); `code_external` (12) — the
+variable is genuinely computed by application code with no schema field
+ever recorded for it at all (a Java constant, a UI-only transient value,
+a runtime-only calculation), not merely a column this compiler failed to
+find; `chained_dependency_unexpandable` (2) — a decision-table DRD
+dependency where *every* upstream rule is itself blocked by something
+this compiler can't resolve (jBilling's `Ageing Step Advancement`) — a
 genuine dead end, not a missed case.
-
-The 91.9%/239-branch figures from the chained-decision-output expansion
-pass (below) are the historical numbers from before the ground-truth
-fixes in the section after it; they are kept in that section's own text
-since they document what the expansion mechanism achieves on its own
-terms, independent of later ground-truth corrections.
 
 **Compiled-but-not-generator-ready dropped sharply after the
 derived/aggregate resolution pass below** (figures as of that pass, before
@@ -335,41 +321,12 @@ the flagship attendance worked example (untouched by this change, no
 DRD chain through a decision table) was re-diffed and still matches
 exactly.
 
-## Two ground-truth fixes: semesterType and projectedTotalCoursesThisRegistration (2026-09-11, fourth pass)
+## Two ground-truth fixes, one of them corrected: semesterType and projectedTotalCoursesThisRegistration (2026-09-11, fourth and fifth passes)
 
 FLEX2's 52 "needs work" branches (per-rule readiness stats, prior pass)
 had two recurring root causes behind most of them. Investigated directly
-against `schemas/flex2/Flex1.sql` rather than guessed at — both turned
-out resolvable from evidence already in the repository, needing no
-clarifying question:
-
-**`semesterType` (`Course Load Limit`'s input, affecting 43 of the 52
-FLEX2 "needs work" records at the time)**: ground truth previously
-labeled it `derived` with the honest-but-vague note "exact column not
-confirmed from DDL alone." Direct inspection of `Flex1.sql` settles it:
-`SEMESTER` has only `SEM_ID`/`TITLE`/`STATUS`; `CAMP_SEMESTER` has
-campus-specific dates and a `STATUS` flag but no type classification; and
-none of FLEX2's 24 `D_*` dimension tables (which is exactly the pattern
-every *other* coded category in this schema uses — course type, employee
-type, student status) cover semester/term type. There is no dedicated
-Regular/Summer column anywhere in the 220-table schema; the only
-candidate is `TITLE`, free text (e.g. `'Summer 2021'`), reachable only
-via a fragile `LIKE '%Summer%'` substring match, not a clean equality
-lookup. **Reclassified from `derived` to `SCHEMA GAP (partial)`** — a
-genuine §4.4-style schema-representability finding, not an
-under-investigated mapping, so it should honestly block rather than
-silently compile as a "needs more work" placeholder.
-
-**Consequence, traced rather than assumed**: this correctly blocks
-*every* rule of `Course Load Limit` (all 4), which removes every upstream
-grounding `enumerate_upstream_groundings` needs to expand
-`Course Registration Eligibility`'s `maxCoursesAllowed` dependency — so
-that rule's branch count drops from several expanded variants back to a
-single, correctly-`chained_dependency_unexpandable`-blocked record. This
-is why the program-wide compiled-branch total *fell* (260 → 222) after a
-ground-truth fix, rather than rose: fewer branches, but the ones that
-disappeared were placeholders the vague `derived` label had been letting
-through, not real capability lost.
+against `schemas/flex2/Flex1.sql`, with standing permission from the
+project owner to ask a clarifying question if one was needed.
 
 **`projectedTotalCoursesThisRegistration` (`Course Registration
 Eligibility`'s input, affecting 0 already-compiled records, since it was
@@ -383,22 +340,52 @@ and `SEM_ID` columns, exactly as the existing note already claimed —
 so the fix was purely mechanical: rewrite the schema-field text to
 `COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>`,
 which now resolves to a real `derived_aggregate` node with a genuine,
-SQL-shaped filter clause (confirmed directly: `resolve_variable` now
-returns `filter_text: "ROLL_NO=<student> AND SEM_ID=<semester>"` instead
-of `None`). This variable itself is no longer why `Course Registration
-Eligibility::Rule_3` is blocked — that rule's sole remaining blocker is
-the unrelated `maxCoursesAllowed`/`semesterType` chain above, confirmed
-by re-checking `compile_report.json`'s blocking-variable list for that
-record directly.
+SQL-shaped filter clause. This one needed no domain knowledge beyond the
+DDL and stands as fixed.
 
-Neither fix needed a question back to the user (offered, per the user's
-"you can ask me questions" instruction) — both were fully resolvable from
-the real FLEX2 DDL already checked into this repository.
+**`semesterType` (`Course Load Limit`'s input, affecting 43 of the 52
+FLEX2 "needs work" records at the time) — first pass, wrong**: ground
+truth previously labeled it `derived` with the honest-but-vague note
+"exact column not confirmed from DDL alone." DDL-only inspection of
+`Flex1.sql` found `SEMESTER` has only `SEM_ID`/`TITLE`/`STATUS`, no other
+table carries a type classification, and none of FLEX2's 24 `D_*`
+dimension tables cover semester/term type — the pattern every *other*
+coded category in this schema uses. From that alone, this was concluded
+to be reclassified `SCHEMA GAP (partial)`: no dedicated Regular/Summer
+column, `TITLE` dismissed as "free text, reachable only via a fragile
+`LIKE '%Summer%'` substring match." **This conclusion was wrong, and it
+was wrong for exactly the reason a clarifying question exists to catch**:
+DDL shows column definitions, never data, so there was no way to
+mechanically tell "TITLE is free text" apart from "TITLE is a clean
+categorical column that happens to be typed as text" — and this was
+guessed at instead of asked about, despite standing permission to ask.
 
-**Verified the same way as every previous pass**: `find_blocking_issues`
-re-run over all 196 newly-compiled records found zero leaks, and the
-flagship attendance worked example (unrelated to either fix) was
-re-diffed and still matches exactly.
+**Corrected via the project owner's own domain knowledge**: `TITLE` *is*
+the semester-type field, with exactly three possible values — `'Fall'`,
+`'Spring'`, `'Summer'` — not free text with an embedded year. A plain
+equality lookup, not a substring match. Ground truth is now `direct`,
+mapped to `SEMESTER.TITLE`, with the correction (and the wrong
+conclusion it replaces) documented in the CSV's own notes field rather
+than silently overwritten.
+
+**Consequence, both times traced rather than assumed**: the first
+(wrong) `SCHEMA GAP` conclusion correctly-given-its-premise blocked every
+rule of `Course Load Limit`, which cascaded to block `Course Registration
+Eligibility`'s `maxCoursesAllowed` dependency too (no upstream grounding
+left to expand) — the program-wide compiled-branch total dropped 260 →
+222 as a result. Once `semesterType` was corrected back to a real
+column, `Course Load Limit` compiles again and the cascade reverses:
+totals are back to 260 total / 239 compiled (91.9%), identical to the
+chained-decision-output expansion pass's own original numbers, and
+`sql_compiler.py`'s clean rate actually improved past that baseline (see
+below) since `projectedTotalCoursesThisRegistration`'s independent fix is
+still in effect.
+
+**Verified the same way as every previous pass, after the correction**:
+`find_blocking_issues` re-run over all 239 newly-recompiled records found
+zero leaks, `semesterType` now resolves to a plain `schema_column`
+(`semester.title`), and the flagship attendance worked example (unrelated
+to either fix) was re-diffed and still matches exactly.
 
 ## `sql_compiler.py` — the JSON→SQL validation compiler (§6.7, built 2026-09-11)
 
@@ -448,17 +435,19 @@ comment, and records a warning — never silently guessing at what a
 human-written note meant, and never emitting broken SQL as if it were
 runnable.
 
-**Result (updated after the semesterType/projectedTotalCoursesThisRegistration
-ground-truth fixes above)**: 173 of 196 compiled branches (88.3%) produce
-a fully clean validation query with zero warnings — OpenMRS 97.2%, Spree
-92.6%, FLEX2 84.2%, jBilling 75.6%. FLEX2's clean rate jumped sharply
-(48.0% → 84.2%) as a direct, traceable consequence of the ground-truth
-fixes: the branches that used to compile with a `semesterType` warning
-attached no longer compile *at all* (they now correctly block upstream,
-per the previous section), so they stopped diluting the clean-rate
-denominator; separately, `projectedTotalCoursesThisRegistration`'s new
-real filter clause means every record that still references it compiles
-without a "prose, not SQL" warning. The flagship attendance branch still
+**Result (updated after both the semesterType correction and the
+projectedTotalCoursesThisRegistration fix above)**: 216 of 239 compiled
+branches (90.4%) produce a fully clean validation query with zero
+warnings — OpenMRS 97.2%, Spree 92.6%, FLEX2 91.0%, jBilling 75.6%.
+FLEX2's clean rate rose sharply from the original 48.0% baseline to
+91.0% — better than the 84.2% the *mistaken* `schema_gap` reclassification
+produced along the way, since that version's apparent gain was partly an
+artifact of shrinking the denominator (blocking branches outright rather
+than compiling them cleanly). With `semesterType` correctly resolving to
+`SEMESTER.TITLE` as a real equality-comparable column, those branches now
+compile *and* compile clean, which is the genuine improvement;
+`projectedTotalCoursesThisRegistration`'s real filter clause independently
+removes its own "prose, not SQL" warning. The flagship attendance branch still
 compiles to `(SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID =
 :this_course_offering)` for `lecturesHeldForOffering` — structurally
 identical to §6.1's own hand-written `(SELECT COUNT(*) FROM LECTURE WHERE

@@ -46,20 +46,25 @@ current case studies (FLEX2, OpenMRS, Spree, jBilling — matches §13.5's
 own total exactly, and its Not-Persisted/Schema-Gap percentages exactly,
 since both are computed from the same source data).
 
-**Updated 2026-09-11** after the `semesterType` ground-truth fix (see
-`generator/README.md`'s "Two ground-truth fixes" section): that one row
-moved from category 8 (`Compound / Unclassified Derivation`, a vague
-`derived` guess) to category 5 (`Schema Gap`), reflecting the direct
-DDL finding that FLEX2's schema genuinely has no semester-type column
-anywhere, not merely one this taxonomy's patterns failed to recognize.
+**Updated 2026-09-11, twice.** A first pass moved `semesterType` from
+category 8 (`Compound / Unclassified Derivation`) to category 5 (`Schema
+Gap`), reasoning from DDL evidence alone that FLEX2's schema had no
+semester-type column anywhere. **That conclusion was wrong** — the
+project owner's own domain knowledge confirmed `SEMESTER.TITLE` *is* the
+semester-type field (a clean 3-value categorical column: `Fall`/`Spring`/
+`Summer`, not free text), something no amount of DDL-only inspection
+could have settled either way. `semesterType` is now correctly counted
+under category 1 (`Direct Attribute Reference`) instead. See
+`generator/README.md`'s "Two ground-truth fixes, one of them corrected"
+section for the full sequence.
 
 | # | Category | Count | % | What it means | SQL/DDL construct a translator would emit |
 |---|---|---|---|---|---|
-| 1 | **Direct Attribute Reference** | 91 | 33.2% | The DMN input variable *is* a column value, untransformed. | Plain column reference / `SELECT column`. |
+| 1 | **Direct Attribute Reference** | 92 | 33.6% | The DMN input variable *is* a column value, untransformed. | Plain column reference / `SELECT column`. |
 | 2 | **Not-Persisted** | 82 | 29.9% | A decision's own output/verdict — never meant to be stored (§ "what is not persisted" from an earlier session). | None — by design, not a gap. |
 | 3 | **Single-Column Predicate** | 28 | 10.2% | An existence check (`IS NOT NULL`) or a comparison against a named constant, over one real column. | `WHERE column IS NOT NULL`, `column = <constant>`. |
 | 4 | **Decision Output / Write-Back Target** | 12 | 4.4% | An *output* variable that genuinely gets written back to a column (e.g. FLEX2's `newWarningCount` → `STUDENT_PROGRAM.WARNING`) — the opposite direction from category 1. | `INSERT`/`UPDATE` target, not a `SELECT`-side construct. |
-| 5 | **Schema Gap** | 12 | 4.4% | The fact has no column anywhere in the schema — not unenforced, structurally absent. | None — the genuine "cannot translate" case. |
+| 5 | **Schema Gap** | 11 | 4.0% | The fact has no column anywhere in the schema — not unenforced, structurally absent. | None — the genuine "cannot translate" case. |
 | 6 | **Aggregate Function** | 9 | 3.3% | A `COUNT`/`SUM`-style aggregate over related rows. | `COUNT(*)`/`SUM(...)` with `GROUP BY` or a scalar subquery. |
 | 7 | **Existence / Correlated Subquery** | 8 | 2.9% | "Does at least one related row satisfy X" — including existence reached by following one FK first. | `EXISTS (SELECT 1 FROM ... WHERE ...)`. |
 | 8 | **Compound / Unclassified Derivation** | 20 | 7.3% | The catch-all: a real derived fact whose free text didn't match any of this taxonomy's mechanical patterns — needs a human (or a future, more targeted pass) to turn into a concrete recipe. | Not determinable from this taxonomy alone. |
@@ -75,27 +80,27 @@ A genuinely new axis the original design doc's own §7b never had access
 to, since it requires the parsed condition trees this program didn't have
 until `generator/compile_constraints.py` was built:
 
-| Usage shape | Count | % of 196 compiled branches |
+| Usage shape | Count | % of 239 compiled branches |
 |---|---|---|
-| Plain single comparison | 145 | 74.0% |
-| Cross-variable comparison (right-hand side is another variable, not a literal) | 33 | 16.8% |
-| Negation (`not(...)`) | 16 | 8.2% |
-| Set-membership (`IN (...)`) | 9 | 4.6% |
+| Plain single comparison | 149 | 62.3% |
+| Cross-variable comparison (right-hand side is another variable, not a literal) | 57 | 23.8% |
+| Negation (`not(...)`) | 54 | 22.6% |
+| Set-membership (`IN (...)`) | 9 | 3.8% |
 
-(Regenerated 2026-09-11 after the `semesterType` ground-truth fix removed
-the expanded `Course Load Limit`/`Course Registration Eligibility`
-variants from the compiled set — see `generator/README.md`'s "Two
-ground-truth fixes" section. Those removed variants were exactly the
-records whose compound conditions encoded FIRST/UNIQUE hit-policy
-suppression as `{"op": "not", ...}` clauses, which is why negation's
-share falls back down here (8.2%, close to its pre-expansion 2.2%..22.6%
-range) rather than reflecting drift in the classifier — the underlying
-constructs the earlier, larger total measured are still real and still
-documented in `generator/README.md`'s "Chained decision output" section;
-they are simply no longer part of the *current* compiled set now that
-their upstream dependency is honestly blocked.)
+(These are the original chained-decision-output-expansion figures,
+confirmed unchanged after the `semesterType` correction restored
+`Course Load Limit`/`Course Registration Eligibility`'s expanded
+variants to the compiled set. A first, mistaken fix to `semesterType`
+had briefly removed those variants — dropping negation's share back to
+8.2% — but that fix was wrong, per `generator/README.md`'s "Two
+ground-truth fixes, one of them corrected" section, and correcting it
+brought this table back to its pre-mistake state. Negation's 22.6% share
+reflects a real, understood construct: every expanded record's compound
+condition literally encodes its upstream rule's FIRST/UNIQUE hit-policy
+suppression as `{"op": "not", ...}` clauses — "this upstream rule fires
+AND NOT any earlier upstream rule" — not classifier drift.)
 
-The cross-variable share (16.8%) is consistent with — in the same range
+The cross-variable share (23.8%) is consistent with — in the same range
 as — the design doc's own program-wide estimate of ~17–19% of decisions
 using this pattern (§7a/§13.4), a useful independent cross-check from a
 completely different measurement method (parsed condition trees vs.
@@ -118,22 +123,26 @@ branch's dependency, with that branch's own DRD edges in view.
 (added 2026-09-11) expands such a dependency into several fully
 self-contained compiled records (one per upstream branch that could
 produce the needed value) whenever at least one upstream branch actually
-resolves. Of the original 9 occurrences, 7 were successfully expanded (56
-new records) at that pass. A later ground-truth fix the same day
-(`semesterType`, reclassified from a vague `derived` guess to a genuine
-`schema_gap` — see `generator/README.md`'s "Two ground-truth fixes"
-section) correctly took one of those 7 back to blocked: FLEX2's `Course
-Load Limit` decision (semesterType's own decision table) now has *every*
-rule blocked, leaving `Course Registration Eligibility`'s
-`maxCoursesAllowed` dependency with no valid upstream grounding at all.
-**3 of the 9 now remain genuinely blocked**: jBilling's `Ageing Step
-Advancement` (its own upstream dependency is itself `code_external`, a
-true dead end) and FLEX2's `Course Registration Eligibility::Rule_3` (its
-upstream `Course Load Limit` is blocked by a genuine schema gap, not a
-missed case either). Measuring the program's real chained-dependency
-structure and its resolution means reading `generator/compile_report.json`
-and `generator/README.md`'s "Chained decision output" and "Two
-ground-truth fixes" sections, not this file.
+resolves. Of the original 9 occurrences, **7 are successfully expanded
+(56 new records)**, and **2 remain genuinely blocked**: jBilling's
+`Ageing Step Advancement` (its own upstream dependency is itself
+`code_external`, a true dead end).
+
+A same-day ground-truth fix to `semesterType` briefly took one of the 7
+back to blocked, by reclassifying it `schema_gap` on DDL evidence alone
+(no dedicated semester-type column found anywhere in the schema). That
+reclassification was **wrong** — corrected once the project owner's own
+domain knowledge confirmed `SEMESTER.TITLE` really is the semester-type
+field (a clean 3-value categorical column), which the DDL alone could
+never settle either way. With the correction applied, `Course Load
+Limit` compiles again and `Course Registration Eligibility`'s expanded
+variants are restored, back to the 7-expanded/2-blocked figures above.
+See `generator/README.md`'s "Two ground-truth fixes, one of them
+corrected" section for the full sequence, including the wrong
+conclusion. Measuring the program's real chained-dependency structure
+and its resolution means reading `generator/compile_report.json` and
+`generator/README.md`'s "Chained decision output" section, not this
+file.
 
 ## Regenerating
 

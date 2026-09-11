@@ -1,8 +1,8 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 57,
-   "blocked": 8
+   "compiled": 100,
+   "blocked": 3
   },
   "OpenMRS": {
    "compiled": 71,
@@ -17,94 +17,18 @@
    "blocked": 13
   }
  },
- "total_compiled": 196,
- "total_blocked": 26,
+ "total_compiled": 239,
+ "total_blocked": 21,
  "blocked_reason_counts": {
-  "unresolved_variable": 23,
-  "chained_dependency_unexpandable": 3
+  "unresolved_variable": 19,
+  "chained_dependency_unexpandable": 2
  },
  "blocking_variable_kind_counts": {
-  "chained_decision_output": 3,
-  "schema_gap": 10,
   "unresolved": 8,
+  "schema_gap": 6,
   "code_external": 12
  },
  "blocked_records": [
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    },
-    {
-     "variable": "semesterType",
-     "kind": "schema_gap",
-     "detail": "Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (\u00a74.4-style), not an under-investigated mapping."
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    },
-    {
-     "variable": "semesterType",
-     "kind": "schema_gap",
-     "detail": "Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (\u00a74.4-style), not an under-investigated mapping."
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "newWarningCount",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    },
-    {
-     "variable": "semesterType",
-     "kind": "schema_gap",
-     "detail": "Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (\u00a74.4-style), not an under-investigated mapping."
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "semesterType",
-     "kind": "schema_gap",
-     "detail": "Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (\u00a74.4-style), not an under-investigated mapping."
-    }
-   ],
-   "case_study": "FLEX2"
-  },
-  {
-   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3",
-   "reason": "chained_dependency_unexpandable",
-   "blocking_variables": [
-    {
-     "variable": "maxCoursesAllowed",
-     "kind": "chained_decision_output",
-     "detail": "requires the upstream decision table to have already selected a branch of its own -- not inlined (scope boundary: a decision table's output depends on which of its own rules fires, which is not a single closed-form expression to substitute the way a literal-expression decision's formula is)"
-    }
-   ],
-   "case_study": "FLEX2"
-  },
   {
    "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
    "reason": "unresolved_variable",

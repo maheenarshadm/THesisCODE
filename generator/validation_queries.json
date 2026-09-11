@@ -78,6 +78,325 @@
   "clean": true
  },
  {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 1)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 1)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 1)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 2)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 2)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 2)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT ((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
   "case_study": "FLEX2",
   "sql": "SELECT ((0 = 3) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AS branch_holds;",
@@ -333,6 +652,606 @@
    [
     "course_registration_roll_no",
     "COURSE_REGISTRATION.ROLL_NO of the specific candidate row"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 99) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 0)) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)))) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 0)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 0)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 1)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 0)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)))) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 1)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 1)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 5) AND (((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 2)) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 1)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)))) AND (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (0 = 2)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (1 = 2)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (2 = 2)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
+   ],
+   [
+    "student_program_roll_no",
+    "STUDENT_PROGRAM.ROLL_NO of the specific candidate row"
+   ]
+  ],
+  "warnings": [],
+  "clean": true
+ },
+ {
+  "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4",
+  "case_study": "FLEX2",
+  "sql": "SELECT (((SELECT COUNT(*) FROM COURSE_REGISTRATION WHERE ROLL_NO=:student AND SEM_ID=:semester) > 2) AND ((((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Summer') AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 0))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 1))) AND (NOT (((SELECT SEMESTER.title FROM SEMESTER WHERE SEMESTER.SEM_ID = :semester_sem_id) = 'Regular') AND (3 = 2)))) AND ((((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2)) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) >= 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 2))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 0))) AND (NOT (((SELECT STUDENT_PROGRAM.cgpa FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) < 2.0) AND ((SELECT STUDENT_PROGRAM.warning FROM STUDENT_PROGRAM WHERE STUDENT_PROGRAM.ROLL_NO = :student_program_roll_no) = 1)))))) AS branch_holds;",
+  "bind_parameters": [
+   [
+    "semester",
+    "semester"
+   ],
+   [
+    "semester_sem_id",
+    "SEMESTER.SEM_ID of the specific candidate row"
+   ],
+   [
+    "student",
+    "student"
    ],
    [
     "student_program_roll_no",
