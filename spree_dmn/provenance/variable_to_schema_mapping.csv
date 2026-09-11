@@ -1,0 +1,45 @@
+decision,variable,mapping_type,schema_location,note
+Promotion Item Total Eligibility,itemTotal,direct,spree_orders.item_total,
+Effective Minimum Amount Threshold,operatorMin,SCHEMA GAP (partial),spree_promotion_rules.preferences,"serialized text blob (t.text ""preferences""), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column)"
+Effective Minimum Amount Threshold,amountMin,SCHEMA GAP (partial),spree_promotion_rules.preferences,"same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column)"
+Effective Minimum Amount Threshold,effectiveMinThreshold,not-persisted,n/a,"formula output; resolves operatorMin into one concrete number (amountMin, or amountMin+0.01 if strict)"
+Promotion Item Total Eligibility,amountMaxSet,SCHEMA GAP (partial),spree_promotion_rules.preferences,"existence check, unchanged by the redesign"
+Effective Maximum Amount Threshold,operatorMax,SCHEMA GAP (partial),spree_promotion_rules.preferences,"same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column)"
+Effective Maximum Amount Threshold,amountMax,SCHEMA GAP (partial),spree_promotion_rules.preferences,"same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column)"
+Effective Maximum Amount Threshold,effectiveMaxThreshold,not-persisted,n/a,"formula output; resolves operatorMax into one concrete number (amountMax, or amountMax-0.01 if strict)"
+Promotion Item Total Eligibility,itemTotalEligible,not-persisted,n/a,"write-back target is a runtime eligibility_errors check, not a column; realized indirectly via whether a spree_discounts row is created. Redesigned twice 2026-09-10: round 1 moved operators upstream; round 2 switched to UNIQUE hit policy with a FEEL range literal, validated exhaustive/non-overlapping by in-session brute-force sweep"
+Promotion Temporal Availability,evaluationTime,not-persisted,n/a,scenario/runtime parameter (Time.current at evaluation), not a stored column
+Promotion Temporal Availability,startsAt,direct,spree_promotions.starts_at,
+Promotion Temporal Availability,expiresAtSet,derived,spree_promotions.expires_at,existence check (IS NOT NULL)
+Promotion Temporal Availability,expiresAt,direct,spree_promotions.expires_at,
+Promotion Temporal Availability,availabilityStatus,not-persisted,n/a,computed at call time, not stored as an enum column
+Promotion Usage Limit Exceeded,usageLimitSet,derived,spree_promotions.usage_limit,existence check (IS NOT NULL)
+Promotion Usage Limit Exceeded,usageLimit,direct,spree_promotions.usage_limit,
+Promotion Usage Limit Exceeded,adjustedCreditsCount,derived-aggregate,spree_discounts (joined via spree_promotion_actions.promotion_id),"COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
+Promotion Usage Limit Exceeded,usageLimitExceeded,not-persisted,n/a,runtime boolean, not stored
+Customer Group Match Count,customerGroupIds,derived-aggregate,spree_customer_group_users.customer_group_id (WHERE customer_id = :customer_id),"join; column is customer_id after 20260728000003_rename_user_id_to_customer_id.rb renamed it from user_id"
+Customer Group Match Count,promotionTargetGroupIds,SCHEMA GAP (partial),spree_promotion_rules.preferences,CustomerGroup rule's customer_group_ids array lives in the serialized preferences blob, not a dedicated join table
+Customer Group Match Count,matchingCustomerGroupCount,not-persisted,n/a,formula output
+Promotion Customer Group Eligibility,customerIdPresent,derived,spree_orders.customer_id,existence check (IS NOT NULL); column renamed from user_id
+Promotion Customer Group Eligibility,promotionTargetGroupsConfigured,SCHEMA GAP (partial),spree_promotion_rules.preferences,existence check over the same blob as promotionTargetGroupIds
+Promotion Customer Group Eligibility,matchingCustomerGroupCount,derived-aggregate,(upstream decision output),substituted from Customer Group Match Count per DRD edge
+Promotion Customer Group Eligibility,customerGroupEligible,not-persisted,n/a,runtime boolean
+Prior Completed Order Count,customerOrEmail,derived,spree_orders.customer_id / spree_orders.email,join key
+Prior Completed Order Count,priorCompletedOrderCount,not-persisted,n/a,formula output (COUNT over spree_orders)
+First-Order Promotion Eligibility,userOrEmailPresent,derived,spree_orders.customer_id / spree_orders.email,existence check (either populated)
+First-Order Promotion Eligibility,priorCompletedOrderCount,derived-aggregate,(upstream decision output),substituted from Prior Completed Order Count per DRD edge
+First-Order Promotion Eligibility,firstOrderEligible,not-persisted,n/a,runtime boolean
+One-Use-Per-User Promotion Eligibility,customerPresent,derived,spree_orders.customer_id,existence check (IS NOT NULL)
+One-Use-Per-User Promotion Eligibility,priorPromotionUsageCount,derived-aggregate,spree_discounts (joined via spree_promotion_actions.promotion_id and spree_orders.customer_id),"COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+One-Use-Per-User Promotion Eligibility,oneUsePerUserEligible,not-persisted,n/a,runtime boolean
+Promotion Tiered Percent Discount Selection,orderAmount,derived,spree_orders.item_total,the object.amount the calculator is invoked against; exact object varies by promotion action type
+Promotion Tiered Percent Discount Selection,basePercent,SCHEMA GAP (partial),spree_calculators.preferences (not sampled in this pass),Calculator preferences (base_percent/tiers hash) live in the polymorphic spree_calculators table's own preferences blob, not sampled into this schema pull
+Promotion Tiered Percent Discount Selection,discountPercent,derived,spree_discounts.value / spree_discounts.amount,write-back target once the computed discount is materialized as a spree_discounts row
+Price List Volume Adjustment Tier Selection,purchaseQuantity,not-persisted,n/a,scenario parameter (the quantity being priced)
+Price List Volume Adjustment Tier Selection,adjustmentPercentage,direct,spree_price_adjustment_tiers.percentage,genuine dedicated column -- a rare direct hit in this case study
+Price List Volume Adjustment Tier Selection,priceListBasePercentage,direct,spree_price_lists.price_adjustment_percentage,fallback base rate when no tier band matches
+Price Adjustment Tier Validity Violations,minQuantity,direct,spree_price_adjustment_tiers.min_quantity,genuine dedicated column
+Price Adjustment Tier Validity Violations,percentage,direct,spree_price_adjustment_tiers.percentage,genuine dedicated column
+Price Adjustment Tier Validity Violations,siblingTierCount,derived-aggregate,spree_price_adjustment_tiers (COUNT WHERE price_list_id = :price_list_id AND id != self),count of other tiers on the same price list; cap is a fixed source constant (10), not schema-enforced
+Price Adjustment Tier Validity Violations,invalidReason,not-persisted,n/a,"COLLECT hit policy (redesigned 2026-09-10): each matching row contributes one reason to a list, so multiple simultaneous violations (e.g. minQuantity<=1 AND percentage=0 at once) are all reported, matching real ActiveRecord validation behavior which accumulates all errors rather than stopping at the first"
+Price Adjustment Tier Validity,tierValid,not-persisted,n/a,"redesigned 2026-09-10: now a separate literal-expression decision (count(invalidReasons) = 0) downstream of the COLLECT violations table, rather than a column on the same table"

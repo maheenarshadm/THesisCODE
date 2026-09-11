@@ -1,0 +1,3243 @@
+{
+  "friendly_id_slugs": {
+    "columns": [
+      "slug",
+      "sluggable_id",
+      "sluggable_type",
+      "scope",
+      "created_at",
+      "deleted_at",
+      "locale"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_addresses": {
+    "columns": [
+      "firstname",
+      "lastname",
+      "address1",
+      "address2",
+      "city",
+      "zipcode",
+      "phone",
+      "state_name",
+      "alternative_phone",
+      "company",
+      "state_id",
+      "country_id",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "label",
+      "quick_checkout",
+      "latitude",
+      "longitude",
+      "country_code",
+      "state_code",
+      "user_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_adjustments": {
+    "columns": [
+      "source_type",
+      "source_id",
+      "adjustable_type",
+      "adjustable_id",
+      "amount",
+      "label",
+      "mandatory",
+      "eligible",
+      "created_at",
+      "updated_at",
+      "state",
+      "order_id",
+      "included"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_calculators": {
+    "columns": [
+      "type",
+      "calculable_type",
+      "calculable_id",
+      "created_at",
+      "updated_at",
+      "preferences",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_countries": {
+    "columns": [
+      "iso_name",
+      "iso",
+      "iso3",
+      "name",
+      "numcode",
+      "states_required",
+      "updated_at",
+      "zipcode_required",
+      "created_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_credit_cards": {
+    "columns": [
+      "month",
+      "year",
+      "cc_type",
+      "last_digits",
+      "address_id",
+      "gateway_customer_profile_id",
+      "gateway_payment_profile_id",
+      "created_at",
+      "updated_at",
+      "name",
+      "user_id",
+      "payment_method_id",
+      "default",
+      "deleted_at",
+      "gateway_customer_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_customer_returns": {
+    "columns": [
+      "number",
+      "stock_location_id",
+      "created_at",
+      "updated_at",
+      "store_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_gateways": {
+    "columns": [
+      "type",
+      "name",
+      "description",
+      "active",
+      "environment",
+      "server",
+      "test_mode",
+      "created_at",
+      "updated_at",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_line_items": {
+    "columns": [
+      "variant_id",
+      "order_id",
+      "quantity",
+      "price",
+      "created_at",
+      "updated_at",
+      "currency",
+      "cost_price",
+      "tax_category_id",
+      "adjustment_total",
+      "additional_tax_total",
+      "promo_total",
+      "included_tax_total",
+      "pre_tax_amount",
+      "taxable_adjustment_total",
+      "non_taxable_adjustment_total",
+      "public_metadata",
+      "private_metadata",
+      "price_source"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_log_entries": {
+    "columns": [
+      "source_type",
+      "source_id",
+      "details",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_types": {
+    "columns": [
+      "name",
+      "presentation",
+      "position",
+      "created_at",
+      "updated_at",
+      "filterable",
+      "kind"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_value_variants": {
+    "columns": [
+      "variant_id",
+      "option_value_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_values": {
+    "columns": [
+      "position",
+      "name",
+      "presentation",
+      "option_type_id",
+      "created_at",
+      "updated_at",
+      "color_code"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_order_promotions": {
+    "columns": [
+      "order_id",
+      "promotion_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_orders": {
+    "columns": [
+      "number",
+      "item_total",
+      "total",
+      "adjustment_total",
+      "user_id",
+      "completed_at",
+      "bill_address_id",
+      "ship_address_id",
+      "payment_total",
+      "shipment_state",
+      "payment_state",
+      "email",
+      "special_instructions",
+      "created_at",
+      "updated_at",
+      "currency",
+      "last_ip_address",
+      "created_by_id",
+      "shipment_total",
+      "additional_tax_total",
+      "promo_total",
+      "channel",
+      "included_tax_total",
+      "item_count",
+      "approver_id",
+      "approved_at",
+      "confirmation_delivered",
+      "considered_risky",
+      "token",
+      "canceled_at",
+      "canceler_id",
+      "store_id",
+      "state_lock_version",
+      "taxable_adjustment_total",
+      "non_taxable_adjustment_total",
+      "store_owner_notification_delivered",
+      "public_metadata",
+      "private_metadata",
+      "internal_note",
+      "accept_marketing",
+      "signup_for_an_account",
+      "gift_card_id",
+      "locale",
+      "status",
+      "fee_total",
+      "coupon_code",
+      "po_number",
+      "commission_amount_total",
+      "commission_tax_total",
+      "commission_total"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_capture_events": {
+    "columns": [
+      "amount",
+      "payment_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_methods": {
+    "columns": [
+      "type",
+      "name",
+      "description",
+      "active",
+      "deleted_at",
+      "created_at",
+      "updated_at",
+      "auto_capture",
+      "preferences",
+      "position",
+      "settings",
+      "capture_method",
+      "display_on"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_methods_stores": {
+    "columns": [
+      "payment_method_id",
+      "store_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": null
+  },
+  "spree_payments": {
+    "columns": [
+      "amount",
+      "order_id",
+      "source_type",
+      "source_id",
+      "payment_method_id",
+      "state",
+      "response_code",
+      "avs_response",
+      "created_at",
+      "updated_at",
+      "number",
+      "cvv_response_code",
+      "cvv_response_message",
+      "public_metadata",
+      "private_metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_preferences": {
+    "columns": [
+      "value",
+      "key",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_prices": {
+    "columns": [
+      "variant_id",
+      "amount",
+      "currency",
+      "deleted_at",
+      "created_at",
+      "updated_at",
+      "compare_at_amount",
+      "min_quantity"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_option_types": {
+    "columns": [
+      "position",
+      "product_id",
+      "option_type_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_promotion_rules": {
+    "columns": [
+      "product_id",
+      "promotion_rule_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_products": {
+    "columns": [
+      "name",
+      "description",
+      "available_on",
+      "deleted_at",
+      "slug",
+      "meta_description",
+      "meta_keywords",
+      "tax_category_id",
+      "shipping_category_id",
+      "created_at",
+      "updated_at",
+      "promotionable",
+      "meta_title",
+      "discontinue_on",
+      "public_metadata",
+      "private_metadata",
+      "status",
+      "make_active_at",
+      "variant_count",
+      "classification_count",
+      "total_image_count",
+      "thumbnail_id",
+      "units_sold_count",
+      "revenue",
+      "default_variant_id",
+      "collections_count"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_products_stores": {
+    "columns": [
+      "product_id",
+      "store_id",
+      "created_at",
+      "updated_at",
+      "units_sold_count",
+      "revenue"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_action_line_items": {
+    "columns": [
+      "promotion_action_id",
+      "variant_id",
+      "quantity",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_actions": {
+    "columns": [
+      "promotion_id",
+      "position",
+      "type",
+      "deleted_at",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_categories": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "code"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_rule_users": {
+    "columns": [
+      "user_id",
+      "promotion_rule_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_rules": {
+    "columns": [
+      "promotion_id",
+      "user_id",
+      "product_group_id",
+      "type",
+      "created_at",
+      "updated_at",
+      "code",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotions": {
+    "columns": [
+      "description",
+      "expires_at",
+      "starts_at",
+      "name",
+      "type",
+      "usage_limit",
+      "match_policy",
+      "code",
+      "advertise",
+      "path",
+      "created_at",
+      "updated_at",
+      "promotion_category_id",
+      "code_prefix",
+      "number_of_codes",
+      "kind",
+      "multi_codes"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotions_stores": {
+    "columns": [
+      "promotion_id",
+      "store_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_refund_reasons": {
+    "columns": [
+      "name",
+      "active",
+      "created_at",
+      "updated_at",
+      "mutable"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_refunds": {
+    "columns": [
+      "payment_id",
+      "amount",
+      "transaction_id",
+      "created_at",
+      "updated_at",
+      "refund_reason_id",
+      "reimbursement_id",
+      "refunder_id",
+      "originator_type",
+      "originator_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_reimbursement_credits": {
+    "columns": [
+      "amount",
+      "reimbursement_id",
+      "creditable_id",
+      "creditable_type",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_reimbursement_types": {
+    "columns": [
+      "name",
+      "active",
+      "mutable",
+      "created_at",
+      "updated_at",
+      "type"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_reimbursements": {
+    "columns": [
+      "number",
+      "reimbursement_status",
+      "customer_return_id",
+      "order_id",
+      "total",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_return_authorizations": {
+    "columns": [
+      "number",
+      "state",
+      "order_id",
+      "memo",
+      "created_at",
+      "updated_at",
+      "stock_location_id",
+      "return_authorization_reason_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_return_items": {
+    "columns": [
+      "return_authorization_id",
+      "inventory_unit_id",
+      "exchange_variant_id",
+      "created_at",
+      "updated_at",
+      "pre_tax_amount",
+      "included_tax_total",
+      "additional_tax_total",
+      "reception_status",
+      "acceptance_status",
+      "customer_return_id",
+      "reimbursement_id",
+      "acceptance_status_errors",
+      "preferred_reimbursement_type_id",
+      "override_reimbursement_type_id",
+      "resellable"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_role_users": {
+    "columns": [
+      "role_id",
+      "user_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_roles": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "description",
+      "mutable",
+      "permissions"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_shipping_method_categories": {
+    "columns": [
+      "shipping_method_id",
+      "shipping_category_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_state_changes": {
+    "columns": [
+      "name",
+      "previous_state",
+      "stateful_id",
+      "user_id",
+      "stateful_type",
+      "next_state",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_states": {
+    "columns": [
+      "name",
+      "abbr",
+      "country_id",
+      "updated_at",
+      "created_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_locations": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "default",
+      "address1",
+      "address2",
+      "city",
+      "state_id",
+      "state_name",
+      "country_id",
+      "zipcode",
+      "phone",
+      "active",
+      "backorderable_default",
+      "propagate_all_variants",
+      "admin_name",
+      "deleted_at",
+      "company",
+      "kind",
+      "pickup_enabled",
+      "pickup_stock_policy",
+      "pickup_ready_in_minutes",
+      "pickup_instructions",
+      "country_code",
+      "state_code",
+      "returns_enabled"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_movements": {
+    "columns": [
+      "stock_item_id",
+      "quantity",
+      "action",
+      "created_at",
+      "updated_at",
+      "originator_type",
+      "originator_id",
+      "kind",
+      "reason",
+      "order_id",
+      "fulfillment_id",
+      "return_id",
+      "exchange_id",
+      "stock_transfer_id",
+      "purchase_order_id",
+      "unit_cost",
+      "stock_receipt_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_transfers": {
+    "columns": [
+      "reference",
+      "source_location_id",
+      "destination_location_id",
+      "created_at",
+      "updated_at",
+      "number",
+      "public_metadata",
+      "private_metadata",
+      "store_id",
+      "status",
+      "shipped_at",
+      "received_at",
+      "notes",
+      "created_by_id",
+      "deleted_at",
+      "closed_short_at",
+      "close_reason"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_store_credit_categories": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_store_credit_events": {
+    "columns": [
+      "store_credit_id",
+      "action",
+      "amount",
+      "authorization_code",
+      "user_total_amount",
+      "originator_id",
+      "originator_type",
+      "deleted_at",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_store_credit_types": {
+    "columns": [
+      "name",
+      "priority",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_store_credits": {
+    "columns": [
+      "user_id",
+      "category_id",
+      "created_by_id",
+      "amount",
+      "amount_used",
+      "memo",
+      "deleted_at",
+      "currency",
+      "amount_authorized",
+      "originator_id",
+      "originator_type",
+      "type_id",
+      "created_at",
+      "updated_at",
+      "store_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stores": {
+    "columns": [
+      "name",
+      "url",
+      "meta_description",
+      "meta_keywords",
+      "seo_title",
+      "mail_from_address",
+      "default_currency",
+      "code",
+      "default",
+      "created_at",
+      "updated_at",
+      "supported_currencies",
+      "facebook",
+      "twitter",
+      "instagram",
+      "default_locale",
+      "customer_support_email",
+      "default_country_id",
+      "description",
+      "address",
+      "contact_phone",
+      "new_order_notifications_email",
+      "checkout_zone_id",
+      "seo_robots",
+      "supported_locales",
+      "deleted_at",
+      "settings",
+      "preferences",
+      "public_metadata",
+      "private_metadata",
+      "storefront_custom_code_head",
+      "storefront_custom_code_body_start",
+      "storefront_custom_code_body_end",
+      "default_country_code",
+      "setup_token"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tax_categories": {
+    "columns": [
+      "name",
+      "description",
+      "is_default",
+      "deleted_at",
+      "created_at",
+      "updated_at",
+      "tax_code"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tax_rates": {
+    "columns": [
+      "amount",
+      "zone_id",
+      "tax_category_id",
+      "included_in_price",
+      "created_at",
+      "updated_at",
+      "name",
+      "show_rate_in_label",
+      "deleted_at",
+      "public_metadata",
+      "private_metadata",
+      "country_code",
+      "state_code"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_taxonomies": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "position",
+      "store_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_trackers": {
+    "columns": [
+      "analytics_id",
+      "active",
+      "created_at",
+      "updated_at",
+      "engine"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_users": {
+    "columns": [
+      "encrypted_password",
+      "password_salt",
+      "email",
+      "remember_token",
+      "persistence_token",
+      "reset_password_token",
+      "perishable_token",
+      "sign_in_count",
+      "failed_attempts",
+      "last_request_at",
+      "current_sign_in_at",
+      "last_sign_in_at",
+      "current_sign_in_ip",
+      "last_sign_in_ip",
+      "login",
+      "ship_address_id",
+      "bill_address_id",
+      "authentication_token",
+      "unlock_token",
+      "locked_at",
+      "remember_created_at",
+      "reset_password_sent_at",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_variants": {
+    "columns": [
+      "sku",
+      "weight",
+      "height",
+      "width",
+      "depth",
+      "deleted_at",
+      "is_master",
+      "product_id",
+      "cost_price",
+      "position",
+      "cost_currency",
+      "track_inventory",
+      "tax_category_id",
+      "updated_at",
+      "discontinue_on",
+      "created_at",
+      "public_metadata",
+      "private_metadata",
+      "barcode",
+      "weight_unit",
+      "dimensions_unit",
+      "image_count",
+      "thumbnail_id",
+      "preorderable",
+      "preorder_ships_at",
+      "backorder_limit",
+      "hs_code",
+      "country_of_origin",
+      "customs_description",
+      "minimum_order_quantity",
+      "order_multiple",
+      "purchase_unit",
+      "units_per_carton",
+      "carton_weight",
+      "cartons_per_pallet"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_zone_members": {
+    "columns": [
+      "zoneable_type",
+      "zoneable_id",
+      "zone_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_zones": {
+    "columns": [
+      "name",
+      "description",
+      "default_tax",
+      "zone_members_count",
+      "created_at",
+      "updated_at",
+      "kind"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_wishlists": {
+    "columns": [
+      "user_id",
+      "store_id",
+      "name",
+      "token",
+      "is_private",
+      "is_default"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_digital_links": {
+    "columns": [
+      "digital_id",
+      "line_item_id",
+      "secret",
+      "access_counter"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_sources": {
+    "columns": [
+      "gateway_payment_profile_id",
+      "type",
+      "payment_method_id",
+      "user_id",
+      "public_metadata",
+      "private_metadata",
+      "gateway_customer_profile_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_translations": {
+    "columns": [
+      "name",
+      "description",
+      "locale",
+      "spree_product_id",
+      "meta_description",
+      "meta_keywords",
+      "meta_title",
+      "slug",
+      "deleted_at"
+    ],
+    "fks": [
+      "spree_product"
+    ],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_type_translations": {
+    "columns": [
+      "presentation",
+      "locale",
+      "spree_option_type_id"
+    ],
+    "fks": [
+      "spree_option_type"
+    ],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_value_translations": {
+    "columns": [
+      "presentation",
+      "locale",
+      "spree_option_value_id"
+    ],
+    "fks": [
+      "spree_option_value"
+    ],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_taxonomy_translations": {
+    "columns": [
+      "name",
+      "locale",
+      "spree_taxonomy_id"
+    ],
+    "fks": [
+      "spree_taxonomy"
+    ],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_store_translations": {
+    "columns": [
+      "name",
+      "meta_description",
+      "meta_keywords",
+      "seo_title",
+      "facebook",
+      "twitter",
+      "instagram",
+      "customer_support_email",
+      "description",
+      "address",
+      "contact_phone",
+      "new_order_notifications_email",
+      "locale",
+      "spree_store_id",
+      "deleted_at"
+    ],
+    "fks": [
+      "spree_store"
+    ],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_data_feeds": {
+    "columns": [
+      "spree_store_id",
+      "name",
+      "provider",
+      "uuid",
+      "enabled"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_coupon_codes": {
+    "columns": [
+      "code",
+      "promotion_id",
+      "order_id",
+      "state",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "action_text_rich_texts": {
+    "columns": [
+      "locale"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_exports": {
+    "columns": [
+      "user_id",
+      "store_id",
+      "number",
+      "type",
+      "search_params",
+      "format",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_taxon_rules": {
+    "columns": [
+      "taxon_id",
+      "type",
+      "value",
+      "match_policy"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_custom_domains": {
+    "columns": [
+      "store_id",
+      "url",
+      "status",
+      "default",
+      "public_metadata",
+      "private_metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_reports": {
+    "columns": [
+      "store_id",
+      "user_id",
+      "type",
+      "currency",
+      "date_from",
+      "date_to"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_gateway_customers": {
+    "columns": [
+      "profile_id",
+      "payment_method_id",
+      "user_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_taggings": {
+    "columns": [
+      "tag_id",
+      "taggable_type",
+      "taggable_id",
+      "tagger_type",
+      "tagger_id",
+      "context",
+      "created_at",
+      "tenant"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tags": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "taggings_count"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_integrations": {
+    "columns": [
+      "store_id",
+      "type",
+      "preferences",
+      "active"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_invitations": {
+    "columns": [
+      "email",
+      "token",
+      "status",
+      "resource_id",
+      "inviter_id",
+      "invitee_id",
+      "role_id",
+      "accepted_at",
+      "expires_at",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_gift_card_batches": {
+    "columns": [
+      "store_id",
+      "created_by_id",
+      "codes_count",
+      "amount",
+      "currency",
+      "prefix",
+      "expires_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_gift_cards": {
+    "columns": [
+      "store_id",
+      "user_id",
+      "gift_card_batch_id",
+      "created_by_id",
+      "code",
+      "state",
+      "amount",
+      "amount_authorized",
+      "amount_used",
+      "currency",
+      "expires_at",
+      "redeemed_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_policies": {
+    "columns": [
+      "slug",
+      "name",
+      "body"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_policy_translations": {
+    "columns": [
+      "locale",
+      "name",
+      "spree_policy_id",
+      "body"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_newsletter_subscribers": {
+    "columns": [
+      "email",
+      "user_id",
+      "verified_at",
+      "verification_token",
+      "public_metadata",
+      "private_metadata"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_imports": {
+    "columns": [
+      "user_id",
+      "owner_id",
+      "status",
+      "number",
+      "type",
+      "processing_errors",
+      "preferences",
+      "rows_count",
+      "processing_groups_count",
+      "completed_groups_count"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_import_rows": {
+    "columns": [
+      "import_id",
+      "item_id",
+      "status",
+      "row_number",
+      "data",
+      "validation_errors"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_import_mappings": {
+    "columns": [
+      "import_id",
+      "schema_field",
+      "file_column"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_user_identities": {
+    "columns": [
+      "user_id",
+      "provider",
+      "uid",
+      "info",
+      "access_token",
+      "refresh_token",
+      "expires_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_price_lists": {
+    "columns": [
+      "store_id",
+      "name",
+      "description",
+      "position",
+      "status",
+      "starts_at",
+      "ends_at",
+      "match_policy",
+      "deleted_at",
+      "price_adjustment_percentage",
+      "adjust_compare_at"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_price_rules": {
+    "columns": [
+      "price_list_id",
+      "type",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_webhook_endpoints": {
+    "columns": [
+      "store_id",
+      "url",
+      "active",
+      "subscriptions",
+      "secret_key",
+      "deleted_at",
+      "name",
+      "disabled_reason",
+      "disabled_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_webhook_deliveries": {
+    "columns": [
+      "webhook_endpoint_id",
+      "event_name",
+      "payload",
+      "response_code",
+      "response_body",
+      "error_type",
+      "execution_time",
+      "request_errors",
+      "success",
+      "delivered_at",
+      "event_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_customer_groups": {
+    "columns": [
+      "store_id",
+      "name",
+      "description",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_customer_group_users": {
+    "columns": [
+      "customer_group_id",
+      "user_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_api_keys": {
+    "columns": [
+      "name",
+      "key_type",
+      "token",
+      "store_id",
+      "created_by_id",
+      "last_used_at",
+      "revoked_at",
+      "revoked_by_id",
+      "token_digest",
+      "token_prefix",
+      "scopes"
+    ],
+    "fks": [],
+    "unique_count": 4,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_sessions": {
+    "columns": [
+      "type",
+      "order_id",
+      "payment_method_id",
+      "customer_id",
+      "amount",
+      "currency",
+      "status",
+      "external_id",
+      "external_data",
+      "expires_at",
+      "customer_external_id",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_setup_sessions": {
+    "columns": [
+      "customer_id",
+      "payment_method_id",
+      "payment_source_id",
+      "status",
+      "external_id",
+      "external_client_secret",
+      "external_data",
+      "deleted_at",
+      "type"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_markets": {
+    "columns": [
+      "store_id",
+      "name",
+      "currency",
+      "default_locale",
+      "supported_locales",
+      "tax_inclusive",
+      "default",
+      "position",
+      "deleted_at",
+      "tax_provider"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_market_countries": {
+    "columns": [
+      "market_id",
+      "country_id",
+      "country_code"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_allowed_origins": {
+    "columns": [
+      "store_id",
+      "origin"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_refresh_tokens": {
+    "columns": [
+      "token",
+      "user_id",
+      "expires_at",
+      "ip_address",
+      "user_agent",
+      "audience"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_price_histories": {
+    "columns": [
+      "price_id",
+      "variant_id",
+      "amount",
+      "compare_at_amount",
+      "currency",
+      "recorded_at",
+      "created_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_reservations": {
+    "columns": [
+      "stock_item_id",
+      "line_item_id",
+      "order_id",
+      "quantity",
+      "expires_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_variant_media": {
+    "columns": [
+      "variant_id",
+      "media_id"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_channels": {
+    "columns": [
+      "store_id",
+      "name",
+      "code",
+      "active",
+      "preferences",
+      "default"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_order_routing_rules": {
+    "columns": [
+      "store_id",
+      "channel_id",
+      "type",
+      "position",
+      "active",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_publications": {
+    "columns": [
+      "product_id",
+      "channel_id",
+      "published_at",
+      "unpublished_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_collections": {
+    "columns": [
+      "name",
+      "permalink",
+      "automatic",
+      "rules_match_policy",
+      "sort_order",
+      "position",
+      "products_count",
+      "store_id",
+      "meta_title",
+      "meta_description",
+      "meta_keywords",
+      "metadata",
+      "description"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_collections": {
+    "columns": [
+      "product_id",
+      "collection_id",
+      "position"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_collection_rules": {
+    "columns": [
+      "collection_id",
+      "type",
+      "value",
+      "match_policy"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_collection_translations": {
+    "columns": [
+      "name",
+      "permalink",
+      "meta_title",
+      "meta_description",
+      "meta_keywords",
+      "locale",
+      "spree_collection_id",
+      "description"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_categories": {
+    "columns": [
+      "parent_id",
+      "position",
+      "name",
+      "permalink",
+      "taxonomy_id",
+      "lft",
+      "rgt",
+      "description",
+      "created_at",
+      "updated_at",
+      "meta_title",
+      "meta_description",
+      "meta_keywords",
+      "depth",
+      "hide_from_nav",
+      "pretty_name",
+      "rules_match_policy",
+      "sort_order",
+      "automatic",
+      "children_count",
+      "products_count"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_categories": {
+    "columns": [
+      "product_id",
+      "taxon_id",
+      "position",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_promotion_rule_categories": {
+    "columns": [
+      "taxon_id",
+      "promotion_rule_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_category_translations": {
+    "columns": [
+      "name",
+      "description",
+      "locale",
+      "spree_taxon_id",
+      "meta_title",
+      "meta_description",
+      "meta_keywords",
+      "permalink",
+      "pretty_name"
+    ],
+    "fks": [
+      "spree_taxon"
+    ],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_admin_users": {
+    "columns": [
+      "email",
+      "password_digest",
+      "first_name",
+      "last_name",
+      "selected_locale",
+      "failed_attempts",
+      "locked_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_customers": {
+    "columns": [
+      "email",
+      "password_digest",
+      "first_name",
+      "last_name",
+      "phone",
+      "selected_locale",
+      "accepts_email_marketing",
+      "bill_address_id",
+      "ship_address_id",
+      "failed_attempts",
+      "locked_at",
+      "internal_note",
+      "email_marketing_consent_updated_at",
+      "email_marketing_consent_source",
+      "anonymized_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_types": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at",
+      "products_count",
+      "fulfillment_types"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_option_type_product_types": {
+    "columns": [
+      "prototype_id",
+      "option_type_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_type_categories": {
+    "columns": [
+      "taxon_id",
+      "prototype_id",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_type_translations": {
+    "columns": [
+      "name",
+      "locale",
+      "spree_product_type_id"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_zones": {
+    "columns": [
+      "store_id",
+      "name",
+      "description",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_zone_members": {
+    "columns": [
+      "delivery_zone_id",
+      "member_type",
+      "country_id",
+      "state_id",
+      "postal_code_prefix",
+      "postal_code_from",
+      "postal_code_to",
+      "country_code",
+      "state_code"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_carts": {
+    "columns": [
+      "store_id",
+      "market_id",
+      "channel_id",
+      "customer_id",
+      "currency",
+      "locale",
+      "email",
+      "ship_address_id",
+      "bill_address_id",
+      "accept_marketing",
+      "customer_note",
+      "last_ip_address",
+      "token",
+      "lock_version",
+      "completed_at",
+      "completing_at",
+      "coupon_code",
+      "gift_card_id",
+      "preferred_stock_location_id",
+      "item_total",
+      "adjustment_total",
+      "included_tax_total",
+      "additional_tax_total",
+      "taxable_adjustment_total",
+      "non_taxable_adjustment_total",
+      "discount_total",
+      "fee_total",
+      "delivery_total",
+      "total",
+      "payment_total",
+      "total_quantity",
+      "metadata",
+      "po_number"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_fulfillments": {
+    "columns": [
+      "tracking",
+      "number",
+      "cost",
+      "shipped_at",
+      "order_id",
+      "address_id",
+      "state",
+      "created_at",
+      "updated_at",
+      "stock_location_id",
+      "adjustment_total",
+      "additional_tax_total",
+      "promo_total",
+      "included_tax_total",
+      "pre_tax_amount",
+      "taxable_adjustment_total",
+      "non_taxable_adjustment_total",
+      "public_metadata",
+      "private_metadata",
+      "fulfillment_type",
+      "pickup_point_data",
+      "delivered_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_methods": {
+    "columns": [
+      "name",
+      "display_on",
+      "deleted_at",
+      "created_at",
+      "updated_at",
+      "tracking_url",
+      "admin_name",
+      "tax_category_id",
+      "code",
+      "estimated_transit_business_days_min",
+      "estimated_transit_business_days_max",
+      "storefront_visible",
+      "fulfillment_provider",
+      "pickup_point_provider",
+      "rate_provider",
+      "markup_flat",
+      "markup_percent",
+      "fulfillment_type",
+      "available_to_sellers"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_rates": {
+    "columns": [
+      "shipment_id",
+      "shipping_method_id",
+      "selected",
+      "cost",
+      "created_at",
+      "updated_at",
+      "tax_rate_id",
+      "carrier",
+      "service_level",
+      "estimated_delivery_date",
+      "metadata",
+      "name",
+      "unpriced"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_fulfillment_items": {
+    "columns": [
+      "state",
+      "variant_id",
+      "order_id",
+      "shipment_id",
+      "created_at",
+      "updated_at",
+      "pending",
+      "line_item_id",
+      "quantity",
+      "original_return_item_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_method_zones": {
+    "columns": [
+      "shipping_method_id",
+      "zone_id",
+      "created_at",
+      "updated_at",
+      "delivery_method_id",
+      "delivery_zone_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_method_stock_locations": {
+    "columns": [
+      "delivery_method_id",
+      "stock_location_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tax_lines": {
+    "columns": [
+      "cart_id",
+      "order_id",
+      "tax_rate_id",
+      "line_item_id",
+      "fulfillment_id",
+      "fee_id",
+      "amount",
+      "rate",
+      "label",
+      "included",
+      "provider_id",
+      "data",
+      "metadata",
+      "taxability_reason",
+      "country_code",
+      "state_code"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_discounts": {
+    "columns": [
+      "cart_id",
+      "order_id",
+      "promotion_action_id",
+      "promotion_id",
+      "line_item_id",
+      "fulfillment_id",
+      "amount",
+      "label",
+      "kind",
+      "code",
+      "value",
+      "value_type",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 1,
+    "pk": "id"
+  },
+  "spree_fees": {
+    "columns": [
+      "cart_id",
+      "order_id",
+      "line_item_id",
+      "fulfillment_id",
+      "amount",
+      "label",
+      "kind",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 1,
+    "pk": "id"
+  },
+  "spree_delivery_method_rules": {
+    "columns": [
+      "type",
+      "delivery_method_id",
+      "active",
+      "preferences"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_returns": {
+    "columns": [
+      "number",
+      "store_id",
+      "order_id",
+      "stock_location_id",
+      "reason_id",
+      "created_by_id",
+      "status",
+      "memo",
+      "approved_at",
+      "received_at",
+      "refunded_at",
+      "canceled_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_return_line_items": {
+    "columns": [
+      "return_id",
+      "fulfillment_item_id",
+      "line_item_id",
+      "variant_id",
+      "quantity",
+      "received_quantity",
+      "pre_tax_amount",
+      "resellable"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_exchanges": {
+    "columns": [
+      "number",
+      "store_id",
+      "order_id",
+      "stock_location_id",
+      "reason_id",
+      "created_by_id",
+      "status",
+      "memo",
+      "approved_at",
+      "received_at",
+      "fulfilled_at",
+      "canceled_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_exchange_line_items": {
+    "columns": [
+      "exchange_id",
+      "fulfillment_item_id",
+      "line_item_id",
+      "original_variant_id",
+      "new_variant_id",
+      "quantity",
+      "received_quantity",
+      "resellable"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_claims": {
+    "columns": [
+      "number",
+      "store_id",
+      "order_id",
+      "reason_id",
+      "created_by_id",
+      "status",
+      "resolution",
+      "memo",
+      "approved_at",
+      "resolved_at",
+      "denied_at",
+      "canceled_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_claim_line_items": {
+    "columns": [
+      "claim_id",
+      "line_item_id",
+      "variant_id",
+      "replacement_variant_id",
+      "quantity",
+      "send_replacement",
+      "refund_amount",
+      "description"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_return_authorization_reasons": {
+    "columns": [
+      "name",
+      "active",
+      "created_at",
+      "updated_at",
+      "mutable"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_method_rule_products": {
+    "columns": [
+      "delivery_method_rule_id",
+      "product_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tax_identifiers": {
+    "columns": [
+      "owner_id",
+      "kind",
+      "value",
+      "validation_status",
+      "validated_at",
+      "validation_evidence",
+      "source"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_type_custom_field_definitions": {
+    "columns": [
+      "product_type_id",
+      "custom_field_definition_id",
+      "required",
+      "sort_order"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_companies": {
+    "columns": [
+      "store_id",
+      "parent_id",
+      "name",
+      "kind",
+      "metadata",
+      "default_bill_address_id",
+      "default_ship_address_id",
+      "po_number_required"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_company_memberships": {
+    "columns": [
+      "company_id",
+      "customer_id"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_company_invitations": {
+    "columns": [
+      "company_id",
+      "inviter_id",
+      "customer_id",
+      "email",
+      "token",
+      "expires_at",
+      "accepted_at",
+      "revoked_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_tax_exemption_certificates": {
+    "columns": [
+      "company_id",
+      "country_code",
+      "state_code",
+      "certificate_number",
+      "reason_code",
+      "status",
+      "issued_at",
+      "expires_at",
+      "issuing_authority",
+      "verified_at",
+      "verified_by_id",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_metafields": {
+    "columns": [
+      "type",
+      "resource_id",
+      "metafield_definition_id",
+      "value"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_metafield_definitions": {
+    "columns": [
+      "namespace",
+      "key",
+      "name",
+      "metafield_type",
+      "resource_type",
+      "searchable",
+      "sortable",
+      "display_on"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_delivery_method_services": {
+    "columns": [
+      "delivery_method_id",
+      "carrier",
+      "service",
+      "label",
+      "markup_flat",
+      "markup_percent",
+      "position"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_shipping_categories": {
+    "columns": [
+      "name",
+      "created_at",
+      "updated_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_channel_stock_locations": {
+    "columns": [
+      "channel_id",
+      "stock_location_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_digitals": {
+    "columns": [
+      "variant_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_digital_assets": {
+    "columns": [
+      "provider_type",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_number_sequences": {
+    "columns": [
+      "store_id",
+      "resource_type",
+      "value"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_items": {
+    "columns": [
+      "stock_location_id",
+      "variant_id",
+      "count_on_hand",
+      "created_at",
+      "updated_at",
+      "backorderable",
+      "deleted_at",
+      "public_metadata",
+      "private_metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_levels": {
+    "columns": [
+      "allocated_count"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_sellers": {
+    "columns": [
+      "store_id",
+      "name",
+      "slug",
+      "status",
+      "contact_email",
+      "billing_email",
+      "about",
+      "billing_address_id",
+      "terms_accepted_at",
+      "holiday_mode_until",
+      "payouts_schedule_interval",
+      "minimum_payout_amount",
+      "tax_remittance",
+      "metadata",
+      "deleted_at",
+      "legal_name",
+      "registration_number",
+      "payouts_enabled_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_translations": {
+    "columns": [
+      "name",
+      "about",
+      "locale",
+      "spree_seller_id",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_commission_rates": {
+    "columns": [
+      "store_id",
+      "name",
+      "code",
+      "enabled",
+      "position",
+      "kind",
+      "value",
+      "tax_inclusive",
+      "include_shipping",
+      "commission_tax_rate",
+      "metadata",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_commission_rate_values": {
+    "columns": [
+      "commission_rate_id",
+      "currency",
+      "amount",
+      "min_amount",
+      "max_amount",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_commission_rules": {
+    "columns": [
+      "commission_rate_id",
+      "type",
+      "preferences",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_commission_rule_products": {
+    "columns": [
+      "commission_rule_id",
+      "product_id",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_commission_lines": {
+    "columns": [
+      "order_id",
+      "seller_id",
+      "line_item_id",
+      "fulfillment_id",
+      "commission_rate_id",
+      "rate",
+      "kind",
+      "amount",
+      "tax_amount",
+      "tax_rate",
+      "total",
+      "currency",
+      "taxability_reason",
+      "country_code",
+      "state_code",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 1,
+    "pk": "id"
+  },
+  "spree_external_references": {
+    "columns": [
+      "store_id",
+      "system",
+      "resource_id",
+      "external_id",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_requirements": {
+    "columns": [
+      "store_id",
+      "type",
+      "name",
+      "description",
+      "position",
+      "active",
+      "required",
+      "preferences",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_requirement_submissions": {
+    "columns": [
+      "seller_id",
+      "seller_requirement_id",
+      "status",
+      "submitted_by_id",
+      "reviewed_by_id",
+      "reviewed_at",
+      "note",
+      "review_note",
+      "reference",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_media": {
+    "columns": [
+      "viewable_type",
+      "viewable_id",
+      "attachment_width",
+      "attachment_height",
+      "attachment_file_size",
+      "position",
+      "attachment_content_type",
+      "attachment_file_name",
+      "type",
+      "attachment_updated_at",
+      "alt",
+      "created_at",
+      "updated_at",
+      "session_id",
+      "media_type",
+      "focal_point_x",
+      "focal_point_y",
+      "external_video_url"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_requirement_custom_fields": {
+    "columns": [
+      "seller_requirement_id",
+      "custom_field_definition_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_order_groups": {
+    "columns": [
+      "store_id",
+      "customer_id",
+      "cart_id",
+      "number",
+      "currency",
+      "email",
+      "token",
+      "ship_address_id",
+      "bill_address_id",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_payment_splits": {
+    "columns": [
+      "payment_id",
+      "order_id",
+      "authorized_amount",
+      "captured_amount",
+      "refunded_amount",
+      "currency",
+      "claimed_amount"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_transfers": {
+    "columns": [
+      "store_id",
+      "seller_id",
+      "order_id",
+      "payout_id",
+      "reversed_from_id",
+      "refund_id",
+      "amount",
+      "currency",
+      "kind",
+      "status",
+      "provider",
+      "reference",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 5,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_seller_payouts": {
+    "columns": [
+      "store_id",
+      "seller_id",
+      "amount",
+      "currency",
+      "status",
+      "period_start",
+      "period_end",
+      "provider",
+      "reference",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_catalogs": {
+    "columns": [
+      "store_id",
+      "name",
+      "active",
+      "position",
+      "metadata",
+      "description",
+      "minimum_order_quantity",
+      "order_multiple"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_catalog_products": {
+    "columns": [
+      "catalog_id",
+      "product_id"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_catalog_assignments": {
+    "columns": [
+      "catalog_id",
+      "assignable_id"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_product_submissions": {
+    "columns": [
+      "product_id",
+      "status",
+      "submitted_by_id",
+      "reviewed_by_id",
+      "reviewed_at",
+      "review_note",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_catalog_quantity_rules": {
+    "columns": [
+      "catalog_id",
+      "variant_id",
+      "minimum_order_quantity",
+      "order_multiple"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_catalog_order_minimums": {
+    "columns": [
+      "catalog_id",
+      "currency",
+      "amount"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_package_types": {
+    "columns": [
+      "store_id",
+      "name",
+      "kind",
+      "length",
+      "width",
+      "height",
+      "dimensions_unit",
+      "weight",
+      "max_weight",
+      "weight_unit",
+      "default",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 9,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_custom_field_definitions": {
+    "columns": [],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_consent_records": {
+    "columns": [
+      "store_id",
+      "owner_id",
+      "purpose",
+      "source",
+      "accepted",
+      "email",
+      "ip_address",
+      "user_agent",
+      "documents",
+      "recorded_at"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_data_requests": {
+    "columns": [
+      "store_id",
+      "customer_id",
+      "number",
+      "download_token",
+      "kind",
+      "status",
+      "email",
+      "requested_at",
+      "completed_at",
+      "expires_at",
+      "error_message",
+      "requested_by_id"
+    ],
+    "fks": [],
+    "unique_count": 2,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_order_cancellations": {
+    "columns": [
+      "order_id",
+      "reason",
+      "note",
+      "restock_items",
+      "refund_payments",
+      "refund_amount",
+      "notify_customer",
+      "canceled_by_id",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_order_approvals": {
+    "columns": [
+      "order_id",
+      "status",
+      "level",
+      "note",
+      "approver_id",
+      "decided_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_wishlist_items": {
+    "columns": [
+      "variant_id",
+      "wishlist_id",
+      "quantity"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_shipping_labels": {
+    "columns": [
+      "owner_id",
+      "store_id",
+      "integration_id",
+      "source",
+      "external_id",
+      "carrier",
+      "service",
+      "tracking_number",
+      "cost",
+      "currency",
+      "format",
+      "status",
+      "refunded_at",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_deliveries": {
+    "columns": [
+      "owner_id",
+      "store_id",
+      "shipping_label_id",
+      "tracking_number",
+      "tracking_url",
+      "carrier",
+      "service",
+      "status",
+      "estimated_delivery_at",
+      "delivered_at",
+      "details"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_transfer_items": {
+    "columns": [
+      "stock_transfer_id",
+      "variant_id",
+      "quantity_shipped",
+      "quantity_received",
+      "quantity_rejected"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_suppliers": {
+    "columns": [
+      "name",
+      "contact_name",
+      "email",
+      "phone",
+      "notes",
+      "store_id",
+      "purchase_orders_count",
+      "address1",
+      "address2",
+      "city",
+      "state_name",
+      "state_code",
+      "country_code",
+      "postal_code",
+      "metadata",
+      "deleted_at"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_purchase_orders": {
+    "columns": [
+      "number",
+      "status",
+      "currency",
+      "reference",
+      "supplier_id",
+      "store_id",
+      "destination_location_id",
+      "expected_at",
+      "ordered_at",
+      "received_at",
+      "notes",
+      "created_by_id",
+      "metadata",
+      "cancel_by",
+      "closed_short_at",
+      "close_reason"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_purchase_order_items": {
+    "columns": [
+      "purchase_order_id",
+      "variant_id",
+      "quantity_ordered",
+      "quantity_received",
+      "unit_cost",
+      "quantity_rejected"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_price_adjustment_tiers": {
+    "columns": [
+      "price_list_id",
+      "min_quantity",
+      "percentage"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_receipts": {
+    "columns": [
+      "number",
+      "store_id",
+      "receivable_id",
+      "reference",
+      "received_at",
+      "received_by_id",
+      "notes",
+      "metadata"
+    ],
+    "fks": [],
+    "unique_count": 1,
+    "check_count": 0,
+    "pk": "id"
+  },
+  "spree_stock_receipt_items": {
+    "columns": [
+      "stock_receipt_id",
+      "line_id",
+      "quantity_accepted",
+      "quantity_rejected",
+      "rejection_reason",
+      "notes"
+    ],
+    "fks": [],
+    "unique_count": 0,
+    "check_count": 0,
+    "pk": "id"
+  }
+}
