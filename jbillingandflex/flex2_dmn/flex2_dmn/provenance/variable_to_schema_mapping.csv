@@ -4,7 +4,7 @@ Academic_Standing.dmn,Academic Warning Status,priorWarningCount,input,STUDENT_PR
 Academic_Standing.dmn,Academic Warning Status,newWarningCount,output,STUDENT_PROGRAM.WARNING,direct,written back after each semester's processing
 Academic_Standing.dmn,Academic Warning Status,admissionStatus,output,STUDENT_PROGRAM.PROG_STATUS via D_STUDENT_STATUS,direct-coded,Active/Closed must be mapped to the real STATUS_ID values in D_STUDENT_STATUS (not visible in this DDL-only export - no seed data)
 Academic_Standing.dmn,Academic Warning Status,warningAction,output,(none),not-persisted,Workflow/notification text only - no matching column found
-Academic_Standing.dmn,Course Load Limit,semesterType,input,SEMESTER (Regular/Summer classification),derived,exact column not confirmed from DDL alone - SEMESTER table structure not inspected in this pass
+Academic_Standing.dmn,Course Load Limit,semesterType,input,SEMESTER.TITLE (free text only -- see notes),SCHEMA GAP (partial),"Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (§4.4-style), not an under-investigated mapping."
 Academic_Standing.dmn,Course Load Limit,newWarningCount,input,STUDENT_PROGRAM.WARNING,direct,fed from Academic Warning Status decision (DRD edge)
 Academic_Standing.dmn,Course Load Limit,maxCoursesAllowed,output,(none - runtime check),derived,validated against COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID at registration time
 Academic_Standing.dmn,Course Load Limit,courseLoadBasis,output,(none),not-persisted,explanatory text only
@@ -13,7 +13,7 @@ Academic_Standing.dmn,Admission Closure Eligibility,newAdmissionEligibilityNotMe
 Academic_Standing.dmn,Admission Closure Eligibility,admissionStatus,output,STUDENT_PROGRAM.PROG_STATUS,direct,
 Academic_Standing.dmn,Admission Closure Eligibility,closureReason,output,STUDENT_REMARKS_HISTORY,direct,table exists specifically for this purpose
 Academic_Standing.dmn,Course Registration Eligibility,newWarningCount,input,STUDENT_PROGRAM.WARNING,direct,fed from Academic Warning Status (DRD edge)
-Academic_Standing.dmn,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,derived COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID,derived,
+Academic_Standing.dmn,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>,derived,"Verified directly against Flex1.sql (2026-09-11): COURSE_REGISTRATION has both ROLL_NO and SEM_ID columns, exactly as this fact requires. Filter clause added so this compiles to a real derived_aggregate recipe instead of an aggregate with no WHERE text."
 Academic_Standing.dmn,Course Registration Eligibility,maxCoursesAllowed,input,(none - runtime),direct,fed from Course Load Limit (DRD edge)
 Academic_Standing.dmn,Course Registration Eligibility,canRegisterCourse,output,gates COURSE_REGISTRATION insert (REG_STATUS/REG_APPROVAL_DATE),derived,
 Academic_Standing.dmn,Course Registration Eligibility,reason,output,EXCEPTION_DETAIL,direct,table exists specifically for this purpose

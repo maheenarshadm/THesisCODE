@@ -4,7 +4,7 @@ FLEX2,Academic Warning Status,priorWarningCount,input,Direct Attribute Reference
 FLEX2,Academic Warning Status,newWarningCount,output,Decision Output / Write-Back Target,direct,written back after each semester's processing
 FLEX2,Academic Warning Status,admissionStatus,output,Decision Output / Write-Back Target,direct,Active/Closed must be mapped to the real STATUS_ID values in D_STUDENT_STATUS (not visible in this DDL-only export - no seed data)
 FLEX2,Academic Warning Status,warningAction,output,Not-Persisted,not_persisted,Workflow/notification text only - no matching column found
-FLEX2,Course Load Limit,semesterType,input,Compound / Unclassified Derivation,derived,exact column not confirmed from DDL alone - SEMESTER table structure not inspected in this pass
+FLEX2,Course Load Limit,semesterType,input,Schema Gap,schema_gap,"Checked directly against Flex1.sql (2026-09-11): SEMESTER has only SEM_ID/TITLE/STATUS, and no D_* dimension table exists for semester type anywhere in the 220-table schema (every other coded category in this schema -- course type, employee type, student status -- has one). No dedicated Regular/Summer column exists; TITLE (free-text, e.g. 'Summer 2021') is the only candidate, and only via a fragile LIKE '%Summer%' substring match, not a clean equality lookup. A genuine schema-representability finding (§4.4-style), not an under-investigated mapping."
 FLEX2,Course Load Limit,newWarningCount,input,Direct Attribute Reference,direct,fed from Academic Warning Status decision (DRD edge)
 FLEX2,Course Load Limit,maxCoursesAllowed,output,Aggregate Function,derived,validated against COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID at registration time
 FLEX2,Course Load Limit,courseLoadBasis,output,Not-Persisted,not_persisted,explanatory text only
@@ -13,7 +13,7 @@ FLEX2,Admission Closure Eligibility,newAdmissionEligibilityNotMet,input,Compound
 FLEX2,Admission Closure Eligibility,admissionStatus,output,Decision Output / Write-Back Target,direct,
 FLEX2,Admission Closure Eligibility,closureReason,output,Compound / Unclassified Derivation,direct,table exists specifically for this purpose
 FLEX2,Course Registration Eligibility,newWarningCount,input,Direct Attribute Reference,direct,fed from Academic Warning Status (DRD edge)
-FLEX2,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,Aggregate Function,derived,
+FLEX2,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,Aggregate Function,derived,"Verified directly against Flex1.sql (2026-09-11): COURSE_REGISTRATION has both ROLL_NO and SEM_ID columns, exactly as this fact requires. Filter clause added so this compiles to a real derived_aggregate recipe instead of an aggregate with no WHERE text."
 FLEX2,Course Registration Eligibility,maxCoursesAllowed,input,Compound / Unclassified Derivation,direct,fed from Course Load Limit (DRD edge)
 FLEX2,Course Registration Eligibility,canRegisterCourse,output,Compound / Unclassified Derivation,derived,
 FLEX2,Course Registration Eligibility,reason,output,Compound / Unclassified Derivation,direct,table exists specifically for this purpose
