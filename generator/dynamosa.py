@@ -92,7 +92,7 @@ sys.path.insert(0, HERE)
 from candidate import Candidate, derive_genome, build_seed_candidate  # noqa: E402
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
-                       _leaf_variables, _schema_for)
+                       _leaf_variables, _schema_for, candidate_values)
 from crossover import crossover  # noqa: E402
 
 
@@ -204,7 +204,49 @@ def evaluate_objective(record, candidate, focal_maps, scenario, table_cache):
         return float('inf')  # not yet evaluable against this individual -- never "covered"
 
 
-def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache, rng=None):
+_KICK_PROBABILITY = 0.15  # a modest diversification rate -- see _kick_value_for's own docstring
+
+
+def _kick_value_for(record, var_name, node, current, case_study, rng):
+    """An UNCONDITIONAL, non-greedy jump for one leaf -- the escape hatch
+    for a real, confirmed structural limitation of coordinate-descent
+    search (found and verified directly 2026-09-12, not assumed): a
+    substantial share of the corpus's stuck-at-a-hard-floor objectives
+    (`Course Registration Eligibility`'s own composite-leaf records,
+    dominant among the 292 "active with finite residual" records at the
+    post-composite-leaf-fix plateau) turned out to be GENUINE local
+    optima under single-leaf greedy search, not merely slow-converging --
+    confirmed by running a single-record `hillclimb()` with a generous
+    300-iteration budget directly against one of them: it stalled after
+    only 3 accepted moves at a stable, non-zero `branch_fitness`, with
+    the SAME leaf-by-leaf greedy logic every other leaf pick in that
+    budget failing to improve at all. This is coordinate descent's own
+    textbook failure mode: several leaves need to move TOGETHER for the
+    branch's own AND-composed condition to ever reach 0, but a step that
+    only ever accepts a single leaf's OWN strictly-improving move can
+    never discover a joint change where moving leaf A alone (holding B
+    fixed) doesn't help, and vice versa -- no matter how many
+    generations or how large the population.
+
+    Reuses `candidate_values` (the exact same value-generation logic
+    `best_value_for` itself calls), but with a large, randomized step
+    (not just ±1) and picks one of the returned candidates uniformly at
+    random rather than the best-scoring one -- a real, if temporarily
+    fitness-worsening, perturbation, not a hill-climb step. Safe to
+    apply unconditionally at the population level: DynaMOSA's own
+    archive discipline never regresses (a kick that makes one child
+    worse simply never overwrites a better archived answer), and
+    non-dominated sorting will naturally discard an offspring a kick
+    made strictly worse with no compensating gain -- the same safety
+    property that makes "occasional large mutation" a standard, accepted
+    diversification move in population-based search generally."""
+    big_step = rng.randint(2, 40)
+    options = candidate_values(record, var_name, node, current, case_study, step=big_step)
+    return rng.choice(options) if options else None
+
+
+def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache, rng=None,
+                       kick_probability=_KICK_PROBABILITY):
     """The population loop's own variation step for a single objective --
     reimplements mutation.py's own `mutate()` control flow (pick a random
     leaf variable, find its best replacement value via `best_value_for`,
@@ -241,7 +283,14 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     `derived_join_count`'s own context-row search) genuinely
     unresolvable against the current candidate even though the record
     itself compiles fine -- an honest "not evaluable yet," not a bug to
-    crash on."""
+    crash on.
+
+    `kick_probability` (see `_kick_value_for`'s own docstring): with this
+    probability, the picked leaf's value is replaced by an UNCONDITIONAL
+    random jump instead of `best_value_for`'s own greedy best-value pick
+    -- the escape hatch for genuine local optima a purely greedy search
+    can never climb out of on its own. Applies uniformly to every
+    record/leaf, never targeted at any specific decision."""
     rng = rng or random
     rid = record['record_id']
     scenario = scenario_cache[rid]
@@ -252,17 +301,22 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
         if not leaves:
             return candidate, focal_maps, False
         var_name, node = rng.choice(leaves)
-        best_value, _best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
+        if rng.random() < kick_probability:
+            value = _kick_value_for(record, var_name, node, genome.get(var_name), record['case_study'], rng)
+            if value is None:
+                return candidate, focal_maps, False
+        else:
+            value, _best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
+            if not improved:
+                return candidate, focal_maps, False
     except FitnessEvaluationError:
-        return candidate, focal_maps, False
-    if not improved:
         return candidate, focal_maps, False
 
     new_candidate, new_focal_maps = copy.deepcopy((candidate, focal_maps))
     new_focal = new_focal_maps[rid]
     scenario_copy = dict(scenario)
     try:
-        apply_mutation(record, new_candidate, new_focal, scenario_copy, var_name, node, best_value, genome.get(var_name))
+        apply_mutation(record, new_candidate, new_focal, scenario_copy, var_name, node, value, genome.get(var_name))
     except FitnessEvaluationError:
         return candidate, focal_maps, False
     return new_candidate, new_focal_maps, True
@@ -493,7 +547,7 @@ def _mutations_per_child(active, population_size, mutations_per_child):
 
 
 def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
-                  mutations_per_child='auto'):
+                  mutations_per_child='auto', kick_probability=_KICK_PROBABILITY):
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
@@ -546,7 +600,25 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     attempted -- so both fixes trade a comparatively small compute
     increase for directly fixing a diagnosed bottleneck, rather than the
     population/generation tuning already found not to work at this
-    scale."""
+    scale.
+
+    `kick_probability` (see `_kick_value_for`'s own docstring) is this
+    module's own local-optimum escape hatch (2026-09-12) -- built after
+    confirming directly (a 300-iteration single-record `hillclimb()`
+    against one of the stuck records, not assumed) that a large share of
+    what's left stuck even after the multi-pick and composite-leaf
+    fixes above is a GENUINE local optimum under greedy single-leaf
+    search: extending generations 40->70 at the same population produced
+    a coverage_history flat at the exact same count for 45 generations
+    straight, ruling out "just needs more time." With this probability,
+    a picked leaf's value is replaced by an unconditional random jump
+    instead of the usual greedy best-value pick, letting the search
+    escape a state where no SINGLE leaf's own improving move exists even
+    though a JOINT change across several leaves would reach fitness 0.
+    Safe at the population level: DynaMOSA's own archive never regresses
+    from a kick that makes one child temporarily worse, and
+    non-dominated sorting discards a kick with no compensating gain on
+    its own."""
     rng = rng or random.Random(0)
     table_cache = {}
     population, scenario_cache = _seed_shared_population(records, case_study, population_size)
@@ -614,7 +686,8 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                         # an honest "not evaluable yet," never a crash.
                         for _ in range(_local_burst_size(r)):
                             child_c, child_fm, _improved = _mutate_objective(
-                                r, child_c, child_fm, scenario_cache, table_cache, rng)
+                                r, child_c, child_fm, scenario_cache, table_cache, rng,
+                                kick_probability=kick_probability)
                 offspring.append((child_c, child_fm))
         offspring = offspring[:population_size]
 
