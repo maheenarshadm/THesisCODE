@@ -268,6 +268,35 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     return new_candidate, new_focal_maps, True
 
 
+_LOCAL_BURST_CAP = 8  # bounds worst-case cost for a record with an unusually large leaf count
+
+
+def _local_burst_size(record):
+    """How many sequential `_mutate_objective` attempts a single pick of
+    `record` gets, within one child, before moving on to the next pick --
+    driven purely by how many leaf variables THIS record's own condition
+    has (`_leaf_variables`), never by which decision or record it is (a
+    real, measured coverage bottleneck found 2026-09-12: composite
+    records needing an aggregate count, a category mapping, a join-based
+    count, an upstream-chained literal, AND a plain column comparison to
+    ALL align simultaneously -- five independent leaves -- dominated the
+    remaining uncovered FLEX2 objectives, ~285 of them sharing that exact
+    five-kind shape). Every pick used to get exactly ONE mutation
+    attempt regardless of how many leaves the record actually has to
+    move -- systematically under-serving a multi-leaf record for a
+    purely structural reason (more independent things need to move
+    before it can ever reach fitness 0) that has nothing to do with
+    which specific record it is. `_mutate_objective` already picks a
+    fresh random leaf on every call and is a no-op when that leaf isn't
+    actually improvable, so repeating it `len(leaves)`-many times for
+    the SAME record naturally rotates through its different leaves over
+    the burst rather than wasting every attempt on one that already
+    stalled; a single-leaf record (the common case) is completely
+    unaffected -- its own burst size is still exactly 1, identical to
+    this module's behavior before this fix."""
+    return max(1, min(_LOCAL_BURST_CAP, len(_leaf_variables(record))))
+
+
 def _branch_key(record):
     return f"{record['decision_name']}::{record['rule_id']}"
 
@@ -495,13 +524,28 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     objectives per generation, sequentially, each attempt building on
     the previous one's own result within that same child -- not just a
     single random pick, regardless of how large the active set grows.
+
+    Each of those picks, in turn, now gets a LOCAL BURST of attempts
+    (see `_local_burst_size`'s own docstring) rather than exactly one --
+    this module's own composite-leaf fix (2026-09-12), found necessary
+    after the multi-pick fix above still left the corpus's genuinely
+    hardest records stuck: a record needing several independent facts
+    (an aggregate count, a category mapping, a join-based count, an
+    upstream-chained literal, a plain column comparison, ...) to ALL
+    align at once needs proportionally more within-record optimization
+    depth to ever reach fitness 0 -- purely a function of how many leaf
+    variables THAT record's own condition has, never of which specific
+    record or decision it is. A single-leaf record's own burst size is
+    still exactly 1, so this is a pure addition for multi-leaf records,
+    not a behavior change for the common, already-solving case.
+
     The extra cost is cheap relative to what it buys: each additional
     mutation attempt is one numeric optimization over one leaf, far
     lighter than the O(active²) non-dominated-sort cost that already
     dominates a generation regardless of how many mutations were
-    attempted -- so this trades a comparatively small compute increase
-    for directly fixing the attention-dilution bottleneck, rather than
-    the population/generation tuning already found not to work at this
+    attempted -- so both fixes trade a comparatively small compute
+    increase for directly fixing a diagnosed bottleneck, rather than the
+    population/generation tuning already found not to work at this
     scale."""
     rng = rng or random.Random(0)
     table_cache = {}
@@ -555,14 +599,22 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                     # the PREVIOUS pick's own result within this same
                     # child, exactly like a single pick already did.
                     for r in rng.sample(active, min(k, len(active))):
+                        # A local burst, not just one attempt, per pick --
+                        # this module's own composite-leaf fix (see
+                        # _local_burst_size's own docstring): a record
+                        # with several independent leaves that must ALL
+                        # align gets proportionally more within-record
+                        # attempts here, purely as a function of its own
+                        # leaf count, never by which record it is.
                         # _mutate_objective already guards its own genome
                         # computation against FitnessEvaluationError (see
                         # its own docstring) -- a freshly-created,
                         # still-empty dedicated row can leave some OTHER
                         # leaf of the same record genuinely unresolvable,
                         # an honest "not evaluable yet," never a crash.
-                        child_c, child_fm, _improved = _mutate_objective(
-                            r, child_c, child_fm, scenario_cache, table_cache, rng)
+                        for _ in range(_local_burst_size(r)):
+                            child_c, child_fm, _improved = _mutate_objective(
+                                r, child_c, child_fm, scenario_cache, table_cache, rng)
                 offspring.append((child_c, child_fm))
         offspring = offspring[:population_size]
 
