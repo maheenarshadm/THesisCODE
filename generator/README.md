@@ -1102,6 +1102,116 @@ same DMN-convergence verdicts as before -- just in far fewer steps.
 
 Self-contained via `python3 generator/mutation.py`.
 
+## `materialize.py` -- §6.5: from a solved `Candidate` to a real, validated dataset (2026-09-12)
+
+The first concrete step toward the actual deliverable ("real generated
+datasets," not just a search algorithm) -- built as three pieces, in the
+order §6.5 itself names them:
+
+1. **`topological_table_order`** -- a real topological sort (Kahn's
+   algorithm) over the schema's own `fk_columns` data, so materialized
+   output always inserts lookup tables before the fact tables that
+   reference them. A genuine FK cycle (rare, but real -- a
+   self-referencing column, two tables pointing at each other) is broken
+   deterministically (placing the least-blocked table next) and
+   *reported*, never silently hidden or left to crash Kahn's algorithm.
+2. **`to_sql_inserts`** / **`write_csv_files`** -- two views of the same
+   materialized rows: real `INSERT` statements in FK order, or one CSV
+   per table.
+3. **`validate_with_sqlite`** -- §6.5's own "non-negotiable" validation
+   pass: builds a throwaway in-memory SQLite database from the schema's
+   *real* declared DDL (columns, types, NOT NULL, PK, FK, with
+   `PRAGMA foreign_keys = ON`), then attempts every row as a genuine
+   INSERT. The engine is the ground truth here, not
+   `candidate_constraint_fitness`'s own hand-written distance math --
+   this is what actually proves a materialized candidate is valid data,
+   independent of whether that separate check agrees.
+
+**`build_seed_candidate` promoted from a self-test to a real API**: the
+generic candidate-construction logic that lived inside `candidate.py`'s
+own `__main__` corpus sweep is now `candidate.py`'s own
+`build_seed_candidate(record)` -- the actual entry point a real
+generation run (or `materialize.py`'s own tests) uses to get a starting
+candidate with no per-record hand-holding. The corpus sweep itself now
+calls this function instead of duplicating its logic.
+
+**Three real, load-bearing bugs found getting the flagship rule to
+materialize and validate cleanly end to end, from a fully generic seed,
+for the first time** -- not incidental polish, each one blocked the
+whole pipeline until fixed:
+
+1. **Repair only ever covered rows mutation itself touched.**
+   `_repair_row` (mutation.py's own NOT NULL/FK construction discipline)
+   only fires on rows M1/M2 construct or edit during search --
+   `build_seed_candidate`'s own seed rows for a "bystander" table (one a
+   `derived_aggregate`'s FROM-list names but the search has no reason to
+   ever mutate) stayed exactly as informationally-thin as the seed left
+   them, all the way to materialization. Fixed with a new bulk utility,
+   `repair_candidate(candidate, case_study)` -- repairs *every* row
+   currently in a candidate, not just future mutation targets. `solve_branch`
+   now calls this on its own input as a deliberate, documented exception
+   to "never touch the caller's objects" (idempotent and additive-only,
+   so always safe).
+2. **`create_table_ddl` declared FK clauses to tables that were never
+   actually part of the materialization.** A nullable FK column that no
+   leaf mutation ever set (e.g. `BATCH.SHIFT_ID -> D_SHIFT`) is legitimately
+   unset and never checked by real SQL -- but the DDL still *named*
+   `D_SHIFT` in a `FOREIGN KEY` clause even though `D_SHIFT` was never
+   part of this candidate's own table set, and SQLite (with FK
+   enforcement on) rejects `CREATE TABLE` outright with "no such table"
+   the moment *any* declared FK target is missing, regardless of whether
+   any row ever violates it. Fixed by only emitting a FK clause when its
+   target table is actually among the tables being materialized this
+   run -- correct, not a workaround: `repair_candidate` already
+   guarantees any FK column that got a real *value* also got a real
+   parent row materialized alongside it, so this can never hide a genuine
+   dangling reference.
+3. **`build_seed_candidate`'s own `derived_aggregate` seeding never
+   matched the branch's own filter.** The original seed rows were a bare
+   `{'X': i}` -- no column the branch's `filter_text` conjuncts (e.g.
+   `ROLL_NO=<student>`) actually named, so the aggregate always counted 0
+   regardless of how many rows were seeded, producing an immediate `0/0`
+   division before `hillclimb` could even take its first step. Fixed
+   with a new shared helper, `_row_from_filter_conjuncts` (the
+   construction mirror of the module's own `_mechanical_filter_predicate`,
+   built to the identical parsing rules mutation.py's own M2 "add a row"
+   logic already uses), and dropped the leftover `'X'` placeholder key
+   entirely once real columns exist (it isn't needed to keep rows
+   distinct, and a fake column name broke real SQLite validation on its
+   own account: "table LECTURE has no column named X").
+
+**Verified with a genuinely complete run, not a partial one**: the
+flagship rule now goes `build_seed_candidate` -> `repair_candidate` ->
+`hillclimb` -> `to_sql_inserts`/`write_csv_files` -> `validate_with_sqlite`
+with **zero hand-built fixtures anywhere in the chain** and reaches
+`branch_fitness == 0.0` *and* `validate_with_sqlite` reporting `ok=True,
+0 errors` against real SQLite DDL. A hand-built, already-tested candidate
+(reusing `mutation.py`'s own flagship self-check setup) was verified the
+same way first, to separate "does the emission/validation machinery
+itself work" from "does the fully-generic pipeline work" -- both do, but
+they're two different claims and were checked as two different tests.
+
+**A real, incidental improvement this surfaced**: fixing
+`derived_aggregate`'s generic seeding also raised `candidate.py`'s own
+full-corpus sweep from 218/242 (89.3%, real-candidate coverage) to
+**220/242 (90.9%)** -- two records that used to fail with a division-by
+-zero (the exact bug the filter-conjunct fix targeted) now evaluate
+cleanly.
+
+**Known scope limit, stated plainly**: this is per-branch
+materialization -- one solved `Candidate` in, one validated dataset out.
+Combining multiple branches' solutions into one shared, case-study-wide
+dataset (so a real generation run covers every branch at once rather
+than one at a time) is the population loop's job (§6.4), not yet built.
+`exists`/`raw_sql_boolean`'s own seed rows in `build_seed_candidate`
+still use a placeholder `'X'` column in the cases where no real column
+name can be mechanically extracted -- unaffected by today's fix (that
+gap is `raw_sql_boolean`'s and `derived`'s own documented, pre-existing
+scope, not new), but worth the same treatment eventually if those kinds
+need to materialize too.
+
+Self-contained via `python3 generator/materialize.py`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

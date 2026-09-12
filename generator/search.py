@@ -56,7 +56,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import derive_genome  # noqa: E402
 from fitness import branch_fitness, FitnessEvaluationError  # noqa: E402
-from mutation import hillclimb, mutate  # noqa: E402
+from mutation import hillclimb, mutate, repair_candidate  # noqa: E402
 from crossover import crossover  # noqa: E402
 
 
@@ -80,6 +80,15 @@ def solve_branch(record, candidate, focal, scenario, mutation_budget=200,
     phase 1 stalled): a small population + crossover GA for `generations`
     rounds, as described in this module's own docstring.
 
+    Note: unlike mutate()/hillclimb() themselves (which always work on
+    copies and never touch their inputs), this function DOES repair the
+    incoming `candidate` in place before searching (`repair_candidate`) --
+    a deliberate exception, since a caller handing in a freshly built
+    seed candidate (`build_seed_candidate`) needs every row schema-legal
+    before materialization, not just the ones the search happens to
+    mutate. Idempotent and additive-only (never removes/changes a value
+    already set), so this is always safe to rely on.
+
     Returns a dict: {'candidate', 'focal', 'scenario', 'fitness',
     'solved', 'method', 'mutation_history', 'population_history'} --
     'solved' is the honest `fitness == 0.0` check; a branch that never
@@ -90,6 +99,15 @@ def solve_branch(record, candidate, focal, scenario, mutation_budget=200,
     independent of whether it actually solved the branch."""
     rng = rng or random.Random(0)
     seed_restarts = seed_restarts if seed_restarts is not None else max(population_size - 1, 1)
+
+    # Repair the INCOMING candidate wholesale before searching at all --
+    # not just what mutation itself later touches. Found necessary
+    # materializing a freshly built seed end to end (2026-09-12,
+    # materialize.py): a "bystander" table/row the search never has
+    # reason to mutate would otherwise reach materialization exactly as
+    # incomplete as whatever built `candidate` left it. Idempotent, so
+    # this is a safe no-op for a caller that already hands in a clean one.
+    repair_candidate(candidate, record['case_study'])
 
     solved_c, solved_f, solved_s, mutation_history = hillclimb(
         record, candidate, focal, scenario, max_iters=mutation_budget, rng=rng)

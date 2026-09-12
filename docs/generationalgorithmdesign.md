@@ -1071,3 +1071,22 @@ Built the "still-unbuilt AVM step" named as the honest limitation in §13.27's o
 Every existing test in this session's record was re-run after this change: compiled/blocked counts unchanged, and the full A/B/C/D tricky-rules sweep still passes with identical DMN-convergence verdicts, just in far fewer steps.
 
 Documented in `generator/README.md`'s new "AVM step acceleration" section. Self-contained via `python3 generator/mutation.py`.
+
+### 13.29 `materialize.py` -- §6.5: from a solved Candidate to a real, validated dataset (2026-09-12)
+
+First concrete step toward the actual deliverable (real generated datasets, not just a search algorithm), per the agreed order: materialization first, DynaMOSA population loop second. Built as three pieces per §6.5's own spec: `topological_table_order` (a real Kahn's-algorithm topological sort over the schema's `fk_columns`, breaking a genuine FK cycle deterministically and reporting it rather than crashing or hiding it), `to_sql_inserts`/`write_csv_files` (real INSERT statements or one CSV per table, same rows), and `validate_with_sqlite` (§6.5's own "non-negotiable" pass -- a real throwaway SQLite database built from the schema's actual DDL, FK enforcement on, every row attempted as a genuine INSERT; the engine is the ground truth, not `candidate_constraint_fitness`'s own hand-written math).
+
+Also promoted `build_seed_candidate` from `candidate.py`'s own self-test into a real, reusable API -- the actual entry point a generation run uses to get a starting candidate with no per-record hand-holding.
+
+**Three real, load-bearing bugs found getting the flagship rule to materialize and validate cleanly end to end from a fully generic seed** -- each one blocked the whole pipeline, not incidental polish:
+1. `_repair_row` only ever covered rows mutation itself touched during search, so a seed-built "bystander" table the search never mutates stayed exactly as thin as the seed left it. Fixed with `repair_candidate(candidate, case_study)` -- a bulk repair of every row currently in a candidate, called by `solve_branch` on its own input as a deliberate, documented exception to "never touch the caller's objects."
+2. `create_table_ddl` declared FK clauses to tables that were never actually part of the materialization (a nullable, never-set FK), and SQLite (FK enforcement on) rejects CREATE TABLE outright with "no such table" the moment any declared target is missing -- regardless of whether any row ever violates it. Fixed by only emitting a FK clause when its target is actually among the tables being materialized this run.
+3. `build_seed_candidate`'s own `derived_aggregate` seeding used a bare placeholder row with no column the branch's own filter actually named, so the aggregate always counted 0, producing an immediate 0/0 division before hillclimb could even start. Fixed with `_row_from_filter_conjuncts`, the construction mirror of the module's own `_mechanical_filter_predicate`, built to the identical parsing rules mutation.py's M2 "add a row" logic already uses.
+
+**Verified with a genuinely complete run**: the flagship rule now goes build_seed_candidate -> repair_candidate -> hillclimb -> to_sql_inserts/write_csv_files -> validate_with_sqlite with zero hand-built fixtures anywhere, reaching branch_fitness == 0.0 AND validate_with_sqlite reporting ok=True. A separate, already-tested hand-built candidate was verified the same way first, to distinguish "does the emission/validation machinery work" from "does the fully-generic pipeline work."
+
+A real, incidental improvement this surfaced: fixing the aggregate-seeding bug also raised candidate.py's own full-corpus sweep from 218/242 to 220/242.
+
+**Known scope limit**: per-branch materialization only -- one solved Candidate in, one validated dataset out. Combining multiple branches' solutions into one shared, case-study-wide dataset is the population loop's job (§6.4), the next agreed step.
+
+Documented in `generator/README.md`'s new "`materialize.py`" section. Self-contained via `python3 generator/materialize.py`.

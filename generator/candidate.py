@@ -171,6 +171,41 @@ def _mechanical_filter_predicate(filter_text, scenario):
     return predicate, skipped
 
 
+def _row_from_filter_conjuncts(filter_text, scenario):
+    """The construction mirror of `_mechanical_filter_predicate`: builds
+    a real row dict satisfying every mechanically-recognized `COLUMN =
+    VALUE`/`COLUMN = <placeholder>` conjunct in `filter_text`, the exact
+    same shape `mutation.py`'s own M2 "add a row" logic already builds
+    (kept independent, not imported, since candidate.py has no
+    dependency on mutation.py -- but the parsing rules must stay
+    identical, so any change to one belongs in the other too). A conjunct
+    this can't parse is simply skipped (no key added for it), same
+    honesty convention as `_mechanical_filter_predicate`'s own
+    `skipped` list -- a row missing an unparseable conjunct's column is
+    an approximation, never a silent wrong guess at its value."""
+    row = {}
+    for c in re.split(r'\bAND\b', filter_text or '', flags=re.I):
+        m = _SIMPLE_EQ_CONJUNCT_RE.match(c.strip())
+        if not m:
+            continue
+        col, raw_val = m.group(1), m.group(2).strip()
+        ph = _PLACEHOLDER_RE.fullmatch(raw_val)
+        if ph:
+            if ph.group(1) in scenario:
+                row[col] = scenario[ph.group(1)]
+        else:
+            v = raw_val.strip("'\"")
+            try:
+                v = int(v)
+            except ValueError:
+                try:
+                    v = float(v)
+                except ValueError:
+                    pass
+            row[col] = v
+    return row
+
+
 def _raw_sql_boolean_value(node, candidate, scenario, warnings):
     """The one resolution kind with no structured tree to walk at all
     (generator/compile_constraints.py's own documented escape hatch,
@@ -365,6 +400,120 @@ def derive_genome(record, candidate, focal, scenario, warnings=None):
     return genome
 
 
+def _leaf_kinds_for_seeding(var_name, node, out, blocking_kinds):
+    kind = node.get('kind')
+    if kind == 'substituted_decision':
+        for fv, sub in node.get('free_variable_resolutions', {}).items():
+            _leaf_kinds_for_seeding(fv, sub, out, blocking_kinds)
+    elif kind not in ('literal', 'literal_via_upstream_branch') and kind not in blocking_kinds:
+        out.append((var_name, kind, node))
+
+
+_SEEDING_BLOCKING_KINDS = {'schema_gap', 'code_external', 'unresolved', 'chained_decision_output'}
+
+
+def build_seed_candidate(record, today=20000):
+    """Builds a minimal, generic starting `(candidate, focal, scenario)`
+    for a compiled record -- no per-record hand-holding, no case-study
+    -specific knowledge, just one row per table each leaf resolution
+    needs, seeded with placeholder values a mutation/search pass can then
+    refine. Extracted from `candidate.py`'s own full-corpus sweep
+    self-check (built 2026-09-11 to answer "does genome derivation reach
+    this far without hand-built fixtures") into a real, reusable
+    materialization entry point -- proven already: 218/242 currently
+    -compiled records produce a fully evaluable genome from exactly this
+    construction, per `generator/README.md`'s own honest tally.
+
+    Every placeholder is a real, if arbitrary, concrete value (never a
+    guess at case-study semantics) -- a mutation/search pass is what
+    turns these into a value that actually satisfies the branch; this
+    function's only job is giving the search somewhere real to start
+    from. Any `filter_text`/`sql_template` placeholder (e.g. `<student>`)
+    found along the way is seeded into `scenario` too, defaulting to `1`,
+    plus `__today__` for FEEL's `today()` calls."""
+    leaves = []
+    for var, node in record.get('variable_resolution', {}).items():
+        _leaf_kinds_for_seeding(var, node, leaves, _SEEDING_BLOCKING_KINDS)
+
+    candidate = Candidate()
+    focal = {}
+    scenario = {'__today__': today}
+    for _var, _kind, node in leaves:
+        for field in ('filter_text', 'sql_template'):
+            for m in _PLACEHOLDER_RE.finditer(node.get(field) or ''):
+                scenario.setdefault(m.group(1), 1)
+
+    def ensure_row(table, col=None, val=1):
+        row = focal.get(table.upper())
+        if row is None:
+            row = {}
+            focal[table.upper()] = row
+            candidate.add_row(table, row)
+        if col:
+            row[col] = val
+        return row
+
+    for var, kind, node in leaves:
+        if kind in ('schema_column', 'null_check'):
+            ensure_row(node['table'], node['column'], 1)
+        elif kind == 'any_not_null':
+            for x in node['columns']:
+                ensure_row(x['table'], x['column'], 1)
+        elif kind in ('join_lookup', 'join_null_check'):
+            ensure_row(node['via']['local_table'], node['via']['local_column'], 42)
+            ensure_row(node['result_table'], node['result_column'], 42)
+        elif kind == 'regex_match':
+            ensure_row(node['value_column']['table'], node['value_column']['column'], 'abc')
+            ensure_row(node['pattern_column']['table'], node['pattern_column']['column'], 'a.*')
+        elif kind == 'derived_aggregate':
+            # A real, filter-matching row, not a bare {'X': i} placeholder
+            # -- found necessary materializing the flagship rule end to
+            # end (2026-09-12, materialize.py): a row with no columns the
+            # branch's own filter_text conjuncts actually name can never
+            # match that filter, so the aggregate always counted 0
+            # regardless of how many rows were seeded, producing an
+            # immediate 0/0 division before hillclimb could even start.
+            # Reuses _row_from_filter_conjuncts -- the exact same
+            # mechanically-recognized-conjunct construction
+            # mutation.py's own M2 "add a row" logic already uses, so a
+            # seeded row and a mutation-added row are built the same way.
+            tables = [t.strip() for t in node['table'].split(',')]
+            for i in range(1, 4):
+                row = _row_from_filter_conjuncts(node.get('filter_text'), scenario)
+                # no artificial distinguishing key needed -- these are
+                # still 3 separate row objects in the list even with
+                # identical content, and a fake 'X' column would only
+                # break real SQLite validation later (found exactly this
+                # way, 2026-09-12: "table LECTURE has no column named X").
+                if node.get('value_column'):
+                    row[node['value_column'].split('.')[1]] = 10
+                candidate.add_row(tables[0], row)
+            for t in tables[1:]:
+                candidate.add_row(t, {'X': 0})
+        elif kind == 'exists':
+            table = (node.get('candidate_tables') or [None])[0]
+            if table:
+                candidate.add_row(table, {'X': 1})
+        elif kind == 'raw_sql_boolean':
+            for t in node['tables']:
+                cols = set(re.findall(r'\b\w+\.(\w+)\b', node['sql_template']))
+                candidate.add_row(t, {col: 1 for col in cols} or {'X': 1})
+        elif kind == 'derived_case':
+            ensure_row(node['table'], node['column'], node['cases'][0][0])
+        elif kind == 'derived_join_count':
+            ctx = ensure_row(node['registration_table'], node['prereq_course_column'], 1)
+            ctx[node['registration_roll_column']] = 1
+            candidate.add_row(node['prereq_table'],
+                               {node['prereq_course_column']: 1, node['prereq_target_column']: 2})
+            candidate.add_row(node['registration_table'],
+                               {node['registration_roll_column']: 1,
+                                node['registration_course_column']: 2,
+                                node['registration_grade_column']: 'A'})
+        elif kind == 'not_persisted':
+            scenario[var] = 1
+    return candidate, focal, scenario
+
+
 if __name__ == '__main__':
     # Two checks: (1) the flagship worked example, this time with a REAL
     # candidate row-set (including noise rows a correct filter must
@@ -419,80 +568,8 @@ if __name__ == '__main__':
     print("Full-corpus sweep: how far genome derivation reaches with a minimal auto-built "
           "candidate (see generator/README.md's 'candidate.py' section for the honest tally).")
     ok, errs = 0, {}
-
-    def leaf_kinds(var_name, node, out, blocking):
-        kind = node.get('kind')
-        if kind == 'substituted_decision':
-            for fv, sub in node.get('free_variable_resolutions', {}).items():
-                leaf_kinds(fv, sub, out, blocking)
-        elif kind not in ('literal', 'literal_via_upstream_branch') and kind not in blocking:
-            out.append((var_name, kind, node))
-
-    blocking_kinds = {'schema_gap', 'code_external', 'unresolved', 'chained_decision_output'}
     for rec in compiled:
-        leaves = []
-        for var, node in rec.get('variable_resolution', {}).items():
-            leaf_kinds(var, node, leaves, blocking_kinds)
-        auto = Candidate()
-        focal = {}
-        auto_scenario = {'__today__': 20000}
-        for var, kind, node in leaves:
-            for field in ('filter_text', 'sql_template'):
-                for m in _PLACEHOLDER_RE.finditer(node.get(field) or ''):
-                    auto_scenario.setdefault(m.group(1), 1)
-
-        def ensure_row(table, col=None, val=1):
-            row = focal.get(table.upper())
-            if row is None:
-                row = {}
-                focal[table.upper()] = row
-                auto.add_row(table, row)
-            if col:
-                row[col] = val
-            return row
-
-        for var, kind, node in leaves:
-            if kind in ('schema_column', 'null_check'):
-                ensure_row(node['table'], node['column'], 1)
-            elif kind == 'any_not_null':
-                for x in node['columns']:
-                    ensure_row(x['table'], x['column'], 1)
-            elif kind in ('join_lookup', 'join_null_check'):
-                ensure_row(node['via']['local_table'], node['via']['local_column'], 42)
-                ensure_row(node['result_table'], node['result_column'], 42)
-            elif kind == 'regex_match':
-                ensure_row(node['value_column']['table'], node['value_column']['column'], 'abc')
-                ensure_row(node['pattern_column']['table'], node['pattern_column']['column'], 'a.*')
-            elif kind == 'derived_aggregate':
-                tables = [t.strip() for t in node['table'].split(',')]
-                for i in range(1, 4):
-                    row = {'X': i}
-                    if node.get('value_column'):
-                        row[node['value_column'].split('.')[1]] = 10
-                    auto.add_row(tables[0], row)
-                for t in tables[1:]:
-                    auto.add_row(t, {'X': 0})
-            elif kind == 'exists':
-                table = (node.get('candidate_tables') or [None])[0]
-                if table:
-                    auto.add_row(table, {'X': 1})
-            elif kind == 'raw_sql_boolean':
-                for t in node['tables']:
-                    cols = set(re.findall(r'\b\w+\.(\w+)\b', node['sql_template']))
-                    auto.add_row(t, {col: 1 for col in cols} or {'X': 1})
-            elif kind == 'derived_case':
-                ensure_row(node['table'], node['column'], node['cases'][0][0])
-            elif kind == 'derived_join_count':
-                ctx = ensure_row(node['registration_table'], node['prereq_course_column'], 1)
-                ctx[node['registration_roll_column']] = 1
-                auto.add_row(node['prereq_table'],
-                             {node['prereq_course_column']: 1, node['prereq_target_column']: 2})
-                auto.add_row(node['registration_table'],
-                             {node['registration_roll_column']: 1,
-                              node['registration_course_column']: 2,
-                              node['registration_grade_column']: 'A'})
-            elif kind == 'not_persisted':
-                auto_scenario[var] = 1
+        auto, focal, auto_scenario = build_seed_candidate(rec)
         try:
             g = {'__today__': 20000}
             g.update(derive_genome(rec, auto, focal, auto_scenario))

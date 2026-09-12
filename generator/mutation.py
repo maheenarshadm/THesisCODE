@@ -440,6 +440,25 @@ def _repair_row(candidate, table, row, case_study, _seen=None):
             _repair_row(candidate, ref_table, parent_row, case_study, _seen)
 
 
+def repair_candidate(candidate, case_study):
+    """Repairs EVERY row currently in `candidate` for NOT NULL/FK, not
+    just the ones a subsequent mutation happens to touch. `_repair_row`
+    (used by `apply_mutation`) only ever fires on rows M1/M2 themselves
+    touch during search -- a real gap found materializing a freshly
+    seeded candidate end to end for the first time (2026-09-12,
+    materialize.py): `build_seed_candidate` only sets the columns the
+    leaf that needed them actually named, so a "bystander" table (e.g.
+    one a `derived_aggregate`'s multi-table FROM-list names but the
+    search never has reason to mutate) stays exactly as incomplete as
+    the seed left it, all the way to materialization. Call this once on
+    any freshly built candidate (a seed, or one assembled by hand for a
+    test) before handing it to `hillclimb`/`solve_branch` -- idempotent,
+    since repairing an already-clean row is a no-op."""
+    for table, rows in list(candidate.as_dict().items()):
+        for row in list(rows):
+            _repair_row(candidate, table, row, case_study)
+
+
 # ---------------------------------------------------------------------------
 # 3. Applying the winning value to the *real* Candidate -- M1 (field) or
 # M2 (row-count), chosen by the leaf's own resolution kind, never guessed.
