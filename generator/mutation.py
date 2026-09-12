@@ -265,6 +265,29 @@ def _hypothetical_fitness(record, genome, var_name, value):
         return float('inf')  # an invalid trial value should never be picked
 
 
+_NUMERIC_STEP_KINDS = {'schema_column', 'derived_aggregate', 'derived_join_count'}
+_AVM_MAX_ROUNDS = 60  # generous: log2 of even a huge gap is small; guards pathological oscillation
+
+
+def _numeric_step_eligible(record, var_name, node, current):
+    """True only for the leaf shapes where growing `step` in
+    candidate_values() actually produces a wider probe -- a numeric
+    schema_column/derived_aggregate/derived_join_count with no enumerable
+    domain. AVM-style step acceleration only makes sense for these; every
+    other kind (boolean, domain-based, string single-char edit) ignores
+    `step` entirely (candidate_values' own domain/boolean branches return
+    before ever looking at it), so "accelerating" them would just
+    re-probe the identical candidates for no benefit."""
+    kind = node.get('kind')
+    if kind in BOOLEAN_LEAF_KINDS:
+        return False
+    if enumerable_domain(record, var_name):
+        return False
+    if kind == 'schema_column':
+        return isinstance(current, (int, float)) and not isinstance(current, bool)
+    return kind in ('derived_aggregate', 'derived_join_count')
+
+
 def best_value_for(record, genome, var_name, node, case_study):
     """Tries every candidate replacement for var_name and returns
     (best_value, best_fitness, improved) -- 'improved' is False when
@@ -275,14 +298,55 @@ def best_value_for(record, genome, var_name, node, case_study):
     docstring) -- `branch_fitness` needs nothing but the flat genome, so
     there is no reason to materialize a real candidate just to pick a
     DMN-optimal value; `apply_mutation` (called once, on the winning
-    value only) is where a real row actually gets touched."""
+    value only) is where a real row actually gets touched.
+
+    For numeric leaves with no enumerable domain, this is AVM's own
+    "probe and accelerate": try step=1 both ways; once a direction
+    improves, keep doubling the step in that same direction as long as
+    it keeps improving, halving back down on overshoot. Added 2026-09-12,
+    found necessary by this session's own tricky-rules testing: a branch
+    needing a count to climb ~99 units took 99 individual step-1 mutation
+    calls without this -- doubling closes the same gap in ~7 (see this
+    module's own docstring and generator/README.md's "AVM step
+    acceleration" section for the worked-example numbers). Every other
+    leaf kind is unaffected: a single pass, exactly as before."""
     current = genome.get(var_name)
     current_fitness = branch_fitness(record, genome)
     best_value, best_fitness = current, current_fitness
-    for value in candidate_values(record, var_name, node, current, case_study):
-        f = _hypothetical_fitness(record, genome, var_name, value)
-        if f < best_fitness:
-            best_value, best_fitness = value, f
+
+    if not _numeric_step_eligible(record, var_name, node, current):
+        for value in candidate_values(record, var_name, node, current, case_study):
+            f = _hypothetical_fitness(record, genome, var_name, value)
+            if f < best_fitness:
+                best_value, best_fitness = value, f
+        return best_value, best_fitness, best_value != current
+
+    step = 1
+    direction = None  # None = probe both ways; +1/-1 once one has proven to help
+    tried_reset = False
+    for _round in range(_AVM_MAX_ROUNDS):
+        values = candidate_values(record, var_name, node, best_value, case_study, step=step)
+        if direction is not None:
+            values = [v for v in values if (v > best_value) == (direction > 0)]
+        round_value, round_fitness, round_direction = best_value, best_fitness, None
+        for value in values:
+            f = _hypothetical_fitness(record, genome, var_name, value)
+            if f < round_fitness:
+                round_value, round_fitness, round_direction = value, f, (1 if value > best_value else -1)
+        if round_fitness < best_fitness:
+            best_value, best_fitness = round_value, round_fitness
+            direction = round_direction
+            step *= 2  # accelerate: this direction just improved again
+            tried_reset = False
+            if best_fitness == 0.0:
+                break
+        elif step > 1:
+            step = max(1, step // 2)  # overshot -- retreat and retry finer, same direction
+        elif direction is not None and not tried_reset:
+            direction = None  # step-1 failed in the established direction -- one more both-ways check
+            tried_reset = True
+        else:
+            break  # true local optimum for this variable
     return best_value, best_fitness, best_value != current
 
 
@@ -467,13 +531,24 @@ def _apply_field_mutation(node, value, candidate, focal):
 
 
 def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None):
-    """M2: add or remove a whole row -- one row per mutation call, moving
-    one step toward `value`, using the same mechanically-recognized
-    filter_text conjuncts candidate.py's own _mechanical_filter_predicate
-    already extracts (in reverse: turned into a new row's column values,
-    not just a match test). Returns every (table, row) pair *newly added*
-    (never a removed one -- nothing to repair there) so apply_mutation can
-    make each one schema-legal by construction afterward."""
+    """M2: add or remove rows -- moves the FULL distance from `current`
+    to `value` in one call, not just one row, using the same
+    mechanically-recognized filter_text conjuncts candidate.py's own
+    _mechanical_filter_predicate already extracts (in reverse: turned
+    into a new row's column values, not just a match test). Returns
+    every (table, row) pair *newly added* (never a removed one -- nothing
+    to repair there) so apply_mutation can make each one schema-legal by
+    construction afterward.
+
+    Moving the full distance, not one row per call, was added alongside
+    AVM-style step acceleration (2026-09-12, search.py): once
+    best_value_for is allowed to decide the best count is many units
+    away (closing a large gap in O(log(gap)) tries instead of O(gap)),
+    applying only one row per call regardless of the decided step would
+    silently diverge the real candidate from the genome the search
+    believed it was accepting -- exactly the gap that made the original
+    step-1-only design need ~99 individual calls to grow one count from
+    4 to 100 (generator/README.md's own tricky-rules sweep)."""
     if node['kind'] == 'exists':
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
@@ -506,10 +581,12 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
                     prereq_rows.append(r)
             except FitnessEvaluationError:
                 continue
-        if value > (current or 0):
-            # a fresh prerequisite course id this student has no passing
+        n = int(round(value)) - int(round(current or 0))
+        if n > 0:
+            # fresh prerequisite course ids this student has no passing
             # registration for -- guaranteed unmet since nothing else
-            # names it yet.
+            # names them yet. One id per unit of the requested step, not
+            # just one row regardless of how big a step was decided.
             used_ids = set()
             for r in prereq_rows:
                 try:
@@ -517,55 +594,63 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
                 except FitnessEvaluationError:
                     pass
             new_prereq_id = 900001
-            while new_prereq_id in used_ids:
-                new_prereq_id += 1
-            new_row = {node['prereq_course_column']: course_id,
-                       node['prereq_target_column']: new_prereq_id}
-            candidate.add_row(node['prereq_table'], new_row)
-            return [(node['prereq_table'], new_row)]
-        elif value < (current or 0) and prereq_rows:
+            touched = []
+            for _ in range(n):
+                while new_prereq_id in used_ids:
+                    new_prereq_id += 1
+                new_row = {node['prereq_course_column']: course_id,
+                           node['prereq_target_column']: new_prereq_id}
+                candidate.add_row(node['prereq_table'], new_row)
+                used_ids.add(new_prereq_id)
+                touched.append((node['prereq_table'], new_row))
+            return touched
+        elif n < 0 and prereq_rows:
             # simplest correct decrease: this course no longer requires
-            # one of its prerequisites, rather than inventing a passing
-            # grade for a course this student was never registered for --
+            # these prerequisites, rather than inventing passing grades
+            # for courses this student was never registered for --
             # equally valid (the count is over COURSE_PREREQ rows), and
             # never touches COURSE_REGISTRATION/previousGradeInCourse's
-            # own row.
-            row = prereq_rows[0]
-            candidate.rows(node['prereq_table']).remove(row)
+            # own row. Removes up to `-n` (never more than exist).
+            for row in prereq_rows[:min(-n, len(prereq_rows))]:
+                candidate.rows(node['prereq_table']).remove(row)
         return []
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
     predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
-    if value > (current or 0):
-        row = {}
-        for conjunct in re.split(r'\bAND\b', node.get('filter_text') or '', flags=re.I):
-            cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
-            if not cm:
-                continue
-            col, raw_val = cm.group(1), cm.group(2).strip()
-            ph = re.fullmatch(r'<([^>]+)>', raw_val)
-            if ph:
-                if ph.group(1) in scenario:
-                    row[col] = scenario[ph.group(1)]
-            else:
-                v = raw_val.strip("'\"")
-                try:
-                    v = int(v)
-                except ValueError:
+    n = int(round(value)) - int(round(current or 0))
+    if n > 0:
+        touched = []
+        for _ in range(n):
+            row = {}
+            for conjunct in re.split(r'\bAND\b', node.get('filter_text') or '', flags=re.I):
+                cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
+                if not cm:
+                    continue
+                col, raw_val = cm.group(1), cm.group(2).strip()
+                ph = re.fullmatch(r'<([^>]+)>', raw_val)
+                if ph:
+                    if ph.group(1) in scenario:
+                        row[col] = scenario[ph.group(1)]
+                else:
+                    v = raw_val.strip("'\"")
                     try:
-                        v = float(v)
+                        v = int(v)
                     except ValueError:
-                        pass
-                row[col] = v
-        if node.get('value_column'):
-            row[node['value_column'].split('.')[1]] = 1
-        candidate.add_row(table, row)
-        return [(table, row)]
-    elif value < (current or 0):
+                        try:
+                            v = float(v)
+                        except ValueError:
+                            pass
+                    row[col] = v
+            if node.get('value_column'):
+                row[node['value_column'].split('.')[1]] = 1
+            candidate.add_row(table, row)
+            touched.append((table, row))
+        return touched
+    elif n < 0:
         rows = candidate.rows(table)
         matching = [r for r in rows if predicate(r)] or rows
-        if matching:
-            rows.remove(matching[0])
+        for row in matching[:min(-n, len(matching))]:
+            rows.remove(row)
     return []
 
 

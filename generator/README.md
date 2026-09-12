@@ -1048,6 +1048,60 @@ rows instead of editing the right one.
 
 Self-contained via `python3 generator/search.py`.
 
+## AVM step acceleration (2026-09-12)
+
+Built the "still-unbuilt AVM step" flagged in `search.py`'s own Case 2b
+finding: mutation's numeric leaves (`schema_column`/`derived_aggregate`/
+`derived_join_count` with no enumerable domain) now use AVM's real
+"probe and accelerate" discipline in `best_value_for`, not a fixed
+step of 1. Try step=1 both ways; once a direction improves, keep
+doubling the step in that same direction as long as it keeps improving;
+halve back down on overshoot; give up on this variable only once step=1
+fails in both directions. Every other leaf kind (boolean, enumerable
+-domain, string single-char edit) is completely unaffected -- a small,
+explicit eligibility check (`_numeric_step_eligible`) routes only the
+step-sensitive kinds through the accelerating loop; everything else
+keeps the exact original single-pass behavior.
+
+**A real companion bug this forced into the open**: once `best_value_for`
+can legitimately decide the best value for a `derived_aggregate`/
+`derived_join_count` leaf is many units away, `_apply_row_count_mutation`
+still only ever added or removed *one* row per call regardless of the
+decided step -- meaning the genome `best_value_for` scored (many units
+away) would silently diverge from what the real candidate actually
+gained (one row) the moment it was applied. Fixed by moving the *full*
+`value - current` distance in one call (looping the same per-row
+construction/removal logic `abs(value - current)` times), for both the
+generic aggregate branch and `derived_join_count`.
+
+**Verified with real, dramatic before/after numbers, not just "it still
+passes"**:
+- The flagship attendance self-check, previously needing 11 accepted
+  mutation steps to converge, now converges in **2** -- the very first
+  leaf picked jumps `lecturesHeldForOffering` from 45 straight to 60
+  (1+2+4+8=15, exactly the doubling sequence), reaching fitness `0.0`
+  immediately.
+- The cross-variable `Rule_3` test from the tricky-rules sweep, which
+  previously needed ~99 individual +1 steps (and a 5000-iteration budget
+  to be sure of it), now converges in **4** steps with the *default*
+  300-iteration budget.
+- `search.py`'s own Case 2b (built specifically to demonstrate
+  escalation rescuing this same branch when starved) had to be
+  re-measured after this fix: mutation alone now solves it from a
+  budget of 10, where it previously needed the full population/crossover
+  escalation at a budget of 20. The bar for what counts as "starved"
+  moved a lot -- escalation is still real and demonstrable (re-verified
+  at a tighter budget of 3), just needed for a much narrower slice of
+  branches than before.
+
+Every other test in this session's own record was re-run after this
+change: `compile_constraints.py`/`candidate.py`'s counts are unchanged
+(this only touches how mutation *searches*, never what a genome/candidate
+means), and the full A/B/C/D tricky-rules sweep still passes with the
+same DMN-convergence verdicts as before -- just in far fewer steps.
+
+Self-contained via `python3 generator/mutation.py`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
