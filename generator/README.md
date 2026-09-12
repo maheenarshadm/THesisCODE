@@ -1401,6 +1401,10 @@ Asked how to push coverage past the ~48% `dynamosa.py`'s focal-per-objective ref
 
 `compiled_constraints.json`/`compile_report.json` regenerated and committed as the new source of truth. Self-contained via `python3 generator/compile_constraints.py`.
 
+**The real, honest coverage number on the corrected corpus**: re-ran `dynamosa.py` at the same budget as `generate_dataset.py`'s own headline number (population 30, generations 40) against FLEX2's now-genuine 391 unique objectives (previously only 83 were even visible -- the rest hidden behind the id-collision bug just fixed). Result: **43/391 (11.0%) in 397s** -- a real absolute gain (40 -> 43 covered) but a much lower percentage, since the honest denominator just grew ~4.7x. Not a regression -- the true problem size was always this large, just invisible.
+
+**Scaling the search budget up does not fix this at the new scale, tested directly**: population 35/generations 40 reached only 41/391 (10.5%) in 479s -- *worse* despite more compute -- and its own coverage history shows a hard plateau after generation ~19 (`..., 39, 39, 39, ..., 41, 41, 41, ...`, 20+ generations producing nothing further). Two larger configurations both had to be killed after 580-590s without even finishing -- per-generation cost has grown much faster than the objective count itself, almost certainly NSGA-II's own O(active²) sorting compounding with the "one random active objective mutated per child per generation" policy now spreading the same one-pick-per-child attention across a much bigger active set. Getting coverage up from here needs a change to the variation step itself (e.g. mutating several distinct active objectives per child per generation) -- named as the concrete next step, not attempted in this session.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
