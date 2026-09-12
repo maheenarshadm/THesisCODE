@@ -17,17 +17,44 @@ mutated variable's own resolution kind, never chosen by the caller:
   a whole row, since nothing on a single row is *the* count.
 
 Direction for both is decided the same, unified way: try each candidate
-replacement value for the chosen variable *in the genome* (a cheap,
-in-memory hypothetical -- no candidate edit yet), keep whichever
-`branch_fitness` call comes out lowest, then apply only that winning
-value to the real Candidate. This is what lets one mutation function
-handle every leaf kind uniformly rather than needing per-kind direction
-logic duplicated.
+replacement value for the chosen variable, keep whichever scores lowest
+on the **combined objective** -- `branch_fitness` (the DMN term) *plus*
+`candidate_constraint_fitness` (the schema/DB constraint term: NOT NULL,
+UNIQUE/PK, FK, CHECK) -- then adopt that winning state.
+
+This wasn't always true: the operator originally scored candidates by a
+cheap, in-genome `branch_fitness`-only hypothetical, with no schema
+awareness at all. Asked directly whether row mutation checks FK/schema
+constraints, the honest answer (2026-09-12) was no, demonstrated
+concretely: a candidate that reached `branch_fitness == 0.0` (DMN-perfect)
+scored `candidate_constraint_fitness == 68.3` on the exact same rows --
+M2 had added ~96 near-empty rows with no FK linkage, missing NOT NULL
+columns, and duplicate PK keys, entirely invisible to a DMN-only
+objective. Since the constraint term needs real materialized rows (NOT
+NULL/UNIQUE/FK/CHECK can't be read off a flat genome), the cheap
+in-genome hypothetical had to go: every candidate value is now actually
+applied to a real, deep-copied candidate before being scored, and the
+copy with the lowest combined fitness is adopted -- more work per
+mutation, but the only way the constraint half can be evaluated at all.
+This lets one mutation function keep handling every leaf kind uniformly,
+rather than needing per-kind direction logic duplicated.
+
+Known remaining gap, stated plainly: this makes constraint violations
+*count* toward whether a mutation is accepted, but it does not yet give
+the operator any way to *fix* one on its own -- M2's row-builder still
+only fills in the columns the DMN filter text names, so a table's other
+NOT NULL/FK columns stay unset regardless of which candidate value wins.
+Combined fitness can therefore plateau above 0.0 for aggregate-heavy
+branches even once the DMN term itself is fully satisfied. Closing that
+needs a real repair step in M2 (fill NOT NULL columns with a valid
+placeholder, pick a real existing PK for FK columns) -- a follow-up, not
+attempted here.
 
 Usage:
     from mutation import mutate, hillclimb
-    child_candidate = mutate(record, candidate, focal, scenario, rng)
-    solved_candidate, history = hillclimb(record, candidate, focal, scenario)
+    new_candidate, new_focal, new_scenario, var, improved, fitness = \\
+        mutate(record, candidate, focal, scenario, rng)
+    solved_candidate, focal, scenario, history = hillclimb(record, candidate, focal, scenario)
 """
 import copy
 import json
@@ -40,7 +67,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
                         _mechanical_filter_predicate, _find_focal_with_columns, _row_get)
-from fitness import branch_fitness, distance_to_true, FitnessEvaluationError  # noqa: E402
+from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
+                      candidate_constraint_fitness)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
 
 BOOLEAN_LEAF_KINDS = {'null_check', 'any_not_null', 'join_null_check', 'exists',
@@ -197,28 +225,51 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
     return []
 
 
-def _hypothetical_fitness(record, genome, var_name, value):
-    trial = dict(genome)
-    trial[var_name] = value
-    try:
-        return branch_fitness(record, trial)
-    except FitnessEvaluationError:
-        return float('inf')  # an invalid trial value should never be picked
+def _combined_fitness(record, candidate, focal, scenario, schema):
+    """The real objective mutation optimizes: `branch_fitness` (the DMN
+    branch-distance term) plus `candidate_constraint_fitness` (the
+    schema/DB constraint term -- NOT NULL, UNIQUE/PK, FK, CHECK) over the
+    same candidate. Both terms are already normalized to the same 0..1
+    per-clause scale (fitness.py's own `normalize`), so an unweighted sum
+    keeps them comparable -- no weighting scheme is named anywhere in the
+    design doc's own §6.3 equation, and this is the single-objective
+    hillclimb's own stand-in for DynaMOSA's proper multi-objective
+    comparison (each term would be its own objective there, per §6.4)."""
+    genome = derive_genome(record, candidate, focal, scenario)
+    return branch_fitness(record, genome) + candidate_constraint_fitness(candidate.as_dict(), schema)
 
 
-def best_value_for(record, genome, var_name, node, case_study):
-    """Tries every candidate replacement for var_name and returns
-    (best_value, best_fitness, improved) -- 'improved' is False when
-    nothing beats the current value, meaning this variable is already
-    locally optimal and mutate() should try a different one instead."""
-    current = genome.get(var_name)
-    current_fitness = branch_fitness(record, genome)
-    best_value, best_fitness = current, current_fitness
+def best_value_for(record, candidate, focal, scenario, var_name, node, case_study):
+    """Tries every candidate replacement value for var_name, each one
+    actually APPLIED to a real, deep-copied candidate -- not a cheap
+    in-genome guess, since the constraint half of the combined objective
+    needs real materialized rows (NOT NULL/UNIQUE/FK/CHECK can't be read
+    off a flat genome at all). Returns
+    (best_candidate, best_focal, best_scenario, best_fitness, improved)
+    -- 'improved' is False when nothing beats the current combined
+    fitness, meaning this variable is already locally optimal and
+    mutate() should try a different one instead. A value that can't
+    legitimately be applied at all (apply_mutation refuses it, or the
+    resulting candidate can't even be scored) is skipped, not treated as
+    a tie -- the same "never pick an invalid trial" discipline the old
+    genome-only version had, now enforced by construction rather than a
+    float('inf') sentinel."""
+    schema = _schema_for(case_study)
+    current = derive_genome(record, candidate, focal, scenario).get(var_name)
+    current_fitness = _combined_fitness(record, candidate, focal, scenario, schema)
+    best_candidate, best_focal, best_scenario, best_fitness = candidate, focal, scenario, current_fitness
     for value in candidate_values(record, var_name, node, current, case_study):
-        f = _hypothetical_fitness(record, genome, var_name, value)
+        trial_candidate = copy.deepcopy(candidate)
+        trial_focal = copy.deepcopy(focal)
+        trial_scenario = dict(scenario)
+        try:
+            apply_mutation(record, trial_candidate, trial_focal, trial_scenario, var_name, node, value, current)
+            f = _combined_fitness(record, trial_candidate, trial_focal, trial_scenario, schema)
+        except FitnessEvaluationError:
+            continue  # this value can't legitimately be applied/scored -- never a candidate
         if f < best_fitness:
-            best_value, best_fitness = value, f
-    return best_value, best_fitness, best_value != current
+            best_candidate, best_focal, best_scenario, best_fitness = trial_candidate, trial_focal, trial_scenario, f
+    return best_candidate, best_focal, best_scenario, best_fitness, best_candidate is not candidate
 
 
 # ---------------------------------------------------------------------------
@@ -449,61 +500,60 @@ def _leaf_variables(record):
 
 def mutate(record, candidate, focal, scenario, rng=None):
     """One mutation: picks a random leaf variable, finds its best
-    replacement value (by hypothetical fitness, tried in-genome before
-    touching any real row), and applies it via M1 or M2 to a *copy* of
-    `candidate`/`focal`/`scenario` -- parents are never mutated in place.
-    Returns (new_candidate, new_focal, new_scenario, mutated_var, improved)."""
+    replacement value by the combined objective (each candidate value
+    actually applied to a real, deep-copied candidate/focal/scenario --
+    parents are never mutated in place), and adopts whichever copy scores
+    lowest. Returns (new_candidate, new_focal, new_scenario, mutated_var,
+    improved, new_fitness) -- when nothing improves, the "new" state is
+    just the unchanged input and new_fitness is the current combined
+    fitness, so callers never need to recompute it separately.
+
+    A leaf whose only candidate values apply_mutation refuses (e.g.
+    raw_sql_boolean, deliberately unmutatable) or that can't even be
+    scored is handled inside best_value_for itself now -- every value is
+    tried inside its own try/except, so a refusal just removes that value
+    from consideration rather than propagating out and crashing the
+    search (a real crash this fixed, found testing tricker rules,
+    2026-09-11: raw_sql_boolean is listed in BOOLEAN_LEAF_KINDS, so the
+    old genome-only hypothetical was happy to call it "improvable" even
+    though apply_mutation always refused it)."""
     rng = rng or random
     genome = derive_genome(record, candidate, focal, scenario)
     leaves = [(v, n) for v, n in _leaf_variables(record) if v in genome]
     if not leaves:
-        return candidate, focal, scenario, None, False
+        return candidate, focal, scenario, None, False, None
     var_name, node = rng.choice(leaves)
-    best_value, best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
-    if not improved:
-        return candidate, focal, scenario, var_name, False
-
-    new_candidate = copy.deepcopy(candidate)
-    new_focal = copy.deepcopy(focal)
-    new_scenario = dict(scenario)
-    try:
-        apply_mutation(record, new_candidate, new_focal, new_scenario, var_name, node, best_value, genome.get(var_name))
-    except FitnessEvaluationError:
-        # best_value_for's genome-level hypothetical said this leaf's new
-        # value would help, but apply_mutation refuses to actually write it
-        # (raw_sql_boolean's own explicit refusal, or any future kind with
-        # no M1/M2 handling) -- found via a real crash while testing
-        # mutation.py against tricker rules (2026-09-11): best_value_for
-        # (via candidate_values' BOOLEAN_LEAF_KINDS) is happy to consider
-        # a raw_sql_boolean leaf "improvable," but apply_mutation can't
-        # execute that improvement, and this call used to propagate
-        # straight out of mutate()/hillclimb(), crashing the whole search
-        # the first time picking that leaf actually looked worthwhile.
-        # Treated exactly like "not improved" -- this leaf just isn't
-        # mutatable, so hillclimb tries a different leaf next iteration
-        # rather than dying.
-        return candidate, focal, scenario, var_name, False
-    return new_candidate, new_focal, new_scenario, var_name, True
+    new_candidate, new_focal, new_scenario, new_fitness, improved = best_value_for(
+        record, candidate, focal, scenario, var_name, node, record['case_study'])
+    return new_candidate, new_focal, new_scenario, var_name, improved, new_fitness
 
 
 def hillclimb(record, candidate, focal, scenario, max_iters=200, rng=None):
     """Repeated mutation, keeping only non-worsening moves -- a (1+1)
-    local search exercising `mutate` end to end. Not DynaMOSA itself (no
-    population, no crossover, no multi-objective sorting), but a valid
-    standalone way to prove the mutation operator actually converges, and
-    a legitimate cheap mode in its own right for a branch simple enough
-    not to need the full loop (§6.4's own allowance)."""
+    local search exercising `mutate` end to end, scored on the combined
+    objective (DMN branch distance + schema/DB constraint distance, see
+    `_combined_fitness`) rather than the DMN term alone. Not DynaMOSA
+    itself (no population, no crossover, no multi-objective sorting), but
+    a valid standalone way to prove the mutation operator actually
+    converges, and a legitimate cheap mode in its own right for a branch
+    simple enough not to need the full loop (§6.4's own allowance).
+
+    Note the combined objective can plateau above 0.0 even once the DMN
+    term is fully satisfied, for a branch whose M2-added rows are missing
+    NOT NULL/FK data the current candidate-value vocabulary has no lever
+    to fix -- an honest, expected outcome (see this module's own
+    docstring), not a bug in the search loop."""
     rng = rng or random.Random(0)
+    schema = _schema_for(record['case_study'])
     history = []
-    current_fitness = branch_fitness(record, derive_genome(record, candidate, focal, scenario))
+    current_fitness = _combined_fitness(record, candidate, focal, scenario, schema)
     history.append(current_fitness)
     for _ in range(max_iters):
         if current_fitness == 0.0:
             break
-        new_c, new_f, new_s, var, improved = mutate(record, candidate, focal, scenario, rng)
+        new_c, new_f, new_s, var, improved, new_fitness = mutate(record, candidate, focal, scenario, rng)
         if not improved:
             continue
-        new_fitness = branch_fitness(record, derive_genome(record, new_c, new_f, new_s))
         if new_fitness <= current_fitness:
             candidate, focal, scenario, current_fitness = new_c, new_f, new_s, new_fitness
             history.append(current_fitness)
@@ -534,12 +584,26 @@ if __name__ == '__main__':
     solved, focal, scenario, history = hillclimb(rule2, start, {}, scenario, max_iters=100)
     g1 = derive_genome(rule2, solved, focal, scenario)
     f1 = branch_fitness(rule2, g1)
-    print(f"After hillclimb ({len(history)} accepted steps): genome={g1}, fitness={f1:.6f}")
-    print(f"Fitness trajectory: {history}")
-    assert f1 == 0.0, "mutation operator failed to converge on the flagship rule from a wrong start"
+    schema = _schema_for('FLEX2')
+    constraint_f1 = candidate_constraint_fitness(solved.as_dict(), schema)
+    print(f"After hillclimb ({len(history)} accepted steps): genome={g1}")
+    print(f"  DMN branch_fitness={f1:.6f}, schema/DB constraint_fitness={constraint_f1:.6f}")
+    print(f"Combined-fitness trajectory (what hillclimb actually optimizes): {history}")
+    assert f1 == 0.0, "mutation operator failed to converge the DMN term on the flagship rule from a wrong start"
     assert all(history[i] >= history[i + 1] for i in range(len(history) - 1)), \
-        "fitness must be monotonically non-increasing across accepted mutations"
-    print("Mutation operator converged correctly and monotonically. Self-check passed.")
+        "combined fitness must be monotonically non-increasing across accepted mutations"
+    print("Mutation operator converged the DMN term correctly and monotonically. Self-check passed.")
+    if constraint_f1 > 0.0:
+        # Expected, not a bug -- see this module's own docstring ("Known
+        # remaining gap"): the combined objective makes a constraint
+        # violation *count*, but M2's row-builder has no repair lever to
+        # actually close one on its own. Concretely, here: LECTURE.OFFER_ID
+        # has a real FK to COURSE_OFFER.OFFER_ID (flex2_schema_full.json),
+        # and this candidate never gained a COURSE_OFFER row -- nothing in
+        # candidate_values' vocabulary lets mutation add one.
+        print(f"  (Residual {constraint_f1:.4f} of schema/DB constraint distance remains -- expected: "
+              f"the mutation vocabulary has no lever yet to add the missing COURSE_OFFER row "
+              f"LECTURE.OFFER_ID's own FK needs; see this module's docstring.)")
 
     print()
     print("derived_case regression check (semesterType, found while first testing this module):")

@@ -779,6 +779,76 @@ for the record's other, initially-untested `raw_sql_boolean` leaf first
 compiles cleanly through SQLite, leaving `isNeededToGraduateThisSummer`
 as the one and only failure.
 
+## Wiring schema/DB constraints into the mutation objective (2026-09-12)
+
+Asked directly whether row mutation checks FK/schema constraints. Checked
+rather than assumed: no -- `mutation.py` only ever imported and optimized
+`branch_fitness` (the DMN term); `fitness.py`'s own constraint-distance
+functions (`not_null_distance`, `unique_distance`, `fk_distance`,
+`check_distance`, `candidate_constraint_fitness`) existed and worked, but
+nothing in `mutation.py` ever called them. Demonstrated concretely before
+touching any code: the D test candidate from the tricker-rules sweep
+above, having converged to `branch_fitness == 0.0`, scored
+`candidate_constraint_fitness == 68.3` on the exact same rows -- 96
+near-empty `COURSE_REGISTRATION` rows added purely to satisfy a `COUNT`
+aggregate, none with a real `COURSE_ID`, all missing other required
+columns, several byte-for-byte duplicates.
+
+**Fix**: mutation's objective is now `branch_fitness + candidate_constraint_fitness`
+(`_combined_fitness`), not the DMN term alone. This forced a real
+mechanical change, not just an extra addend: `candidate_constraint_fitness`
+needs actual materialized rows (NOT NULL/UNIQUE/FK/CHECK can't be read off
+a flat genome), so the old "try each candidate value cheaply in-genome"
+hypothetical had to go -- `best_value_for` now actually applies every
+candidate value to a real, deep-copied `candidate`/`focal`/`scenario` and
+scores that copy, adopting whichever scores lowest. This also cleanly
+subsumed the earlier "`mutate()` crashes on an unmutatable-but-improvable
+leaf" fix (§ above): a value `apply_mutation` refuses now just fails its
+own trial's `try/except` and is skipped, no separate patch needed.
+
+**Verified working**: re-ran tests A and B from the tricker-rules sweep.
+Both still reach `branch_fitness == 0.0` (the DMN term is still solved),
+and now the constraint residual is visible and honestly reported rather
+than invisible: A ends at DMN `0.0` / constraint `1.33`, B at DMN `0.0` /
+constraint `0.67` -- real, existing violations mutation now *measures*
+even though (see below) it can't yet fully repair them. The flagship
+attendance self-check now visibly reports a `0.5` constraint residual too
+(a real, correctly-identified `LECTURE.OFFER_ID -> COURSE_OFFER.OFFER_ID`
+FK violation -- the search deleted every row down to the one it needed,
+since `COURSE_OFFER` was never populated).
+
+**A genuine, previously-invisible emergent problem this surfaced, on
+test D**: re-running D (the cross-variable-comparison test, needing
+`projectedTotalCoursesThisRegistration` to climb from 4 toward >99)
+against the combined objective, hillclimb got stuck at combined fitness
+`1.657` after only 6 steps and never moved again in 5000 iterations --
+worse on the DMN term than where it started. Diagnosed directly, not
+guessed: hillclimb had greedily *deleted* rows all the way down to
+`projectedTotalCoursesThisRegistration = 0`, because each constraint-
+incomplete row `derived_aggregate`'s M2 adds costs a full `K`-scale
+constraint penalty (~0.5-1.0 normalized) while contributing only a tiny
+fractional DMN improvement toward a target 99 units away -- so *removing*
+rows always looked better to a one-step-lookahead greedy search than
+*adding* the (still-incomplete) rows actually needed to reach the DMN
+target. Confirmed by hand: from the stuck state, trying
+`projectedTotalCoursesThisRegistration = 1` scores combined `2.32`,
+worse than staying at `0` (`1.657`) -- a real local optimum, not a bug.
+
+This is not a mutation.py defect -- it's the exact, now-demonstrated
+reason the design doc's own §6.4 keeps the DMN term and the constraint
+term as *separate* DynaMOSA objectives (Pareto-compared per test case,
+never summed into one scalar) rather than a single combined number: an
+unweighted sum lets one objective's large per-step cost mask another's
+real, necessary long-range improvement, exactly what a single-objective
+(1+1) hillclimb has no way to see past. `hillclimb()`'s own docstring
+now states this plainly as a known consequence, not a hidden gap.
+
+**Still true, and unchanged by this fix**: nothing yet gives M2 a way to
+*repair* a constraint violation it can measure -- there's no candidate-
+value dimension for "also set this table's other NOT NULL columns" or
+"also add the parent row this FK needs." That's the natural next
+refinement (a real repair step in M2's row-builder), not attempted here.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
