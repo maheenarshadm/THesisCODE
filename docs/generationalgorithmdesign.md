@@ -1090,3 +1090,15 @@ A real, incidental improvement this surfaced: fixing the aggregate-seeding bug a
 **Known scope limit**: per-branch materialization only -- one solved Candidate in, one validated dataset out. Combining multiple branches' solutions into one shared, case-study-wide dataset is the population loop's job (§6.4), the next agreed step.
 
 Documented in `generator/README.md`'s new "`materialize.py`" section. Self-contained via `python3 generator/materialize.py`.
+
+### 13.30 `dynamosa.py` -- the DynaMOSA population loop, finally built (2026-09-12)
+
+The settled algorithm-of-record (§6.4): one shared population per case study, every compiled branch is one objective, DRD-gated dynamic objective activation, real NSGA-II non-dominated sorting + crowding distance. Reuses every operator already built (mutate/crossover/repair_candidate/build_seed_candidate/branch_fitness) -- this module is purely the population/selection/activation scaffolding. DRD-gated activation reuses `grounded_upstream_branches`, already present on every compiled record from compile_constraints.py's own DRD walk, rather than re-deriving it.
+
+**A deliberate, stated scope decision**: real DynaMOSA evolves one shared row-set where different rows serve as the focal context for different objectives at once. Building that fully is a substantially larger design than this first version attempts -- the scope decision made here is that any objective's focal row, for any table it needs, is always that table's first row in the shared candidate.
+
+**Verified honestly at two scales**: a 4-objective test (2 root, 2 chained) reaches 3/4 covered with the archive confirmed monotonic and the DRD-gating invariant confirmed directly; the uncovered 4th's residual fitness (0.6667) matches exactly the signature of a structurally infeasible literal mismatch already documented elsewhere. Scaled to 30 real objectives: 11/30 covered, plateauing after generation 4 -- inspection confirmed this is the scope decision's own real, measured cost: multiple Course Load Limit variants each need a different cumulativeGPA/priorWarningCount/semesterType combination on the same shared tables, and since every objective's focal is always "the first row," only one such combination can be true at once. Named as the natural next refinement, now backed by a concrete measured example rather than left abstract.
+
+A real crash found and fixed while scaling up: mutate() assumes its caller already knows the chosen record is evaluable against the current genome (true for hillclimb's own use, not guaranteed when a random active record is picked against a shared, still-evolving candidate). Fixed by catching FitnessEvaluationError around the population loop's own mutate() call.
+
+Documented in `generator/README.md`'s new "`dynamosa.py`" section. Self-contained via `python3 generator/dynamosa.py`.

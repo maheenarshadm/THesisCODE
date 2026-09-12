@@ -1212,6 +1212,78 @@ need to materialize too.
 
 Self-contained via `python3 generator/materialize.py`.
 
+## `dynamosa.py` -- the DynaMOSA population loop (§6.4, built 2026-09-12)
+
+The settled algorithm-of-record, finally built: one shared population per
+case study, every compiled branch is one objective, DRD-gated dynamic
+objective activation, real NSGA-II non-dominated sorting + crowding
+distance. Reuses every operator already built this session
+(`mutate`/`crossover`/`repair_candidate`/`build_seed_candidate`/
+`branch_fitness`) rather than reimplementing anything -- this module is
+purely the population/selection/activation scaffolding around them.
+
+**DRD-gated activation reuses data already on the compiled record, not
+a new DRD walk**: each compiled record already carries its own
+`grounded_upstream_branches` (compile_constraints.py's own resolved list
+of `"decision::rule_id"` branches its condition depends on). An objective
+is active once every branch it names has been *covered* (fitness 0.0) in
+the run's own archive -- which only ever grows, never regresses, exactly
+DynaMOSA's own archiving discipline (a target's best answer, once found,
+is never lost even if the current population moves past it).
+
+**A deliberate, stated scope decision**: real DynaMOSA evolves one
+shared row-set where *different* rows serve as the focal context for
+*different* objectives at once. Building that fully -- searching not
+just what rows exist but which row is "this" for which objective, as
+part of the genome itself -- is a substantially larger design than this
+first version attempts. The scope decision made here: for any objective
+evaluated against any individual, the focal row for each table it needs
+is always that table's *first* row in the shared candidate. This keeps
+one shared representation genuinely meaningful (progress on shared
+tables helps multiple objectives, the actual efficiency argument §6.4
+names for choosing DynaMOSA over independent per-branch search) while
+staying implementable now.
+
+**Verified honestly, and the scope decision's own real cost was
+measured, not just described**: a 4-objective test (2 root branches, 2
+chained on them) reaches 3/4 covered in 25 generations, with the
+archive's own coverage count confirmed monotonic and the DRD-gating
+invariant confirmed directly (every covered chained objective's own
+dependency was independently confirmed covered too -- gating is real,
+not bypassed). The 4th's residual fitness (0.6667) matches exactly the
+signature of a structurally infeasible literal mismatch already seen
+elsewhere this session (a fixed upstream literal that can never satisfy
+the chained rule's own requirement) -- not a search failure.
+
+Scaled to 30 real objectives (population 15, 20 generations, 0.8s):
+**11/30 covered**, plateauing after generation 4. Inspecting *why*
+confirms the scope decision's own cost concretely rather than leaving it
+abstract: many of the uncovered objectives are `Course Load Limit`
+variants that each need a *different* `cumulativeGPA`/`priorWarningCount`/
+`semesterType` combination on the *same* shared `STUDENT_PROGRAM`/
+`SEMESTER` tables (that's the whole point of FIRST-hit-policy rules --
+each row is mutually exclusive with the others) -- since every objective's
+focal row is always "the first row of that table," only one such
+combination can ever be true in one shared candidate at a time. This is
+the natural next refinement (letting different rows serve as different
+objectives' focal context within one candidate), named but not attempted
+here, now backed by a real, measured example of what it would fix.
+
+**A real crash found and fixed while scaling up**: `mutate()` assumes
+its caller already knows the chosen record is evaluable against the
+current genome (true for `hillclimb`'s own single-record use, which
+checks this up front) -- not guaranteed here, where a random *active*
+record is picked against a shared, still-evolving candidate. A record
+whose own condition compiles fine can still reference a genuinely
+unresolvable variable in an *earlier* row's suppression term
+(`compile_constraints.py` still marks the record itself "compiled"),
+and `best_value_for`'s own first `branch_fitness` call isn't wrapped in
+a try/except anywhere in `mutate()`. Fixed by catching
+`FitnessEvaluationError` around the population loop's own `mutate()`
+call and skipping that pick rather than crashing the whole run.
+
+Self-contained via `python3 generator/dynamosa.py`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
