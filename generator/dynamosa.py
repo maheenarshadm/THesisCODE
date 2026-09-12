@@ -82,6 +82,7 @@ Usage:
     archive, coverage_history, population = run_dynamosa(records, case_study, population_size=20, generations=50)
 """
 import copy
+import math
 import os
 import random
 import sys
@@ -438,7 +439,32 @@ def _seed_shared_population(records, case_study, population_size):
     return population, scenario_cache
 
 
-def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None):
+def _mutations_per_child(active, population_size, mutations_per_child):
+    """How many DISTINCT active objectives each child attempts a
+    mutation against this generation -- the fix for a real, measured
+    attention-dilution bottleneck (design doc §13.34/§13.35): with a
+    fixed single pick per child (this module's original design), the
+    active set growing into the hundreds (once the DRD-grounding/
+    id-collision fixes surfaced FLEX2's real 391-objective scope) meant
+    every objective was still competing for the same `population_size *
+    2` total picks per generation regardless of how large the active set
+    grew -- confirmed empirically: population/generation tuning alone
+    plateaued (even regressed slightly) rather than helping.
+
+    'auto' (the default) recomputes a fresh value EVERY generation from
+    the CURRENT active-set size (which itself grows over the run as DRD
+    gates open), aiming for roughly one attempted mutation per active
+    objective per generation across the WHOLE offspring batch:
+    `ceil(len(active) / (2 * population_size))`, never less than 1. An
+    explicit int overrides this and is used as-is (e.g. for a smaller
+    self-test where auto-scaling would round down to 1 anyway)."""
+    if mutations_per_child == 'auto':
+        return max(1, math.ceil(len(active) / (2 * population_size))) if active else 1
+    return mutations_per_child
+
+
+def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
+                  mutations_per_child='auto'):
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
@@ -461,7 +487,22 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     refinement (see the module docstring): every objective's own
     dedicated row per table travels WITH its candidate through crossover
     and mutation, rather than every objective sharing whichever row
-    happens to be "first" in a bare `Candidate`."""
+    happens to be "first" in a bare `Candidate`.
+
+    `mutations_per_child` (see `_mutations_per_child`'s own docstring)
+    is this module's own multi-pick mutation fix (2026-09-12): each
+    child now attempts mutation against SEVERAL distinct active
+    objectives per generation, sequentially, each attempt building on
+    the previous one's own result within that same child -- not just a
+    single random pick, regardless of how large the active set grows.
+    The extra cost is cheap relative to what it buys: each additional
+    mutation attempt is one numeric optimization over one leaf, far
+    lighter than the O(active²) non-dominated-sort cost that already
+    dominates a generation regardless of how many mutations were
+    attempted -- so this trades a comparatively small compute increase
+    for directly fixing the attention-dilution bottleneck, rather than
+    the population/generation tuning already found not to work at this
+    scale."""
     rng = rng or random.Random(0)
     table_cache = {}
     population, scenario_cache = _seed_shared_population(records, case_study, population_size)
@@ -493,6 +534,12 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                          if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0}
         active = [r for r in records if is_active(r, covered_keys)]
 
+        # Computed once per generation (the active set itself only
+        # changes between generations, as DRD gates open) -- not once per
+        # child, since every child in this same generation should use the
+        # same "how many picks" policy; only WHICH picks differ per child.
+        k = _mutations_per_child(active, population_size, mutations_per_child)
+
         offspring = []
         while len(offspring) < population_size:
             p1, p2 = rng.sample(population, 2) if len(population) >= 2 else (population[0], population[0])
@@ -501,15 +548,21 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                 p1_c, p2_c, case_study, rng, focal_maps1=p1_fm, focal_maps2=p2_fm)
             for child_c, child_fm in ((c1, fm1), (c2, fm2)):
                 if active:
-                    r = rng.choice(active)
-                    # _mutate_objective already guards its own genome
-                    # computation against FitnessEvaluationError (see its
-                    # own docstring) -- a freshly-created, still-empty
-                    # dedicated row can leave some OTHER leaf of the same
-                    # record genuinely unresolvable, an honest "not
-                    # evaluable yet," never a crash.
-                    child_c, child_fm, _improved = _mutate_objective(
-                        r, child_c, child_fm, scenario_cache, table_cache, rng)
+                    # k DISTINCT active objectives, not just one -- this
+                    # module's own multi-pick mutation fix (see
+                    # _mutations_per_child's own docstring). Applied
+                    # sequentially: each pick's mutation attempt builds on
+                    # the PREVIOUS pick's own result within this same
+                    # child, exactly like a single pick already did.
+                    for r in rng.sample(active, min(k, len(active))):
+                        # _mutate_objective already guards its own genome
+                        # computation against FitnessEvaluationError (see
+                        # its own docstring) -- a freshly-created,
+                        # still-empty dedicated row can leave some OTHER
+                        # leaf of the same record genuinely unresolvable,
+                        # an honest "not evaluable yet," never a crash.
+                        child_c, child_fm, _improved = _mutate_objective(
+                            r, child_c, child_fm, scenario_cache, table_cache, rng)
                 offspring.append((child_c, child_fm))
         offspring = offspring[:population_size]
 
