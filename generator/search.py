@@ -225,7 +225,17 @@ if __name__ == '__main__':
     # counts as "starved" moved a lot, but escalation still has real,
     # demonstrable value at a tight-enough budget -- shown here with
     # budget=3, below the ~4 steps AVM itself needs on this branch. ------
-    D = find('Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1')
+    # Rule_3's own record_id now also grounds an earlier-row dependency
+    # (2026-09-12 DRD-grounding fix, compile_constraints.py) -- exact-suffix
+    # match is no longer possible (the id keeps growing with a further
+    # Academic Warning Status segment), so match by prefix and take the
+    # first, sorted for a deterministic pick; which specific further
+    # grounding is chosen is irrelevant to what this case actually tests
+    # (a numeric leaf unrelated to newWarningCount's own value).
+    D = min((r for r in compiled if r['record_id'].startswith(
+        'FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3'
+        '::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1')),
+        key=lambda r: r['record_id'])
     c = Candidate()
     row_cr = c.add_row('COURSE_REGISTRATION', {'ROLL_NO': 777, 'COURSE_ID': 202, 'GRADE': 'B', 'SEM_ID': 9})
     row_sem_d = c.add_row('SEMESTER', {'TITLE': 'Fall'})

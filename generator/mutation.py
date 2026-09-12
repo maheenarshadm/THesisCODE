@@ -860,7 +860,14 @@ if __name__ == '__main__':
 
     print()
     print("derived_case regression check (semesterType, found while first testing this module):")
-    load_rec = next(r for r in data if r['record_id'] == 'FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4')
+    # Rule_4 itself has no bare/ungrounded compiled entry anymore (2026-09-12
+    # DRD-grounding fix, compile_constraints.py) -- every variant now
+    # carries a ::via:: suffix grounding its own earlier-row suppression
+    # dependency, but semesterType's own resolution (what this check
+    # actually exercises) is identical across every one of them, so any
+    # variant works.
+    load_rec = next(r for r in data
+                     if r['record_id'].startswith('FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via'))
     case_node = load_rec['variable_resolution']['semesterType']
     assert case_node['kind'] == 'derived_case', "semesterType should no longer be a plain schema_column"
 

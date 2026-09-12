@@ -996,10 +996,12 @@ def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, 
         if not clean:
             continue
 
+        own_label = f"{upstream_decision.name}::{rule['id']}"
         if not chained_vars:
             options.append({'value': value_node, 'condition': truth_condition,
                              'extra_resolutions': dict(base_resolutions),
-                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name})
+                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name,
+                             'provenance': [own_label]})
             continue
 
         var_names = [v for v, _ in chained_vars]
@@ -1007,17 +1009,37 @@ def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, 
         for combo in itertools.product(*option_lists):
             combo_clauses = [truth_condition]
             combo_resolutions = dict(base_resolutions)
+            # `provenance` accumulates the FULL grounding chain, not just
+            # this immediate rule -- a real bug found 2026-09-12 building
+            # the earlier-row grounding fix above: two DIFFERENT combos
+            # here (differing only in which FURTHER-upstream rule grounds
+            # one of THIS rule's own chained vars) previously returned the
+            # identical `source_rule_id`/`source_decision` label, so
+            # compile_case_study's own record_id/grounded_upstream_branches
+            # (built from exactly that label) silently collided -- two
+            # genuinely distinct, differently-conditioned records sharing
+            # one record_id, one overwriting the other wherever a
+            # consumer keys off record_id (dynamosa.py's own archive
+            # dict, confirmed directly: FLEX2's `Course Registration
+            # Eligibility::Rule_3::via::Course Load Limit::Rule_1..4` each
+            # turned out to already be 6 distinct, non-duplicate combos
+            # colliding under one id, not padding). Every provenance
+            # label is now included, so a combo's full chain is reflected
+            # in the record_id it produces.
+            provenance = [own_label]
             for var_name, sub_opt in zip(var_names, combo):
                 combo_resolutions[var_name] = {
                     'kind': 'literal_via_upstream_branch', 'value': sub_opt['value'],
                     'from_decision': sub_opt['source_decision'], 'from_rule_id': sub_opt['source_rule_id']}
                 combo_clauses.append(sub_opt['condition'])
                 combo_resolutions.update(sub_opt['extra_resolutions'])
+                provenance.extend(sub_opt['provenance'])
             combined_condition = combo_clauses[0] if len(combo_clauses) == 1 \
                 else {'op': 'and', 'clauses': combo_clauses}
             options.append({'value': value_node, 'condition': combined_condition,
                              'extra_resolutions': combo_resolutions,
-                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name})
+                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name,
+                             'provenance': provenance})
     return options
 
 
@@ -1055,11 +1077,49 @@ def compile_case_study(cs, mapping_source='ground_truth'):
 
             referenced_vars = sorted(set(find_all_variable_refs(condition)))
             variable_resolution = {}
-            blocking = []
+            own_blocking = []
             for var in referenced_vars:
                 res = resolve_and_substitute(cs, gt, decision, var, by_id, by_name)
                 variable_resolution[var] = res
-                blocking.extend(find_blocking_issues(var, res))
+                own_blocking.extend(find_blocking_issues(var, res))
+
+            # Earlier-row (FIRST/UNIQUE suppression) conditions and their
+            # own free variables -- resolved HERE, before the
+            # chained-expansion decision below, not after it (2026-09-12
+            # fix; this used to happen per-variant, further down, well
+            # after this rule's own condition had already been decided
+            # not to need expansion). A real, measured gap this closes:
+            # an earlier row can reference a chained_decision_output fact
+            # this rule's OWN condition never does at all (FLEX2's Course
+            # Load Limit::Rule_4 -- own condition just `semesterType =
+            # 'Summer'`, no chained dependency of its own -- inherited an
+            # ungroundable `newWarningCount` purely from Rule_1/2/3's own
+            # earlier-row suppression context, permanently unresolvable
+            # and never coverable by any search as a result, one of
+            # exactly 4 FLEX2 records found in this shape). Only a
+            # chained_decision_output issue from an earlier row gets the
+            # same grounding-expansion treatment as one this rule's own
+            # condition needs -- a genuinely unresolved/schema_gap
+            # earlier-row variable is still recorded honestly, as-is, and
+            # still never newly blocks this record (unchanged from
+            # before this fix): only a consumer that actually needs THAT
+            # specific suppression term at evaluation time should ever
+            # see it fail.
+            earlier_rows = []
+            earlier_chained_blocking = []
+            if decision.hit_policy in ('FIRST', 'UNIQUE'):
+                for earlier_idx in range(row_idx):
+                    earlier_condition, earlier_errors, _ = build_rule_condition(decision, decision.rules[earlier_idx])
+                    if earlier_errors:
+                        continue
+                    earlier_rows.append({'rule_id': decision.rules[earlier_idx]['id'], 'condition': earlier_condition})
+                    for var in find_all_variable_refs(earlier_condition):
+                        if var in variable_resolution:
+                            continue  # already resolved -- this rule's own condition, or an even-earlier row
+                        res = resolve_and_substitute(cs, gt, decision, var, by_id, by_name)
+                        variable_resolution[var] = res
+                        earlier_chained_blocking.extend(
+                            (v, k, d) for v, k, d in find_blocking_issues(var, res) if k == 'chained_decision_output')
 
             # A rule blocked ONLY by chained_decision_output dependencies
             # is not a dead end -- enumerate_upstream_groundings expands
@@ -1069,9 +1129,11 @@ def compile_case_study(cs, mapping_source='ground_truth'):
             # record per combination rather than leaving the branch
             # unresolved. A mix of chained + genuinely unresolved/
             # schema_gap blocking still blocks outright -- expansion can't
-            # fix those.
-            chained_blocking = [b for b in blocking if b[1] == 'chained_decision_output']
-            other_blocking = [b for b in blocking if b[1] != 'chained_decision_output']
+            # fix those. Earlier-row-only chained variables are folded in
+            # here too (see above), expanded by the exact same mechanism.
+            blocking = own_blocking + earlier_chained_blocking
+            chained_blocking = [b for b in own_blocking if b[1] == 'chained_decision_output'] + earlier_chained_blocking
+            other_blocking = [b for b in own_blocking if b[1] != 'chained_decision_output']
 
             if other_blocking:
                 blocked.append({'record_id': record_id, 'reason': 'unresolved_variable',
@@ -1107,7 +1169,14 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                                          'from_decision': opt['source_decision'], 'from_rule_id': opt['source_rule_id']}
                         vr.update(opt['extra_resolutions'])
                         extra_clauses.append(opt['condition'])
-                        suffix.append(f"{opt['source_decision']}::{opt['source_rule_id']}")
+                        # The FULL chain (opt['provenance']), not just this
+                        # immediate upstream rule -- see
+                        # enumerate_upstream_groundings's own docstring/
+                        # comment on why: two combos differing only in a
+                        # FURTHER-upstream grounding previously produced
+                        # the identical suffix here, colliding two
+                        # genuinely distinct records under one record_id.
+                        suffix.extend(opt['provenance'])
                     combined = extra_clauses[0] if len(extra_clauses) == 1 else {'op': 'and', 'clauses': extra_clauses}
                     variants.append((combined, vr, suffix))
 
@@ -1118,33 +1187,13 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                 for (out_name, _typeref), out_text in zip(decision.outputs, rule['output_texts']):
                     outputs[out_name] = parse_output_value(out_text)
 
-                hit_policy_context = {'earlier_rows': []}
-                if decision.hit_policy in ('FIRST', 'UNIQUE'):
-                    for earlier_idx in range(row_idx):
-                        earlier_condition, earlier_errors, _ = build_rule_condition(decision, decision.rules[earlier_idx])
-                        if earlier_errors:
-                            continue
-                        hit_policy_context['earlier_rows'].append(
-                            {'rule_id': decision.rules[earlier_idx]['id'], 'condition': earlier_condition})
-                        # An earlier row can reference free variables this
-                        # rule's own condition never does (a FIRST/UNIQUE
-                        # decision's rows commonly test different declared
-                        # inputs row to row) -- resolve and merge those in
-                        # too, or a downstream consumer needing the full
-                        # suppression term (fitness.py's own FIRST/UNIQUE
-                        # suppression distance, §6.3) has no way to
-                        # evaluate it at all. Never causes this record to
-                        # newly block: an earlier row's own variable being
-                        # itself unresolved/schema_gap/etc. is recorded
-                        # here as-is (not silently dropped), the same
-                        # honesty this record's own condition variables
-                        # already get -- a consumer that actually needs to
-                        # evaluate that specific suppression term is where
-                        # it should surface, not here.
-                        for var in find_all_variable_refs(earlier_condition):
-                            if var not in variant_resolution:
-                                variant_resolution[var] = resolve_and_substitute(
-                                    cs, gt, decision, var, by_id, by_name)
+                # `earlier_rows` and every earlier-row variable it needs
+                # (including any chained_decision_output one now grounded
+                # into this specific variant's own `variable_resolution`
+                # via the combo loop above) were already resolved once,
+                # up front -- identical across every variant of this
+                # record, so no reason to redo it per variant.
+                hit_policy_context = {'earlier_rows': earlier_rows}
 
                 tables = set()
                 for res in variant_resolution.values():
