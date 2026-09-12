@@ -1284,6 +1284,80 @@ call and skipping that pick rather than crashing the whole run.
 
 Self-contained via `python3 generator/dynamosa.py`.
 
+## `generate_dataset.py` -- running it for real, at full case-study scale (2026-09-12)
+
+Ties `dynamosa.py` (search) and `materialize.py` (output) together into
+the actual "generate a real dataset for one case study" entry point --
+the first module that runs the whole pipeline end to end and produces
+real files, not just a self-test.
+
+**Two honest coverage numbers, not one**, because they answer genuinely
+different questions: **archive coverage** -- how many objectives reached
+fitness 0.0 *at some point* during the run, possibly on different
+individuals at different generations (DynaMOSA's own archive discipline,
+a progress metric); **final-dataset coverage** -- how many objectives
+are *simultaneously* satisfied by the ONE real candidate this module
+actually materializes (the honest, deliverable number -- a dataset is
+one concrete row-set, not a scrapbook of per-objective snapshots taken
+at different moments).
+
+**Real result, full FLEX2 scale (103 compiled branches, population 30,
+40 generations, 7.7s)**: archive coverage **20/103 (19.4%)**,
+final-dataset coverage **6/103 (5.8%)**, and the materialized dataset
+validates **cleanly against real SQLite DDL with FK enforcement on --
+`ok=True, 0 errors`**. The archive/final gap (14) is the measured,
+concrete cost of `dynamosa.py`'s own "first row per table" scope
+decision, exactly as its own smaller-scale test already predicted.
+
+**Two more real, previously-latent bugs found only by running this at
+full scale** -- both existed since `build_seed_candidate`'s own seeding
+logic was written, and neither was ever caught before because nothing
+had checked these specific seed rows against the *real* schema until
+`validate_with_sqlite` did:
+
+1. **`raw_sql_boolean`'s own seeding stamped ALL of a multi-table SQL
+   template's columns onto EVERY table it named.** `isElectiveTaughtByVisitingScholarUnavailableOtherwise`'s
+   template references `COURSE_OFFER`/`EMPLOYEE`/`D_EMP_TYPE` via
+   aliases (`CO`/`E`/`DT`); the old code pulled every `alias.column`
+   mention out of the *whole* template into one flat set and gave that
+   *same* set to every one of `node['tables']` -- so `COURSE_OFFER`'s
+   seed row ended up carrying `EMPLOYEE`'s and `D_EMP_TYPE`'s own
+   columns too (`TITLE`, `EMP_TYPE_ID`), columns that table doesn't
+   have. Fixed by filtering each table's own seeded columns against that
+   table's real declared schema columns.
+2. **A genuine cross-table join conjunct
+   (`PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID`) was mistaken for a
+   literal-string value comparison.** `_mechanical_filter_predicate` (and
+   its construction mirror, `_row_from_filter_conjuncts`) matched the
+   bare `TABLE.COLUMN` on the right-hand side as if it were a literal
+   value to equal -- meaning `degreeTotalCredits`' own filter demanded
+   `COURSE_ID == 'COURSE.COURSE_ID'` (the string), which no real
+   integer `COURSE_ID` could ever satisfy, silently zeroing the
+   aggregate to 0 every time rather than honestly reporting the join as
+   unparseable. Fixed by recognizing a bare `TABLE.COLUMN` right-hand
+   side as a join conjunct to skip (the same honest "can't mechanically
+   apply this" convention already used for prose filters), and by
+   implementing a real join in `derive_value`'s own aggregate branch for
+   when `value_column` names a *different* table than the aggregate's
+   own `FROM` table (via the same `"<TABLE>_ID"` FK-naming convention
+   `join_lookup` already documents as this program's real, surveyed
+   pattern) -- confirmed directly: `degreeTotalCredits` now correctly
+   sums to `30` (3 courses × 10 credit hours each) via a real join,
+   instead of silently returning `0`. Bounded, not guessed at: exactly 4
+   rule-row variants in the whole corpus use this dotted-`value_column`
+   shape, all now fixed.
+
+Both fixes re-verified against the full regression suite (compile/
+candidate/fitness/mutation/crossover/search/materialize/dynamosa) with
+no change in outcome anywhere else, then the full FLEX2 run was
+re-executed: same 20/103 and 6/103 coverage numbers (these bugs were
+schema-*validity* bugs, not DMN branch-fitness bugs, so coverage was
+never wrong -- only the materialized data's own real-world validity
+was), now with `validate_with_sqlite` reporting `ok=True, 0 errors`
+where it previously found 9 real, concrete violations.
+
+Self-contained via `python3 generator/generate_dataset.py --case-study FLEX2 --population-size 30 --generations 40`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

@@ -23,6 +23,7 @@ Usage:
     genome = derive_genome(record, candidate, focal, scenario)
     score = branch_fitness(record, genome)   # fitness.py, unchanged
 """
+import json
 import os
 import re
 import sqlite3
@@ -31,8 +32,25 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from fitness import FitnessEvaluationError  # noqa: E402 -- reused, not reimplemented
+from compile_constraints import CASE_STUDY_SCHEMA_JSON  # noqa: E402 -- safe: compile_constraints.py
+# depends on neither candidate.py nor mutation.py, so no circularity (mutation.py depends on
+# candidate.py, so candidate.py must never import mutation.py itself).
 
 _PLACEHOLDER_RE = re.compile(r'<([^>]+)>')
+_SEED_SCHEMA_CACHE = {}
+
+
+def _schema_for_seeding(case_study):
+    if case_study not in _SEED_SCHEMA_CACHE:
+        with open(CASE_STUDY_SCHEMA_JSON[case_study], encoding='utf-8') as f:
+            _SEED_SCHEMA_CACHE[case_study] = json.load(f)
+    return _SEED_SCHEMA_CACHE[case_study]
+
+
+def _real_columns_of(case_study, table):
+    schema = _schema_for_seeding(case_study)
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+    return {c.upper() for c in (info.get('columns') or {})}
 
 
 class Candidate:
@@ -119,6 +137,7 @@ def _find_row_by_pk(candidate, table, pk_column, value):
 # skipped and reported, never silently assumed to mean "no filter."
 # ---------------------------------------------------------------------------
 _SIMPLE_EQ_CONJUNCT_RE = re.compile(r'^\s*(?:[\w]+\.)?([\w]+)\s*=\s*(.+?)\s*$')
+_BARE_TABLE_DOT_COLUMN_RE = re.compile(r'^[A-Za-z_]\w*\.[A-Za-z_]\w*$')
 
 
 def _mechanical_filter_predicate(filter_text, scenario):
@@ -126,10 +145,16 @@ def _mechanical_filter_predicate(filter_text, scenario):
     ' AND ' (the only combinator actually seen in these facts' filter
     text) and keeps only conjuncts of the plain `COLUMN = VALUE` or
     `COLUMN = <placeholder>` shape; anything else (a join description in
-    prose, an IN-subquery description, ...) is reported as skipped rather
-    than guessed at, and the resulting predicate is a real over-count on
-    exactly the skipped conjuncts' account -- an honest approximation,
-    not a silent exact answer."""
+    prose, an IN-subquery description, a genuine cross-table join
+    conjunct like `PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID` -- a real
+    bug found materializing degreeTotalCredits end to end, 2026-09-12:
+    this used to treat the bare `TABLE.COLUMN` on the right as a literal
+    STRING value to match against, which no real row's own COURSE_ID
+    integer could ever equal, silently zeroing the aggregate rather than
+    honestly reporting the join as unparseable) is reported as skipped
+    rather than guessed at, and the resulting predicate is a real
+    over-count on exactly the skipped conjuncts' account -- an honest
+    approximation, not a silent exact (or silently wrong) answer."""
     if not filter_text:
         return (lambda row: True), []
     conjuncts = re.split(r'\bAND\b', filter_text, flags=re.I)
@@ -141,6 +166,9 @@ def _mechanical_filter_predicate(filter_text, scenario):
             skipped.append(c.strip())
             continue
         col, raw_val = m.group(1), m.group(2).strip()
+        if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
+            skipped.append(c.strip())  # a real cross-table join, not a value comparison -- see docstring
+            continue
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
             if ph.group(1) not in scenario:
@@ -189,6 +217,8 @@ def _row_from_filter_conjuncts(filter_text, scenario):
         if not m:
             continue
         col, raw_val = m.group(1), m.group(2).strip()
+        if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
+            continue  # a real cross-table join conjunct, not a value to assign -- see the predicate's own docstring
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
             if ph.group(1) in scenario:
@@ -278,8 +308,34 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
         rows = candidate.rows(tables[0])
         matching = [r for r in rows if predicate(r)]
         if node.get('value_column'):
-            _, col = node['value_column'].split('.')
-            return sum((_row_get(r, col) or 0) for r in matching)
+            value_table, col = node['value_column'].split('.')
+            if value_table.upper() == tables[0].upper():
+                return sum((_row_get(r, col) or 0) for r in matching)
+            # value_column lives on a DIFFERENT, joined-in table than
+            # tables[0] -- e.g. FLEX2's degreeTotalCredits:
+            # "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE". A
+            # real, pre-existing bug found materializing this end to end
+            # (2026-09-12): this used to read `col` straight off
+            # tables[0]'s own rows regardless, which only ever "worked"
+            # because build_seed_candidate's own (also-fixed) seeding
+            # happened to stash it there too -- never a genuine join, and
+            # never a real schema column on tables[0] either. Joined via
+            # the "<TABLE>_ID" naming convention join_lookup's own
+            # docstring already documents as this program's real,
+            # surveyed FK convention.
+            join_col = f'{value_table.upper()}_ID'
+            value_rows = candidate.rows(value_table)
+            total = 0
+            for r in matching:
+                try:
+                    key = _row_get(r, join_col)
+                except FitnessEvaluationError:
+                    continue
+                target = next((vr for vr in value_rows
+                               if vr.get(join_col, vr.get(join_col.lower())) == key), None)
+                if target is not None:
+                    total += _row_get(target, col) or 0
+            return total
         return len(matching)
     if kind == 'exists':
         table = (node.get('candidate_tables') or [None])[0]
@@ -478,6 +534,8 @@ def build_seed_candidate(record, today=20000):
             # mutation.py's own M2 "add a row" logic already uses, so a
             # seeded row and a mutation-added row are built the same way.
             tables = [t.strip() for t in node['table'].split(',')]
+            value_table, value_col = (node['value_column'].split('.') if node.get('value_column') else (None, None))
+            joined_value_table = value_table and value_table.upper() != tables[0].upper()
             for i in range(1, 4):
                 row = _row_from_filter_conjuncts(node.get('filter_text'), scenario)
                 # no artificial distinguishing key needed -- these are
@@ -485,18 +543,47 @@ def build_seed_candidate(record, today=20000):
                 # identical content, and a fake 'X' column would only
                 # break real SQLite validation later (found exactly this
                 # way, 2026-09-12: "table LECTURE has no column named X").
-                if node.get('value_column'):
-                    row[node['value_column'].split('.')[1]] = 10
+                if value_table and not joined_value_table:
+                    row[value_col] = 10
+                elif joined_value_table:
+                    # value_column lives on a DIFFERENT, joined-in table
+                    # -- build a REAL joinable pair, not a column stamped
+                    # onto the wrong table's row (a real bug found the
+                    # same way: materialize.py's real SQLite validation
+                    # was the first thing to ever check these seed rows
+                    # against the actual schema). See derive_value's own
+                    # matching fix for the "<TABLE>_ID" join convention.
+                    join_col = f'{value_table.upper()}_ID'
+                    row[join_col] = i
+                    candidate.add_row(value_table, {join_col: i, value_col: 10})
                 candidate.add_row(tables[0], row)
             for t in tables[1:]:
+                if joined_value_table and t.upper() == value_table.upper():
+                    continue  # already seeded with real, joinable rows above
                 candidate.add_row(t, {'X': 0})
         elif kind == 'exists':
             table = (node.get('candidate_tables') or [None])[0]
             if table:
                 candidate.add_row(table, {'X': 1})
         elif kind == 'raw_sql_boolean':
+            # A real, found-not-guessed bug (2026-09-12, discovered only
+            # once materialize.py's real SQLite validation checked these
+            # seed rows against the actual schema for the first time --
+            # the in-memory raw_sql_boolean evaluator builds its own
+            # throwaway table from whatever columns happen to be present,
+            # so it never caught this): the old version pulled every
+            # `alias.column` mention out of the WHOLE sql_template (which
+            # names several different tables via several different
+            # aliases -- e.g. CO/E/DT for COURSE_OFFER/EMPLOYEE/
+            # D_EMP_TYPE) and stamped that ENTIRE mixed set onto EVERY
+            # one of `node['tables']` -- so COURSE_OFFER's seed row ended
+            # up carrying EMPLOYEE's and D_EMP_TYPE's own columns too.
+            # Filtered per table now, against that table's real declared
+            # schema columns.
+            all_cols = set(re.findall(r'\b\w+\.(\w+)\b', node['sql_template']))
             for t in node['tables']:
-                cols = set(re.findall(r'\b\w+\.(\w+)\b', node['sql_template']))
+                real_cols = _real_columns_of(record['case_study'], t)
+                cols = {c for c in all_cols if c.upper() in real_cols} if real_cols else set()
                 candidate.add_row(t, {col: 1 for col in cols} or {'X': 1})
         elif kind == 'derived_case':
             ensure_row(node['table'], node['column'], node['cases'][0][0])

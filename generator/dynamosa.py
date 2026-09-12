@@ -47,7 +47,7 @@ selection pressure at all, per §6.4's own framing).
 
 Usage:
     from dynamosa import run_dynamosa
-    archive, coverage_history = run_dynamosa(records, case_study, population_size=20, generations=50)
+    archive, coverage_history, population = run_dynamosa(records, case_study, population_size=20, generations=50)
 """
 import copy
 import os
@@ -192,24 +192,38 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
-    (archive, coverage_history) -- `archive` is {record_id:
+    (archive, coverage_history, population) -- `archive` is {record_id:
     (best_fitness_ever_found, candidate_snapshot_that_achieved_it)},
     growing monotonically across the whole run (DynaMOSA's own archive
     discipline: a target's best answer is never lost even if the current
     population moves on); `coverage_history[g]` is how many objectives
     had reached fitness 0.0 by the end of generation g, for watching
-    convergence honestly rather than only reporting the final number."""
+    convergence honestly rather than only reporting the final number;
+    `population` is the final generation's own individuals -- exposed so
+    a caller (generate_dataset.py) can pick ONE real, self-consistent
+    candidate to actually materialize, rather than the archive's own
+    per-objective-best snapshots, which were captured at different points
+    in the run and were never guaranteed consistent with each other (see
+    this module's own "first row per table" scope-decision docstring)."""
     rng = rng or random.Random(0)
     table_cache = {}
     population, scenario_cache = _seed_shared_population(records, case_study, population_size)
 
-    archive = {}
+    # Every record gets a real entry from the start, even one that turns
+    # out permanently unresolvable (inf against every individual all run)
+    # -- a real KeyError found wiring this into generate_dataset.py
+    # (2026-09-12): update_archive's own strict `<` comparison never
+    # improves on inf with inf, so a record that's inf for every
+    # individual, always, never got a key at all, and any caller that
+    # didn't defensively .get() the archive crashed. An honest "never
+    # covered, inf" entry is the correct initial state, not an absent key.
+    archive = {r['record_id']: (float('inf'), population[0]) for r in records}
 
     def update_archive(individual):
         for r in records:
             rid = r['record_id']
             f = evaluate_objective(r, individual, scenario_cache[rid], table_cache)
-            if f < archive.get(rid, (float('inf'), None))[0]:
+            if f < archive[rid][0]:
                 archive[rid] = (f, individual)
 
     for ind in population:
@@ -273,7 +287,7 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                              if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0)
         coverage_history.append(covered_count)
 
-    return archive, coverage_history
+    return archive, coverage_history, population
 
 
 if __name__ == '__main__':
@@ -301,7 +315,7 @@ if __name__ == '__main__':
 
     start = time.time()
     rng = random.Random(0)
-    archive, coverage_history = run_dynamosa(records, 'FLEX2', population_size=12, generations=25, rng=rng)
+    archive, coverage_history, _final_population = run_dynamosa(records, 'FLEX2', population_size=12, generations=25, rng=rng)
     elapsed = time.time() - start
 
     print(f"\nCoverage history across {len(coverage_history)} generations: {coverage_history}")
