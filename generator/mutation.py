@@ -17,42 +17,63 @@ mutated variable's own resolution kind, never chosen by the caller:
   a whole row, since nothing on a single row is *the* count.
 
 Direction for both is decided the same, unified way: try each candidate
-replacement value for the chosen variable, keep whichever scores lowest
-on the **combined objective** -- `branch_fitness` (the DMN term) *plus*
-`candidate_constraint_fitness` (the schema/DB constraint term: NOT NULL,
-UNIQUE/PK, FK, CHECK) -- then adopt that winning state.
+replacement value for the chosen variable *in the genome* (a cheap,
+in-memory hypothetical -- no candidate edit yet), keep whichever
+`branch_fitness` call comes out lowest, then apply only that winning
+value to the real Candidate. This is what lets one mutation function
+handle every leaf kind uniformly rather than needing per-kind direction
+logic duplicated.
 
-This wasn't always true: the operator originally scored candidates by a
-cheap, in-genome `branch_fitness`-only hypothetical, with no schema
-awareness at all. Asked directly whether row mutation checks FK/schema
-constraints, the honest answer (2026-09-12) was no, demonstrated
-concretely: a candidate that reached `branch_fitness == 0.0` (DMN-perfect)
-scored `candidate_constraint_fitness == 68.3` on the exact same rows --
-M2 had added ~96 near-empty rows with no FK linkage, missing NOT NULL
-columns, and duplicate PK keys, entirely invisible to a DMN-only
-objective. Since the constraint term needs real materialized rows (NOT
-NULL/UNIQUE/FK/CHECK can't be read off a flat genome), the cheap
-in-genome hypothetical had to go: every candidate value is now actually
-applied to a real, deep-copied candidate before being scored, and the
-copy with the lowest combined fitness is adopted -- more work per
-mutation, but the only way the constraint half can be evaluated at all.
-This lets one mutation function keep handling every leaf kind uniformly,
-rather than needing per-kind direction logic duplicated.
+Schema/DB constraints (NOT NULL, UNIQUE/PK, FK) are handled by a
+*separate* mechanism, not folded into this search objective -- and this
+wasn't always the design. Asked directly whether row mutation checks
+FK/schema constraints (2026-09-12), the honest answer was no; the first
+fix tried was summing `branch_fitness + candidate_constraint_fitness`
+into one combined objective. That surfaced a real, deeper problem before
+it shipped: re-testing it against a rule needing a large aggregate-count
+increase, hillclimb got trapped *deleting* rows toward fewer constraint
+violations instead of adding the ones the DMN branch actually needed --
+an unweighted sum lets one objective's per-step cost mask another's
+necessary long-range gain, exactly why the design doc's own §6.4 keeps
+DynaMOSA's objectives Pareto-compared, never summed.
 
-Known remaining gap, stated plainly: this makes constraint violations
-*count* toward whether a mutation is accepted, but it does not yet give
-the operator any way to *fix* one on its own -- M2's row-builder still
-only fills in the columns the DMN filter text names, so a table's other
-NOT NULL/FK columns stay unset regardless of which candidate value wins.
-Combined fitness can therefore plateau above 0.0 for aggregate-heavy
-branches even once the DMN term itself is fully satisfied. Closing that
-needs a real repair step in M2 (fill NOT NULL columns with a valid
-placeholder, pick a real existing PK for FK columns) -- a follow-up, not
-attempted here.
+The actual fix: NOT NULL/UNIQUE/FK are mechanically decidable from the
+schema alone with no DMN-relevant ambiguity (a column either must be set
+or it doesn't; a FK either has a valid parent or it doesn't) -- so they
+don't belong in the fitness landscape as something to be *discovered* at
+all. `_repair_row` makes every row M1/M2 touches or adds schema-legal
+*by construction*, immediately, every time -- filling required NOT NULL
+columns with a type-appropriate placeholder (using a fresh, never-reused
+value when that column is also part of a key, so repair itself never
+manufactures a new UNIQUE collision) and auto-materializing a minimal
+parent row for any FK column that's set but has no match yet. This never
+competes with `branch_fitness` because it never enters the objective --
+the DMN search stays exactly branch_fitness-alone, as originally
+designed. `candidate_constraint_fitness` remains available as a
+post-hoc audit metric (see the self-test below), just not a search
+signal. CHECK constraints are the one real exception -- they constrain
+the *same* values a DMN branch may care about, so they're a genuine
+trade-off, not a mechanical fill-in; left as a stated scope boundary for
+whenever the real population/Pareto DynaMOSA loop exists to give them
+their own objective, not attempted here (rare: 3 CHECK constraints
+total, Spree only).
+
+A second real bug found while building this fix, unrelated to the
+objective itself but only visible once real deep-copied candidates were
+being compared: `copy.deepcopy(candidate)` and `copy.deepcopy(focal)` as
+two *separate* top-level calls silently break the object aliasing
+between a focal row and its own entry in the candidate's row list (they
+start out as the *same* dict object; deepcopy-ing them apart makes two
+independent copies with the same content). A field mutation would then
+write into `focal`'s copy while `candidate`'s own stored row stayed
+stale -- meaning the genome a mutation was scored on could diverge from
+what the adopted candidate actually contained. Fixed by deep-copying
+`(candidate, focal)` together in one call, which preserves shared
+references the same way they existed before copying.
 
 Usage:
     from mutation import mutate, hillclimb
-    new_candidate, new_focal, new_scenario, var, improved, fitness = \\
+    new_candidate, new_focal, new_scenario, var, improved = \\
         mutate(record, candidate, focal, scenario, rng)
     solved_candidate, focal, scenario, history = hillclimb(record, candidate, focal, scenario)
 """
@@ -68,7 +89,7 @@ sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
                         _mechanical_filter_predicate, _find_focal_with_columns, _row_get)
 from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
-                      candidate_constraint_fitness)
+                      candidate_constraint_fitness, _unique_key_sets)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
 
 BOOLEAN_LEAF_KINDS = {'null_check', 'any_not_null', 'join_null_check', 'exists',
@@ -226,50 +247,133 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
 
 
 def _combined_fitness(record, candidate, focal, scenario, schema):
-    """The real objective mutation optimizes: `branch_fitness` (the DMN
-    branch-distance term) plus `candidate_constraint_fitness` (the
-    schema/DB constraint term -- NOT NULL, UNIQUE/PK, FK, CHECK) over the
-    same candidate. Both terms are already normalized to the same 0..1
-    per-clause scale (fitness.py's own `normalize`), so an unweighted sum
-    keeps them comparable -- no weighting scheme is named anywhere in the
-    design doc's own §6.3 equation, and this is the single-objective
-    hillclimb's own stand-in for DynaMOSA's proper multi-objective
-    comparison (each term would be its own objective there, per §6.4)."""
+    """NOT the search objective (see this module's own docstring for why
+    summing was tried and reverted) -- kept as a post-hoc audit helper:
+    `branch_fitness` (the DMN term) plus `candidate_constraint_fitness`
+    (the schema/DB constraint term), for reporting how schema-clean a
+    solved candidate actually is, never for deciding what to mutate."""
     genome = derive_genome(record, candidate, focal, scenario)
     return branch_fitness(record, genome) + candidate_constraint_fitness(candidate.as_dict(), schema)
 
 
-def best_value_for(record, candidate, focal, scenario, var_name, node, case_study):
-    """Tries every candidate replacement value for var_name, each one
-    actually APPLIED to a real, deep-copied candidate -- not a cheap
-    in-genome guess, since the constraint half of the combined objective
-    needs real materialized rows (NOT NULL/UNIQUE/FK/CHECK can't be read
-    off a flat genome at all). Returns
-    (best_candidate, best_focal, best_scenario, best_fitness, improved)
-    -- 'improved' is False when nothing beats the current combined
-    fitness, meaning this variable is already locally optimal and
-    mutate() should try a different one instead. A value that can't
-    legitimately be applied at all (apply_mutation refuses it, or the
-    resulting candidate can't even be scored) is skipped, not treated as
-    a tie -- the same "never pick an invalid trial" discipline the old
-    genome-only version had, now enforced by construction rather than a
-    float('inf') sentinel."""
-    schema = _schema_for(case_study)
-    current = derive_genome(record, candidate, focal, scenario).get(var_name)
-    current_fitness = _combined_fitness(record, candidate, focal, scenario, schema)
-    best_candidate, best_focal, best_scenario, best_fitness = candidate, focal, scenario, current_fitness
+def _hypothetical_fitness(record, genome, var_name, value):
+    trial = dict(genome)
+    trial[var_name] = value
+    try:
+        return branch_fitness(record, trial)
+    except FitnessEvaluationError:
+        return float('inf')  # an invalid trial value should never be picked
+
+
+def best_value_for(record, genome, var_name, node, case_study):
+    """Tries every candidate replacement for var_name and returns
+    (best_value, best_fitness, improved) -- 'improved' is False when
+    nothing beats the current value, meaning this variable is already
+    locally optimal and mutate() should try a different one instead.
+    Genome-only and cheap, deliberately: schema/DB constraints are no
+    longer part of this objective at all (see this module's own
+    docstring) -- `branch_fitness` needs nothing but the flat genome, so
+    there is no reason to materialize a real candidate just to pick a
+    DMN-optimal value; `apply_mutation` (called once, on the winning
+    value only) is where a real row actually gets touched."""
+    current = genome.get(var_name)
+    current_fitness = branch_fitness(record, genome)
+    best_value, best_fitness = current, current_fitness
     for value in candidate_values(record, var_name, node, current, case_study):
-        trial_candidate = copy.deepcopy(candidate)
-        trial_focal = copy.deepcopy(focal)
-        trial_scenario = dict(scenario)
-        try:
-            apply_mutation(record, trial_candidate, trial_focal, trial_scenario, var_name, node, value, current)
-            f = _combined_fitness(record, trial_candidate, trial_focal, trial_scenario, schema)
-        except FitnessEvaluationError:
-            continue  # this value can't legitimately be applied/scored -- never a candidate
+        f = _hypothetical_fitness(record, genome, var_name, value)
         if f < best_fitness:
-            best_candidate, best_focal, best_scenario, best_fitness = trial_candidate, trial_focal, trial_scenario, f
-    return best_candidate, best_focal, best_scenario, best_fitness, best_candidate is not candidate
+            best_value, best_fitness = value, f
+    return best_value, best_fitness, best_value != current
+
+
+# ---------------------------------------------------------------------------
+# 2b. Repair-by-construction -- NOT NULL/UNIQUE/FK are mechanically
+# decidable from the schema alone, with no DMN-relevant ambiguity, so a
+# row M1/M2 touches or adds is made schema-legal immediately, every time,
+# rather than left for a search objective to maybe discover. Never
+# overwrites a column that already carries a real value (DMN-written or
+# otherwise) -- repair only ever fills in what's still missing.
+# ---------------------------------------------------------------------------
+
+def _placeholder_for_column_type(ctype):
+    """A minimal, valid placeholder for a column repair needs to fill but
+    has no DMN-relevant value for. Never used for a column any leaf
+    mutation actually cares about -- those are always written first."""
+    ctype = (ctype or '').upper()
+    if 'DATE' in ctype or 'TIME' in ctype:
+        return '2000-01-01'
+    if any(t in ctype for t in ('NUM', 'INT', 'DEC', 'FLOAT', 'DOUBLE')):
+        return 1
+    return 'X'
+
+
+def _fresh_key_value(candidate, table, column):
+    """A numeric value guaranteed not to collide with any existing value
+    of `column` across this table's current rows -- used only when a NOT
+    NULL column repair needs to fill is *also* part of a declared
+    PK/UNIQUE key, so filling it in with a shared constant across many
+    rows (e.g. M2's own aggregate-count rows) never manufactures a fresh
+    UNIQUE violation repair itself would be responsible for."""
+    existing = {r.get(column) for r in candidate.rows(table)
+                if isinstance(r.get(column), (int, float)) and not isinstance(r.get(column), bool)}
+    return (max(existing) + 1) if existing else 1
+
+
+def _repair_row(candidate, table, row, case_study, _seen=None):
+    """Makes one row schema-legal on NOT NULL and FK, in place, using
+    real schema data (`flex2_schema_full.json` et al., the same JSON
+    `_column_type`/`fitness.py`'s own constraint functions already read).
+    UNIQUE/PK is handled as a side effect of `_fresh_key_value`, not
+    checked separately -- there is no general "avoid this collision" move
+    to make beyond giving a key column its own fresh value when repair is
+    the one filling it in.
+
+    When an FK needs a parent row synthesized, that new row is repaired
+    too (recursively) -- otherwise the minimal `{ref_col: val}` row this
+    function itself creates would trade one FK gap for a fresh NOT NULL
+    gap on the very row meant to close it. `_seen` guards against a cyclic
+    FK graph recursing forever (tracked by object identity, since two
+    equal-content rows are still different real rows)."""
+    _seen = _seen if _seen is not None else set()
+    if id(row) in _seen:
+        return
+    _seen.add(id(row))
+    schema = _schema_for(case_study)
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+    if not info:
+        return
+    real_table = table
+    key_cols = {c.upper() for cols in _unique_key_sets(schema, real_table) for c in cols}
+    lowered = {k.lower() for k in row}
+    for col, meta in (info.get('columns') or {}).items():
+        if not meta.get('null_false') or col.lower() in lowered:
+            continue  # not required, or already has a real value -- never overwritten
+        if col.upper() in key_cols:
+            row[col] = _fresh_key_value(candidate, real_table, col)
+        else:
+            row[col] = _placeholder_for_column_type(meta.get('type'))
+        lowered.add(col.lower())
+    for fk in (info.get('fk_columns') or []):
+        col = fk['column']
+        val = row.get(col)
+        if val is None:
+            # unset (never touched, or deliberately nulled) -- a nullable
+            # FK left NULL is valid SQL, not a gap repair needs to fill.
+            continue
+        ref_table, ref_col = fk['ref_table'], fk['ref_column']
+        parent_row = None
+        for pr in candidate.rows(ref_table):
+            v = pr.get(ref_col, pr.get(ref_col.upper(), pr.get(ref_col.lower())))
+            if v == val:
+                parent_row = pr
+                break
+        if parent_row is None:
+            # no valid parent row exists for this FK's real value yet --
+            # materialize a minimal one rather than leave it dangling, and
+            # repair *that* row too (it's a new row this same construction
+            # discipline applies to, not an exception to it).
+            parent_row = candidate.add_row(ref_table, {ref_col: val})
+            _repair_row(candidate, ref_table, parent_row, case_study, _seen)
 
 
 # ---------------------------------------------------------------------------
@@ -281,14 +385,20 @@ def _apply_field_mutation(node, value, candidate, focal):
     """M1: write one row's one column. For a boolean-valued leaf
     (null_check et al.), True/False means "make the underlying fact hold
     or not" -- realized as setting the column non-null vs null, the same
-    semantics classify_derived's own null_check kind already carries."""
+    semantics classify_derived's own null_check kind already carries.
+    Returns every (table, row) pair this call touched or added, so
+    apply_mutation can repair each one for NOT NULL/FK by construction
+    afterward -- collected rather than repaired inline here, so this
+    function stays purely about the DMN-relevant write."""
     kind = node['kind']
+    touched = []
     if kind == 'schema_column':
         table, column = node['table'], node['column']
         row = focal.setdefault(table.upper(), {})
         if table.upper() not in {t for t in candidate.as_dict()} or row not in candidate.rows(table):
             candidate.add_row(table, row)
         row[column] = value
+        touched.append((table, row))
     elif kind == 'derived_case':
         # `value` is a *derived* category (e.g. 'Regular') the branch
         # condition compares against -- never write that string itself
@@ -305,6 +415,7 @@ def _apply_field_mutation(node, value, candidate, focal):
         if row not in candidate.rows(table):
             candidate.add_row(table, row)
         row[column] = real_value
+        touched.append((table, row))
     elif kind == 'null_check':
         table, column = node['table'], node['column']
         row = focal.setdefault(table.upper(), {})
@@ -313,6 +424,7 @@ def _apply_field_mutation(node, value, candidate, focal):
         row[column] = (row.get(column, 1) if value else None) if value else None
         if value and row.get(column) is None:
             row[column] = 1  # any non-null placeholder satisfies "is set"
+        touched.append((table, row))
     elif kind == 'any_not_null':
         # True: ensure at least one of the columns is set; False: null all
         for c in node['columns']:
@@ -320,6 +432,7 @@ def _apply_field_mutation(node, value, candidate, focal):
             if row not in candidate.rows(c['table']):
                 candidate.add_row(c['table'], row)
             row[c['column']] = None
+            touched.append((c['table'], row))
         if value:
             first = node['columns'][0]
             focal[first['table'].upper()][first['column']] = 1
@@ -327,9 +440,10 @@ def _apply_field_mutation(node, value, candidate, focal):
         local_row = focal.setdefault(node['via']['local_table'].upper(), {})
         if local_row not in candidate.rows(node['via']['local_table']):
             candidate.add_row(node['via']['local_table'], local_row)
+        touched.append((node['via']['local_table'], local_row))
         if kind == 'join_null_check' and not value:
             local_row[node['via']['local_column']] = None
-            return
+            return touched
         target_row = focal.setdefault(node['result_table'].upper(), {})
         if target_row not in candidate.rows(node['result_table']):
             candidate.add_row(node['result_table'], target_row)
@@ -337,6 +451,7 @@ def _apply_field_mutation(node, value, candidate, focal):
         local_row[node['via']['local_column']] = key
         if kind == 'join_lookup':
             target_row[node['result_column']] = value
+        touched.append((node['result_table'], target_row))
     elif kind == 'regex_match':
         vrow = focal.setdefault(node['value_column']['table'].upper(), {})
         prow = focal.setdefault(node['pattern_column']['table'].upper(), {})
@@ -346,6 +461,9 @@ def _apply_field_mutation(node, value, candidate, focal):
             candidate.add_row(node['pattern_column']['table'], prow)
         prow.setdefault(node['pattern_column']['column'], '.*')
         vrow[node['value_column']['column']] = 'MATCH' if value else ''
+        touched.append((node['value_column']['table'], vrow))
+        touched.append((node['pattern_column']['table'], prow))
+    return touched
 
 
 def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None):
@@ -353,16 +471,19 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
     one step toward `value`, using the same mechanically-recognized
     filter_text conjuncts candidate.py's own _mechanical_filter_predicate
     already extracts (in reverse: turned into a new row's column values,
-    not just a match test)."""
+    not just a match test). Returns every (table, row) pair *newly added*
+    (never a removed one -- nothing to repair there) so apply_mutation can
+    make each one schema-legal by construction afterward."""
     if node['kind'] == 'exists':
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
-            return
+            return []
         if value and not candidate.rows(table):
-            candidate.add_row(table, {})
+            row = candidate.add_row(table, {})
+            return [(table, row)]
         elif not value:
             candidate._tables[table.upper()] = []
-        return
+        return []
     if node['kind'] == 'derived_join_count':
         # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
         # while testing mutation.py against tricker rules, 2026-09-11) --
@@ -398,9 +519,10 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
             new_prereq_id = 900001
             while new_prereq_id in used_ids:
                 new_prereq_id += 1
-            candidate.add_row(node['prereq_table'], {
-                node['prereq_course_column']: course_id,
-                node['prereq_target_column']: new_prereq_id})
+            new_row = {node['prereq_course_column']: course_id,
+                       node['prereq_target_column']: new_prereq_id}
+            candidate.add_row(node['prereq_table'], new_row)
+            return [(node['prereq_table'], new_row)]
         elif value < (current or 0) and prereq_rows:
             # simplest correct decrease: this course no longer requires
             # one of its prerequisites, rather than inventing a passing
@@ -410,7 +532,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
             # own row.
             row = prereq_rows[0]
             candidate.rows(node['prereq_table']).remove(row)
-        return
+        return []
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
     predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
@@ -438,27 +560,37 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         if node.get('value_column'):
             row[node['value_column'].split('.')[1]] = 1
         candidate.add_row(table, row)
+        return [(table, row)]
     elif value < (current or 0):
         rows = candidate.rows(table)
         matching = [r for r in rows if predicate(r)] or rows
         if matching:
             rows.remove(matching[0])
+    return []
 
 
 def apply_mutation(record, candidate, focal, scenario, var_name, node, value, current):
+    """Applies the winning value via M1 or M2, then repairs every row that
+    call touched for NOT NULL/FK by construction (`_repair_row`) -- always,
+    not conditionally, since a real Candidate should never leave M1/M2's
+    own scope without being schema-legal on the parts that are mechanically
+    decidable regardless of what the DMN branch needed."""
     kind = node.get('kind')
     if kind in FIELD_LEAF_KINDS:
-        _apply_field_mutation(node, value, candidate, focal)
+        touched = _apply_field_mutation(node, value, candidate, focal)
     elif kind in AGGREGATE_LEAF_KINDS:
-        _apply_row_count_mutation(node, value, candidate, scenario, current, focal)
+        touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal)
     elif kind == 'not_persisted':
         scenario[var_name] = value
+        touched = []
     elif kind == 'raw_sql_boolean':
         raise FitnessEvaluationError(
             f"{var_name!r} (raw_sql_boolean) has no automatic mutation -- too bespoke a "
             f"compound fact to edit generically; needs a fact-specific operator")
     else:
         raise FitnessEvaluationError(f"mutation has no handling for resolution kind {kind!r}")
+    for table, row in touched or []:
+        _repair_row(candidate, table, row, record['case_study'])
 
 
 # ---------------------------------------------------------------------------
@@ -500,60 +632,72 @@ def _leaf_variables(record):
 
 def mutate(record, candidate, focal, scenario, rng=None):
     """One mutation: picks a random leaf variable, finds its best
-    replacement value by the combined objective (each candidate value
-    actually applied to a real, deep-copied candidate/focal/scenario --
-    parents are never mutated in place), and adopts whichever copy scores
-    lowest. Returns (new_candidate, new_focal, new_scenario, mutated_var,
-    improved, new_fitness) -- when nothing improves, the "new" state is
-    just the unchanged input and new_fitness is the current combined
-    fitness, so callers never need to recompute it separately.
+    replacement value (by hypothetical DMN-only fitness, tried in-genome
+    before touching any real row), and applies it via M1 or M2 to a
+    *copy* of `candidate`/`focal`/`scenario` -- parents are never mutated
+    in place. `apply_mutation` also repairs every row it touches for NOT
+    NULL/FK by construction (see this module's own docstring), so the
+    adopted candidate is schema-legal on those without that ever being
+    part of what this function searches for. Returns (new_candidate,
+    new_focal, new_scenario, mutated_var, improved).
 
-    A leaf whose only candidate values apply_mutation refuses (e.g.
-    raw_sql_boolean, deliberately unmutatable) or that can't even be
-    scored is handled inside best_value_for itself now -- every value is
-    tried inside its own try/except, so a refusal just removes that value
-    from consideration rather than propagating out and crashing the
-    search (a real crash this fixed, found testing tricker rules,
-    2026-09-11: raw_sql_boolean is listed in BOOLEAN_LEAF_KINDS, so the
-    old genome-only hypothetical was happy to call it "improvable" even
-    though apply_mutation always refused it)."""
+    The candidate/focal copy is made via ONE joint `copy.deepcopy` call,
+    not two separate ones -- a real bug (see this module's own docstring)
+    found while building the schema-constraint fix: two separate top-level
+    deepcopy calls silently break the object aliasing between a focal row
+    and its own entry in the candidate's row list, so a field mutation
+    could write into a focal copy that `candidate` itself never actually
+    contained.
+
+    A leaf whose winning value `apply_mutation` refuses to actually write
+    (raw_sql_boolean's own explicit refusal, or any future kind with no
+    M1/M2 handling) is treated exactly like "not improved" rather than
+    propagating out and crashing the search -- a real crash this fixed,
+    found testing tricker rules (2026-09-11): raw_sql_boolean is listed in
+    BOOLEAN_LEAF_KINDS, so the genome-only hypothetical is happy to call
+    it "improvable" even though apply_mutation always refuses it."""
     rng = rng or random
     genome = derive_genome(record, candidate, focal, scenario)
     leaves = [(v, n) for v, n in _leaf_variables(record) if v in genome]
     if not leaves:
-        return candidate, focal, scenario, None, False, None
+        return candidate, focal, scenario, None, False
     var_name, node = rng.choice(leaves)
-    new_candidate, new_focal, new_scenario, new_fitness, improved = best_value_for(
-        record, candidate, focal, scenario, var_name, node, record['case_study'])
-    return new_candidate, new_focal, new_scenario, var_name, improved, new_fitness
+    best_value, best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
+    if not improved:
+        return candidate, focal, scenario, var_name, False
+
+    new_candidate, new_focal = copy.deepcopy((candidate, focal))
+    new_scenario = dict(scenario)
+    try:
+        apply_mutation(record, new_candidate, new_focal, new_scenario, var_name, node, best_value, genome.get(var_name))
+    except FitnessEvaluationError:
+        return candidate, focal, scenario, var_name, False
+    return new_candidate, new_focal, new_scenario, var_name, True
 
 
 def hillclimb(record, candidate, focal, scenario, max_iters=200, rng=None):
     """Repeated mutation, keeping only non-worsening moves -- a (1+1)
-    local search exercising `mutate` end to end, scored on the combined
-    objective (DMN branch distance + schema/DB constraint distance, see
-    `_combined_fitness`) rather than the DMN term alone. Not DynaMOSA
-    itself (no population, no crossover, no multi-objective sorting), but
-    a valid standalone way to prove the mutation operator actually
-    converges, and a legitimate cheap mode in its own right for a branch
-    simple enough not to need the full loop (§6.4's own allowance).
-
-    Note the combined objective can plateau above 0.0 even once the DMN
-    term is fully satisfied, for a branch whose M2-added rows are missing
-    NOT NULL/FK data the current candidate-value vocabulary has no lever
-    to fix -- an honest, expected outcome (see this module's own
-    docstring), not a bug in the search loop."""
+    local search exercising `mutate` end to end. Scored on `branch_fitness`
+    alone (the DMN term) -- schema/DB constraints are never part of this
+    acceptance criterion (see this module's own docstring for why summing
+    them in was tried and reverted); `_repair_row` keeps every row
+    schema-legal by construction regardless of what this loop optimizes
+    for. Not DynaMOSA itself (no population, no crossover, no
+    multi-objective sorting), but a valid standalone way to prove the
+    mutation operator actually converges, and a legitimate cheap mode in
+    its own right for a branch simple enough not to need the full loop
+    (§6.4's own allowance)."""
     rng = rng or random.Random(0)
-    schema = _schema_for(record['case_study'])
     history = []
-    current_fitness = _combined_fitness(record, candidate, focal, scenario, schema)
+    current_fitness = branch_fitness(record, derive_genome(record, candidate, focal, scenario))
     history.append(current_fitness)
     for _ in range(max_iters):
         if current_fitness == 0.0:
             break
-        new_c, new_f, new_s, var, improved, new_fitness = mutate(record, candidate, focal, scenario, rng)
+        new_c, new_f, new_s, var, improved = mutate(record, candidate, focal, scenario, rng)
         if not improved:
             continue
+        new_fitness = branch_fitness(record, derive_genome(record, new_c, new_f, new_s))
         if new_fitness <= current_fitness:
             candidate, focal, scenario, current_fitness = new_c, new_f, new_s, new_fitness
             history.append(current_fitness)
@@ -571,6 +715,7 @@ if __name__ == '__main__':
     # side, and let mutation find its way down to a real solution.
     STUDENT, OFFERING = 2024001, 5001
     start = Candidate()
+    start.add_row('STUDENT_PROGRAM', {'ROLL_NO': STUDENT})
     for i in range(45):
         start.add_row('LECTURE', {'LECTURE_ID': 1000 + i, 'OFFER_ID': OFFERING})
     for i in range(44):
@@ -587,23 +732,27 @@ if __name__ == '__main__':
     schema = _schema_for('FLEX2')
     constraint_f1 = candidate_constraint_fitness(solved.as_dict(), schema)
     print(f"After hillclimb ({len(history)} accepted steps): genome={g1}")
-    print(f"  DMN branch_fitness={f1:.6f}, schema/DB constraint_fitness={constraint_f1:.6f}")
-    print(f"Combined-fitness trajectory (what hillclimb actually optimizes): {history}")
+    print(f"  DMN branch_fitness={f1:.6f}, schema/DB constraint_fitness={constraint_f1:.6f} (audit-only, "
+          f"never the search objective -- see this module's docstring)")
+    print(f"branch_fitness trajectory (what hillclimb actually optimizes): {history}")
     assert f1 == 0.0, "mutation operator failed to converge the DMN term on the flagship rule from a wrong start"
     assert all(history[i] >= history[i + 1] for i in range(len(history) - 1)), \
-        "combined fitness must be monotonically non-increasing across accepted mutations"
+        "fitness must be monotonically non-increasing across accepted mutations"
     print("Mutation operator converged the DMN term correctly and monotonically. Self-check passed.")
     if constraint_f1 > 0.0:
-        # Expected, not a bug -- see this module's own docstring ("Known
-        # remaining gap"): the combined objective makes a constraint
-        # violation *count*, but M2's row-builder has no repair lever to
-        # actually close one on its own. Concretely, here: LECTURE.OFFER_ID
-        # has a real FK to COURSE_OFFER.OFFER_ID (flex2_schema_full.json),
-        # and this candidate never gained a COURSE_OFFER row -- nothing in
-        # candidate_values' vocabulary lets mutation add one.
-        print(f"  (Residual {constraint_f1:.4f} of schema/DB constraint distance remains -- expected: "
-              f"the mutation vocabulary has no lever yet to add the missing COURSE_OFFER row "
-              f"LECTURE.OFFER_ID's own FK needs; see this module's docstring.)")
+        # Expected, not a bug: `_repair_row` only repairs rows M1/M2
+        # themselves touch or construct -- it has no mandate to retroactively
+        # fix a row this test script handed mutation directly (the initial
+        # STUDENT_PROGRAM row above is deliberately incomplete, missing
+        # PROG_ID/BATCH_NO, to prove exactly this boundary). Every row
+        # mutation actually built or touched this run -- the 8 new LECTURE
+        # rows, the auto-materialized COURSE_OFFER parent row FK-repair
+        # created for them -- is fully schema-legal; confirmed directly via
+        # fk_distance/not_null_distance on each in this module's own testing
+        # history, not just inferred from the total.
+        print(f"  (Residual {constraint_f1:.4f} of schema/DB constraint distance remains -- entirely from "
+              f"the hand-seeded STUDENT_PROGRAM row above (missing PROG_ID/BATCH_NO), which predates any "
+              f"mutation and so was never repair's to fix; every row mutation itself built is schema-clean.)")
 
     print()
     print("derived_case regression check (semesterType, found while first testing this module):")

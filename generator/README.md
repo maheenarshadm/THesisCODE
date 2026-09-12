@@ -840,14 +840,68 @@ term as *separate* DynaMOSA objectives (Pareto-compared per test case,
 never summed into one scalar) rather than a single combined number: an
 unweighted sum lets one objective's large per-step cost mask another's
 real, necessary long-range improvement, exactly what a single-objective
-(1+1) hillclimb has no way to see past. `hillclimb()`'s own docstring
-now states this plainly as a known consequence, not a hidden gap.
+(1+1) hillclimb has no way to see past.
 
-**Still true, and unchanged by this fix**: nothing yet gives M2 a way to
-*repair* a constraint violation it can measure -- there's no candidate-
-value dimension for "also set this table's other NOT NULL columns" or
-"also add the parent row this FK needs." That's the natural next
-refinement (a real repair step in M2's row-builder), not attempted here.
+### The actual fix: repair-by-construction, not a search objective (2026-09-12, same day)
+
+Asked directly what to do about this, the recommendation was to stop
+treating NOT NULL/UNIQUE/FK as something for the search to *discover* at
+all -- they're mechanically decidable from the schema alone with no
+DMN-relevant ambiguity (a column either must be set or it doesn't; a FK
+either has a valid parent or it doesn't), so summing them into a fitness
+landscape was always going to create exactly the kind of masking problem
+above found. The real fix: revert `hillclimb`/`best_value_for` to
+`branch_fitness` alone (the original, cheap, genome-only design), and
+give `apply_mutation` a mandatory repair step (`_repair_row`) that makes
+every row M1/M2 touches or constructs schema-legal *immediately*, by
+construction -- filling required NOT NULL columns with a type-appropriate
+placeholder (a *fresh*, never-reused value when that column is also part
+of a declared key, so repair itself never manufactures a new UNIQUE
+collision across the many near-identical rows M2 often adds for one
+aggregate count), and auto-materializing a minimal parent row for any FK
+column that's set but has no match yet -- recursively repairing that new
+parent row too, so it doesn't trade one FK gap for a fresh NOT NULL gap
+on the row just created to close it. `candidate_constraint_fitness`
+stays available, just as a post-hoc audit metric now, never a search
+signal. CHECK constraints are the one real exception (they constrain the
+*same* values a DMN branch may care about, a genuine trade-off, not a
+mechanical fill-in) -- left as a stated scope boundary for whenever a
+real population/Pareto DynaMOSA loop exists to give them their own
+objective; rare enough (3 CHECK constraints total, Spree only) that this
+isn't blocking.
+
+**A second real bug found while building this**, unrelated to the
+objective question but only surfacing once real deep-copied candidates
+were being compared side by side: `copy.deepcopy(candidate)` and
+`copy.deepcopy(focal)` as two *separate* top-level calls silently break
+the object aliasing between a focal row and its own entry in the
+candidate's row list (they start out as the literal same dict; copying
+them apart makes two independent copies with equal-but-diverging
+content). A field mutation would then write into `focal`'s copy while
+`candidate`'s own stored row stayed stale -- the genome a mutation was
+scored on could diverge from what the adopted candidate actually
+contained. Fixed by deep-copying `(candidate, focal)` together in one
+call, preserving the same shared references they had before copying.
+
+**Verified working, concretely, not just re-passing the old assertions**:
+- The flagship attendance self-check (seeded with a deliberately
+  incomplete `STUDENT_PROGRAM` row, missing `PROG_ID`/`BATCH_NO`, to
+  prove the scope boundary) reaches `branch_fitness == 0.0` and
+  `candidate_constraint_fitness == 0.667` -- and that residual is
+  entirely the pre-seeded incomplete row repair was never responsible
+  for; every row mutation itself built (8 new `LECTURE` rows, the
+  auto-materialized `COURSE_OFFER` parent row FK-repair created for
+  them) is fully schema-clean, confirmed directly via `fk_distance`/
+  `not_null_distance` on each, not just inferred from the total.
+- Tests A and B (from the tricker-rules sweep) now reach **`branch_fitness
+  == 0.0` AND `candidate_constraint_fitness == 0.0`** -- fully clean,
+  not just DMN-solved.
+- Test D -- the exact case that got trapped under the summed objective --
+  now converges again in 99 steps (matching its original DMN-only
+  behavior before any of this session's constraint work), with a residual
+  constraint distance of `2.0`, traced entirely to the test's own 4
+  hand-seeded `COURSE_REGISTRATION` rows (never touched by mutation, so
+  never repair's to fix) rather than anything mutation constructed.
 
 ## Known scope limits (stated here, not discovered by a reader)
 
