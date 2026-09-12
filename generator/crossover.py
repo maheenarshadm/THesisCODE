@@ -43,7 +43,7 @@ discarded.
 
 Usage:
     from crossover import crossover
-    child1, child2 = crossover(parent1, parent2, case_study, rng)
+    child1, child2, f1, f2, fm1, fm2 = crossover(parent1, parent2, case_study, rng)
 """
 import copy
 import os
@@ -56,13 +56,15 @@ from candidate import Candidate  # noqa: E402
 from mutation import _repair_row  # noqa: E402 -- reused, not reimplemented
 
 
-def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None):
+def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None,
+              focal_maps1=None, focal_maps2=None):
     """Uniform table-mask crossover with mandatory FK-repair. Returns
-    (child1, child2, child_focal1, child_focal2) -- complementary children
-    built from the same mask and its inverse, each independently repaired
-    for NOT NULL/FK by construction. Neither parent is mutated (each row
-    is deep-copied into its child, the same "parents are never touched"
-    discipline mutation.py's own mutate() follows).
+    (child1, child2, child_focal1, child_focal2, child_focal_maps1,
+    child_focal_maps2) -- complementary children built from the same mask
+    and its inverse, each independently repaired for NOT NULL/FK by
+    construction. Neither parent is mutated (each row is deep-copied into
+    its child, the same "parents are never touched" discipline
+    mutation.py's own mutate() follows).
 
     `focal1`/`focal2` (optional -- default `{}`, in which case the
     returned child focals are also `{}`) are the per-branch "which row is
@@ -74,9 +76,27 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None):
     `copy.deepcopy` call as that table's own row list -- exactly
     mutation.py's own `(candidate, focal)` aliasing fix, applied here too,
     since a focal row is frequently the identical object as one of that
-    table's own rows and copying them apart would silently break that."""
+    table's own rows and copying them apart would silently break that.
+
+    `focal_maps1`/`focal_maps2` (optional -- default `{}`) generalize the
+    same idea to dynamosa.py's own shared-population representation,
+    where a SINGLE candidate carries not one but MANY objectives' own
+    dedicated focal rows at once (`{record_id: {table: row}}`, added
+    2026-09-12 building the focal-per-objective refinement -- see
+    dynamosa.py's own module docstring): every record's own entry for a
+    table that swaps parents must swap with it too, exactly like
+    `focal1`/`focal2` above, just for every record_id at once rather than
+    one. Still one joint `copy.deepcopy` call per table -- covering that
+    table's row list AND every record's own focal entry for it
+    together -- since a dedicated focal row is frequently the identical
+    object as one of that table's own rows (by construction -- see
+    dynamosa.py's own `_focal_for_mutate`), and copying them apart would
+    silently break that the same way splitting `focal1` from a table's
+    rows would."""
     rng = rng or random
     focal1, focal2 = focal1 or {}, focal2 or {}
+    focal_maps1, focal_maps2 = focal_maps1 or {}, focal_maps2 or {}
+    record_ids = sorted(set(focal_maps1) | set(focal_maps2))
     # sorted(), not a raw set iteration -- found necessary while testing
     # (2026-09-12): Python's string hashing is randomized per process by
     # default, so iterating a bare `set` of table names visits them in a
@@ -86,23 +106,36 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None):
     # randomization alone -- a real reproducibility bug for anything that
     # needs a deterministic replay from a fixed seed (as a search run
     # generally does).
-    tables = sorted(set(parent1.as_dict()) | set(parent2.as_dict()) | set(focal1) | set(focal2))
+    tables = sorted(set(parent1.as_dict()) | set(parent2.as_dict()) | set(focal1) | set(focal2)
+                     | {t for fm in focal_maps1.values() for t in fm}
+                     | {t for fm in focal_maps2.values() for t in fm})
     from_parent1 = {table: rng.random() < 0.5 for table in tables}
 
     def build(mask):
         child = Candidate()
         child_focal = {}
+        child_focal_maps = {rid: {} for rid in record_ids}
         for table in tables:
-            source, source_focal = (parent1, focal1) if mask[table] else (parent2, focal2)
-            rows_copy, focal_copy = copy.deepcopy((source.rows(table), source_focal.get(table)))
+            if mask[table]:
+                source, source_focal, source_focal_maps = parent1, focal1, focal_maps1
+            else:
+                source, source_focal, source_focal_maps = parent2, focal2, focal_maps2
+            per_record_entries = {rid: source_focal_maps[rid][table]
+                                   for rid in record_ids
+                                   if table in source_focal_maps.get(rid, {})}
+            rows_copy, focal_copy, per_record_copy = copy.deepcopy(
+                (source.rows(table), source_focal.get(table), per_record_entries))
             for row in rows_copy:
                 child.add_row(table, row)
             if focal_copy is not None:
                 child_focal[table] = focal_copy
-        return child, child_focal
+            for rid, row_copy in per_record_copy.items():
+                child_focal_maps[rid][table] = row_copy
+        return child, child_focal, child_focal_maps
 
     inverted = {table: not v for table, v in from_parent1.items()}
-    (child1, child_focal1), (child2, child_focal2) = build(from_parent1), build(inverted)
+    (child1, child_focal1, child_focal_maps1), (child2, child_focal2, child_focal_maps2) = (
+        build(from_parent1), build(inverted))
 
     for child in (child1, child2):
         # list(...) snapshots, not a live dict view -- a real bug found
@@ -119,7 +152,7 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None):
         for table, rows in list(child.as_dict().items()):
             for row in list(rows):
                 _repair_row(child, table, row, case_study)
-    return child1, child2, child_focal1, child_focal2
+    return child1, child2, child_focal1, child_focal2, child_focal_maps1, child_focal_maps2
 
 
 if __name__ == '__main__':
@@ -207,7 +240,7 @@ if __name__ == '__main__':
     print()
     print("crossover() -- with its mandatory FK-repair pass:")
     rng = random.Random(2)
-    child1, child2, child_focal1, child_focal2 = crossover(p1, p2, 'FLEX2', rng)
+    child1, child2, child_focal1, child_focal2, _fm1, _fm2 = crossover(p1, p2, 'FLEX2', rng)
     for label, child in [('child1', child1), ('child2', child2)]:
         cf = candidate_constraint_fitness(child.as_dict(), schema)
         print(f"  {label}: tables={sorted(child.as_dict())}, constraint_fitness={cf:.6f}")

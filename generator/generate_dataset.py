@@ -46,9 +46,13 @@ from mutation import _schema_for  # noqa: E402
 from candidate import build_seed_candidate  # noqa: E402
 
 
-def _covered_count(candidate, records, scenario_cache, table_cache):
+def _covered_count(individual, records, scenario_cache, table_cache):
+    """`individual` is a `(candidate, focal_maps)` pair -- dynamosa.py's
+    own focal-per-objective representation (2026-09-12), not a bare
+    Candidate anymore."""
+    candidate, focal_maps = individual
     return sum(1 for r in records
-               if evaluate_objective(r, candidate, scenario_cache[r['record_id']], table_cache) == 0.0)
+               if evaluate_objective(r, candidate, focal_maps, scenario_cache[r['record_id']], table_cache) == 0.0)
 
 
 def generate_case_study_dataset(case_study, records=None, out_dir=None,
@@ -74,8 +78,13 @@ def generate_case_study_dataset(case_study, records=None, out_dir=None,
     table_cache = {}
 
     archive_covered = sum(1 for r in records if archive[r['record_id']][0] == 0.0)
-    final_candidate = max(population, key=lambda ind: _covered_count(ind, records, scenario_cache, table_cache))
-    final_covered = _covered_count(final_candidate, records, scenario_cache, table_cache)
+    final_individual = max(population, key=lambda ind: _covered_count(ind, records, scenario_cache, table_cache))
+    final_covered = _covered_count(final_individual, records, scenario_cache, table_cache)
+    # Only the bare Candidate half of the (candidate, focal_maps) pair is
+    # relevant from here on -- focal_maps is pure search-time bookkeeping
+    # (dynamosa.py's own focal-per-objective refinement, 2026-09-12),
+    # irrelevant to materialize.py's own SQL/CSV output.
+    final_candidate = final_individual[0]
 
     schema = _schema_for(case_study)
     sql_statements, sql_warnings = to_sql_inserts(final_candidate, schema)

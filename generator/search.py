@@ -158,7 +158,7 @@ def solve_branch(record, candidate, focal, scenario, mutation_budget=200,
 
 
 def _cross_pair(p1, p2, case_study, rng):
-    c1, c2, f1, f2 = crossover(p1[0], p2[0], case_study, rng, focal1=p1[1], focal2=p2[1])
+    c1, c2, f1, f2, _fm1, _fm2 = crossover(p1[0], p2[0], case_study, rng, focal1=p1[1], focal2=p2[1])
     return c1, f1, c2, f2
 
 
