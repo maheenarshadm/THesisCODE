@@ -85,6 +85,22 @@ def _lookup(focal, table, column):
     return _row_get(row, column, table)
 
 
+def _find_focal_with_columns(focal, columns):
+    """Finds whichever focal row carries all of `columns` (case-
+    insensitively) -- used by derived_join_count, whose ground-truth text
+    only names the join tables, not which of the record's own focal rows
+    is "this" course/student context (that's COURSE_REGISTRATION itself
+    for Course Registration Eligibility, but EXEMPTED_COURSES for Credit
+    Transfer Exemption -- both real tables happen to carry their own
+    ROLL_NO + COURSE_ID columns, DDL-confirmed, so this is a real
+    heuristic match, not a guess at an arbitrary table)."""
+    wanted = {c.lower() for c in columns}
+    for table, row in focal.items():
+        if wanted <= {k.lower() for k in row}:
+            return table, row
+    return None, None
+
+
 def _find_row_by_pk(candidate, table, pk_column, value):
     for row in candidate.rows(table):
         try:
@@ -246,6 +262,52 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
             f"{var_name!r}: real value {real_value!r} in {node['table']}.{node['column']} "
             f"isn't covered by any CASE_MAP case ({node['cases']}) -- an unmapped real value, "
             f"not silently defaulted to one of the known categories")
+    if kind == 'derived_join_count':
+        # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
+        # while testing mutation.py, 2026-09-11): count of this row's own
+        # course's COURSE_PREREQ entries for which this row's own student
+        # has no passing COURSE_REGISTRATION. "This row's own course/
+        # student" is whichever focal row carries both key columns, not a
+        # fixed table name -- see _find_focal_with_columns's docstring.
+        context_table, context_row = _find_focal_with_columns(
+            focal, [node['prereq_course_column'], node['registration_roll_column']])
+        if context_row is None:
+            raise FitnessEvaluationError(
+                f"{var_name!r} (derived_join_count) needs a focal row carrying both "
+                f"{node['prereq_course_column']} and {node['registration_roll_column']} "
+                f"to know which course/student this count is about; none of the given "
+                f"focal rows ({sorted(focal)}) has both")
+        course_id = _row_get(context_row, node['prereq_course_column'], context_table)
+        roll_no = _row_get(context_row, node['registration_roll_column'], context_table)
+        prereq_rows = []
+        for r in candidate.rows(node['prereq_table']):
+            try:
+                if _row_get(r, node['prereq_course_column']) == course_id:
+                    prereq_rows.append(r)
+            except FitnessEvaluationError:
+                continue
+        unmet = 0
+        for pr in prereq_rows:
+            try:
+                prereq_course_id = _row_get(pr, node['prereq_target_column'])
+            except FitnessEvaluationError:
+                continue
+            passed = False
+            for rr in candidate.rows(node['registration_table']):
+                try:
+                    if _row_get(rr, node['registration_roll_column']) != roll_no:
+                        continue
+                    if _row_get(rr, node['registration_course_column']) != prereq_course_id:
+                        continue
+                    grade = _row_get(rr, node['registration_grade_column'])
+                except FitnessEvaluationError:
+                    continue
+                if grade is not None and grade not in node['fail_grades']:
+                    passed = True
+                    break
+            if not passed:
+                unmet += 1
+        return unmet
     if kind == 'not_persisted':
         if var_name not in scenario:
             raise FitnessEvaluationError(
@@ -420,6 +482,15 @@ if __name__ == '__main__':
                     auto.add_row(t, {col: 1 for col in cols} or {'X': 1})
             elif kind == 'derived_case':
                 ensure_row(node['table'], node['column'], node['cases'][0][0])
+            elif kind == 'derived_join_count':
+                ctx = ensure_row(node['registration_table'], node['prereq_course_column'], 1)
+                ctx[node['registration_roll_column']] = 1
+                auto.add_row(node['prereq_table'],
+                             {node['prereq_course_column']: 1, node['prereq_target_column']: 2})
+                auto.add_row(node['registration_table'],
+                             {node['registration_roll_column']: 1,
+                              node['registration_course_column']: 2,
+                              node['registration_grade_column']: 'A'})
             elif kind == 'not_persisted':
                 auto_scenario[var] = 1
         try:

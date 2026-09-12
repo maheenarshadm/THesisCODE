@@ -401,6 +401,63 @@ def _try_extract_case_map(text):
             'cases': [[k, v] for k, v in cases]}
 
 
+# A fourth escape hatch, found necessary while testing mutation.py against
+# tricker rules (2026-09-11): unmetPrerequisiteCount's raw text is "COUNT
+# via COURSE_PREREQ join COURSE_REGISTRATION.GRADE" -- a real join-based
+# aggregate, but _try_extract_aggregate_recipe's three regexes all require
+# a literal "AGG(...)" call, so this text matched none of them and fell
+# all the way through to the generic len(pairs)==1 fallback, which
+# produced a plain schema_column pointing straight at
+# course_registration.grade -- the *same* physical column
+# previousGradeInCourse also resolves to (a STRING letter grade), even
+# though unmetPrerequisiteCount is a NUMBER compared with `> 0`. Confirmed
+# as a real bug via mutation.py: writing a string grade into that shared
+# column crashed distance_to_false's numeric comparison for
+# unmetPrerequisiteCount.
+#
+# The real semantics (confirmed against schemas/flex2/Flex1.sql's own DDL,
+# 2026-09-11): COURSE_PREREQ(COURSE_ID, COURSE_PREREQ) names, per course,
+# which other course is a prerequisite for it; a student has satisfied one
+# when COURSE_REGISTRATION has a row for (that student, that prerequisite
+# course) with a passing GRADE -- "passing" being not in the same
+# {F,D,D+,C-} blocklist previousGradeInCourse's own notes already name.
+# This phrasing occurs exactly twice in the whole program (grep-verified),
+# both in FLEX2, both over this same COURSE_PREREQ/COURSE_REGISTRATION
+# pair with the same semantics (count of "this" row's own course's
+# prerequisites that "this" row's own student hasn't passed yet) -- only
+# which table supplies "this" row differs (COURSE_REGISTRATION itself for
+# Course Registration Eligibility, EXEMPTED_COURSES for Credit Transfer
+# Exemption); both real tables carry their own ROLL_NO + COURSE_ID columns
+# (DDL-confirmed), so candidate.py's bridge finds "this" context by
+# looking for whichever focal row carries both, rather than assuming one
+# fixed table name.
+_COUNT_VIA_JOIN_RE = re.compile(
+    r'COUNT via ([A-Za-z_][A-Za-z0-9_]*)\s+join\s+([A-Za-z_][A-Za-z0-9_]*)(?:\.([A-Za-z_][A-Za-z0-9_]*))?',
+    re.I)
+_PREREQ_FAIL_GRADES = ['F', 'D', 'D+', 'C-']
+
+
+def _try_extract_prereq_gap_count(text):
+    if not text:
+        return None
+    m = _COUNT_VIA_JOIN_RE.search(text)
+    if not m:
+        return None
+    prereq_table, registration_table = m.group(1), m.group(2)
+    return {
+        'kind': 'derived_join_count',
+        'prereq_table': prereq_table,
+        'prereq_course_column': 'COURSE_ID',
+        'prereq_target_column': 'COURSE_PREREQ',
+        'registration_table': registration_table,
+        'registration_course_column': 'COURSE_ID',
+        'registration_roll_column': 'ROLL_NO',
+        'registration_grade_column': 'GRADE',
+        'fail_grades': list(_PREREQ_FAIL_GRADES),
+        'source_text': text,
+    }
+
+
 def classify_derived(row):
     """The general classifier for a 'derived'-bucketed ground-truth row --
     replaces a narrow aggregate-only check with pattern rules covering
@@ -419,6 +476,11 @@ def classify_derived(row):
     """
     notes, raw = row['notes'] or '', row['raw_schema_field'] or ''
     pairs = row['schema_pairs']
+
+    prereq_gap = _try_extract_prereq_gap_count(notes) or _try_extract_prereq_gap_count(raw)
+    if prereq_gap:
+        prereq_gap['notes'] = notes
+        return prereq_gap
 
     agg = _try_extract_aggregate_recipe(notes) or _try_extract_aggregate_recipe(raw)
     if agg:
@@ -800,6 +862,9 @@ def collect_tables_from_resolution(node, tables):
             tables.add(t)
     elif node.get('kind') == 'derived_case':
         tables.add(node['table'])
+    elif node.get('kind') == 'derived_join_count':
+        tables.add(node['prereq_table'])
+        tables.add(node['registration_table'])
 
 
 def build_rule_condition(decision, rule):

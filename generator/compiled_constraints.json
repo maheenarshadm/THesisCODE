@@ -7991,9 +7991,21 @@
   },
   "variable_resolution": {
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -8004,6 +8016,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -8189,9 +8202,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -8202,6 +8227,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -8428,9 +8454,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -8441,6 +8479,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -8699,9 +8738,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -8712,6 +8763,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -9002,9 +9054,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -9015,6 +9079,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -9337,9 +9402,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -9350,6 +9427,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -9704,9 +9782,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
@@ -9717,6 +9807,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -9985,9 +10076,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -10004,6 +10107,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -10309,9 +10413,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -10328,6 +10444,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -10665,9 +10782,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -10684,6 +10813,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -11053,9 +11183,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -11072,6 +11214,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -11473,9 +11616,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -11492,6 +11647,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -11925,9 +12081,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -11944,6 +12112,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -12249,9 +12418,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -12268,6 +12449,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -12610,9 +12792,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -12629,6 +12823,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -13003,9 +13198,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -13022,6 +13229,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -13428,9 +13636,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -13447,6 +13667,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -13885,9 +14106,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -13904,6 +14137,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -14374,9 +14608,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -14393,6 +14639,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -14730,9 +14977,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -14749,6 +15008,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -15123,9 +15383,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -15142,6 +15414,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -15548,9 +15821,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -15567,6 +15852,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -16005,9 +16291,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -16024,6 +16322,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -16494,9 +16793,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -16513,6 +16824,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -17015,9 +17327,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -17034,6 +17358,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -17386,9 +17711,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -17405,6 +17742,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -17794,9 +18132,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -17813,6 +18163,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -18234,9 +18585,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -18253,6 +18616,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -18706,9 +19070,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -18725,6 +19101,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -19210,9 +19587,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -19229,6 +19618,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -19746,9 +20136,21 @@
     ]
    },
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "previousGradeInCourse": {
@@ -19765,6 +20167,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -19904,9 +20307,21 @@
   },
   "variable_resolution": {
    "unmetPrerequisiteCount": {
-    "kind": "schema_column",
-    "table": "course_registration",
-    "column": "grade",
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE",
     "notes": "exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "newWarningCount": {
@@ -19940,6 +20355,7 @@
    "COUNTRY",
    "COURSE",
    "COURSE_OFFER",
+   "COURSE_PREREQ",
    "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
@@ -20839,9 +21255,22 @@
   },
   "variable_resolution": {
    "unmetPrerequisiteAlsoPassedCount": {
-    "kind": "derived",
-    "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": []
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION",
+    "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "cumulativeExemptedCreditPercentIfGranted": {
     "kind": "schema_column",
@@ -20851,11 +21280,33 @@
    }
   },
   "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
    "COURSE",
+   "COURSE_OFFER",
+   "COURSE_PREREQ",
+   "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
    "D_COURSE_TYPE",
-   "D_DEPT_TYPE"
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false
  },
@@ -20937,9 +21388,22 @@
   },
   "variable_resolution": {
    "unmetPrerequisiteAlsoPassedCount": {
-    "kind": "derived",
-    "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)",
-    "table_hints": []
+    "kind": "derived_join_count",
+    "prereq_table": "COURSE_PREREQ",
+    "prereq_course_column": "COURSE_ID",
+    "prereq_target_column": "COURSE_PREREQ",
+    "registration_table": "COURSE_REGISTRATION",
+    "registration_course_column": "COURSE_ID",
+    "registration_roll_column": "ROLL_NO",
+    "registration_grade_column": "GRADE",
+    "fail_grades": [
+     "F",
+     "D",
+     "D+",
+     "C-"
+    ],
+    "source_text": "COUNT via COURSE_PREREQ join COURSE_REGISTRATION",
+    "notes": "exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    },
    "cumulativeExemptedCreditPercentIfGranted": {
     "kind": "schema_column",
@@ -20949,11 +21413,33 @@
    }
   },
   "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
    "COURSE",
+   "COURSE_OFFER",
+   "COURSE_PREREQ",
+   "COURSE_REGISTRATION",
    "DEPARTMENT",
    "D_COURSE_LEVEL",
+   "D_COURSE_RELATION",
    "D_COURSE_TYPE",
-   "D_DEPT_TYPE"
+   "D_DEPT_TYPE",
+   "D_EMP_DESIGNATION",
+   "D_EMP_TYPE",
+   "D_PROGRAM_LEVEL",
+   "D_REG_STATUS",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "EMPLOYEE",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false
  },

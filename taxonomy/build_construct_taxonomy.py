@@ -97,6 +97,16 @@ def categorize(io, resolution):
         return 'Single-Column Predicate'
     if kind == 'derived_aggregate':
         return 'Aggregate Function'
+    if kind == 'derived_join_count':
+        # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
+        # while testing mutation.py, 2026-09-11): a real join-based COUNT
+        # (COURSE_PREREQ anti-joined against COURSE_REGISTRATION on a
+        # passing grade) that _try_extract_aggregate_recipe's AGG(...)-only
+        # regexes never recognized ("COUNT via X join Y" phrasing).
+        # Folded into Aggregate Function, same family as derived_aggregate
+        # -- still fundamentally a COUNT, just with a join/anti-join in
+        # its filter rather than a flat WHERE.
+        return 'Aggregate Function'
     if kind in ('join_lookup',):
         return 'Cross-Table Join'
     if kind in ('exists', 'join_null_check'):

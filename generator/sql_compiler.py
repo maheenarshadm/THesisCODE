@@ -242,6 +242,30 @@ def exists_subquery(res, ctx):
     return f"EXISTS (SELECT 1 FROM {table} WHERE {' AND '.join(conds)})"
 
 
+def prereq_gap_count_subquery(res, ctx):
+    """unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
+    while testing mutation.py against tricker rules, 2026-09-11): a real
+    correlated-subquery COUNT, not a plain column read -- counts this
+    course's COURSE_PREREQ entries for which this student has no passing
+    COURSE_REGISTRATION. "This course"/"this student" have no fixed PK to
+    bind against (unlike scalar_column_subquery's single table) -- they're
+    free bind params the validation harness supplies directly, the same
+    role a `<placeholder>` plays elsewhere in this compiler."""
+    course_param = ctx.register_free_param(f"{res['prereq_table']}_this_course_id")
+    roll_param = ctx.register_free_param(f"{res['registration_table']}_this_roll_no")
+    fail_list = ', '.join(sql_quote_string(g) for g in res['fail_grades'])
+    return (
+        f"(SELECT COUNT(*) FROM {res['prereq_table']} WHERE "
+        f"{res['prereq_table']}.{res['prereq_course_column']} = :{course_param} AND NOT EXISTS "
+        f"(SELECT 1 FROM {res['registration_table']} WHERE "
+        f"{res['registration_table']}.{res['registration_roll_column']} = :{roll_param} AND "
+        f"{res['registration_table']}.{res['registration_course_column']} = "
+        f"{res['prereq_table']}.{res['prereq_target_column']} AND "
+        f"{res['registration_table']}.{res['registration_grade_column']} IS NOT NULL AND "
+        f"{res['registration_table']}.{res['registration_grade_column']} NOT IN ({fail_list})))"
+    )
+
+
 def compile_resolution_as_value(res, ctx, var_name=None):
     kind = res.get('kind')
     if kind == 'literal':
@@ -274,6 +298,8 @@ def compile_resolution_as_value(res, ctx, var_name=None):
         return scalar_boolean_as_value(f"{join_subquery(res, ctx)} IS NOT NULL")
     if kind == 'derived_aggregate':
         return aggregate_subquery(res, ctx)
+    if kind == 'derived_join_count':
+        return prereq_gap_count_subquery(res, ctx)
     if kind == 'exists':
         return scalar_boolean_as_value(exists_subquery(res, ctx))
     if kind == 'regex_match':

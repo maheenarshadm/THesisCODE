@@ -668,6 +668,117 @@ Wired into every consumer that needed it: `candidate.py`'s `derive_value` reads 
 
 **Verified**: `mutation.py`'s own self-check now confirms both directions explicitly -- mutating toward `'Summer'` writes `'Summer'`; mutating toward `'Regular'` writes `'Fall'` or `'Spring'`, never `'Regular'` itself. Re-ran the full pipeline afterward: identical 242/18 compiled/blocked counts and identical `sql_compiler.py` clean-rate numbers (purely a resolution-shape change, not a new gap or a closed one) -- the only visible shift is `taxonomy/`'s own storage-shape table, where `semesterType` moves from "Direct Attribute Reference" to "Single-Column Predicate" (93→92, 28→29), folded into that category rather than given a 15th one-off bucket since it still decomposes to one real column compared against a named constant, just through a `CASE` expression.
 
+## Testing `mutation.py` against tricker rules (2026-09-11/12) -- three more real bugs found
+
+Explicitly went looking for rules likelier to break the operator than the
+flagship attendance rule did: a deeply-nested `AND`/`NOT IN` condition with
+a FIRST-hit suppression row (`Course Registration Eligibility::Rule_2`,
+both a feasible and a deliberately structurally-infeasible grounding of
+it), `derived_case` (`semesterType`) exercised through the full
+`mutate()`/`hillclimb()` loop rather than just `apply_mutation` in
+isolation (`Course Load Limit::Rule_2`), a branch carrying both a
+`raw_sql_boolean` leaf and a permanently-unclassified `derived` leaf
+together (`Summer Semester Registration::Rule_2`), and a genuine
+cross-variable comparison (`projectedTotalCoursesThisRegistration >
+maxCoursesAllowed`) combined with `derived_case` and a 2-level chained
+suppression structure (`Course Registration Eligibility::Rule_3`). Found
+three real bugs, none of them hypothetical:
+
+**Bug 1 -- `unmetPrerequisiteCount` and `previousGradeInCourse` resolved to
+the exact same physical column.** Crashed immediately on the first test
+(`TypeError: '>' not supported between 'str' and 'int'`), traced to
+`compile_constraints.py`: `unmetPrerequisiteCount`'s raw ground-truth text
+is `"COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE"` -- a real
+join-based aggregate -- but `_try_extract_aggregate_recipe`'s three regexes
+all require a literal `AGG(...)` call syntax, so this text matched none of
+them and fell through the generic `len(pairs)==1` fallback straight to a
+plain `schema_column` on `course_registration.grade` -- the *same* column
+`previousGradeInCourse` (a letter-grade string) also resolves to, even
+though `unmetPrerequisiteCount` is a number compared with `> 0`. **Fixed**
+with a new resolution kind, `derived_join_count`: a real correlated-COUNT
+recipe (confirmed against `schemas/flex2/Flex1.sql`'s own DDL) -- counts a
+course's `COURSE_PREREQ` rows for which the student has no passing
+`COURSE_REGISTRATION` (grade not in the same `{F,D,D+,C-}` blocklist
+`previousGradeInCourse` already uses). Occurs exactly twice in the whole
+program (grep-verified), both FLEX2, both this same table pair; "this"
+course/student context is found by matching whichever focal row carries
+both key columns (`COURSE_REGISTRATION` itself for Course Registration
+Eligibility, `EXEMPTED_COURSES` for Credit Transfer Exemption -- both real
+tables confirmed via DDL to carry them), not a hardcoded table name. Wired
+through all four places a resolution kind needs it: `candidate.py`
+(real join+anti-join count over actual rows), `mutation.py` (row-count
+mutation: add a row for a fresh unmet prerequisite / remove one to
+decrease), `sql_compiler.py` (a real `COUNT ... NOT EXISTS` correlated
+subquery), and `taxonomy/`'s categorizer (folded into Aggregate Function).
+Re-ran the full pipeline: identical 242/18 compiled/blocked counts;
+`candidate.py`'s own full-corpus sweep coverage went *up*, 216/242 (89.3%)
+-> 218/242 (90.1%), the two previously-miscounted records now correctly
+evaluable.
+
+**Bug 2 -- mutating toward a `NOT IN` target cycled forever among the
+blocked values themselves.** `previousGradeInCourse NOT IN {F,D,D+,C-}`:
+starting wrong (`'F'`), hillclimb stalled at fitness `0.5` instead of `0`.
+Diagnosed directly: `candidate_values`' domain-based candidates for this
+leaf were `['D', 'D+', 'C-']` -- every one of them *also* a blocked grade,
+so branch-distance scored all three identically to the wrong starting
+value. `enumerable_domain`/`_collect_literal_comparisons` collected every
+literal a variable is compared against, but never distinguished "hitting
+one of these makes the condition true" from "avoiding *all* of these does"
+-- a `NOT IN`'s own listed members are exactly the values that must be
+escaped, never candidates worth trying. **Fixed** by tracking `not`-polarity
+while walking the condition (`_collect_domain_facts`, replacing the old
+polarity-blind collector) to split literals into `hit` (try these) vs.
+`avoid` (escape these), and adding `_domain_escape_value` -- a value
+guaranteed outside the avoid-set (one past the max for a numeric domain, a
+suffixed string otherwise) -- as an extra candidate whenever `avoid` is
+non-empty. Re-verified: A's feasible grounding now reaches fitness `0.0` in
+4 steps (previously stuck at `0.5`); re-ran `mutation.py`'s own flagship
+self-check afterward with no change in behavior (that rule never had an
+`avoid`-only leaf, so the fix is additive there).
+
+**Bug 3 -- `mutate()` crashed outright the moment a `raw_sql_boolean` leaf
+looked improvable.** `raw_sql_boolean` is deliberately unmutatable
+(`apply_mutation` explicitly raises for it -- "too bespoke... needs a
+fact-specific operator"), but it's *also* listed in `BOOLEAN_LEAF_KINDS`,
+so `candidate_values`/`best_value_for` are perfectly happy to say flipping
+it would improve fitness. `mutate()` never caught `apply_mutation`'s own
+refusal, so the moment hillclimb's random leaf choice landed on such a leaf
+*and* flipping it looked like an improvement, the exception propagated
+straight out of `mutate()`/`hillclimb()`, killing the whole search --
+reproduced directly with a minimal synthetic record (not hypothetical:
+this is exactly the shape `Summer Semester Registration::Rule_2`'s own
+`isElectiveTaughtByVisitingScholarUnavailableOtherwise` leaf has). **Fixed**
+by catching `FitnessEvaluationError` around the `apply_mutation` call in
+`mutate()` and treating it exactly like "not improved" -- this leaf isn't
+mutatable, so hillclimb tries a different leaf next iteration instead of
+dying. Re-verified the repro no longer crashes, and re-ran `mutation.py`'s
+own self-check with no change in outcome.
+
+**What survived as a real, honest (non-bug) finding, not fixed today**:
+`Course Registration Eligibility::Rule_3`'s `projectedTotalCoursesThisRegistration
+> maxCoursesAllowed` needed the count to climb from 4 to 100 -- a 96-unit
+gap. With the fixed step size of 1 candidate value per mutation and only
+6 leaves to randomly choose among, 500 iterations wasn't enough budget
+(stalled at 97/100, fitness 0.75); raising the budget to 5000 iterations
+reached fitness exactly `0.0` in 99 accepted, still-monotonic steps --
+confirming the operator itself is correct, just that it has no AVM-style
+"probe and accelerate" step-doubling yet (the design doc's own §6.4 names
+this as AVM's technique, borrowed only in spirit so far) — a real
+follow-up worth building before DynaMOSA is expected to close large
+numeric gaps in a reasonable iteration budget, not a defect in what's
+built today.
+
+Also confirmed (not a bug): `Summer Semester Registration::Rule_2` can
+never be fully generated end to end regardless of candidate quality --
+`isNeededToGraduateThisSummer` is a permanently-unclassified `derived`
+catch-all fact (§7b's own documented ~7% gap), and `derive_genome` raises
+for the whole record the moment it hits any such leaf. Verified this is
+the *only* remaining blocker by supplying a fully-materialized candidate
+for the record's other, initially-untested `raw_sql_boolean` leaf first
+(real `COURSE_OFFER`/`EMPLOYEE`/`D_EMP_TYPE` rows) and confirming it
+compiles cleanly through SQLite, leaving `isNeededToGraduateThisSummer`
+as the one and only failure.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

@@ -38,7 +38,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from candidate import Candidate, derive_genome, derive_value, _mechanical_filter_predicate  # noqa: E402
+from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
+                        _mechanical_filter_predicate, _find_focal_with_columns, _row_get)
 from fitness import branch_fitness, distance_to_true, FitnessEvaluationError  # noqa: E402
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
 
@@ -46,7 +47,7 @@ BOOLEAN_LEAF_KINDS = {'null_check', 'any_not_null', 'join_null_check', 'exists',
                       'regex_match', 'raw_sql_boolean'}
 FIELD_LEAF_KINDS = {'schema_column', 'null_check', 'any_not_null', 'join_lookup',
                     'join_null_check', 'regex_match', 'derived_case'}
-AGGREGATE_LEAF_KINDS = {'derived_aggregate', 'exists'}
+AGGREGATE_LEAF_KINDS = {'derived_aggregate', 'exists', 'derived_join_count'}
 
 _SCHEMA_CACHE = {}
 
@@ -76,41 +77,77 @@ def _column_type(case_study, table, column):
 # suppression-relevant literal is just as real a domain member).
 # ---------------------------------------------------------------------------
 
-def _collect_literal_comparisons(node, var_name, out):
+def _collect_domain_facts(node, var_name, negated, hit, avoid):
+    """Walks the condition tracking `not`-polarity, splitting every literal
+    comparison against var_name into "would make this comparison true if
+    var_name equals this" (hit) vs "...if var_name is anything BUT this"
+    (avoid) -- e.g. `previousGradeInCourse NOT IN {F,D,D+,C-}` puts all
+    four grades in `avoid`, not `hit`. Distinguishing these two was found
+    necessary while testing mutation.py against tricker rules (2026-09-11):
+    treating a NOT-IN's own listed values as candidates to *try* is wrong
+    -- every one of them scores identically (still a member of the
+    blocked set), so hillclimb stalled cycling among F/D/D+/C- forever,
+    never trying the one thing that actually helps: a value outside the
+    set entirely."""
     if not isinstance(node, dict):
         return
     op = node.get('op')
+    if op == 'not':
+        _collect_domain_facts(node.get('clause'), var_name, not negated, hit, avoid)
+        return
     if op in ('=', '!='):
         left, right = node.get('left'), node.get('right')
+        lit = None
         if isinstance(left, dict) and left.get('kind') == 'variable' and left.get('ref') == var_name \
                 and isinstance(right, dict) and right.get('kind') == 'literal':
-            out.add(right['value'])
-        if isinstance(right, dict) and right.get('kind') == 'variable' and right.get('ref') == var_name \
+            lit = right['value']
+        elif isinstance(right, dict) and right.get('kind') == 'variable' and right.get('ref') == var_name \
                 and isinstance(left, dict) and left.get('kind') == 'literal':
-            out.add(left['value'])
+            lit = left['value']
+        if lit is not None:
+            wants_equal = (op == '=') != negated  # negated '=' behaves like '!=', and vice versa
+            (hit if wants_equal else avoid).add(lit)
     elif op == 'in':
         left = node.get('left')
         if isinstance(left, dict) and left.get('kind') == 'variable' and left.get('ref') == var_name:
-            for v in node.get('values', []):
-                if isinstance(v, dict) and v.get('kind') == 'literal':
-                    out.add(v['value'])
+            vals = {v['value'] for v in node.get('values', []) if isinstance(v, dict) and v.get('kind') == 'literal'}
+            (avoid if negated else hit).update(vals)
     for key in ('left', 'right', 'clause', 'cond', 'then', 'else'):
         if key in node:
-            _collect_literal_comparisons(node[key], var_name, out)
+            _collect_domain_facts(node[key], var_name, negated, hit, avoid)
     for key in ('clauses', 'values'):
         for child in node.get(key, []):
-            _collect_literal_comparisons(child, var_name, out)
+            _collect_domain_facts(child, var_name, negated, hit, avoid)
+
+
+def _domain_escape_value(literals, current):
+    """A value guaranteed to be outside `literals` -- what an "avoid all
+    of these" fact (a NOT IN / negated =) actually needs to try, since
+    swapping among the avoided values themselves can never help."""
+    sample = next(iter(literals)) if literals else current
+    if isinstance(sample, (int, float)) and not isinstance(sample, bool):
+        numeric = [v for v in literals if isinstance(v, (int, float)) and not isinstance(v, bool)]
+        return (max(numeric) if numeric else 0) + 1
+    base = str(current) if current is not None else str(sample)
+    escape = base + '_'
+    while escape in literals:
+        escape += '_'
+    return escape
 
 
 def enumerable_domain(record, var_name):
     """-> sorted list of distinct literal values var_name is compared
     against via =/!=/in anywhere in this record's own condition or
     FIRST/UNIQUE earlier-row conditions, or None if it's never compared
-    that way (e.g. only via </>=, which has no finite domain to enumerate)."""
-    found = set()
-    _collect_literal_comparisons(record['condition'], var_name, found)
+    that way (e.g. only via </>=, which has no finite domain to enumerate).
+    Kept as the plain "candidate values to try" list this always was;
+    candidate_values() itself calls _collect_domain_facts directly when it
+    also needs the hit/avoid split (to add an escape value)."""
+    hit, avoid = set(), set()
+    _collect_domain_facts(record['condition'], var_name, False, hit, avoid)
     for row in record.get('hit_policy_context', {}).get('earlier_rows', []):
-        _collect_literal_comparisons(row['condition'], var_name, found)
+        _collect_domain_facts(row['condition'], var_name, False, hit, avoid)
+    found = hit | avoid
     if not found:
         return None
     try:
@@ -130,7 +167,14 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
         return [True, False]
     domain = enumerable_domain(record, var_name)
     if domain:
-        return [v for v in domain if v != current] or domain
+        values = [v for v in domain if v != current] or list(domain)
+        hit, avoid = set(), set()
+        _collect_domain_facts(record['condition'], var_name, False, hit, avoid)
+        for row in record.get('hit_policy_context', {}).get('earlier_rows', []):
+            _collect_domain_facts(row['condition'], var_name, False, hit, avoid)
+        if avoid:
+            values.append(_domain_escape_value(hit | avoid, current))
+        return values
     if kind == 'schema_column':
         ctype = _column_type(case_study, node['table'], node['column'])
         if 'DATE' in ctype or 'TIME' in ctype:
@@ -147,7 +191,7 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
             i = random.randrange(len(current))
             return [current[:i] + chr((ord(current[i]) + 1) % 128) + current[i + 1:]]
         return []
-    if kind == 'derived_aggregate':
+    if kind in ('derived_aggregate', 'derived_join_count'):
         base = current if isinstance(current, (int, float)) else 0
         return [max(0, base - step), base + step]
     return []
@@ -253,7 +297,7 @@ def _apply_field_mutation(node, value, candidate, focal):
         vrow[node['value_column']['column']] = 'MATCH' if value else ''
 
 
-def _apply_row_count_mutation(node, value, candidate, scenario, current):
+def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None):
     """M2: add or remove a whole row -- one row per mutation call, moving
     one step toward `value`, using the same mechanically-recognized
     filter_text conjuncts candidate.py's own _mechanical_filter_predicate
@@ -267,6 +311,54 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current):
             candidate.add_row(table, {})
         elif not value:
             candidate._tables[table.upper()] = []
+        return
+    if node['kind'] == 'derived_join_count':
+        # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
+        # while testing mutation.py against tricker rules, 2026-09-11) --
+        # see candidate.py's derive_value for the same recipe read in
+        # reverse. "This" course/student context is whichever focal row
+        # carries both key columns.
+        context_table, context_row = _find_focal_with_columns(
+            focal or {}, [node['prereq_course_column'], node['registration_roll_column']])
+        if context_row is None:
+            raise FitnessEvaluationError(
+                f"derived_join_count mutation needs a focal row carrying both "
+                f"{node['prereq_course_column']} and {node['registration_roll_column']} -- "
+                f"none of the given focal rows has both")
+        course_id = _row_get(context_row, node['prereq_course_column'])
+        roll_no = _row_get(context_row, node['registration_roll_column'])
+        prereq_rows = []
+        for r in candidate.rows(node['prereq_table']):
+            try:
+                if _row_get(r, node['prereq_course_column']) == course_id:
+                    prereq_rows.append(r)
+            except FitnessEvaluationError:
+                continue
+        if value > (current or 0):
+            # a fresh prerequisite course id this student has no passing
+            # registration for -- guaranteed unmet since nothing else
+            # names it yet.
+            used_ids = set()
+            for r in prereq_rows:
+                try:
+                    used_ids.add(_row_get(r, node['prereq_target_column']))
+                except FitnessEvaluationError:
+                    pass
+            new_prereq_id = 900001
+            while new_prereq_id in used_ids:
+                new_prereq_id += 1
+            candidate.add_row(node['prereq_table'], {
+                node['prereq_course_column']: course_id,
+                node['prereq_target_column']: new_prereq_id})
+        elif value < (current or 0) and prereq_rows:
+            # simplest correct decrease: this course no longer requires
+            # one of its prerequisites, rather than inventing a passing
+            # grade for a course this student was never registered for --
+            # equally valid (the count is over COURSE_PREREQ rows), and
+            # never touches COURSE_REGISTRATION/previousGradeInCourse's
+            # own row.
+            row = prereq_rows[0]
+            candidate.rows(node['prereq_table']).remove(row)
         return
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
@@ -307,7 +399,7 @@ def apply_mutation(record, candidate, focal, scenario, var_name, node, value, cu
     if kind in FIELD_LEAF_KINDS:
         _apply_field_mutation(node, value, candidate, focal)
     elif kind in AGGREGATE_LEAF_KINDS:
-        _apply_row_count_mutation(node, value, candidate, scenario, current)
+        _apply_row_count_mutation(node, value, candidate, scenario, current, focal)
     elif kind == 'not_persisted':
         scenario[var_name] = value
     elif kind == 'raw_sql_boolean':
@@ -374,7 +466,23 @@ def mutate(record, candidate, focal, scenario, rng=None):
     new_candidate = copy.deepcopy(candidate)
     new_focal = copy.deepcopy(focal)
     new_scenario = dict(scenario)
-    apply_mutation(record, new_candidate, new_focal, new_scenario, var_name, node, best_value, genome.get(var_name))
+    try:
+        apply_mutation(record, new_candidate, new_focal, new_scenario, var_name, node, best_value, genome.get(var_name))
+    except FitnessEvaluationError:
+        # best_value_for's genome-level hypothetical said this leaf's new
+        # value would help, but apply_mutation refuses to actually write it
+        # (raw_sql_boolean's own explicit refusal, or any future kind with
+        # no M1/M2 handling) -- found via a real crash while testing
+        # mutation.py against tricker rules (2026-09-11): best_value_for
+        # (via candidate_values' BOOLEAN_LEAF_KINDS) is happy to consider
+        # a raw_sql_boolean leaf "improvable," but apply_mutation can't
+        # execute that improvement, and this call used to propagate
+        # straight out of mutate()/hillclimb(), crashing the whole search
+        # the first time picking that leaf actually looked worthwhile.
+        # Treated exactly like "not improved" -- this leaf just isn't
+        # mutatable, so hillclimb tries a different leaf next iteration
+        # rather than dying.
+        return candidate, focal, scenario, var_name, False
     return new_candidate, new_focal, new_scenario, var_name, True
 
 
