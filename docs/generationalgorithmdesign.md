@@ -1,0 +1,1073 @@
+# Search-Based Synthetic Data Generation for DMN-Governed Relational Databases — Design Document
+
+**Status:** living design document, compiled from the research/design discussion held in this session. Captures every decision made so far, the reasoning behind it, and what literature supports it. Intended to be the working reference while drafting the paper's methodology section, and the starting point for the next design session (evaluation design, then implementation).
+
+**2026-09-10 update:** §2, §7a, §7b, and §7e's numbers below are superseded by a second case-study swap (OFBiz → Spree Commerce) and a further boolean-reduction pass applied to OpenMRS, Spree, FLEX2, and jBilling. See **§13** for the full merged update — the current program totals are **65 decisions / 212 rule rows / 20 DMN files** across FLEX2, OpenMRS, Spree Commerce, and jBilling (OFBiz dropped to backup status alongside PrestaShop). Sections below are left as originally written, as a historical record consistent with this document's own convention (§7c/§7d/§7e); §13 is the current source of truth for anything it touches.
+
+---
+
+## 1. Research Goal
+
+Generate synthetic data for data-intensive relational database systems such that the generated data simultaneously satisfies:
+
+1. **The database's own integrity constraints** (primary keys, foreign keys, uniqueness, NOT NULL, CHECK), and
+2. **Business rules that are not expressed anywhere in the schema itself**, formalized as DMN (Decision Model and Notation) decision tables.
+
+The core research claim motivating this: a meaningful share of a real institution's/system's business rules have **no representation in the relational schema at all** — not even as an implicit constraint — so a data generator that only respects schema-declared constraints will silently produce data that violates real business rules. Demonstrating this gap, and building a generator that closes it via **search-based methods**, is the paper's contribution.
+
+---
+
+## 2. Case Study Program — COMPLETE (all four case studies drafted)
+
+**Superseded 2026-09-10 (see §13): OFBiz was dropped and replaced by Spree Commerce as case study #3** — the table below is kept as originally drafted, as a historical record.
+
+Four case studies were selected to span the range of schema-enforced referential integrity, from ad-hoc real-world messiness to fully-enforced entity models to jBilling's own moderately-FK'd, code-driven design:
+
+| # | System | Domain | Tables | PK | FK | UNIQUE | CHECK | DMN status |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **FLEX2 (Flex1)** — user's own industrial university ERP (Oracle) | Admissions, academic fee/finance, PhD workflow | 220 | 140 | 225 | 14 | 0 | **Done** — 11 decisions / 6 files / 56 rules (Tier 1, see §4) |
+| 2 | **OpenMRS** (core) | Healthcare / EHR | 119 | 117 | 448 | 120 | 0 | **Done** — 19 decisions / 6 files / 85 rules (Tier 2) |
+| 3 | **Apache OFBiz** | ERP / order management / manufacturing | 845 (+273 views) | 845 | ~1,928 | 7 | 0 | **Done** — 13 decisions / 5 files / 55 rules (Tier 2) |
+| 4 | **jBilling** | Billing / subscription management | 98 | 85 | 120 | 0 | 0 | **Done** — 16 decisions / 5 files / 53 rules (Tier 2) |
+
+**Program total: 59 decisions, 249 rule rows, 22 DMN files across all four case studies.** Full per-case-study drafting narratives (methodology, exclusion rationale, notable schema/code findings, caveats) live in `case-study-selection.md`'s "DMN drafting progress" section — this document keeps only the FLEX2 walkthrough (§4) as the original worked example of the process, since it was written before OpenMRS/OFBiz/jBilling existed.
+
+**Case study #4 was swapped 2026-09-10**: PrestaShop (14 decisions / 4 files / 57 rules, drafted and fully FEEL-revised — §7c/§7d below) was replaced by jBilling after a complete pass, specifically to keep the program's business-rule character weighted toward genuine enterprise policy (ageing/dunning schedules, payment authorization, proration, tax composition) rather than e-commerce catalog/pricing precedence logic. This is a trade-off, not a strict upgrade: it gives up PrestaShop's zero-FK referential-integrity extreme (see §11's cross-case-study-generalization bullet) in exchange for a fourth code-mining methodology validation and a genuinely new exclusion finding (jBilling's pricing tasks delegate to an unavailable Drools rules engine — an opaque, code-external rules layer distinct from anything found in the other three case studies). PrestaShop's own DMN package, provenance, and FEEL-promotion revision (§7d) are kept in full below as a historical record — see `case-study-selection.md`'s "PrestaShop → jBilling swap" section for the complete rationale, gains, and losses.
+
+Explicitly excluded (kept as backups): Moodle (academic/admissions overlap with FLEX2), OpenEMR (healthcare backup), Apache Fineract (financial-rule backup), SuiteCRM (no reliable static schema). **PrestaShop**, formerly case study #4, is also excluded as of 2026-09-10 — not upfront like the above, but after a complete drafting-and-revision pass (see the swap note above and `case-study-selection.md`).
+
+Full schema/constraint extraction methodology, parser scripts, and per-table breakdowns for all four case studies are in the `paper_supplementary/` deliverable (schemas, `parse_oracle_mysql_ddl.py`, `parse_liquibase_snapshot.py`, `parse_ofbiz_entitymodel.py`, per-table CSVs).
+
+**Rule-provenance tier system** (used throughout to grade how trustworthy a rule's source is):
+- **Tier 1** — regulation / official policy document (e.g., FLEX2's NUCES Academic Rules PDF)
+- **Tier 2** — mined from application code or existing DB constraints
+- **Tier 3** — domain-expert elicitation
+- **Tier 4** — researcher-authored / synthetic (used sparingly, e.g. for a derived-calculation decision with no numbered clause of its own)
+
+---
+
+## 3. Phase 1: Schema & Integrity Constraint Extraction (completed, all 4 case studies)
+
+Regex/XML-based heuristic parsers were built per schema format (raw Oracle/MySQL DDL, Liquibase XML changelogs, OFBiz's declarative entity model, and jBilling's raw MySQL DDL). Each parser extracts: table count, PK presence/columns, FK list with resolved target table, UNIQUE constraints (including inline column-level declarations), NOT NULL count, CHECK count. Known limitation: these are static, heuristic extractors, not a live DB introspection or full SQL grammar — cross-checked manually during extraction, documented per-schema in `paper_supplementary/README.md`.
+
+---
+
+## 4. Phase 2: Business Rule Extraction as DMN (FLEX2 — completed and revised twice)
+
+### 4.1 Curation approach
+
+Source: NUCES *"Academic Rules and Regulations for Undergraduate Programs, Revised August 2020"* (Tier 1). ~90 of ~150 numbered policy clauses were reviewed; a **curated core set** was selected — clauses that are genuinely decision-table-shaped (condition → outcome) and consequential for data generation, not purely procedural rules (who signs a form, a committee's composition).
+
+Output structure: one DMN 1.3 file per decision area, decisions linked via a Decision Requirements Diagram (DRD) where applicable, targeting **Camunda 7** compatibility. DMN variables use **readable, business-analyst-style names** (e.g. `cumulativeGPA`, not `CGPA`) rather than raw FLEX2 column names — chosen deliberately so a business analyst can read the rule directly; the cost of this choice is that automated name-based schema matching becomes harder (see §5).
+
+A custom, minimal DMN 1.3 + DRD/DMNDI XML generator (`dmn_builder.py`) was built rather than using an external DMN library, since only decision tables, a small DRD, and (after revision 3) literal-expression calculation decisions were needed. This same generator, unmodified, was reused for all three subsequent case studies (OpenMRS, OFBiz, PrestaShop, and then jBilling) — and remained unmodified through the §7c/§7d FEEL-promotion revisions and the jBilling build as well, since it writes whatever FEEL text it is given verbatim.
+
+### 4.2 Revision history
+
+**Revision 1 (initial draft):** 12 decisions across 8 files, 66 rules.
+
+**Revision 2 — removed schema-unmappable rules.** After building the variable-to-schema mapping (§5), every decision/input/rule found to have **no matching table or column anywhere in FLEX2's 220 tables** was removed rather than kept as an unenforceable rule:
+
+- **Removed entirely** (every input unmappable, or sole output unmappable):
+  - `Academic_Honesty_Penalty.dmn` (rules 8.14–8.18) — no Disciplinary Committee / case-referral table exists in FLEX2.
+  - `Honor_List_Eligibility.dmn` (rules 7.3–7.8) — inputs map fine, but the sole output (Rector's/Dean's List membership) has no flag column; the policy text itself frames it as presentation-layer ("issued/displayed on the website"), not persisted.
+- **Partially trimmed** (decision kept, unmappable input/rule dropped):
+  - `Admission Closure Eligibility` — dropped `disciplinaryCommitteeRecommendsClosure` (rule 3.27, no case table) and `extensionApproved` (rule 3.25's exception, no extension-approval table), keeping the mappable half of 3.25 (`maxDurationExceeded` → Closed).
+  - `Attendance Eligibility For Final Exam` — dropped `hodCondonationApproved` (rule 1.21's condonation exception, no matching column).
+  - `Credit Transfer Exemption` — dropped `gpaInCourseAtPreviousInstitution` and rule 3.10 (only a free-text `EXEMPTED_COURSES.REMARKS` column exists, not a structured grade field).
+- **Kept despite an imperfect mapping:** `Summer_Semester_Registration`'s `isElectiveTaughtByVisitingScholarUnavailableOtherwise` — marked "SCHEMA GAP (partial)" rather than removed, since it's derivable via a join (`EMPLOYEE`/`D_EMP_TYPE` × `COURSE_OFFER` instructor) rather than fully absent.
+
+This yielded **10 decisions across 6 files, 55 rules.**
+
+**Revision 3 — attendance rule made course-wise / duration-driven.** Motivated directly by the data-generation goal (see §6): a single pre-computed `attendancePercentage` input wasn't concrete enough to drive row generation. `Grading_and_Attendance.dmn` gained an upstream **literal-expression (calculation) decision**:
+
+```
+Attendance Percentage  ──▶  Attendance Eligibility For Final Exam
+(literal expression:          (decision table: >=80% not debarred,
+ raw counts → percentage)      <80% debarred, FA grade)
+```
+
+`attendancePercentage = (lecturesAttended / lecturesHeldForOffering) * 100`, where both raw inputs are course-wise and duration-driven (not a fixed lecture count for every course):
+- `lecturesHeldForOffering` = `COUNT(LECTURE)` where `OFFER_ID` = a specific course offering — varies by course credit hours and by that offering's actual semester dates.
+- `lecturesAttended` = `COUNT(STUDENT_ATTENDANCE)` for that student/offering with `ATTEND_FLAG='Y'`.
+
+`dmn_builder.py` was extended to support this "literal expression" decision kind (a decision producing a value via a plain FEEL formula rather than a branching table), in addition to decision tables.
+
+This yielded the current, final set: **11 decisions across 6 files, 56 rule/formula rows.**
+
+### 4.3 Deliverable artifacts (`flex2_dmn.zip`, delivered)
+
+```
+flex2_dmn/
+├── README.md
+├── dmn/                     6 Camunda-7-compatible DMN 1.3 files
+├── scripts/
+│   ├── dmn_builder.py       reusable DMN 1.3 + DRD/DMNDI generator (decision tables + literal expressions)
+│   └── build_flex2_dmn.py   the 11 decisions as data + provenance-CSV generator
+├── provenance/
+│   ├── rule_provenance_matrix.csv       one row per rule/formula: clause, page, source tier, extraction method
+│   └── variable_to_schema_mapping.csv   one row per DMN variable: FLEX2 table.column / formula / gap flag
+└── source_documents/        the policy PDF and prerequisite spreadsheet, kept for self-containment
+```
+
+All 6 files re-validated after each revision: XML well-formedness, and input/output arity per decision-table rule matches. Not executed against a live Camunda engine — see §10's resolution: this was assessed as unnecessary for the paper's actual claim (the generator consumes DMN rules directly via its own logic, not through a live Camunda engine at runtime) and deliberately dropped rather than pursued, after confirming Maven Central (needed for `camunda-engine-dmn`) is blocked by this environment's network policy. XML well-formedness + input/output arity validation, plus full rule-by-rule source citation (the provenance matrix), is the validation standard actually used across all four case studies.
+
+### 4.4 Schema-representability finding
+
+The mapping pass (§5) produced a genuine empirical finding worth foregrounding in the paper: several policy rules have **zero relational representation** in a real production system — not merely unenforced, but structurally absent (no table/column could ever store the fact). This is stronger evidence for the paper's thesis than "the rules exist but aren't formalized as CHECK constraints." Counter-finding, also worth keeping: a few rules (Grade Points, Course Replacement's `IS_REPLACED`/`REPLACED_WITH`, `REPEAT_COURSE`, `EXEMPTED_COURSES`) map almost exactly onto purpose-built schema structures — the schema-representability of business rules varies rule by rule, not uniformly. The other case studies each reproduced an analogous finding in their own idiom (OpenMRS: code concepts with no 1:1 column, e.g. `value_boolean`; OFBiz: whole entities collapsed into one generic table, e.g. `WorkEffort`; jBilling: item-pricing logic that isn't a schema gap so much as a code-external gap — `PricingField`'s pricing rules delegate to a Drools `.drl` rules engine not present in the mined source at all, so the "business rule" for that decision literally does not exist as Java branching logic to mine in the first place) — see `case-study-selection.md` for each case study's own findings section. PrestaShop's own analogous finding — precedence/evaluation-order logic with no column representation at all, e.g. `specific_price`'s implicit `ORDER BY`-based precedence — is preserved as historical record there alongside the rest of its superseded DMN package.
+
+---
+
+## 5. Phase 3: DMN-to-Schema Variable Mapping
+
+### 5.1 Why this is hard
+
+Two independent sources of difficulty, both real for FLEX2:
+
+1. **Deliberate naming mismatch.** DMN variables are business-friendly by design (`attendancePercentage`), so there is little to no string similarity to the schema's abbreviated, all-caps legacy column names (`ATTEND_FLAG`). This is a direct, known consequence of the naming choice in §4.1, not a tooling gap.
+2. **Non-1-to-1 correspondence.** Many DMN variables correspond not to a single column but to an aggregate/derived expression over multiple tables (e.g. `attendancePercentage` is a ratio over `LECTURE` and `STUDENT_ATTENDANCE`; `cumulativeExemptedCreditPercentIfGranted` joins `EXEMPTED_COURSES` against `COURSE`). Some variables correspond to **nothing** in the schema at all (§4.4).
+
+### 5.2 Manual mapping process (as performed for FLEX2, and repeated for OpenMRS/OFBiz/PrestaShop/jBilling)
+
+1. Read the DMN variable and determine what real-world fact it represents (not what it's named).
+2. Identify candidate tables by domain/topic (e.g. attendance → `LECTURE`, `STUDENT_ATTENDANCE`).
+3. Determine whether the fact is a direct column or requires a calculation (count/sum/ratio/join).
+4. For enum/fixed-value-list inputs, check whether any lookup table's row values (or FK target, given FLEX2's `D_*` dimension-table naming convention) match that value list.
+5. If no plausible table/column/derivation is found after a genuine search, record "no match" — a valid, informative outcome, not a failure.
+6. Record the result (column / formula / no-match) against the variable, with a note — this is `variable_to_schema_mapping.csv`.
+
+This process was applied by hand across all four case studies' mapping CSVs (FLEX2, OpenMRS, OFBiz, and — after the 2026-09-10 swap — jBilling in place of PrestaShop). After the §7c/§7d FEEL-promotion revisions (which split several pre-collapsed booleans into 2+ real columns) and the jBilling swap, the current row counts are **59 for FLEX2 (unrevised), 101 for OpenMRS, 56 for OFBiz, 59 for jBilling — 275 rows total**, so `mapping_type` values (`direct`, `direct - exact match`, `derived`, `not-persisted`, `SCHEMA GAP (partial)`) are consistent across all four and directly comparable. (PrestaShop's own, now-superseded, mapping CSV had 75 rows post-revision; its numbers are preserved in §7c/§7d's historical tables and in `case-study-selection.md`.)
+
+### 5.3 Toward automation: candidate generation + confidence scoring + human-in-the-loop
+
+This maps onto the established **schema matching** literature (see §8). Recommended architecture, mapped step-by-step onto §5.2:
+
+1. **Tokenize** both DMN variable names/labels and schema table/column names (camelCase / snake_case splitting) so word-lists can be compared instead of opaque strings.
+2. **Score every table/column** against the variable's tokens using string similarity (e.g. Jaro-Winkler, Levenshtein) and, where available, semantic similarity — rank candidates, keep top-N, never commit to a single blind guess.
+3. **Type-compatibility filter**: prune candidates whose SQL data type doesn't match the DMN `typeRef` (number/string/boolean).
+4. **Value-set matching for enums** — the one strongly automatable signal: compare a DMN input's declared value list against a candidate lookup table's actual stored values (or, absent seed data, its FK-linked `D_*`-style dimension table by naming convention).
+5. **Confidence threshold**: below a cutoff, output "no confident match" rather than force-picking the least-bad candidate — mirrors step 5 of the manual process.
+6. **Structured output**: variable, ranked candidates with scores, and a confident/needs-review flag — same shape as `variable_to_schema_mapping.csv`.
+
+This is a **candidate generation + confidence scoring + human review** architecture, matching how established schema-matching tools operate (see §8) — not a fully unattended pipeline. With all four case studies' hand-built mappings now available (275 rows total, post-swap), this is also a larger, more diverse ground-truth set to validate an automated approach against than FLEX2 alone would have provided.
+
+### 5.4 LLM-assisted mapping — design if attempted
+
+Grounded in two 2024–2025 studies on using LLMs for schema matching (§8), both of which tested **only proprietary models (GPT-3.5/4)** — no open-source/open-weight model has published results for this exact task, so this is genuinely unvalidated territory if attempted with an open-source model, and worth reporting as such.
+
+Recommended design (synthesizing what worked in the literature):
+
+1. **Never give the model the whole schema at once.** The VLDB 2024 study found that full-schema-vs-full-schema prompting ("N-to-M") performs *worse* than narrower framings — restrict each prompt to one DMN variable against a short pre-filtered candidate list (from §5.3's cheap scoring step).
+2. **Ask yes/no/unknown per candidate pair**, not open-ended "what's the match" — this framing outperformed direct matching in the same study.
+3. **Majority-vote across repeated calls** (e.g. 3 calls per judgment) to dampen inconsistency/hallucination.
+4. **Only let the model choose among real, pre-verified candidates — never let it name a column freely.** This is the one safeguard neither reviewed paper fully implements, and it's the difference between "the model might pick a wrong real column" (recoverable) and "the model invents a plausible-sounding column that doesn't exist" (silently corrupts the mapping).
+5. **Evaluate against `variable_to_schema_mapping.csv` as ground truth** — a real, reportable accuracy number, directly comparable in spirit to the 0.580 best F1-score the VLDB study achieved with GPT-4 (temper expectations for an open-weight model accordingly, and treat any measurement here as a small independent contribution, since no prior work has published this for open-source models).
+
+---
+
+## 5.5 Prototype built and validated (2026-09-08) — replaces the "if attempted" framing above
+
+§5.3's design was implemented as a working tool (`mapper/` — `schema_extract.py`, `dmn_extract.py`, `mapper.py`, `validate_mapper.py`, delivered as `dmn_schema_mapper.zip`), directly in response to the user's request to build "a generic mapper that maps DMN to its corresponding schema mapping" as an input to the generator, so the manual DMN↔schema lookup step doesn't have to be repeated. It was validated end-to-end against all 291 rows of the hand-built ground truth across all four case studies **as they stood at the time of this prototype (FLEX2/OpenMRS/OFBiz/PrestaShop, pre-swap)**, not just designed on paper. The table below is kept as-measured rather than re-run against jBilling, since the mapper prototype's purpose was to validate the §5.3 architecture in general, not to re-certify it after every case-study substitution; re-running `validate_mapper.py` against the current jBilling-inclusive ground truth (275 rows) is a natural, low-cost follow-up but not yet done.
+
+**Pipeline**: `schema_extract.py` normalizes all four schema sources (Oracle DDL, MySQL DDL, Liquibase XML, OFBiz entity-model XML) into one unified column-level table (10,599 columns total), reusing the existing `paper_supplementary/scripts` parsers' table-finding logic and adding the column-level detail (name, type, nullable, PK, FK target) those parsers didn't originally capture. `dmn_extract.py` parses every `.dmn` file into one row per input/output variable (291 rows, exactly matching the hand-built mapping CSVs' row counts at the time). `mapper.py` scores every DMN variable against every column in that case study's schema — token similarity (Jaccard + sequence-ratio) × a type-compatibility factor, plus small bonuses for enum-shaped column names and decision-name/table-name overlap — keeps the top 3, and never forces a single guess: below a 0.45 confidence threshold, or when the variable name itself suggests a derived fact (contains "count", "ratio", "exists", etc.), the row is flagged `needs review` / `derived` rather than committed.
+
+**Validated results, per case study and overall** (`validate_mapper.py` against the pre-swap 291-row ground truth):
+
+| Case study | Not-persisted classification accuracy | Top-1 exact match (of grounded vars) | Top-3 hit rate | Derived-fact detection recall |
+|---|---|---|---|---|
+| FLEX2 | 100.0% (n=4) | 13.8% (n=29) | 37.9% | 25.0% (n=24) |
+| OpenMRS | 100.0% (n=35) | 45.5% (n=66) | 77.3% | 13.3% (n=30) |
+| OFBiz | 78.9% (n=19) | 14.7% (n=34) | 23.5% | 25.0% (n=20) |
+| PrestaShop *(superseded 2026-09-10 — kept for the record; see §2)* | 79.2% (n=24) | 35.4% (n=48) | 50.0% | 35.7% (n=28) |
+| **Overall (pre-swap)** | **89.0% (n=82)** | **31.6% (n=177)** | **53.1%** | **24.5% (n=102)** |
+
+**Honest reading of these numbers, worth carrying into the paper directly:**
+
+- **Not-persisted/schema-gap detection (89%) is genuinely strong** and reproduces the paper's own empirical finding (§4.4/§7b) about how common schema gaps are — the tool reliably recognizes when a DMN variable has no possible schema target.
+- **Top-1 accuracy (31.6% overall) is not good enough to trust unattended**, and the pattern across case studies is itself a finding: FLEX2 scores worst (13.8%) of all four, which is a direct, quantified confirmation of §5.1's own claim that its business-analyst-style DMN naming was *deliberately* chosen to have little string similarity to legacy column names. Automated matching struggles exactly where the paper already argued naming mismatch is hardest — worth reporting as corroborating evidence, not just a tool limitation.
+- **Top-3 hit rate (53.1%) is the more meaningful practical number**: roughly half the time, a human reviewer picks from 3 pre-ranked candidates instead of searching hundreds to thousands of columns cold — a real reduction in manual effort even though it isn't full automation.
+- **Derived-fact detection (24.5% recall) is the weakest component** — a fixed keyword heuristic only catches variable names that literally say "count" or "ratio"; most genuinely derived facts in this program don't announce themselves lexically (e.g. `isEligible`, `hasCompleted`). This is the piece most worth handing to an LLM-assisted pass (§5.4) rather than improving with more keywords.
+- **Root cause behind the capped top-1 ceiling**: none of the four schemas ship seed/reference data (§10's existing caveat), so §5.3 step 4's value-set matching — comparing a DMN input's declared enum values against a candidate lookup table's *actual stored values* — could never be implemented as designed. It degraded to a naming heuristic (does the column merely look enum-shaped) instead of a real value-set comparison, which is the single biggest lever for improving accuracy if even one seed dataset per case study becomes available.
+
+**Bottom line for the "no more manual lookup before generation starts" goal**: not fully achieved by this prototype alone. It collapses the search space substantially (schema-gap cases resolved automatically at 89% accuracy; grounded cases narrowed from "the whole schema" to "3 ranked candidates" more than half the time) but still needs a human — or the LLM-assisted second pass designed in §5.4, restricted to exactly the rows this tool marks `needs review`/`likely derived` and choosing only among its pre-generated top-3 candidates — before its output could feed the generator unattended. Full design rationale, per-signal reasoning, and known limitations (OFBiz's field-type mapping, the keyword-only derived-fact heuristic) are in `mapper/README.md`.
+
+---
+
+## 6. Phase 4: Search-Based Generation Algorithm Design
+
+### 6.1 Overall four-stage pipeline
+
+For any single target (a specific DMN decision branch to hit, for a specific test scenario):
+
+1. **Derive the constraint.** Start from the target branch's condition; if it references another decision's output (a DRD `informationRequirement` edge), substitute that decision's logic (formula or table) and repeat, working backward until every remaining variable is grounded in the schema via §5's mapping. (Worked example: `attendancePercentage < 80` → substitute the calculation decision → `(lecturesAttended / lecturesHeldForOffering) * 100 < 80`.)
+2. **Pick concrete values.** Solve/search the derived constraint for concrete numbers. For a variable that is a ratio of two others, fix one (commonly the denominator — e.g. how many lectures a course offering has) and solve the resulting linear inequality for the other. Prefer boundary-relevant values (just-below, well-below, just-above, well-above a threshold) over arbitrary in-range values, since boundary-value coverage is standard practice in search-based test generation and is more likely to surface issues.
+3. **Materialize rows**, split into two tiers:
+   - **Shared fixture (built once, reused across all test cases):** the ~20–30 small reference/lookup tables needed purely for FK closure (campus, department, semester codes, student-status codes, etc.) — see §6.6 for FLEX2's actual count.
+   - **Per-case rows (built fresh per scenario):** the handful of fact-table rows that actually encode the target — e.g. `N` `LECTURE` rows and `M` `STUDENT_ATTENDANCE` rows for one course offering/student pair.
+4. **Validate.** Re-evaluate the rule from the materialized data (recompute the percentage from the actual generated rows) to confirm the intended branch is really hit — catches bugs in step 2's arithmetic before they silently corrupt the dataset. Where possible, also attempt the actual INSERTs against a real DBMS as the ground-truth check on integrity-constraint satisfaction (see §6.5). **§6.7 below supersedes this bullet's original informal description with a concrete, SQL-based validation architecture.**
+
+**The compiled constraint record (designed 2026-09-09) — the artifact actually handed to the generator.** Step 1 above ("derive the constraint") is not something the generator does at search time by re-parsing DMN XML/FEEL text on the fly — it is a one-time compilation pass, merging the DMN decision tables with `variable_to_schema_mapping.csv` (or, once trustworthy enough, `mapping_auto.csv`, §5.5) into one JSON record per target branch (one per decision × rule row). This compiled JSON — not the DMN files, not the mapping CSV — is what the generator actually reads. Each record contains: the branch's condition as a structured predicate tree (comparison/AND/OR/`in`-list nodes), not a FEEL string, so §6.3's branch-distance function can walk it directly without a FEEL parser in the hot loop; every variable already resolved through the mapping to a schema location, a derivation recipe (e.g. a `COUNT ... GROUP BY` over a table the generator hasn't populated yet), or excluded as not-persisted; the DRD backward-substitution (§6.1 step 1) already inlined, so a branch is self-contained and never triggers a runtime lookup into another decision; and the hit-policy context (every earlier row's condition, for the FIRST-hit suppression term) plus the FK-closure table list needed for materialization (§6.6). A record whose predicate depends on a variable the mapper marked `needs review` is refused at compile time rather than silently treated as ungrounded — the compiler should hard-stop and list exactly which unresolved variables are blocking which branches.
+
+Worked example (FLEX2's attendance chain, rule 1.22 — the "debarred" branch — chosen because it exercises both a DRD substitution and an aggregate derivation):
+
+```json
+{
+  "record_id": "FLEX2::Attendance Eligibility For Final Exam::rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Grading_and_Attendance.dmn",
+  "decision_name": "Attendance Eligibility For Final Exam",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_AttendanceEligibility_Rule_2",
+  "source_citation": "Rule 1.22 (NUCES Academic Rules, p.14)",
+
+  "condition": {
+    "op": "<",
+    "left":  { "kind": "variable", "ref": "attendancePercentage" },
+    "right": { "kind": "literal", "value": 80, "type": "number" }
+  },
+
+  "outputs": {
+    "eligibleForFinalExam": { "kind": "literal", "value": false },
+    "assignedGradeOverride": { "kind": "literal", "value": "FA" }
+  },
+
+  "hit_policy_context": {
+    "earlier_rows": [
+      { "rule_id": "rule_1",
+        "condition": { "op": ">=", "left": {"kind":"variable","ref":"attendancePercentage"},
+                        "right": {"kind":"literal","value":80,"type":"number"} } }
+    ]
+  },
+
+  "variable_resolution": {
+    "attendancePercentage": {
+      "kind": "substituted_decision",
+      "substituted_from": "Attendance Percentage",
+      "expression": {
+        "op": "*",
+        "left": { "op": "/",
+                  "left":  {"kind":"variable","ref":"lecturesAttended"},
+                  "right": {"kind":"variable","ref":"lecturesHeldForOffering"} },
+        "right": { "kind": "literal", "value": 100, "type": "number" }
+      }
+    },
+    "lecturesAttended": {
+      "kind": "derived_aggregate",
+      "recipe": { "aggregate": "COUNT", "table": "STUDENT_ATTENDANCE",
+        "filter": [
+          {"column": "OFFER_ID", "op": "=", "bound_to": "scenario.offer_id"},
+          {"column": "STUDENT_ID", "op": "=", "bound_to": "scenario.student_id"},
+          {"column": "ATTEND_FLAG", "op": "=", "value": "Y"}
+        ] },
+      "materializes_in": "STUDENT_ATTENDANCE"
+    },
+    "lecturesHeldForOffering": {
+      "kind": "derived_aggregate",
+      "recipe": { "aggregate": "COUNT", "table": "LECTURE",
+        "filter": [{"column": "OFFER_ID", "op": "=", "bound_to": "scenario.offer_id"}] },
+      "materializes_in": "LECTURE"
+    }
+  },
+
+  "requires_seed_scenario_params": ["offer_id", "student_id"],
+  "fk_closure_tables": ["LECTURE", "STUDENT_ATTENDANCE", "COURSE_OFFER", "COURSE", "CAMPUS",
+    "EMPLOYEE", "DEPARTMENT", "SEMESTER", "SECTION", "D_SHIFT", "STUDENT_PROGRAM",
+    "STUDENT_PERSONAL_INFO", "PROGRAM", "BATCH", "D_STUDENT_STATUS", "D_STUDENT_REG_STATUS",
+    "COURSE_REGISTRATION", "D_COURSE_RELATION", "D_REG_STATUS", "CITY", "COUNTRY",
+    "D_EMP_TYPE", "D_EMP_DESIGNATION", "SCHOOL"],
+  "cross_variable_reference": false,
+
+  "provenance": {
+    "rule_provenance_row": "flex2_dmn/provenance/rule_provenance_matrix.csv#Rule 1.22",
+    "mapping_rows": ["...#lecturesAttended", "...#lecturesHeldForOffering"]
+  }
+}
+```
+
+Two variants change how the fitness function reads a record, and both need their own branch-distance handling in §6.3's extension (already flagged there as a required, not optional, design item):
+
+- **Cross-variable comparison** (e.g. jBilling's `existingRulePriority <= thisRulePriority`-style pattern from `Cancellation Fee Eligibility`'s date comparisons, and — historically — PrestaShop's `existingRulePriority <= thisRulePriority`) — the right side of `condition` is `{"kind": "variable", "ref": "thisRulePriority"}` instead of a literal, so the search has to keep two generated values jointly consistent rather than solve one against a constant.
+- **FEEL-list-with-sibling-reference** (PrestaShop's `idShop` vs `"0, contextShopId"`, preserved as a historical pattern below in §7d) — the condition becomes an explicit `{"op": "in", "left": {...}, "right": [{"kind":"literal","value":0}, {"kind":"variable","ref":"contextShopId"}]}`, which needs its own branch-distance rule (minimum distance to match any list member) since it isn't a single `a op b` comparison.
+
+`compile_constraints.py` — the script that produces this JSON from the DMN files plus the mapping CSV — is not yet built; it is the natural next artifact in the pipeline, sitting right after the mapper (§5.5) and right before the generator itself (§12).
+
+### 6.2 Representation ("candidate"/genome)
+
+A candidate solution is an in-memory data structure: a proposed set of rows across the tables relevant to one generation target (both the fact-table rows the target cares about and whatever supporting rows FK closure requires), typed per the schema's column types. This mirrors EvoSQL's representation choice directly (§8).
+
+### 6.3 Distance / fitness function design
+
+The mechanism is **branch distance**, the same idea underlying SchemaAnalyst's AVM approach to integrity constraints (§8), extended here to also cover DMN rule conditions so both constraint systems are optimized in one search rather than two separate mechanisms that could fight each other.
+
+**Base table** (distance-to-true for one elementary condition):
+
+| Condition | Distance when false |
+|---|---|
+| `a = b` | `\|a − b\|` |
+| `a ≠ b` | `K` (small constant, e.g. 1) if `a = b`, else 0 |
+| `a < b` | `(a − b) + K` |
+| `a ≥ b` | `(b − a) + K` |
+| boolean flag | `K` if not the desired value |
+| string/category equality | `K` if not equal (or an edit-distance measure, per EvoSQL) |
+
+**Compound conditions within one rule row:** AND → sum the individual distances (all must reach zero together); OR → take the minimum (only one needs to succeed).
+
+**FIRST/PRIORITY hit policy — "hit this row, not an earlier one":** to make row *k* fire, sum: row *k*'s own distance (as above) **plus**, for every earlier row *i*, the distance to make row *i*'s condition *false*. Since making an AND-of-conditions false only requires one sub-condition to disagree, that "make false" term is the **minimum** over row *i*'s own sub-condition distances (De Morgan's law expressed as a distance). **This term dominates in practice: the rule taxonomy (§7a) found 48 of 58 decision tables (82.8%) use FIRST hit policy**, so this suppression term, not per-row condition complexity, is the more common source of search difficulty across the actual rule set.
+
+**Combining with database integrity constraints:** the exact same base table applies — NOT NULL is a boolean check, UNIQUE is a distance against existing/sibling row values, FK is a distance measuring whether the value exists in the parent table, CHECK decomposes into sub-predicate distances (this is literally SchemaAnalyst's documented approach). All terms — DMN-derived and constraint-derived — are summed into one fitness score for the candidate.
+
+**Normalization:** individual distances are on very different natural scales (a percentage gap can be 0–100+; a boolean gap is 0/1) — squash each into `[0,1)` before summing (e.g. `d / (d + 1)`) so no single term dominates or gets ignored, matching SchemaAnalyst's normalize-then-sum approach.
+
+**Worked example (attendance, debarred target):** offering has 45 lectures; candidate `lecturesAttended = 40` gives computed percentage `88.9`, condition `< 80` false, distance `(88.9 − 80) + 1 = 9.9`. Candidate `35` gives `77.8 < 80`, distance `0` — done.
+
+**Known gap — cross-variable references.** The base table above implicitly assumes the right-hand side `b` is a constant. §7a's taxonomy found (at initial drafting) 2 of 57 decisions comparing one generated variable against *another generated variable's value*; **after the §7c/§7d FEEL-promotion revisions (OpenMRS, then OFBiz and PrestaShop) this rose to 11 of 57 (19.3%); after the 2026-09-10 PrestaShop→jBilling swap it stands at 10 of 59 (16.9%)**, since jBilling's own 16 decisions were drafted with real FEEL comparisons from the start (see §7's methodology note) but happened not to need a cross-variable comparison in this particular mined slice of code — the search must still find two or more jointly-consistent values, not one value against a fixed target, in a much larger share of the rule set than first measured at initial FLEX2-only drafting. Needs an explicit extension to §6.3's formalization (not just a documented limitation) before claiming full coverage — this is now a first-order design item, not an edge case. PrestaShop's revision also introduced a variant of this pattern worth naming explicitly, preserved as historical record here since PrestaShop itself is superseded: a **FEEL list unary test that references a sibling variable inside the list** (e.g. `idShop` tested against `"0, contextShopId"` — a fixed sentinel *or* another input's value), which the base distance table doesn't cover at all (it isn't a single `a op b` comparison) and which §6.3's extension needs to handle as its own case, not folded into ordinary cross-variable comparison, should a future case study reintroduce the pattern.
+
+**Design decision: one search run per target branch.** Branches within a UNIQUE/FIRST-hit-policy decision are mutually exclusive by construction, so one candidate cannot satisfy two branches at once — run the search once per branch you want covered, each with its own fitness function built from that branch's derived constraint. This also directly produces the "branch coverage" numbers needed for evaluation (§11).
+
+### 6.4 Search algorithm choice
+
+- **Default: local search (Alternating Variable Method, as SchemaAnalyst uses)** for rules that reduce to a small number of independent or near-independent variables — covers the majority of FLEX2's 11 decisions on inspection, since most rows test one dedicated variable per row even under FIRST hit policy.
+- **Escalate to a genetic algorithm (as EvoSQL uses) or a many-objective variant (as MoeSQL uses)** when: (a) many targets need to be covered together efficiently rather than one at a time, or (b) a target requires jointly consistent values across several chained decisions *and* the schema's own constraints simultaneously, i.e. where the search space has real cross-variable interaction rather than decomposing cleanly.
+- This hybrid framing should be stated explicitly in the methodology rather than defaulting to "search-based" for everything uniformly — see §9 for why literature nonetheless supports applying the search/fitness machinery uniformly even to "easy" cases (architectural consistency and joint satisfaction with integrity constraints, not because each case individually resists direct solving).
+- **A cheap direct-solve first pass, before escalating to full AVM/GA search:** where the derived constraint (§6.1 step 2) is simple enough to solve directly (e.g. a single linear inequality), do so rather than invoking the full search machinery — this is standard practice, not something unique to any one cited system.
+- **Case study program's algorithm-of-record: DynaMOSA, one run per case study (settled 2026-09-10).** Rather than one AVM/GA run per target branch, a single many-objective search run per case study treats every target branch as one objective, with a dependency graph built from DRD `informationRequirement` edges only (not from within-decision row order, since FIRST-hit-policy rows are mutually-exclusive alternatives, not a prerequisite chain) gating which objectives receive preference-sorting pressure — an objective for a DRD-chained decision's branch only activates once some individual in the population has already covered a branch of its upstream decision. This is chosen over per-target AVM/GA restarts (SchemaAnalyst's and EvoSQL's own approach) specifically because our case studies' targets share fixture tables within a case study (53–85 rule rows each) the way MOSA/DynaMOSA's originating work found branches within one program to share control-flow scaffolding — see §8 for the DynaMOSA/MOSA citations and the reasoning for choosing many-objective-per-case-study over per-target independence.
+
+### 6.5 Role of SQL / database interaction
+
+- **During the search loop:** no live database needed — check candidate rows for uniqueness/FK validity against the in-memory candidate state, for speed (this mirrors both SchemaAnalyst's and EvoSQL's designs).
+- **Materializing a winning candidate:** real INSERT statements, ordered to respect FK dependencies (lookup tables → identity tables → fact tables).
+- **Validation pass (recommended, non-negotiable):** attempt the actual inserts against a real DBMS (even a lightweight one, e.g. SQLite/throwaway Postgres) rather than trusting the hand-written distance functions alone — the engine is the ground truth for constraint satisfaction.
+- **SELECT queries** are only needed if generating into an already-populated database (to reuse existing valid FKs / avoid UNIQUE collisions); not needed when generating into an empty schema, since the generator already knows everything it put there.
+- EvoSQL's alternative approach — deriving the fitness signal directly from a real database engine's query execution plan rather than hand-written distance formulas — is worth considering at implementation time as a way to get much of §6.3's mechanism "for free," at the cost of being tied to a specific engine's plan format (EvoSQL itself was only validated against HSQLDB).
+
+### 6.6 Case study complexity: FK-closure table/row estimate (worked example)
+
+Traced through FLEX2's actual FK constraints (not estimated) for the attendance rule:
+
+- **Direct dependency chain:** `STUDENT_ATTENDANCE` → `LECTURE` → `COURSE_OFFER` → `COURSE`, `CAMPUS`, `EMPLOYEE`, `DEPARTMENT`, `SEMESTER`, `SECTION`, `D_SHIFT`; and `STUDENT_ATTENDANCE` → `STUDENT_PROGRAM` → `STUDENT_PERSONAL_INFO`, `PROGRAM`, `BATCH`, `D_STUDENT_STATUS`, `D_STUDENT_REG_STATUS`; plus `COURSE_REGISTRATION` (to record the eligibility outcome) → `D_COURSE_RELATION`, `D_REG_STATUS`. `EMPLOYEE` and `STUDENT_PERSONAL_INFO` branch further into `CITY`, `COUNTRY`, `D_EMP_TYPE`, `D_EMP_DESIGNATION`, `SCHOOL`.
+- **Total: roughly 25–30 tables touched**, of which only 3 (`LECTURE`, `STUDENT_ATTENDANCE`, `COURSE_REGISTRATION`) scale with test-case size — the rest are one-row-per-code lookup tables, seeded once and reused (§6.1's fixture tier).
+- **Row count is dominated by `STUDENT_ATTENDANCE`**, a lectures × students table: a minimal boundary-test scenario (3 students × 10 lectures) needs ~30 attendance rows (~60–90 rows total across all tables); one realistic course offering (45 lectures × 30 students) needs ~1,350 attendance rows alone. Table count stays roughly flat regardless of scenario size; row count scales multiplicatively with lecture count (duration-driven) × student count.
+
+This gap between DMN rule "size" (2 branches) and real database footprint (~25 tables, tens to low-thousands of rows) is itself worth reporting as a finding. OFBiz's cancel-order-item decision and jBilling's ageing/dunning chain (an invoice → order → purchase_order → user/company graph, walked across `server/process`'s ageing tasks) both show analogous FK-closure footprints in their own domains — worth a comparable worked-example table per case study once the generator is implemented. (PrestaShop's cart-rule validity chain, historically part of this comparison, is preserved in `case-study-selection.md`'s superseded PrestaShop section.)
+
+### 6.7 Validation Architecture — JSON drives the search, SQL is the ground truth (designed 2026-09-09)
+
+This section supersedes §6.1 step 4 and refines §6.5's "attempt the actual inserts" bullet into a concrete, two-pass design, resolved directly against the question of whether the compiled constraint (§6.1's JSON record) or a SQL translation of it should be handed to the generator. The answer is not either/or: **the search loop runs on the JSON predicate; SQL is compiled from that same JSON afterward, purely for validation.**
+
+**Why the search loop cannot run on SQL directly.** AVM/GA needs a numeric "distance to true" gradient it can compute in-memory, many times per target branch, while mutating candidate field values that are not yet committed anywhere. A SQL `WHERE` clause run through a real engine only returns a boolean pass/fail, and — more fundamentally — it requires the rows to already exist in a table before it can be evaluated. The generator's actual problem runs the other direction: solve for what rows to create so the condition ends up true, which a live query cannot do. This is the same tradeoff already noted in §8's related work: EvoSQL derives fitness directly from a live engine's query execution plan instead of hand-written distance formulas, and it works, but costs one engine round-trip per fitness evaluation — flagged there as worth considering at implementation time specifically because of that cost, not adopted as this design's default. §6.1's compiled JSON predicate is what avoids that cost: the branch-distance function (§6.3) walks the predicate tree in-memory, with no engine round-trip, for every candidate evaluated during search.
+
+**During search (fast, heuristic, in-memory) — one fitness function, two constraint systems.** Every candidate's fitness score sums two families of distance terms, both computed against the candidate's own in-memory rows (not a live database, for speed):
+- **DMN branch distance** — §6.3's base table walked over the compiled `condition` tree, plus the FIRST-hit suppression term built from `hit_policy_context.earlier_rows`.
+- **Schema constraint distance** — added into the *same* sum: NOT NULL as a boolean check; UNIQUE as a distance against every other row generated so far *and* against a running index of values already committed by earlier targets (needed so two different target branches don't independently pick the same "unique" value and only discover the collision at the very end); FK as a distance measuring whether the referenced row exists among the fixture + candidate rows; CHECK decomposed into sub-predicate distances the same way a DMN AND is.
+
+A candidate is only accepted when every term — DMN and schema — reaches zero simultaneously. This is the literal mechanism behind the paper's core claim that both constraint systems are optimized in one search rather than two that could conflict (§6.3, §9).
+
+**After search produces a candidate — two independent validation passes, both against a real database, because a heuristic fitness of zero is a belief, not a proof.**
+
+1. **DMN semantic re-check, compiled to SQL rather than re-implemented in the host language.** Translate the same `condition` tree into a SQL boolean expression — a mechanical compile step, not new design work, since §7b's construct taxonomy already enumerates exactly which SQL construct each variable category needs (`WHERE`, `JOIN`, `EXISTS`, `COUNT`+`GROUP BY`, `IN`, `COALESCE`, `ROW_NUMBER`, engine `REGEXP`) — then, once the candidate's rows are materialized, run that query against the real database:
+   ```sql
+   SELECT (SELECT COUNT(*) FROM STUDENT_ATTENDANCE
+           WHERE OFFER_ID=:offer_id AND STUDENT_ID=:student_id AND ATTEND_FLAG='Y') * 100.0
+          / (SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID=:offer_id) < 80;
+   ```
+   This replaces a hand-rolled Python re-evaluation of FEEL semantics with one query against the same engine already used for constraint validation below — one mechanism instead of two, and it removes a class of bug (the host language quietly disagreeing with FEEL on a rounding or inclusive-boundary edge case).
+2. **Schema constraint validation via real INSERTs** (§6.5) — fixtures first, then fact rows, in the order `fk_closure_tables` implies. This remains the authority for schema constraints, not the in-memory approximation used during search, for three reasons: UNIQUE must be checked against everything actually in the database at that point, not just this one candidate in isolation; CHECK constraint semantics can carry engine-specific nuances a hand-written decomposition guessed wrong; and FK requires the parent row to genuinely exist in the database, a stronger guarantee than "exists in this candidate's in-memory set."
+
+**A notation-specific limitation that disappears at this compile step.** §7d's "cross-column OR limitation" — historically PrestaShop's `quantityThresholdMet` and `dateWindowActive`, kept boolean because a single DMN table row is an AND across columns and cannot express a two-column OR without restructuring the table — is a limitation of DMN's row/hit-policy notation specifically, not of the underlying logic. It disappears completely once compiling to SQL for validation: `WHERE from_quantity <= 1 OR context_quantity >= from_quantity` is an ordinary predicate, no restructuring needed. The validation query for those variables can therefore express the real comparison even though the DMN table itself keeps them boolean for readability — worth carrying forward either into a future DMN revision or simply as a documented asymmetry between the DMN-table view and the SQL-validation view of the same rule. (Preserved here as a general design point even though PrestaShop itself is superseded — the pattern is notation-specific, not case-study-specific, and could recur.)
+
+**Failure handling and what it means for coverage (§11).** A semantic-recheck failure (pass 1 disagrees with the search's own fitness-zero claim) indicates a bug in the branch-distance function's math — fix and retry, never accept the candidate. A DB-insert failure (pass 2) is more interesting: it is either a modeling gap in the hand-written CHECK/UNIQUE decomposition (fix and retry), or a genuine conflict between the DMN target and a schema constraint — e.g. the DMN branch needs a column NULL that the schema declares NOT NULL, or the only value space satisfying the DMN condition is already exhausted by a UNIQUE constraint. The second case should be logged as an infeasible target rather than silently dropped: which constraint blocked it, and the fitness's DMN-term vs. schema-term breakdown at the point of failure. That three-way split — DMN-only miss, schema-only miss, genuine DMN/schema conflict — is itself a reportable finding about business-rule/schema coherence, not just a generator diagnostic, and is the natural per-target-branch coverage record for §11.
+
+---
+
+## 7. Rule Taxonomy / Case Study Complexity Table
+
+Recommended structure for presenting case-study complexity in the paper (one row per decision — 11 for FLEX2, 19 for OpenMRS, 13 for OFBiz, 16 for jBilling, 59 total across the program). Columns, in order:
+
+1. **Decision Name**
+2. **Source Clause(s) / Citation** (policy clause+page for FLEX2; file+line+method for the other three)
+3. **Source Tier** (1–4, §2)
+4. **Hit Policy** (UNIQUE / FIRST / COLLECT / literal-expression)
+5. **# Inputs**
+6. **# Rules (Rows)**
+7. **Condition Type** — categorical-match / numeric-threshold / boolean-flag / derived-calculation (state explicitly when a decision mixes types rather than forcing one label)
+8. **Chained? (DRD depth)** — No / Yes, depth N
+9. **Schema Grounding** — direct / derived-aggregate / partial-gap / full-gap (removed)
+
+Kept at decision-level granularity for the paper body (59 rows across all four case studies, post-2026-09-10 swap); each case study's own `rule_provenance_matrix.csv` and `variable_to_schema_mapping.csv` serve as the full-detail, reproducible supplementary data behind it (four pairs of CSVs total: 56/59 rows for FLEX2, 85/101 for OpenMRS, 55/56 for OFBiz, 53/59 for jBilling). A "Generation Approach" column was considered and deliberately deferred — see §9 for why a simple direct-solve-vs-search binary per row would be a weaker claim than describing the fitness function's shape. **§7a and §7b below are the two taxonomies actually built** — one over the decisions themselves, one over the schema-grounding constructs their variables require. **§7c and §7d document the FEEL-promotion revision, applied case study by case study (OpenMRS, then OFBiz and PrestaShop), that these two taxonomies directly motivated; §7e documents the 2026-09-10 PrestaShop→jBilling swap and its effect on both taxonomies.**
+
+---
+
+## 7a. Rule Taxonomy — Business Function × Generation Mechanics (built 2026-09-08, re-run 2026-09-10 after the jBilling swap)
+
+**Superseded 2026-09-10 (see §13): the numbers below predate the OFBiz→Spree swap and the further boolean-reduction pass applied to OpenMRS/Spree/FLEX2/jBilling.** Kept as originally written, as a historical record — §13 reports the current, final hit-policy taxonomy (Axis 2b).
+
+Built by extracting structural facts directly from all DMN XML files (`taxonomy/extract_structure.py`, re-runnable) and classifying each of the 59 decisions along two independent axes. Full per-decision data: `taxonomy/rule_taxonomy.csv`; full write-up with worked examples: `taxonomy/rule_taxonomy_report.md` (both re-delivered to the user reflecting the jBilling swap). **Numbers below are the current, final numbers: post-FEEL-promotion-revision (§7c: OpenMRS; §7d: OFBiz, and historically PrestaShop) and post-jBilling-swap (§7e). §7c/§7d/§7e also report the intermediate numbers at each stage.**
+
+**Axis 1 — Business Function Type** (what real-world question the rule answers):
+
+| Type | Count | % |
+|---|---|---|
+| Validity/Eligibility Gate | 41 | 69.5% |
+| Classification/Categorization | 9 | 15.3% |
+| Derived Calculation | 4 | 6.8% |
+| State-Transition Validation | 3 | 5.1% |
+| Precedence/Conflict Resolution | 2 | 3.4% |
+
+Precedence resolution is now exclusively a **jBilling** phenomenon (`Cycle Start Source` and `Currency Exchange Rate Source`, both "which of several candidate sources of truth wins" decisions) — a direct successor to the role PrestaShop's zero-FK, app-managed pricing precedence played in this axis before the swap (historically, PrestaShop was the sole occupant of this category; see §7e). State-transition rules now appear in both OFBiz (2) and jBilling (1, `Ageing Status Change Order Action`) rather than OFBiz alone. OpenMRS remains almost entirely gates (18/19), a direct consequence of validators only ever answering "is this object valid." (Axis 1 is unaffected by the FEEL-promotion revisions — they reclassify *how* a condition is expressed, not *what* the decision does — but is naturally affected by the case-study swap itself, since it changes which decisions exist at all.)
+
+**Axis 2 — Generation Mechanics** (what the generator must actually do): condition composition (54.4% boolean-only at initial drafting → 47.4% after OpenMRS alone → 35.1% after OFBiz and PrestaShop were also revised → **39.0% (23/59) after the 2026-09-10 jBilling swap**, since jBilling's own 16 decisions were mined directly into FEEL-promoted form from the start rather than via a later revision pass, but retained a higher share of genuine existence/aggregate-threshold booleans than PrestaShop's revised set had — see §7e), hit policy (48/58 decision tables, 82.8%, are FIRST — the dominant driver of search difficulty via §6.3's suppression term, essentially unaffected by the revision or the swap), DRD chaining (11 chained / 48 standalone, up from 9/48 pre-swap since jBilling contributes 4 chained decisions of its own — see §7e), and cross-variable reference (originally 2 decisions, both FLEX2 → 10 after OpenMRS's revision → 11 after PrestaShop's revision → **10 after the jBilling swap**, since jBilling's mined decisions did not happen to need this pattern in the code paths mined — comparing one generated variable against another rather than a constant remains an explicit gap in §6.3's current distance-table formalization).
+
+**Note on why boolean-only conditions dominate (added 2026-09-08, updated 2026-09-10 after the jBilling swap):** the boolean-heavy share is not uniform across case studies — it remains concentrated in the code-mined, Tier-2 case studies rather than FLEX2's Tier-1 policy-document mining. FLEX2 has **zero** boolean-only decisions, because the policy document states genuine numeric criteria in prose ("CGPA must be at least 2.00"). OpenMRS and OFBiz were dominated by booleans at initial drafting (74%, 54% of decisions respectively) because their source material is validator/service code written in guard-clause style (`if (deathDate.after(birthDate)) reject(...)`), each such comparison deliberately pre-computed into a single named boolean fact rather than reproduced as a raw FEEL comparison inside the DMN table — done to keep DMN tables in the readable "checklist" style the notation is meant for, and because 69.5% of all 59 decisions are Validity/Eligibility Gates by nature (an AND of preconditions). After the FEEL-promotion revision (§7c + §7d), OpenMRS and OFBiz stand at **52.6% (10/19) and 46.2% (6/13) boolean-only decisions**, a meaningful reduction in both, though not to zero, because a genuine share of each case study's booleans are existence/null checks, joins, aggregate-with-threshold facts, or other FEEL-inexpressible patterns that don't benefit from promotion the way a true threshold comparison does. **jBilling stands at 43.8% (7/16) boolean-only** — mined directly with real FEEL comparisons already in place where the source code exposed a genuine threshold (e.g. `Invoice Overdue Check`'s `dueDate + graceDays < now()`, `Ageing Step Advancement`'s day-count comparisons), with the remaining booleans concentrated in genuine existence/status-flag/enum-sentinel checks (e.g. `Ageing Step Config Validation`'s `statusIsActive`/`statusIsDeleted`, `Cancellation Fee Eligibility`'s several `*Provided` existence checks) rather than pre-collapsed thresholds — i.e. jBilling's remaining booleans are largely the same kind of documented, deliberate exception §7c/§7d catalog for the other case studies, just arrived at during initial drafting rather than via a later revision pass. Worth stating explicitly as a design choice in the methodology, since a reviewer could reasonably ask why comparisons weren't left inline, and equally why some booleans remain even after a deliberate promotion pass or a from-the-start-promoted mining pass.
+
+**Evaluation-design implications** (feeds directly into §11): report branch coverage stratified by Axis-1 type and by FIRST-vs-UNIQUE hit policy rather than as one aggregate number; treat chained-vs-standalone as a natural ablation; treat cross-variable-reference decisions (10, post-swap) as an explicit, first-order design item for §6.3's distance-table extension rather than a rare edge case. Full reasoning in `taxonomy/rule_taxonomy_report.md`.
+
+---
+
+## 7b. Construct Taxonomy — DMN-to-Schema Translation Requirements (built 2026-09-08, re-run 2026-09-10 after the jBilling swap)
+
+**Superseded 2026-09-10 (see §13): the numbers below predate the OFBiz→Spree swap.** Kept as originally written, as a historical record — §13 reports the current, final, normalized construct taxonomy over all four case studies' mapping CSVs (274 rows).
+
+**Correction, 2026-09-11 (see §13.12): the `taxonomy/` directory this section describes as built does not exist anywhere in the actual repository** — confirmed by an exhaustive search, not assumed. Same root cause as the OpenMRS/Spree DMN packages gap found and fixed the same day: apparently produced in a prior session's context and never actually committed. §13.12 rebuilds it as a real, current artifact — freshly designed categories, not a reproduction of the numbers below, which (independent of the missing-files problem) were already stale on content grounds too, predating both the PrestaShop→jBilling and OFBiz→Spree swaps.
+
+A second, different taxonomy, prompted by a direct question: not "what kind of business rule is this" but **"if someone built a DMN→DDL/SQL translator, what language constructs would it need to support?"** Modeled explicitly on how NL2OCL/OCL2SQL work scopes its translators — around a construct taxonomy (OCL's own: navigation, collection operations, arithmetic, aggregation functions), then reports coverage construct-by-construct — rather than on any prior DMN-to-SQL taxonomy (none was found in the literature search performed here).
+
+Built by rule-based classification of `variable_to_schema_mapping.csv` across the four case studies (their already-recorded `mapping_type`/`notes` fields, not re-guessed) into 17 possible SQL/DDL-construct categories (15 of which are populated post-swap — see below). Full data: `taxonomy/rule_language_constructs.csv`; full write-up incl. the SQL construct each category requires: `taxonomy/dmn_to_ddl_construct_taxonomy.md` (re-delivered reflecting the jBilling swap). **Table below is the current, final, post-swap distribution (275 variables total); the pre-swap distributions (291 variables, after §7c's and §7d's mapping-CSV updates; 281 at initial drafting; 282 after OpenMRS only) are kept in §7c/§7d/§7e for the historical comparison.**
+
+**Final headline distribution** (275 variables total, post-jBilling-swap):
+
+| Category | Count | % | SQL construct required |
+|---|---|---|---|
+| Not-Persisted / Schema Gap | 81 | 29.5% | None — cannot be translated |
+| Direct Attribute Reference | 77 | 28.0% | Plain column reference |
+| Compound / Multi-Construct Derivation | 39 | 14.2% | Multi-step query/view, not one clause |
+| Single-Column Predicate | 28 | 10.2% | `WHERE col > literal` / `IS NOT NULL` |
+| Aggregate Function | 11 | 4.0% | `COUNT`/`SUM` + `GROUP BY` or scalar subquery |
+| Cross-Table Join (FK navigation) | 9 | 3.3% | `JOIN` |
+| Decision Output / Write-Back Target | 8 | 2.9% | `INSERT`/`UPDATE` target (opposite direction) |
+| Existence / Correlated Subquery | 8 | 2.9% | `EXISTS`/`NOT EXISTS` |
+| Enumerated/Coded-Value or Set-Membership Lookup | 6 | 2.2% | `IN (...)` |
+| Same-Row Multi-Column Comparison | 2 | 0.7% | Predicate over 2 columns, same row |
+| Fallback/Coalesce Across Alternative Columns | 2 | 0.7% | `COALESCE(...)` |
+| Arithmetic Combination of Derived Facts | 1 | 0.4% | Expression over 2+ other constructs' results |
+| Date/Time Function | 1 | 0.4% | `TIMESTAMPDIFF`/`DATEDIFF` |
+| Pattern/Regex Match | 1 | 0.4% | Not portable SQL — engine `REGEXP` or app-layer |
+| Universal Quantifier Over Sibling Rows | 1 | 0.4% | `NOT EXISTS (... WHERE NOT (...))` |
+| Global Configuration Parameter Lookup | 0 | 0.0% | Singleton `SELECT value FROM configuration WHERE name=...` — PrestaShop-only, dropped with the swap |
+| Row-Ordering / Precedence Position | 0 | 0.0% | `ROW_NUMBER() OVER (ORDER BY ...)` — PrestaShop-only, dropped with the swap |
+
+**Key findings for the paper (updated for the post-swap distribution):**
+- Not-Persisted/Schema Gap (29.5%) is again the plurality category post-swap (it was briefly overtaken by Direct Attribute Reference, 31.6%, in the pre-swap final distribution — see §7e). This reversal is a direct, mechanical consequence of the swap rather than a substantive finding: jBilling was mined and FEEL-promoted in one pass rather than drafted-then-revised, and its own gap share (see `case-study-selection.md`, ~39% variable-level) is high enough to pull the *combined* schema-gap share back above direct-reference — the underlying methodological point (§4.4/§9) is unaffected: a large, consistent share of real DMN variables mined from four production systems have no schema target at all, at any translator sophistication level, regardless of which specific gap share a given case study contributes.
+- Direct Attribute Reference (28.0%) and Compound/Multi-Construct Derivation (14.2%, the classifier's catch-all "needs manual review" bucket, largely populated by jBilling's own derived facts such as `Daily Pro-Rate Amount`'s cross-referenced `daysInCycle`/`daysInPeriod`/`fullPrice` triple) remain the next-largest categories.
+- Two categories — Global Configuration Parameter Lookup and Row-Ordering/Precedence Position — dropped to exactly zero with the swap. Both were populated exclusively by PrestaShop variables (a shop-wide `configuration` table lookup, and `specific_price`'s implicit `ORDER BY`-based precedence tier); jBilling's own precedence-flavored decisions (`Cycle Start Source`, `Currency Exchange Rate Source`) resolve via direct comparisons among a fixed set of named columns rather than a row-ordering/ranking construct, so the classifier's keyword patterns for these two categories simply have nothing left to match — this is a **loss of pattern diversity from the swap**, not evidence the patterns are rare in general; both are preserved as documented categories (with 0 current instances) rather than deleted from the taxonomy, and PrestaShop's own populated instances of both are preserved in `case-study-selection.md`'s historical section.
+- More than a quarter of real DMN variables mined from four production systems (29.5%) have no schema target at all, at any translator sophistication level — unaffected by the revision or the swap in its broad-strokes conclusion, though the exact share moves with which case study is included. This gives §4.4/§9's schema-representability finding an exact, defensible number for the current program composition.
+- **Companion finding — what never became a decision table at all:** every case study independently excluded rules that require a **quantifier over a variable-length collection** (OpenMRS's duplicate-name/cross-state-overlap scans, OFBiz's variable-length service orchestration, jBilling's set-level ageing-task iteration over all past-due invoices) — DMN decision tables have fixed arity, so this class of business rule cannot be expressed as one, regardless of hit policy. This is a fundamental scope boundary of DMN itself, not a gap in any translator, and is the DMN-side mirror of the Universal Quantifier construct above. **A second, genuinely new companion finding from jBilling**: its item-pricing logic (`server/item/tasks`) delegates to an unavailable Drools `.drl` rules engine rather than expressing pricing logic as Java branching code at all — an opaque, code-external rules layer that couldn't be mined regardless of DMN's own expressiveness, distinct from (and a new category alongside) the fixed-arity/variable-length-collection exclusion reason. Full detail in `dmn_to_ddl_construct_taxonomy.md`.
+
+---
+
+## 7c. FEEL-Promotion Revision — OpenMRS (2026-09-08)
+
+**Motivation.** §7a/§7b's taxonomies, prompted directly by the user's question "why does almost every rule use true/false values," surfaced a real methodological issue rather than just an explanatory one: §6.3's branch-distance fitness function gives a graduated, searchable gradient for a real comparison (`(a−b)+K`), but a boolean input only ever yields distance 0 or K — a step function that defeats AVM/GA search's core gradient-climbing mechanism. Since §7b's Single-Column-Predicate and Same-Row-Multi-Column-Comparison categories showed that a real threshold or comparison frequently exists *behind* a pre-collapsed boolean (the comparison logic moved into the schema-mapping layer's prose notes, e.g. "`death_date < birthdate`," rather than staying as executable FEEL), this is fixable without inventing new facts — the fix is to expose the real column and let the DMN rule itself do the comparison via FEEL, rather than pre-computing it in application logic before the rule ever sees it.
+
+**Scope decision (asked directly of the user as "software engineer/researcher" advice — publication-quality answer):** convert every genuinely threshold/comparison variable back into a real FEEL comparison; leave genuine existence/null-checks, joins, and FEEL-inexpressible facts (regex, missing modulo) as documented boolean exceptions rather than force-converting them. Applied case study by case study, starting with OpenMRS (user's explicit instruction, "ok start with OpenMRS") since it had the highest boolean-only share of the four (74%, 14/19 gate decisions).
+
+**What changed.** 11 of OpenMRS's 19 decisions were revised: `Birthdate Validity`, `Death Date Consistency`, `Numeric Absolute Range Validity`, `Numeric Interpretation Classification`, `Concept Preferred Name Validity`, `Order Date Activated Consistency`, `Order Scheduled Date Urgency Consistency`, `Program Enrollment Date Consistency`, `Patient State Date Validity`, `Relationship Date Validity`, `Encounter Datetime Validity`. In each, a pre-collapsed boolean (e.g. `birthdateIsFutureDate`, `valueGeHiCritical`, `urgencyIsOnScheduledDate`) was replaced with the real underlying date/number/categorical column, compared directly via a FEEL unary test (`> today()`, `>= hiCritical`, `= "ON_SCHEDULED_DATE"`); where the comparison is against another input rather than a literal, a cross-variable FEEL reference is used (one column's unary test names another input's variable directly, e.g. `< dateActivated`), following the pattern FLEX2 already established (`Course Registration Eligibility`'s `> maxCoursesAllowed`). The other 8 decisions, and several inputs within the 11 revised ones, were deliberately left boolean, each with a documented reason recorded as a code comment in `build_openmrs_dmn.py`:
+- **Existence/null checks** (e.g. `dateActivatedSet`, `causeOfDeathSet`, `locationSet`) — there is no real threshold to expose; "is this column populated" is already the fact.
+- **Joins/multi-table existence** (e.g. `inUseByAnotherPatient`, `duplicateWithinSamePatient`, `visitPatientMismatch`) — these are EXISTS/JOIN constructs (§7b categories 7/9), not single-row comparisons.
+- **Documented FEEL-expressibility limits**: `valueNumericHasFraction` (FEEL 1.3's base spec has no clean modulo/fractional-part built-in), `identifierMatchesFormat` (regex match — a hard stop for portable SQL/FEEL), `checkDigitValid` (the check-digit algorithm lives in Java, not any column — a genuine schema gap), `anyValueFieldSet` (an OR-of-existence-checks across seven different columns, not one comparison), `identifierBlank` (a null-or-empty existence check).
+- One special case, `Patient State Date Validity`'s null-start row, stays keyed on `startDateSet=false` rather than a date comparison, because it encodes a Java comparator quirk (`compareWithNullAsLatest`) rather than a graduated date threshold.
+
+**Mechanics.** `dmn_builder.py` needed **no changes** — confirmed by full read that it writes whatever FEEL text is given verbatim (fully data-driven). Only `build_openmrs_dmn.py`'s decision dicts and `build_openmrs_mapping.py`'s `ROWS` list were edited. After regeneration:
+- All 6 `.dmn` files and `rule_provenance_matrix.csv` re-generated (19 decisions, 85 rule rows — unchanged, since the revision only changes *what* each input represents, not the number of decisions/rules).
+- `variable_to_schema_mapping.csv` regenerated (100 → 101 rows: cross-variable comparisons sometimes need two named columns where one boolean previously stood for the relationship between them).
+- **Validated programmatically**, not just by inspection: (1) XML well-formedness and input/output arity across all 19 decisions — clean; (2) every cross-variable FEEL reference in every rule resolves to a real sibling input's variable name within the same decision table — clean, zero unresolved references, checked by parsing every `inputEntry`'s FEEL text (string literals excluded) against each decision's declared input list; (3) exact 1:1 cross-check between every `(decision, io, variable)` triple appearing in the regenerated DMN XML and the regenerated mapping CSV — 101/101 matched both ways, zero orphans in either direction.
+- Delivered as `openmrs_dmn_revised.zip`; `README.md` gained a "FEEL-promotion revision" section documenting the rationale and the caveat list above.
+
+**Measured effect on the taxonomies at this stage** (re-running `extract_structure.py` → `build_taxonomy.py` → `classify_constructs.py` end-to-end, OpenMRS only revised so far, over the original 57-decision, PrestaShop-inclusive program):
+
+| Metric | Before (initial drafting) | After OpenMRS only |
+|---|---|---|
+| Boolean-only decisions (all 57, §7a Axis 2a) | 31 (54.4%) | 27 (47.4%) |
+| Cross-variable-reference decisions (all 57, §7a Axis 2d) | 2 (3.5%) | 10 (17.5%) |
+| Single-Column Predicate variables (all 282, §7b) | 61 (21.7% of 281) | 49 (17.4%) |
+| Same-Row Multi-Column Comparison variables (§7b) | 16 (5.7% of 281) | 3 (1.1%) |
+| Direct Attribute Reference variables (§7b) | 47 (16.7% of 281) | 73 (25.9%) |
+
+The direction confirmed the revision did what it was meant to: variables that were pre-collapsed predicates/comparisons became direct column references (real FEEL grounding), and the previously-rare cross-variable-reference pattern became a first-order feature of the rule set (17.5% of decisions) rather than an edge case affecting two FLEX2 decisions. **§7d below applies the same revision to OFBiz and (historically) PrestaShop and reports the program-wide numbers as they stood before the 2026-09-10 swap; §7e reports the current, post-swap numbers.**
+
+---
+
+## 7d. FEEL-Promotion Revision — OFBiz and PrestaShop (2026-09-08)
+
+**Trigger.** Direct user instruction after §7c's OpenMRS work was delivered: "like you revise rules with feel expression for one case study do it for other case studies as well." Applied the identical methodology (§7c's scope decision, triage-then-revise-then-validate) to OFBiz (54% boolean-only at initial drafting) and PrestaShop (71%), completing the pass across all three Tier-2 case studies then in the program. FLEX2 needed no revision (0% boolean-only already, §4). **PrestaShop, and this section's PrestaShop-specific content, are preserved here as a historical record following the 2026-09-10 swap to jBilling (§2, §7e) — the OFBiz content below remains fully current.**
+
+### OFBiz
+
+**What changed.** 4 of OFBiz's 13 decisions were revised:
+- `Order Item Returnability` (`d_returnability`): `productReturnableFlagIsN` (boolean) → `productReturnable` (string, tested via `= "N"`); `supportDiscontinued` (boolean) → split into `supportDiscontinuationDateSet` (boolean, kept — existence check) and `supportDiscontinuationDate` (date, tested via `<= now()`).
+- `Return Item Completion Classification` (`d_return_item_complete`): `returnHeaderStatusIsAccepted` (boolean) → `returnHeaderStatus` (string, enum values including `"RETURN_REQUESTED"`, `"RETURN_ACCEPTED"`, `"RETURN_RECEIVED"`, `"RETURN_COMPLETED"`, tested via `= "RETURN_ACCEPTED"`).
+- `Refund Amount Validity` (`d_refund_validity`): `returnAmountIsNearZero` + `returnAmountExceedsOrderGrandTotal` (2 booleans) → `returnAmount` (number) + `orderGrandTotal` (number), tested via a FEEL range literal `[-0.000001..0.000001]` for the near-zero case and a cross-variable comparison `> orderGrandTotal + 0.01` for the exceeds-total case.
+- `Production Run Task Start Eligibility` (`d_prun_task_start`): `productionRunDocsPrinted` (boolean) → `productionRunHeaderStatusId` (string, enum values including `"PRUN_CREATED"`, `"PRUN_SCHEDULED"`, `"PRUN_DOC_PRINTED"`, `"PRUN_RUNNING"`, tested via `!= "PRUN_CREATED"` / `= "PRUN_CREATED"`).
+
+Two further decisions were reviewed and deliberately left boolean, each with a documented reason: `Auto-Order NSF Retry Eligibility` (`maxRetriesConfigured` is an existence check; `failedNsfTriesUnderMax` is an aggregate-with-threshold fact, not a single-row comparison) and `Shipment Cost Estimate Applicability` (`geoRestrictionSet` is an existence check).
+
+**Mechanics and validation.** `dmn_builder.py` again needed no changes. `build_ofbiz_dmn.py`'s decision dicts and `build_ofbiz_mapping.py`'s `ROWS` were edited; regeneration produced 13 decisions / 55 rule rows (unchanged — arity preserved by construction) and grew the mapping CSV from 55 to 56 rows. Full validation (`validate_dmn.py`, covering XML well-formedness, per-rule arity, cross-variable FEEL reference resolution, and an exact DMN↔mapping-CSV consistency cross-check) returned **ALL CLEAR** (56 DMN variables = 56 CSV variables, zero issues) on the first run.
+
+### PrestaShop *(superseded 2026-09-10 — historical record; see §2 and §7e)*
+
+**What changed.** 9 of PrestaShop's 14 decisions were reviewed (the largest and most complex triage of the three); 7 were converted, 2 were reviewed and left boolean with documentation only:
+- `Cart Rule Basic Availability` (`d_cart_rule_basic`): `quantityAvailableIsZero` → split into `quantitySet` (boolean, kept — existence) + `quantity` (number, tested via `= 0`); `dateFromInFuture` → `dateFrom` (date, tested via `> now()`); `dateToHasPassed` → split into `dateToSet` (boolean, kept) + `dateTo` (date, tested via `< now()`).
+- `Cart Rule Minimum Amount Validity` (`d_cart_rule_min_amount`): `minimumAmountConfigured` → `minimumAmount` (number, tested via `<= 0` / `> 0`). `cartTotalBelowMinimumAmount` stays boolean (aggregate-with-threshold, not a single-row comparison).
+- `Cart Rule Gift Product Eligibility` (`d_cart_rule_gift_product`): `giftProductMinimalQuantityOverOne` → `minimalQuantity` (number, `> 1`); `giftProductOutOfStockAndDenied` → split into `giftProductQuantityAvailable` (number, `<= 0`) + `giftProductOutOfStockDenies` (boolean, kept — not a threshold comparison).
+- `Cart Rule Non-Combinability Resolution` (`d_cart_rule_noncombinability`): `existingRulePriorityLowerOrEqual` → `existingRulePriority` (number) + `thisRulePriority` (number), compared via the cross-variable FEEL test `<= thisRulePriority`.
+- `Specific Price Row Applicability` (`d_specific_price_applicability`): 4 booleans (`shopScopeMatches`, `currencyScopeMatches`, `countryScopeMatches`, `groupScopeMatches`) → 4 pairs of number inputs (`idShop`/`contextShopId`, `idCurrency`/`contextCurrencyId`, `idCountry`/`contextCountryId`, `idGroup`/`contextGroupId`, 8 inputs total, up from 4), each id-column tested via a **FEEL list unary test that references a sibling variable**, e.g. `"0, contextShopId"` — validated as resolving correctly against the decision's own declared inputs before committing to the pattern across all four pairs.
+- `Specific Price Selection Precedence Tier` (`d_specific_price_precedence`): `fromQuantityAboveOne` → `fromQuantity` (number, `> 1`).
+- `Product Orderability When Stock Depleted` (`d_stock_orderability`): `quantityAvailableIsZeroOrLess` → `quantityAvailable` (number, tested via `<= 0` / `> 0`).
+
+Left boolean, with documentation: `Cart Rule Per-Customer Usage Limit` (`customerIdentified`, `quantityPerUserConfigured`) and `Cart Rule Restriction Scope Validity` (`deliveryAddressKnown`, `carrierChosen`) — both existence/ID-sentinel checks, not comparisons.
+
+**Two new principled exception categories, not previously needed for OpenMRS or OFBiz, were identified and documented during this triage:**
+
+1. **ID-sentinel existence checks.** PrestaShop's convention of using `0` as an "unset" foreign-key value (rather than `NULL`) means checks like `id_customer != 0`, `id_address_delivery != 0`, `id_carrier != 0`, `id_product_attribute != 0`, `id_cart != 0`, `id_specific_price_rule != 0` are existence checks in disguise. These were deliberately **not** promoted, even though the underlying column is a real, comparable number: branch distance for `!=` against one fixed sentinel value is already a step function (0 or K) regardless of whether the value is exposed as a real number, so FEEL promotion adds no search gradient here — unlike `<`, `>`, `<=`, `>=`, `=` against a genuinely varying value, where exposing the real column does add a gradient. This sits alongside, but is distinct from, the existence/null-check exception already identified in §7c.
+2. **Cross-column OR limitation (a DMN-table-structure limitation, not a FEEL-expressibility one).** Two variables — `quantityThresholdMet` (`from_quantity <= 1 OR context_quantity >= from_quantity`) and `dateWindowActive` (an AND-of-ORs over `from`/`to` date windows) — were kept boolean because each is an OR condition spanning **two different columns**, which cannot be flattened into a single column's FEEL unary test without restructuring the decision table's row/hit-policy shape (a DMN table row is an AND across columns; expressing an OR needs either a same-column list-test or multiple rows). This is contrasted, and validated as genuinely different, from a same-column two-value OR (e.g. `id_shop = 0 OR id_shop = context_shop_id`), which **is** expressible as a FEEL list unary test (`"0, contextShopId"`) — the pattern used for `Specific Price Row Applicability` above.
+
+**Mechanics and validation.** `dmn_builder.py` again needed no changes. `build_prestashop_dmn.py`'s decision dicts and `build_prestashop_mapping.py`'s `ROWS` were edited; regeneration produced 14 decisions / 57 rule rows (unchanged — arity preserved) and grew the mapping CSV from 67 to 75 rows (8 new rows: the 4 new context-variable inputs for `Specific Price Row Applicability`, plus the other split/renamed variables). Full validation (`validate_dmn.py`) returned **ALL CLEAR** (75 DMN variables = 75 CSV variables, zero issues), including confirmation that the novel FEEL list-unary-test-with-cross-variable-reference pattern resolves correctly.
+
+### Program-wide before/after, as it stood pre-swap (all three revisions applied, PrestaShop included)
+
+| Metric | Initial drafting | After OpenMRS only (§7c) | Final, all three revised (§7d, pre-swap) |
+|---|---|---|---|
+| Boolean-only decisions, all 57 (§7a Axis 2a) | 31 (54.4%) | 27 (47.4%) | 20 (35.1%) |
+| — OpenMRS boolean-only decisions | 14/19 (73.7%) | 10/19 (52.6%) | 10/19 (52.6%) |
+| — OFBiz boolean-only decisions | 7/13 (53.8%) | 7/13 (53.8%) | 6/13 (46.2%) |
+| — PrestaShop boolean-only decisions | 10/14 (71.4%) | 10/14 (71.4%) | 4/14 (28.6%) |
+| — FLEX2 boolean-only decisions | 0/11 (0%) | 0/11 (0%) | 0/11 (0%) |
+| Cross-variable-reference decisions, all 57 (§7a Axis 2d) | 2 (3.5%) | 10 (17.5%) | 11 (19.3%) |
+| Total mapping CSV rows, all 4 case studies (§7b) | 281 | 282 | 291 |
+| Single-Column Predicate variables (§7b) | 61 (21.7%) | 49 (17.4%) | 34 (11.7%) |
+| Direct Attribute Reference variables (§7b) | 47 (16.7%) | 73 (25.9%) | 92 (31.6%) |
+
+Two observations worth flagging for the paper, preserved from the pre-swap analysis: first, OFBiz's boolean-only decision count barely moved (7→6) despite 4 of its 13 decisions being edited, because most of the edited decisions already mixed booleans with string/categorical inputs before the revision (only `Refund Amount Validity` was purely boolean-only pre-revision and flipped to numeric-only) — a reminder that the coarse decision-level "boolean-only" metric understates how much was actually changed at the variable level; the construct-level numbers (§7b) are the more sensitive instrument. Second, PrestaShop's count dropped sharply (10→4) because a much larger share of its boolean-only decisions were genuinely comparison-shaped rather than existence/join-shaped — consistent with PrestaShop's zero-FK, "everything is an application-managed integer flag or sentinel" design pushing more real comparisons into pre-collapsed booleans than OFBiz's more conventional entity model did. **§7e below reports the current numbers after PrestaShop's replacement by jBilling.**
+
+Historical deliverables: `ofbiz_dmn_revised.zip` and `prestashop_dmn_revised.zip` (mirroring `openmrs_dmn_revised.zip`'s structure), each with a `README.md` "FEEL-promotion revision" section documenting the case-study-specific rationale, decisions changed, and exceptions kept boolean (including the two new exception categories above, which are specific to PrestaShop's schema conventions but stated generally enough to apply if encountered in future case studies).
+
+---
+
+## 7e. The PrestaShop → jBilling Swap and Its Effect on Both Taxonomies (2026-09-10)
+
+**Trigger and rationale.** Direct user instruction: "i want to use this jbilling case study and extract business rules the way we did for previous case studies and i dont want to include prestashop." Full rationale, gains, and losses are documented in `case-study-selection.md`'s "PrestaShop → jBilling swap" section; the short version is that jBilling was mined using the identical Tier-2 code-mining methodology (16 decisions cited to `mosabsalih/jBilling@master, commit 748ed1d`, file+line+method, across ageing/dunning, payment authorization/blacklist, order cancellation/validity, proration/tax, and currency-exchange logic), producing 5 DMN files / 53 rule rows, and its mapping CSV (59 rows, curated by hand following §5.2's process) was built and validated the same way as the other three.
+
+**Mechanical effect on §7a/§7b.** `taxonomy/extract_structure.py`'s `CASE_STUDIES` dict, `taxonomy/classify_constructs.py`'s `FILES` dict, and `taxonomy/build_taxonomy.py`'s `AXIS1` dict were each updated to point at `jbilling_dmn/` in place of `prestashop_dmn/`, with all 16 jBilling decisions manually classified into the existing Axis-1 categories (9 Gate, 2 Classify, 2 Calculation, 2 Precedence, 1 Transition) before re-running the pipeline end-to-end. No `UNCLASSIFIED` error on re-run confirmed every decision, old and new, resolved to a category.
+
+**Numeric effect, side by side:**
+
+| Metric | Pre-swap (PrestaShop-inclusive, §7a/§7b/§7d final) | Post-swap (jBilling-inclusive, current §7a/§7b) |
+|---|---|---|
+| Total decisions | 57 | 59 |
+| Total rule rows | 253 | 249 |
+| Total DMN files | 21 | 22 |
+| Total mapping-CSV variables | 291 | 275 |
+| Boolean-only decisions | 20 (35.1%) | 23 (39.0%) |
+| Cross-variable-reference decisions | 11 (19.3%) | 10 (16.9%) |
+| Chained (DRD) decisions | 9 | 11 |
+| Precedence/Conflict Resolution decisions | 1 (PrestaShop only) | 2 (jBilling only) |
+| Direct Attribute Reference variables | 92 (31.6%) | 77 (28.0%) |
+| Not-Persisted/Schema Gap variables | ~80–84 (~28–29%) | 81 (29.5%) |
+| Global Config Lookup / Row-Ordering constructs | 2 + 1 (PrestaShop-only) | 0 + 0 (dropped) |
+
+**What this means for the paper's claims.** The program-level headline findings (§4.4/§9's schema-representability gap; §6.3's cross-variable-reference and FIRST-hit-policy findings; §7b's construct-translatability distribution) all survive the swap essentially intact in direction and rough magnitude, which is itself worth stating as a robustness point: the paper's core empirical claims are not an artifact of any one case study's idiosyncrasies. What is genuinely lost is diversity at the tails: PrestaShop was the program's only source of Precedence/Conflict-Resolution-via-row-ordering and Global-Configuration-Lookup constructs, both zero-FK-design artifacts; jBilling's own precedence decisions (`Cycle Start Source`, `Currency Exchange Rate Source`) are structurally different — resolved via direct comparison among a small fixed set of named columns rather than a ranked/ordered row set or a shop-wide settings table — so those two specific SQL-construct categories now sit at zero rather than disappearing from the taxonomy's design (they remain documented, populated-in-principle categories). This is stated plainly here and in `case-study-selection.md` rather than glossed over, consistent with the honesty-over-completeness standard applied throughout this document.
+
+---
+
+## 8. Related Work / Literature Grounding
+
+| Work | What it does | Key figures |
+|---|---|---|
+| [Kapfhammer, McMinn et al. — SchemaAnalyst, "Search-Based Testing of Relational Schema Integrity Constraints"](https://philmcminn.com/publications/kapfhammer2013.pdf); results in [ACM TOSEM](https://dl.acm.org/doi/10.1145/2818639); tool at [GitHub](https://github.com/schemaanalyst/schemaanalyst) | AVM local search generating data to satisfy PK/FK/UNIQUE/NOT NULL/CHECK constraints; fitness = normalized, summed distance across all constraints | 100% constraint coverage on almost all tested schemas; mutation score median 0.65 (AVM) vs 0.41 (random/DBMonster) |
+| [Castelein, Aniche, Gousios, van Deursen — EvoSQL, "Search-Based Test Data Generation for SQL Queries," ICSE 2018](https://pure.tudelft.nl/ws/portalfiles/portal/71909556/3180155.3180202.pdf); [GitHub](https://github.com/SERG-Delft/evosql) | Genetic algorithm generating data to exercise SQL WHERE/JOIN/subquery targets; fitness derived from the DB engine's real query execution plan | 98.6% full coverage on 2,135 real queries vs 6.5% (random) / 90% (biased random); beats SAT-solver approaches (QAGen, ADUSA) specifically on strings/subqueries (84.1% of real queries used these) |
+| [Many-Objective Test Database Generation for SQL ("MoeSQL"), 2020](https://link.springer.com/chapter/10.1007/978-3-030-58115-2_16) | Follow-up to EvoSQL: many-objective evolutionary algorithm to cover multiple targets simultaneously (not one-at-a-time) + a reduction step to prevent dataset bloat | Comparable coverage to EvoSQL at ~59.47% of its row count |
+| [Panichella, Kifetew, Tonella — "Reformulating Branch Coverage as a Many-Objective Optimization Problem" (MOSA), ICST 2015](https://ieeexplore.ieee.org/document/7102604/) | Treats every branch in a program as its own search objective (not one blended whole-suite fitness, and not one-branch-at-a-time), using a lightweight preference-sorting criterion (not full Pareto dominance) to keep a population making progress on many objectives in one run | Outperformed both one-target-at-a-time search and the earlier whole-test-suite blended-fitness approach, especially as the number of target branches grows |
+| [Panichella, Kifetew, Tonella — "Automated Test Case Generation as a Many-Objective Optimisation Problem with Dynamic Selection of the Targets" (DynaMOSA), IEEE TSE / IEEE Xplore 7840029](https://ieeexplore.ieee.org/document/7840029/) | Extends MOSA with a dependency graph over objectives (a control-dependency graph, in their case) so an objective only receives search pressure once its prerequisite objectives are already covered by some individual in the population — avoids wasting budget on unreachable targets | Outperformed static MOSA on efficiency; became EvoSuite's own default algorithm on the strength of this result |
+| [Jensen, Thummalapenta, Sinha, Chandra — "Test Generation from Business Rules," ICST 2015](https://research.ibm.com/publications/test-generation-from-business-rules) (IBM Research); tool: `buster`; full paper read directly 2026-09-10 (superseding the paywalled-abstract summary this entry previously relied on) | Models a business rule as a set of precondition⇒postcondition "rule parts" attached to a specific application *operation* (e.g. `CreateCustomer`, `GenerateInvoice`) over that operation's own input/created/modified entities — never over a persisted relational schema directly, and never engaging with PK/FK/UNIQUE/CHECK constraints at all. Rule parts within one rule are mechanically required to be disjoint and jointly complete (their Properties 1–2) — there is no DMN-FIRST-hit-policy-style overlapping/priority-ordered rule shape in their notation. Generates *test sequences*: chains of operation calls plus concrete parameter values, produced via backward chaining from the target rule part's precondition, guided by unsatisfiable-core extraction (using the `choco` constraint solver) to identify which upstream operation/rule-part could establish a still-unsatisfied piece of state; a Fitnex-derived branch-distance-style fitness function is used as a secondary "is this candidate sequence still making progress" check whenever the unsatisfiable core contains integer variables. The output is an operation-call sequence to run against the live application (which then performs its own database writes) — not rows inserted directly into a schema. **Notably, one of their three evaluation subjects is jBilling itself** — the same open-source billing system this project's case study #4 now mines directly for DMN decision tables, though their rule parts are scoped to jBilling's application operations rather than mined as standalone decision tables the way this project's jBilling DMN package is. | Evaluated on 3 systems — `jBilling` (open-source billing), `Cebu-pacific` (an airline's live booking site, modeled externally), and a confidential telecom system (`App`) — 33 operations, 42 rules, 77 rule parts total, ~10 hours of hand-modeling per subject. Their guided tool (`buster`) covered 99% of rule parts vs. 79% for an unguided exhaustive-search baseline (`exhaust`), while exploring far fewer candidate sequences (e.g. average 4 vs. 480 for one subject). Directly relevant to §9's gap claim: still, after full reading, **no engagement with database schema constraints anywhere in their formalism or evaluation** — the gap this project targets (joint DMN + schema-constraint satisfaction, at the row level) remains open. Also directly relevant to §6.4: their guided (unsatisfiable-core-directed) search beating unguided exhaustive search by a wide margin is independent, cross-domain precedent for why this project also chooses a guided/fitness-directed algorithm (DynaMOSA) over blind or random generation, and their use of a Fitnex-style distance function as a secondary heuristic is a small but genuine point of convergence with this project's own branch-distance mechanism (§6.3), despite their search being primarily symbolic (SAT/SMT-based) rather than metaheuristic. **Correction, 2026-09-10:** this entry previously (incorrectly, based on a secondary source) described their rules as modeled "over UI-observable states" and their search as "a weighted graph search over a page-navigation graph, not a branch-distance fitness function," and claimed a "solve→reuse→provided→random" fallback cascade. None of that holds up against the actual paper — the rules are entity/operation-attribute-based, the search is unsatisfiable-core-guided backward chaining with a Fitnex-derived distance function as one component, and no such four-step cascade appears in this paper (it may belong to the authors' separate, earlier `wateg` work, ICSE 2013, cited but not read here). |
+| [Rahm & Bernstein, "A Survey of Approaches to Automatic Schema Matching," VLDB Journal 2001](https://link.springer.com/article/10.1007/s007780100057) | Foundational survey of schema-matching techniques (name/type/structure/value-based) | ~3,900 citations — the standard reference for this sub-problem |
+| [Schema Matching with Large Language Models: an Experimental Study, VLDB workshop 2024](https://vldb.org/workshops/2024/proceedings/TaDA/TaDA.8.pdf) | Tests GPT-3.5/GPT-4 for schema matching; compares prompt "task scopes" (1-to-1, 1-to-N, N-to-1, N-to-M); majority voting across repeated calls | Best: N-to-1 + GPT-4, mean F1 0.580, vs N-gram baseline 0.335; too much context (N-to-M) hurts performance |
+| [LLMATCH: a Unified Schema Matching Framework with LLMs, 2025](https://arxiv.org/pdf/2507.10897) | Three-stage LLM pipeline: schema rollup → table selection (vector similarity/LLM) → column matching with drilldown | Only tests GPT-3.5/GPT-4o-mini (no open-source models); F1 0.4 vs 0.2 (REMATCH baseline) on largest dataset; does not address hallucination verification |
+| OCL-to-SQL translation work (e.g. OCL2PSQL) and OCL aggregation-function extensions (modeling-languages.com summary of distributive/algebraic/holistic aggregate taxonomy) | Precedent for organizing a translator's scope as a construct taxonomy (navigation, collection ops, arithmetic, aggregation) rather than an undifferentiated feature list | Basis for §7b's construct taxonomy design, applied to DMN→SQL instead of OCL→SQL |
+
+Only proprietary LLMs (GPT-3.5/4/4o-mini) have published schema-matching results — no open-source/open-weight model has been evaluated for this task in the literature found. No prior DMN-to-SQL/DDL construct taxonomy was found in the literature search performed for §7b — it appears to be original to this project.
+
+---
+
+## 9. Identified Research Gap
+
+Targeted searches (business-rule-driven data generation, DMN-specific data generation, and recent 2023–2025 database test-data-generation work generally) found **no existing work that combines DMN-style (or business-rule-style) decision satisfaction with schema-level integrity-constraint satisfaction in one search-based framework.** SchemaAnalyst does integrity constraints; EvoSQL/MoeSQL do SQL query predicates; Jensen et al.'s business-rule test generation (§8) — now confirmed by a full reading of the primary source, not just its abstract — operates at the level of application-operation sequences and parameter values (never database rows directly, and never schema constraints at all), and notably evaluated on jBilling itself, the same system this project's case study #4 mines directly, without ever engaging its underlying schema; a 2025 DMN-adjacent paper ([BPMN/DMN decision table generation via agentic AI](https://www.emerald.com/bpmj/article/doi/10.1108/BPMJ-08-2025-1254/1336970/BPMN-DMN-decision-table-generation-based-on)) generates DMN tables from requirements using AI — a different problem (authoring rules, not generating data to satisfy them). This gap is the basis for the paper's contribution claim.
+
+Correction of an earlier position in this design process, worth stating explicitly in the methodology: individual DMN decisions in the FLEX2 set were found to be directly solvable by hand-derived substitution (§6.1), which initially suggested search wasn't "needed" per rule. The literature above argues against treating that as the deciding criterion — SchemaAnalyst applies the same fitness/search machinery uniformly even to trivially simple constraints (e.g. NOT NULL), specifically because (a) it generalizes without bespoke per-constraint solving code, and (b) it allows simultaneous satisfaction of many different constraint types (DMN + PK/FK/UNIQUE/CHECK) in one search loop rather than two separate mechanisms that could conflict. The defensible framing is therefore: **all rules feed the same fitness-guided search by default; what varies per rule is the shape of its distance term**, not whether search is "used" at all.
+
+---
+
+## 10. Open Questions and Known Assumptions (to resolve before/while implementing)
+
+- **`STUDENT_ATTENDANCE` row semantics unconfirmed**: does every held lecture need an explicit row per student (including an explicit "absent" marker), or does a missing row implicitly mean absent? Changes what "generate M attended rows" actually requires building. Not resolvable from the DDL alone (no seed data); would need to be confirmed against the live FLEX2 application's own behavior if possible, or stated as an assumption otherwise.
+- **Coded reference-table values unconfirmed** (e.g. `STUDENT_PROGRAM.PROG_STATUS` → `D_STUDENT_STATUS.STATUS_ID` numeric codes) — `Flex1.sql` is a DDL-only export with no seed/reference rows. The same caveat applies to OpenMRS's `UniquenessBehavior`/`LocationBehavior` enums, OFBiz's status-id string constants, and jBilling's `payment_result`/order-period status/ageing-step-status codes — all four case studies are DDL/entity-definition-only exports with no seed data (jBilling's `sql/jbilling_test.sql` is a schema-only export, same limitation). **This is the same root cause behind §5.5's capped top-1 accuracy for the automated mapper — see §5.5 for the concrete measured impact.**
+- **Camunda engine execution validation — resolved as out of scope (2026-09-08).** Investigated (Maven Central needed for `camunda-engine-dmn` is blocked by this sandbox's egress policy; pip-installable alternatives found — `pyDMNrules`, requires lossy Excel transcription; `SpiffWorkflow`, a real DMN engine but built for single-table BPMN business-rule-tasks, not standalone multi-decision DRDs). Decided this is not load-bearing for the paper's contribution, since the generation algorithm consumes DMN rules directly via its own logic/fitness function rather than invoking a live engine at runtime — XML well-formedness + arity validation + full source-citation provenance (already done for all DMN files, all four case studies) is the validation standard actually used. The user can optionally spot-check individual files (e.g. FLEX2's `Academic_Standing.dmn` DRD chain) by hand in Camunda Modeler / a Camunda 8 SaaS trial if desired, but this is not a blocking step.
+- **Open-source LLM mapping accuracy is unmeasured** — no literature precedent; would need to be benchmarked against the four `variable_to_schema_mapping.csv` files (275 rows total, post-swap) as ground truth if attempted (§5.4). The non-LLM candidate-generation baseline this would be compared against is measured against the pre-swap ground truth (§5.5: 31.6% top-1, 53.1% top-3); re-measuring against the current jBilling-inclusive ground truth is a natural follow-up, not yet done.
+
+---
+
+## 11. Evaluation Design — status: pending (next design discussion)
+
+Not yet finalized. Candidate dimensions raised during this design process, to be settled in the next session:
+- Coverage: fraction of DMN rule branches successfully generated for, per case study — **and, per §7a, stratified by Axis-1 business-function type and by FIRST-vs-UNIQUE hit policy**, not just as one aggregate number.
+- Dataset efficiency: generated row/table count vs. a random-generation baseline (cf. SchemaAnalyst's DBMonster comparison, EvoSQL's random/biased-random baselines, MoeSQL's row-count reduction framing).
+- Comparison against integrity-constraint-only generation (i.e., what SchemaAnalyst alone would produce, with no DMN-awareness) — isolates the paper's specific contribution.
+- Runtime / search budget to convergence.
+- Schema-mapping accuracy, if the mapping step is automated (§5.3/5.4) — measured against the hand-built mappings (across all four case studies, not just FLEX2) as ground truth. **§5.5 already reports this for the non-LLM prototype against the pre-swap ground truth (89% not-persisted accuracy, 31.6% top-1, 53.1% top-3); an LLM-assisted second pass, if built, should be evaluated the same way, ideally against the current jBilling-inclusive ground truth, for direct comparison.**
+- Cross-case-study generalization: does the same fitness-function machinery and search algorithm choice (§6.4) perform consistently across all four case studies' very different referential-integrity profiles (FLEX2's messy ad-hoc FKs, OpenMRS's heavy FK enforcement, OFBiz's fully-enforced entity model, jBilling's moderate, code-managed FK design — roughly 1.2 FKs/table), or does search algorithm choice need to vary by case study? Note that the 2026-09-10 swap traded away the program's zero-FK extreme (PrestaShop) for a fourth point along the same spectrum instead of a genuinely new spectrum position — worth stating honestly if this dimension is reported, per `case-study-selection.md`'s own accounting of the swap's losses. This is now directly testable with all four rule sets in hand.
+- Chained-vs-standalone ablation (§7a): does coverage/runtime degrade once backward substitution through a DRD (11 decisions, post-swap) is required, vs. the 48 standalone decisions?
+- **Explicit handling of cross-variable-reference decisions is now a required design item, not optional** (raised from 2 to 10–11 decisions across §7c/§7d/§7e depending on program composition, roughly 17–19% of the rule set) — §6.3's distance-table extension for a variable right-hand side, and for the FEEL-list-with-sibling-reference pattern (§7d, historical/PrestaShop-specific but architecturally general), needs to be designed before evaluation, not deferred as a documented limitation.
+- Construct-level breakdown (§7b/§7c/§7d/§7e): report what fraction of *translatable* variables (i.e., excluding the ~29–30% schema-gap) the generator successfully grounds, broken down by construct category — the same "coverage by construct type" framing OCL-to-SQL work uses, rather than one aggregate mapping-accuracy number.
+- **Before/after ablation on the FEEL-promotion revision itself** (§7c/§7d): once the generator is implemented, compare coverage/convergence-speed on each case study's original boolean-collapsed decisions vs. the revised/from-the-start-FEEL-exposed ones, as direct empirical evidence for the claim that boolean inputs defeat branch-distance search's gradient. With OpenMRS and OFBiz revised, and jBilling mined FEEL-exposed from the start, this ablation can be run across three case studies rather than one, strengthening the claim beyond a single case study.
+- **Failure-mode breakdown for uncovered targets** (§6.7): report the three-way split for any branch that didn't reach a validated fitness-zero candidate within budget — DMN-only miss, schema-only miss, or a genuine DMN/schema conflict (the target is provably infeasible under the real schema constraints). The third case is a reportable finding about business-rule/schema coherence in its own right, not just an unresolved generator diagnostic.
+
+---
+
+## 12. Next Steps
+
+1. ~~Apply the same FEEL-promotion revision (§7c) to OFBiz (54% boolean-only) and PrestaShop (71% boolean-only)~~ — **done** (2026-09-08, §7d): all three Tier-2 case studies then in the program revised and validated; FLEX2 needed no revision (0% boolean-only already). **Superseded in part** (2026-09-10, §7e): PrestaShop itself was later replaced by jBilling, which was mined FEEL-exposed from the start rather than revised after the fact.
+2. **Finalize evaluation design in detail (§11)** — now informed by both taxonomies (§7a business-function/mechanics, §7b construct-level) and by the complete §7c/§7d/§7e revision-and-swap history across the program: coverage should be stratified by business-function type, by hit policy, and by schema-grounding construct category, not reported as one number; chained-vs-standalone and cross-variable-reference handling (now 10 decisions, including the FEEL-list-with-sibling-reference pattern as a general architectural case) should be treated as explicit, required design items, not deferred.
+3. ~~Validate all four case studies' DMN files against a real Camunda 7 Modeler/engine~~ — **resolved as out of scope** (2026-09-08, see §10): not load-bearing for the paper's contribution; environment-blocked in any case (Maven Central unavailable).
+4. ~~Draft DMN rules for OpenMRS, then Apache OFBiz, then PrestaShop~~ — **done** (2026-09-07): 19 decisions/6 files (OpenMRS), 13 decisions/5 files (OFBiz), 14 decisions/4 files (PrestaShop, later superseded), each following the FLEX2 process with case-study-specific adaptations (checking schema-mappability during initial drafting rather than as a later correction pass; modeling duration/count-driven inputs as raw schema-derived counts from the start). ~~Draft DMN rules for jBilling in place of PrestaShop~~ — **done** (2026-09-10): 16 decisions/5 files/53 rules, mined from `mosabsalih/jBilling@master, commit 748ed1d`, following the identical Tier-2 code-mining methodology.
+5. ~~Build a rule taxonomy across all four case studies~~ — **done** (2026-09-08, §7a and §7b; re-run 2026-09-10 after the jBilling swap, §7e): (a) a two-axis classification (business function × generation mechanics) of all 59 decisions, re-delivered reflecting the swap; (b) a 17-category (15 currently populated) construct taxonomy of what a DMN→DDL/SQL translator would need to handle, built from all mapped variables, re-delivered reflecting the swap.
+6. ~~Revise OpenMRS's, then OFBiz's and PrestaShop's, DMN to expose real FEEL comparisons instead of pre-collapsed booleans~~ — **done** (2026-09-08, §7c and §7d): 11/19 OpenMRS, 4/13 OFBiz, 7/14 PrestaShop (later superseded) decisions revised (plus documented boolean exceptions in the remainder), each validated (XML well-formedness, arity, cross-variable-reference resolution, DMN↔mapping-CSV consistency), delivered as `openmrs_dmn_revised.zip`, `ofbiz_dmn_revised.zip`, `prestashop_dmn_revised.zip` (historical).
+7. Implement a prototype of the fitness function (§6.3) and search loop (§6.4), starting with the FLEX2 attendance rule as the first testbed, then extending to at least one decision from each of the other three case studies (OpenMRS, OFBiz, jBilling) to test cross-case-study generalization (§11) — informed by §7a's finding that FIRST-hit-policy suppression, not per-row condition complexity, is the dominant difficulty driver; by §7b's construct breakdown for how each grounded variable needs to be resolved (direct/predicate/join/aggregate/etc.) before the fitness function can even be written; and by §7c/§7d/§7e's finding that the fitness function must handle cross-variable references (including the FEEL-list-with-sibling-reference variant, architecturally general even though its only current instance is historical/PrestaShop-specific) as a first-order case (~17–19% of decisions depending on program composition), not an edge case. Two concrete prerequisite artifacts, designed 2026-09-09 (§6.1's compiled constraint record, §6.7's validation architecture) but not yet built: `compile_constraints.py` (DMN + mapping CSV → one JSON record per target branch) and a JSON→SQL compiler for the validation queries (scoped directly by §7b's construct-to-SQL-construct table). Both should exist before the search loop itself, since the search loop's input contract depends on them. **The search algorithm to implement is now settled (2026-09-10, §6.4): DynaMOSA, one run per case study, dependency graph from DRD edges — not a per-target AVM/GA restart.**
+8. Decide how much of OFBiz's 845-entity schema to scope down to for experiments (not yet decided).
+9. ~~Prototype the candidate-generation + confidence-scoring mapping tool (§5.3)~~ — **done** (2026-09-08, §5.5): built and validated against all 291 rows of ground truth across the four case studies as they stood at the time (FLEX2/OpenMRS/OFBiz/PrestaShop; 89% not-persisted accuracy, 31.6% top-1, 53.1% top-3, 24.5% derived-fact recall), delivered as `dmn_schema_mapper.zip`. Next: re-run `validate_mapper.py` against the current jBilling-inclusive ground truth (275 rows) for an up-to-date baseline, then the LLM-assisted second pass (§5.4), restricted to the rows this prototype flagged `needs review`/`likely derived`, to close the gap to something trustworthy enough to feed the generator without a human reviewing every row.
+10. ~~Extract jBilling business rules as DMN, replacing PrestaShop as case study #4~~ — **done** (2026-09-10): 16 decisions / 5 files / 53 rules mined and validated (§2, §7e); `case-study-selection.md` fully rewritten to document the swap; this document's PrestaShop-specific numbers updated program-wide while preserving PrestaShop's own drafting/revision narrative as historical record (§7d, §5.5). Remaining follow-up: add a jBilling section to `docwork/all_rules_english_open_source.md` (currently OpenMRS/OFBiz/PrestaShop only) so the plain-English rule listing matches the current case-study program.
+
+---
+
+## 13. 2026-09-10 Update — OFBiz→Spree Swap and Further Boolean-Reduction Passes (supersedes §2, §7a, §7b, §7e in relevant part)
+
+Merged in from a standalone session note (`program_update_20260910.md`) that did not have write access to this document directly. Written in the same spirit as §7e's swap record: nothing below is glossed over or silently folded into the numbers above — §2/§7a/§7b/§7e are left as originally written and this section is the current source of truth wherever the two disagree. All numbers below are freshly computed from the four case studies' actual, current `build_*_dmn.py` scripts and mapping CSVs, not carried over from §2-§12's pre-swap figures.
+
+### 13.1 Second case-study swap: OFBiz → Spree Commerce
+
+| # | System | Domain | Tables | PK | FK | UNIQUE | CHECK | DMN status |
+|---|---|---|---|---|---|---|---|---|
+| 1 | FLEX2 (Flex1) | Admissions, academic fee/finance, PhD workflow | 220 | 140 | 225 | 14 | 0 | Boolean-reduction pass applied — 11 decisions / 6 files / 56 rules, unchanged (Tier 1) |
+| 2 | OpenMRS (core) | Healthcare / EHR | 119 | 117 | 448 | 120 | 0 | Revised — 24 decisions / 6 files / 71 rules (Tier 2) |
+| 3 | **Spree Commerce** | **E-commerce (promotions/pricing)** | **197** | **196** | **6** | **104** | **3** | New — 14 decisions / 3 files / 32 rules (Tier 2) |
+| 4 | jBilling | Billing / subscription management | 98 | 85 | 120 | 0 | 0 | Boolean-reduction pass applied — 16 decisions / 5 files / 53 rules, unchanged (Tier 2) |
+
+**OFBiz dropped** (845 entities, ~1,928 FKs, 13 decisions / 5 files / 55 rules) — excluded per the same kind of rationale §2/§7e already applied to PrestaShop: an unresolved 845-entity scoping question for the implementation phase (§12 item 8, never resolved), and thin representation of customer-segment/tiered-discount rule shapes relative to what Spree offers natively. Kept as a documented backup case study, same status as Moodle/OpenEMR/Fineract/SuiteCRM/PrestaShop (§2).
+
+This is now the program's **second** case-study swap (after §7e's PrestaShop→jBilling), and it costs the program something analogous to what §7e already flagged for that swap: OFBiz was the program's only source of a fully-enforced, ~1,928-FK entity model at the high end of the referential-integrity spectrum described in §11's cross-case-study-generalization bullet. Spree replaces it with a different point on that spectrum (196 PK / 6 raw FK declarations / 104 UNIQUE — a design that leans on UNIQUE constraints and app-level Rails associations rather than declared FKs), which is a gain for promotion/pricing rule diversity but a loss of the FK-heavy extreme, worth stating in the paper the same way §7e stated the first swap's losses rather than treating this as a strict upgrade.
+
+**Program total: 65 decisions, 212 rule rows, 20 DMN files across the current four case studies** — supersedes §7e's post-first-swap total (59 decisions / 249 rule rows / 22 DMN files) and §2's original total.
+
+### 13.2 OpenMRS — full revision history, this pass
+
+Starting point for this pass was OpenMRS's §7c state (24 decisions / 75 rule rows, after the FIRST→COLLECT split — itself already past what §7c originally documented). Two further revisions applied in sequence:
+
+| Revision | Decisions | Rule rows | Hit policies | Boolean-input share | All-boolean tables |
+|---|---|---|---|---|---|
+| §7c state (FEEL-promoted, pre-COLLECT-split) | 19 | 85 | FIRST/UNIQUE only | 59/64 (92.2%) | 14/19 (73.7%) |
+| + FIRST→COLLECT (5 decisions split into violations+verdict pairs) | 24 | 75 | FIRST 14 / UNIQUE 3 / COLLECT 5 | 34/73 (46.6%) | 5/19 (26.3%) |
+| + boolean-reduction pass (11 decisions converted) | 24 | 75 | unchanged | 34/73 (46.6%) | 5/19 (26.3%) |
+| + check-digit removal (final, current) | **24** | **71** | **FIRST 11 / UNIQUE 3 / COLLECT 5** | **32/71 (45.1%)** | **5/19 (26.3%)** |
+
+**Final OpenMRS hit-policy mix (19 real decision tables)**: FIRST 11 (57.9%), UNIQUE 3 (15.8%), COLLECT 5 (26.3%) — the program's first appearance of COLLECT as a hit policy, a genuinely new dimension for §11's "stratify coverage by hit policy" evaluation-design bullet, not present anywhere in §7a's original taxonomy.
+
+### 13.3 Spree Commerce — final numbers
+
+| Metric | Value |
+|---|---|
+| Total decisions (9 tables + 5 literal-expression calculations) | 14 |
+| Decision tables | 9 |
+| Rule rows | 32 |
+| Hit policy mix | FIRST 7 (77.8%), UNIQUE 1 (11.1%), COLLECT 1 (11.1%) |
+| Boolean-input share | 7/21 (33.3%) |
+| All-boolean decision tables | **0/9 (0%)** |
+| Mapped variables (schema mapping CSV) | 44 |
+| Combined schema-gap share (not-persisted + SCHEMA GAP partial) | 22/44 (50.0%) |
+| Fully-untargetable decisions (every input a gap) | 0 (one existed pre-removal: `Price Rule Volume Applicability`, removed) |
+
+Spree is the only case study in the program with **zero all-boolean decision tables** and a genuine COLLECT decision designed as COLLECT from the start, rather than converted from FIRST the way OpenMRS's were (§13.2).
+
+### 13.4 Program-wide hit-policy taxonomy (supersedes §7a Axis 2b)
+
+Computed programmatically from all four current, verified `build_*_dmn.py` scripts — replaces §7a's Axis-2 hit-policy figures wherever they disagree.
+
+| Case study | Decisions (tables + literal) | FIRST | UNIQUE | COLLECT | Boolean-input share | All-boolean tables |
+|---|---|---|---|---|---|---|
+| FLEX2 | 11 (10+1) | 6 | 4 | 0 | 5/34 (14.7%) | 0/10 |
+| OpenMRS | 24 (19+5) | 11 | 3 | 5 | 32/71 (45.1%) | 5/19 |
+| Spree | 14 (9+5) | 7 | 1 | 1 | 7/21 (33.3%) | 0/9 |
+| jBilling | 16 (16+0) | 14 | 2 | 0 | 26/46 (56.5%) | 5/16 |
+| **Program total** | **65 (54+11)** | **38** | **10** | **6** | **70/172 (40.7%)** | **10/54 (18.5%)** |
+
+**Hit-policy distribution across 54 decision tables**: FIRST 70.4%, UNIQUE 18.5%, COLLECT 11.1%. This supersedes both §7a's original figure ("48/58 decision tables, 82.8%, are FIRST") and §7e's post-first-swap figure — a materially lower FIRST share than either, driven by this pass's OpenMRS/Spree COLLECT introductions and the UNIQUE conversions applied during the boolean-reduction passes. COLLECT is confirmed here as a genuinely new hit policy for the program (§13.2), appearing in 2 of 4 case studies (OpenMRS, Spree).
+
+**Boolean-input share fell from a range of 45.5%–92.2% per case study (pre-pass) to 14.7%–56.5%** — every case study improved, none regressed. Program-wide all-boolean-table share is now 18.5% (10/54), concentrated entirely in OpenMRS (5) and jBilling (5) — **FLEX2 and Spree now have zero all-boolean decision tables**, strengthening §9's "all rules feed the same fitness-guided search by default" framing, since the step-function-fitness problem §7c originally motivated the FEEL-promotion revision with is now eliminated entirely in two of the four case studies.
+
+### 13.5 Program-wide construct taxonomy (supersedes §7b)
+
+Computed by combining and **normalizing** all four current `variable_to_schema_mapping.csv` files (274 total rows) — normalization was necessary because the four files use different label conventions for the same underlying category (`direct-coded`, `direct - exact match`, `direct - aggregate` all roll up to `direct`; `SCHEMA GAP` and `SCHEMA GAP (partial)` roll up together). This supersedes §7b's 17-category classifier output with a coarser, 5-category normalized view; reporting both raw and normalized avoids silently understating the gap share, which a naive raw combination would do (10 raw categories splintering what are really 5 real ones).
+
+| Category (normalized) | Count | % |
+|---|---|---|
+| Derived (formula/join, not a bare column) | 91 | 33.2% |
+| Not-persisted | 82 | 29.9% |
+| Direct (incl. coded/exact-match variants) | 79 | 28.8% |
+| Schema Gap (partial or full) | 11 | 4.0% |
+| Derived-aggregate (COUNT/EXISTS-turned-count) | 11 | 4.0% |
+
+**Combined schema-gap share (not-persisted + Schema Gap): 93/274 = 33.9%.** This is the single number that most directly answers §5's "how would generation-coverage claims hold up if schema-gap rules are common" question, and lands close to (slightly above) §7b's original 29.5% and §7e's post-first-swap figure — over a third of all mined DMN variables across four real production systems have no schema target at all, reinforcing rather than overturning §11's existing "report coverage over the groundable subset" methodology bullet.
+
+**Per-case-study gap share, for context:**
+
+| Case study | Gap share (not-persisted + SCHEMA GAP) |
+|---|---|
+| FLEX2 | 5/60 (8.3%) — much lower than the other three, a direct consequence of Revision 2 (§4.2) actively removing unmappable rules at authoring time |
+| OpenMRS | 41/107 (38.3%) |
+| Spree | 22/44 (50.0%) — highest, driven by the `preferences` serialized-blob finding (Spree's Rails-idiom equivalent of the schema-representability finding §4.4/§9 already document for the other three case studies) |
+| jBilling | 25/63 (39.7%) |
+
+FLEX2's much lower gap share is a methodology artifact, not evidence its rules are more schema-friendly in general — flag this explicitly wherever this table is used in the paper, exactly as §4.4 already cautions for the pre-swap numbers.
+
+### 13.6 Program total, final (supersedes §2 and §7e's total)
+
+| Case study | Decisions | Rule rows | DMN files | Source tier |
+|---|---|---|---|---|
+| FLEX2 | 11 | 56 | 6 | Tier 1 |
+| OpenMRS | 24 | 71 | 6 | Tier 2 |
+| Spree Commerce | 14 | 32 | 3 | Tier 2 |
+| jBilling | 16 | 53 | 5 | Tier 2 |
+| **Total** | **65** | **212** | **20** | |
+
+All numbers in §13 are verified against the actual, current files for all four case studies — nothing here is stale or estimated. Everything in §2, §7a, §7b, and §7e above is retained purely as historical record of the program's prior states, per this document's own established practice (§7c/§7d/§7e).
+
+### 13.7 Consequences for §11 (Evaluation Design) and §12 (Next Steps)
+
+Nothing in §11's evaluation-design bullets is invalidated by this swap — if anything it strengthens two of them directly:
+
+- The **hit-policy stratification bullet** (§11) now has a real third stratum (COLLECT, 6/54 decision tables) to report against, not just FIRST-vs-UNIQUE.
+- The **FEEL-promotion before/after ablation bullet** (§11) can now be run across all four case studies rather than three, since FLEX2 and jBilling were both put through the same boolean-reduction audit as OpenMRS/Spree this pass (§13.1's status column) rather than being exempted as "already fine."
+- §11's **cross-case-study-generalization bullet** should be updated to describe Spree (196 PK / 6 FK / 104 UNIQUE) rather than OFBiz (845 PK / ~1,928 FK) as the program's fourth referential-integrity data point — the "does the same search-algorithm choice generalize" question is still open, but now tests a UNIQUE-heavy/FK-light design instead of a maximally-FK-enforced one, which is arguably a more informative contrast against FLEX2's ad-hoc messiness than OFBiz's uniform enforcement was.
+- §12's item 8 ("decide how much of OFBiz's 845-entity schema to scope down to") is now moot — OFBiz is no longer in the active four-case-study program (§13.1) — and should be struck or reframed as a backup-case-study note rather than an open blocker.
+- §12's remaining items (7: implement `compile_constraints.py` + the fitness function/search loop; 9: re-run the mapper against current ground truth) are otherwise unaffected in scope, but item 9's "re-run against jBilling-inclusive ground truth (275 rows)" should now read **274 rows, Spree-inclusive** (§13.5) instead.
+
+### 13.8 Mapper re-validated against the current program (2026-09-11) — closes §12 item 9
+
+Item 9's "natural follow-up, not yet done" is now done. Before this, the mapper tool (`dmn_schema_mapper/mapper/`) was actually **non-functional as checked into the repository** — `schema_extract.py` imported a `paper_supplementary/scripts` module that doesn't exist anywhere in the codebase, and its cached outputs (and `dmn_extract.py`'s/`validate_mapper.py`'s hard-coded paths) all still targeted the retired FLEX2/OFBiz/OpenMRS/PrestaShop lineup — neither Spree nor jBilling had ever been run through it. OpenMRS's and Spree's own DMN packages were also missing from the repository entirely (only FLEX2's and jBilling's existed there) until supplied and added this session.
+
+Fixed: `schema_extract.py` now reads `all_schema_extraction`'s already-validated per-case-study JSON instead of the dead import; `dmn_extract.py`/`validate_mapper.py` now point at the actual current package locations and the current four-case-study set; a real bug in literal-expression identifier extraction (FEEL keywords/built-ins/loop-bound variables leaking through as if they were input variables — only surfaced once Spree's more complex FEEL, absent from FLEX2/OpenMRS/jBilling's plain arithmetic formulas, was in scope) was fixed.
+
+**Re-validated end to end against the current, correct 274-row ground truth:**
+
+| Case study | Not-persisted accuracy | Top-1 (of grounded) | Top-3 hit rate | Derived-fact recall |
+|---|---|---|---|---|
+| FLEX2 | 100.0% (n=4) | 17.2% (n=29) | 37.9% | 39.1% (n=23) |
+| OpenMRS | 100.0% (n=41) | 42.4% (n=66) | 69.7% | 11.8% (n=34) |
+| jBilling | 89.7% (n=29) | 21.4% (n=28) | 50.0% | 3.2% (n=31) |
+| Spree | 88.9% (n=9) | 29.2% (n=24) | 45.8% | 38.5% (n=13) |
+| **Overall** | **95.2% (n=83)** | **31.3% (n=147)** | **55.8%** | **18.8% (n=101)** |
+
+Same broad shape as the original pre-swap numbers (§5.5: 89.0%/31.6%/53.1%/24.5%) — not-persisted detection is strong, top-1 alone still isn't trustworthy unattended, top-3 remains the more honest usefulness measure, derived-fact recall is still the weakest link — now actually measured against the case studies in the program rather than the retired ones. Full accounting of a small residual extraction/ground-truth mismatch (5 OpenMRS rows, a handful of Spree rows — DRD-substitution pseudo-inputs, and a few Spree literal-expression decisions with no `<variable>` element declared in their DMN XML at all) is in `dmn_schema_mapper/mapper/README.md`; none of it is silently absorbed into the numbers above (`validate_mapper.py` excludes unmatched rows from every metric rather than mis-scoring them).
+
+### 13.9 §5.4's LLM-assisted second pass — built and measured (2026-09-11)
+
+§5.4 designed this; §5.5 and §12 item 9 both listed it as the natural next step, never built. It is now built (`mapper_llm.py`, `dmn_schema_mapper/mapper/`), implementing §5.4's four safeguards exactly: restricted to only the 119 rows the algorithmic pass itself flagged `needs review`/`likely derived`; one yes/no/unknown judgment per candidate, never an open-ended "what's the match"; majority-voted across repeated calls (`--repeats`, configurable); never allowed to name a column freely — only ever judges the 3 real, pre-verified candidates `mapper.py` already generated, with every individual judgment cached so a run is resumable and never silently re-guesses.
+
+**How this run's judgments were produced, stated plainly.** No `ANTHROPIC_API_KEY` was available in the environment this was built in. Rather than simulate results, the script was verified to correctly refuse (raises rather than fabricates) without one, and — since the whole design calls for "have an LLM judge each candidate," and an LLM was directly available for exactly this purpose — all 357 candidate judgments (119 rows × up to 3 candidates) were produced by direct reasoning against each variable's real business meaning and each candidate's real table/column/type, not fabricated, but as **one careful pass per candidate rather than 3 independent, stochastically-sampled API calls** (`--repeats 1`). This is a genuine, real result, not a placeholder — but it is not identical to what §5.4 point 3's majority-vote step is for (damping a stateless call's sampling variance), and is documented as such rather than implied equivalent. A live, API-backed, true multi-call run remains possible with the same script whenever a key is available.
+
+**Result, scored only against the rows this pass touched** (`mapper.py`'s own accuracy on this exact subset is 0/104 by definition, since these are precisely the rows it failed to resolve):
+
+| Outcome | Count |
+|---|---|
+| Confirmed a specific column, and it was right | 25 |
+| Confirmed a specific column, but it was wrong | 4 |
+| Rejected all 3 candidates, correctly (a genuine schema gap/derived fact) | 74 |
+| Rejected all 3 candidates, incorrectly (the true answer was offered and turned down) | 1 |
+| Left `unknown` (not scored) | 8 |
+| **Accuracy on the 104 scoreable rows** | **99/104 (95.2%)** |
+
+**What this means for the paper, stated the same honest way §5.5 stated the plain mapper's numbers**: this is not comparable to §5.5's overall 31.3% top-1 (that figure averages over every variable, including the easy ones the LLM pass never touches) — the right comparison is "of the rows the algorithmic pass gave up on, does adding one LLM-judgment pass recover real answers for a meaningful share." It does: roughly a quarter of the previously-unresolved rows (25/119) get a confirmed correct column, and the large majority of genuine gaps (74/119) are correctly recognized as gaps rather than left as an undifferentiated pile for a human to search from scratch. The one incorrect rejection is itself informative rather than a plain error: it involves a two-column join-key ground-truth description that the evaluation script's simple pair-extraction (same free-text-parsing limitation §5.2/validate_mapper.py already have) treats as a single standalone answer, not a real judgment failure. Two of the four "confirmed but wrong" cases are defensible alternate real columns modeling the same fact at a different granularity (an order-line's captured price vs. a catalog item-price table; an invoice-line percentage flag vs. an item-definition percentage flag), not nonsense guesses — full accounting, including one genuinely informative disagreement about OpenMRS's own obs-grouping model (`concept.is_set` vs. `obs.obs_group_id` — two different, both real, aspects of the same underlying concept), is in `dmn_schema_mapper/mapper/README.md`.
+
+This closes §12 item 9's remaining half (the LLM-assisted pass itself; the "re-run against current ground truth" half was already closed in §13.8) and gives §11's schema-mapping-accuracy evaluation dimension a second, real number to report alongside the non-LLM baseline — not a "future work" placeholder anymore.
+
+### 13.10 `compile_constraints.py` built (2026-09-11) — closes §12 item 7's prerequisite half
+
+§12 item 7 named two concrete prerequisite artifacts, neither built: `compile_constraints.py` (DMN + mapping CSV → one JSON record per target branch) and a JSON→SQL validation compiler, "both should exist before the search loop itself, since the search loop's input contract depends on them." The first is now built (`generator/compile_constraints.py`, `generator/feel_parser.py`); the JSON→SQL compiler and the fitness function/search loop itself remain the next steps.
+
+**Built by first surveying, not assuming.** Before writing any grammar, every distinct FEEL construct actually present across all four case studies' `.dmn` files was cataloged directly (701 unary-test cells, 11 literal-expression formulas) — comparisons against literals/bare identifiers/zero-arg calls like `today()`, `not(...)`, list-membership, range literals, arithmetic, `if...then...else`, function calls, and exactly one FEEL list-filter/comprehension (Spree's `count(order for order in store.orders where ...)`). The parser (`feel_parser.py`) covers everything surveyed and **validates at 701/701 and 11/11** against the program's actual DMN files; the one comprehension outside its grammar degrades to an `opaque_formula` node nested inside its enclosing `count(...)` call rather than crashing or mis-parsing.
+
+**Result (superseded in part by §13.11 below)**: 193/211 target branches compiled (91.5%) across all four case studies (FLEX2 81.8%, OpenMRS 100%, Spree 84.4%, jBilling 94.3%); every one of the 18 blocked branches carries an exact reason and blocking variable(s) in `compile_report.json`, per §6.1's "hard-stop and list exactly which unresolved variables are blocking which branches" — interpreted as never silently emitting an incomplete record, not a literal process-exit on the first block (with 90/276 variables still unresolved after both mapper passes, that would produce zero output). Blocking breaks down as 9 `chained_decision_output` (a documented, deliberate scope boundary — a decision-table-to-decision-table DRD edge isn't a single closed-form expression to inline the way a literal-expression decision's formula is), 9 genuinely `unresolved`, 6 `schema_gap`. These per-run numbers moved again after §13.11's derived/aggregate resolution pass; the structural findings in this subsection (the flagship worked example, the two bugs found and fixed, the FLEX2 mislabeling finding) all still stand.
+
+**The flagship worked example validates directly against this document's own §6.1 JSON**: the compiled record for FLEX2's attendance-eligibility "debarred" branch matches on every structural point — condition, outputs, hit-policy suppression context, and (the part that actually exercises DRD substitution) `attendancePercentage` fully inlined into `(lecturesAttended / lecturesHeldForOffering) * 100` with both of those in turn resolved into `derived_aggregate` recipes, and a **25-table FK closure** — landing squarely inside §6.6's own hand-traced "roughly 25–30 tables" estimate for this exact branch, confirmed programmatically rather than by hand. (Corrected 2026-09-11: an earlier draft of this note misattributed the run's single *largest* FK closure, 28 tables, to this branch — that record actually belongs to a different FLEX2 decision, `Grade Points and Interpretation`; the attendance branch's own closure is 25, checked directly rather than assumed the second time.)
+
+**Two real bugs found and fixed while validating against that worked example** (not swept away — see `generator/README.md`): DRD substitution was losing to a flat ground-truth lookup whenever a variable was both a declared input and DRD-produced (the actual FLEX2 case), producing an un-inlined "derived, see upstream" note instead of §6.1's fully inlined formula; and blocking detection didn't recurse into a substituted decision's own nested free-variable resolutions, so a branch could compile "successfully" while quietly depending on a genuinely unresolved value underneath — caught and fixed, then verified with a self-check confirming zero leaked unresolved values across all 193 compiled records. A third finding was in the source data, not the compiler: FLEX2's own hand-curated mapping CSV mislabels two aggregate facts (`lecturesAttended`/`lecturesHeldForOffering`) as `direct` — not silently corrected, handled by pattern-matching the `COUNT(...)` shape regardless of the row's own label and flagging the mismatch in the resulting node.
+
+**Also measured**: 38 of 193 compiled records (~20%) are cross-variable comparisons — consistent with §6.3/§7a's own ~17–19% program-wide estimate, confirming the fitness function's not-yet-built cross-variable distance-table extension is genuinely load-bearing, not a rare edge case.
+
+Next per §12 item 7: the JSON→SQL validation compiler (§6.7), then the branch-distance fitness function (§6.3) and DynaMOSA search loop (§6.4) itself, both now unblocked by this artifact's existence.
+
+### 13.11 Resolving derived/aggregate nodes into structured recipes (2026-09-11, same day)
+
+§13.10 left every `derived`/`derived_aggregate` fact with only raw notes text or an unstructured filter string — resolved enough not to block compilation, but not yet actionable by an actual generator. Of the 193 branches §13.10 reported compiled, only 73 (34.6% of the full 211-branch program) were checked to be *fully* mechanical (every variable a real schema column); the other 120 carried at least one unstructured `derived`/`derived_aggregate` leaf.
+
+**Approach, matching this document's own survey-before-building discipline**: rather than hand-classify the 83 distinct derived-bucket facts across the program's ground truth one at a time, the actual shapes those 83 facts' free-text notes take were surveyed directly first, then a general pattern classifier (`classify_derived`, added to `generator/compile_constraints.py`) was built covering exactly what the survey found — six new resolution kinds: `null_check` (an IS-NOT-NULL fact over a named real column — by far the most common shape, ~20 of 83), `any_not_null` (OR-of-existence across several named columns), `join_lookup`/`join_null_check` (a value or existence check reached by following one named FK), `regex_match` (two named columns compared by pattern, §7b's own "Pattern/Regex Match" construct category), `exists` (extended to also catch "TABLE (existence)"/"TABLE (COUNT WHERE ...)" phrasings beyond the original "COUNT(TABLE) WHERE" shape), and one new **blocking** kind, `code_external` — a fact whose schema field was recorded as `n/a` because it genuinely has no schema representation at all (a Java constant, a UI-only transient boolean, a runtime-only calculation: jBilling's `eventType`, `isLastSelectedStep`, `daysInCycle`, `daysInPeriod`, `expiryDate`).
+
+**`code_external` is a correctness fix, not a regression**, even though adding it *reduced* jBilling's raw compiled-branch rate (94.3% → 73.6%, and the program total 91.5% → 86.7%, 193/211 → 183/211): those five facts were previously accepted as a generic `derived` node with empty `table_hints`, silently counted as "compiled" — the more dishonest state, since there was nothing there to generate from either way. Blocking them the same way `schema_gap` already is surfaces that plainly. A future, distinct `free_scenario_parameter` kind (the generator picks a value directly, no schema needed at all) is a plausible next refinement for the genuinely-free-choice subset of these (`eventType` already has declared literal values) — not built here, since mechanically telling that apart from a "computed from real inputs not yet captured" case like `expiryDate` (getting it wrong would let the search silently violate that formula) needs more care than this pass had scope for.
+
+**Net result — the number that actually matters for §12 item 7's "search loop's input contract"**: **158 of 211 branches (74.9%) are now fully mechanical**, up from 73 (34.6%) — more than doubled. Only 25 remain in the "compiled but still needs a human or more automation" tier (12 `exists` with unstructured filter, 8 generic `derived` still unclassifiable by pattern, 6 `derived_aggregate` with unstructured filter text), down from 120. Total blocked rose to 28 (from 18), entirely attributable to the 12 newly-and-correctly-blocked `code_external` occurrences.
+
+**Corrected the same day, by checking rather than assuming a second time**: this document's own §13.10 stated the flagship attendance branch's FK closure was 28 tables, "landing right at §6.6's own hand-traced estimate." That 28 was actually the single *largest* closure across the whole 193-branch run — a different FLEX2 decision (`Grade Points and Interpretation`), not the attendance branch, whose own closure is 25 tables (still squarely inside §6.6's 25–30 estimate, just not the maximum). Caught by checking which specific record held the max before letting the claim stand a second time, the same discipline that caught the two substitution bugs in §13.10.
+
+Verified the same way as §13.10: the recursive `find_blocking_issues` self-check confirmed zero leaked unresolved values across all 183 compiled records both before and after this pass, and the flagship worked example was re-diffed against §6.1's own JSON afterward and still matches on every point.
+
+### 13.12 The §7b construct taxonomy, rebuilt as an actual artifact (2026-09-11, same day)
+
+Asked directly whether §7b's taxonomy "still exists." It didn't, in the only sense that matters: `taxonomy/extract_structure.py`, `classify_constructs.py`, `rule_taxonomy.csv`, and `dmn_to_ddl_construct_taxonomy.md` — everything §7b's own text describes as built — are absent from this repository entirely, confirmed by an exhaustive search rather than assumed. Identical root cause to the OpenMRS/Spree DMN packages gap found and fixed earlier in this program: produced in a prior session's context, never actually committed here. Independent of that, the specific 17-category, 291-row table §7b quotes was *already* stale on content grounds — it names PrestaShop-specific constructs (`specific_price`/`tax_rule` precedence, the `idShop` vs `"0, contextShopId"` FEEL-list pattern), predating both the PrestaShop→jBilling swap (§7e) and the OFBiz→Spree swap (§13.1).
+
+**Rebuilt as a real, current artifact** (`taxonomy/build_construct_taxonomy.py`, `taxonomy/construct_taxonomy.csv`, `taxonomy/usage_shapes.csv`, `taxonomy/README.md`) — a rebuild, not a byte-for-byte reproduction of the lost numbers: freshly designed category boundaries, computed over the current 274-row ground truth, verified rather than reverse-engineered to hit unrecoverable figures.
+
+**More rigorous than the description of the original, not just a replacement for it**: where §7b describes the original as classifying `variable_to_schema_mapping.csv`'s free-text notes alone, this version reuses `generator/compile_constraints.py`'s own `resolve_variable`/`classify_derived` directly (one source of truth for "how is this variable resolved" across the whole program) *and* adds a genuinely new second axis — usage-shape tagging over the actual parsed FEEL condition trees in `compiled_constraints.json` (cross-variable comparison, set-membership, range test, negation), which §7b's own methodology never had access to since it predates `feel_parser.py`'s validated (100%-coverage) condition parsing.
+
+**Cross-validated, not just computed**: the rebuilt taxonomy's Not-Persisted (29.9%) and Schema Gap (4.0%) shares match §13.5's own independently-computed normalized taxonomy exactly, since both derive from the same current ground truth via a different computation path — real corroboration, not a coincidence of rounding.
+
+**Storage-shape distribution** (274 variables): Direct Attribute Reference 91 (33.2%), Not-Persisted 82 (29.9%), Single-Column Predicate 28 (10.2%), Decision Output/Write-Back Target 12 (4.4%), Schema Gap 11 (4.0%), Aggregate Function 9 (3.3%), Existence/Correlated Subquery 8 (2.9%), Compound/Unclassified Derivation 21 (7.7%, the catch-all needing a human or a more targeted future pass), Cross-Table Join 4 (1.5%), Multi-Column Existence (any-of) 2 (0.7%), Code-External/no schema representation 5 (1.8%, a genuinely new category §13.11's `code_external` finding motivated — distinct from Schema Gap: never meant to be a column, vs. should be one and isn't), Pattern/Regex Match 1 (0.4%).
+
+**Usage-shape distribution** (183 compiled branches): plain single comparison 145 (79.2%), cross-variable comparison 33 (18.0% — consistent with, if slightly below, §7a/§13.4's own ~17–19% decision-level estimate, a useful cross-check from a completely different measurement method), negation 4 (2.2%), set-membership 1 (0.5%).
+
+**Two more real bugs surfaced and fixed in `classify_derived` while building this** (in `generator/compile_constraints.py` itself, the shared source of truth, not just the taxonomy script): the "joined via X.Y" pattern was only checked when 2+ schema pairs were parsed, missing every single-pair join fact (a join's source column usually only appears in the prose; the schema field itself names only the target) — OpenMRS's `visitPatientId`/`visitStartDatetime`/`visitStopDatetime`/`encounterDatetime` were silently falling back to a plain `schema_column` instead of `join_lookup`, undercounting FK-closure tables for those branches. Separately, the existence-check pattern ran before the join-check, so a fact whose notes describe both ("joined via orders.encounter_id; IS NOT NULL") lost its source table entirely — a genuine correctness issue, not just a labeling nicety, since `fk_closure()` only walks FKs forward and would never discover the FK-holding table starting from the target alone. Reordered so the join check, which captures both ends, wins. Re-verified after both fixes with the same recursive self-check as every previous pass (zero leaks) and a flagship-worked-example regression check (unchanged).
+
+**Known, stated limitation (partially resolved by §13.13 below)**: "Chained Decision Output" reads as zero in the storage-shape table even though 9 real occurrences existed at the time (`generator/compile_report.json`) — this taxonomy classifies each ground-truth row via `resolve_variable` in isolation, keyed only by its own `(decision_name, variable_name)`, while `chained_decision_output` is a property of the DRD-aware resolution *walk* (`resolve_and_substitute`), only visible when actually resolving a specific branch's dependency with that branch's own DRD edges in view. Stated in `taxonomy/README.md` rather than left for a reader to discover.
+
+### 13.13 `chained_decision_output` resolved via recursive branch enumeration (2026-09-11, same day)
+
+Asked directly why this scope boundary wasn't being dealt with, and what could be done about it. §6.1's own self-contained-record requirement ("never trigger a runtime lookup into another decision") settles which of three possible fixes is actually correct: not deferring resolution to the search loop (needs extra cross-target machinery at search time, exactly what inlining exists to avoid), not silently picking one upstream branch as "the" answer (wrong by construction). The only option consistent with the contract is **enumeration**: for each rule of the upstream decision *table* that could produce the needed variable, emit a separate, fully self-contained compiled record — the downstream rule's own condition **AND** that upstream rule's own "this is the one that fires" condition (its own predicates plus, for FIRST/UNIQUE, the same suppression-against-earlier-rows logic `hit_policy_context` already computes for the search, here expressed as a literal boolean formula for inlining instead).
+
+**Built as three new functions in `generator/compile_constraints.py`** (the shared source of truth, not a separate script): `build_rule_condition`/`parse_output_value` (factored out of previously-duplicated inline logic), `build_hit_policy_truth_condition`, and `enumerate_upstream_groundings` — the actual recursive enumeration, handling **multi-level chains** (FLEX2's `Academic Warning Status → Course Load Limit → Course Registration Eligibility` is 3 decisions deep) by recursing into any further chained dependency found inside an upstream rule's own condition and taking the cross-product. A grounding option is only ever offered once every variable it depends on resolves cleanly, recursively — never a half-resolved option presented as safe.
+
+**Result**: 56 new self-contained records where 9 blocked rule-slots used to be. FLEX2's `Course Registration Eligibility::Rule_3` is a genuine 2-level chain — 4 `Course Load Limit` rules × 6 `Academic Warning Status` rules = 24 independently generatable variants, each with a fully coherent compound condition threading both levels (verified directly by inspection: the condition's own predicate, the intermediate decision's winning-rule condition, and the root decision's winning-rule condition, all present and consistent — not merely values without their governing conditions). 2 of the original 9 remain correctly blocked (jBilling's `Ageing Step Advancement`, both rules) — a genuine dead end, not a missed case: its upstream `Is Ageing Required` decision itself depends on `expiryDate`, already found `code_external` (§13.11 — no schema representation at all), so no upstream rule can be grounded and `enumerate_upstream_groundings` correctly returns nothing rather than pretending otherwise.
+
+**Program totals moved again**, since expansion multiplies the branch count rather than resolving a fixed set: **260 total target branches** (up from 211), **239 compiled** (up from 183), **21 blocked** (down from 28, now `unresolved` 8 + `schema_gap` 6 + `code_external` 12 + a new `chained_dependency_unexpandable` 2 for the genuine dead end). "Fully mechanical" as a raw share looks lower than §13.11's 74.9% purely because expansion multiplied every variable resolution in the affected rules, including ones still in the "needs more work" tier (the same underlying facts appearing across more record variants, not new quality problems) — restated plainly in `generator/README.md` rather than left as an apparent regression.
+
+**Downstream effect on §13.12's taxonomy**: `taxonomy/usage_shapes.csv` was regenerated against the new `compiled_constraints.json` (239 records, up from 183) — negation's usage-shape share jumped from 2.2% to 22.6% and cross-variable comparison from 18.0% to 23.8%, both for a real, understood reason rather than classifier drift: every expanded record's compound condition literally encodes its upstream rule's FIRST/UNIQUE suppression as `{"op": "not", ...}` clauses, a genuinely newly-visible construct these branches actually need.
+
+Verified the same way as every previous pass in this section: the recursive `find_blocking_issues` self-check confirmed zero leaked unresolved values across all 239 compiled records (including every expanded variant), and the flagship attendance worked example (untouched by this change — it has no DRD chain through a decision table) was re-diffed against §6.1's own JSON afterward and still matches exactly.
+
+### 13.14 `sql_compiler.py` built — §12 item 7's second prerequisite, now both artifacts exist (2026-09-11, same day)
+
+§12 item 7 named two concrete prerequisite artifacts for the search loop, "both should exist before the search loop itself." `compile_constraints.py` was the first (§13.10); `sql_compiler.py` is now the second, closing this item entirely. §6.7's own framing settles what it has to do: *"the search loop runs on the JSON predicate; SQL is compiled from that same JSON afterward, purely for validation."* One SQL boolean expression per compiled branch (`SELECT (...) AS branch_holds;`), mechanical rather than novel design work since §7b's construct taxonomy already enumerates which SQL construct each variable category needs.
+
+**Design choice, matching §6.1's own worked example's idiom**: every resolved variable compiles to an independent scalar subquery, parameterized by a bind variable per referenced table's own primary key (looked up from the schema JSON, composite keys handled) — not one flat query with a shared join graph across the branch, mirroring how the branches themselves are independent per §6.1's own self-contained-record contract.
+
+**Every resolution kind `compile_constraints.py` produces gets a translation**: `schema_column` → PK-bound scalar subquery; `null_check`/`join_null_check` → `IS NOT NULL`/`IS NULL` (with a direct simplification for the common `var = true/false` DMN pattern rather than a clunky boolean round-trip); `any_not_null` → OR'd existence checks; `join_lookup` → a real `JOIN`; `derived_aggregate` → `COUNT`/`SUM` with subquery semantics; `exists` → `EXISTS (SELECT 1 FROM ... WHERE ...)`; `regex_match` → an engine `REGEXP` operator, flagged non-portable exactly as §7b already characterizes it; `literal_via_upstream_branch`/`substituted_decision` → recursively compiled, reusing the same DRD-inlining structure `compile_constraints.py` already built.
+
+**Honesty over completeness where the source notes don't support more**: a `derived_aggregate`/`exists` fact's filter is often free prose ("`LECTURE_ID IN (LECTURE for that OFFER_ID)`", not valid SQL) rather than a clean WHERE clause — a mechanical check (placeholder substitution + a small, surveyed prose-marker blocklist) only emits a filter when it's actually SQL-shaped; otherwise a syntactically-valid placeholder subquery with the raw text preserved as a comment, plus a recorded warning, never a guess at what a human note meant.
+
+**Result**: 173 of 239 compiled branches (72.4%) produce a fully clean validation query with zero warnings — OpenMRS 97.2%, Spree 92.6%, jBilling 75.6%, FLEX2 48.0% (lower only because §13.13's chained-decision-output expansion multiplied a handful of still-unresolved `derived` facts, like `semesterType`, across dozens of variants — the same underlying gaps repeated, not new ones, confirmed by checking rather than assumed: the 25 `COURSE_REGISTRATION`-table warnings all trace to one single recurring unresolved fact, `projectedTotalCoursesThisRegistration`). The flagship attendance branch's `lecturesHeldForOffering` now compiles to `(SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID = :this_course_offering)` — structurally identical to this document's own §6.1 hand-written `(SELECT COUNT(*) FROM LECTURE WHERE OFFER_ID=:offer_id)` — while `lecturesAttended`'s genuinely messier filter text is honestly left as a flagged placeholder rather than forced through as broken SQL.
+
+**Two more real bugs found and fixed while validating against that same flagship example, in the same spirit as every prior pass in this section**: (1) `not_persisted` was assumed to always represent an output verdict, never reachable as a condition input — it's also legitimately used, by ground truth's own deliberate design, for a genuine runtime/scenario parameter with no stored column at all (OpenMRS's `evaluationTime` — "time of validation, not a stored column"); fixed to compile to a bind parameter, which alone raised the clean rate from 61.5% to 72.4%. (2) The prose-marker heuristic checked a filter's raw text *before* `<placeholder>` substitution, so an English phrase *inside* the brackets (content specifically headed for a bind parameter, not literal SQL — `<this course offering>`) could wrongly disqualify an otherwise clean filter; fixed to mask placeholder spans before the prose check runs, which is exactly what recovered `lecturesHeldForOffering`'s clean compilation.
+
+**§12 item 7 is now fully closed** for its prerequisite half: both `compile_constraints.py` and `sql_compiler.py` exist, tested against the same flagship worked example and each other. What remains of item 7, and of the program's generation work overall, is the branch-distance fitness function (§6.3) and the DynaMOSA search loop (§6.4) itself — not yet built, now genuinely unblocked rather than waiting on prerequisites.
+
+### 13.15 Two ground-truth root-cause fixes: `semesterType` and `projectedTotalCoursesThisRegistration` (2026-09-11, same day)
+
+**Partially superseded 2026-09-11 (see §13.16): the `semesterType` reclassification below was wrong.** It was reached from DDL evidence alone (no dedicated semester-type column anywhere in the schema), without asking the project owner whether an existing text column might already serve that purpose — which is exactly what `SEMESTER.TITLE` turned out to do, per their own domain knowledge (a clean 3-value categorical column: Fall/Spring/Summer, not free text). Kept below as originally written, as a historical record of the wrong conclusion and the reasoning that produced it — not swept away — with §13.16 as the current source of truth for `semesterType`. The `projectedTotalCoursesThisRegistration` fix below is unaffected and stands as correct.
+
+A per-case-study, per-rule readiness report (requested the same day) showed FLEX2 at 103 total/48 ready/52 needs-work/3 blocked — visibly worse than the other three case studies. Rather than accept that as a fixed cost, the two facts behind most of the 52 "needs work" records were investigated directly, with standing permission to ask a clarifying question if one was needed. Neither fix ended up needing one: both were resolvable from DDL evidence already checked into this repository (`schemas/flex2/Flex1.sql`).
+
+**`semesterType`** (`Course Load Limit`'s input, affecting 43 of the 52 "needs work" records): ground truth previously called it `derived` with an honest but vague note, "exact column not confirmed from DDL alone." Direct inspection of `Flex1.sql` settles it rather than leaving it vague: `SEMESTER` has only `SEM_ID`/`TITLE`/`STATUS`; `CAMP_SEMESTER` has campus-specific dates and a status flag but no type classification; and none of FLEX2's 24 `D_*` dimension tables — the exact pattern every *other* coded category in this schema uses (course type, employee type, student status) — cover semester/term type at all. There is no dedicated Regular/Summer column anywhere in the 220-table schema; the only candidate is `TITLE`, free text (`'Summer 2021'`), reachable only via a fragile `LIKE '%Summer%'` substring match. **Reclassified from `derived` to `SCHEMA GAP (partial)`** in `variable_to_schema_mapping.csv` — a genuine §4.4-style schema-representability finding, not an under-investigated mapping, so downstream compiled records should honestly block on it rather than silently compile as vague placeholders.
+
+**Consequence, traced through rather than assumed**: this correctly blocks every one of `Course Load Limit`'s 4 rules, which removes every upstream grounding `enumerate_upstream_groundings` (§13.13) needs to expand `Course Registration Eligibility`'s `maxCoursesAllowed` dependency — so that rule's branch count drops from several expanded variants back to one, correctly `chained_dependency_unexpandable`-blocked record. This is why the program-wide compiled-branch total *fell* after this fix (260 → 222 total target branches, 239 → 196 compiled) rather than rose: the branches that disappeared were placeholders the earlier vague `derived` label had been letting through, not real capability lost — restated plainly rather than left looking like a regression.
+
+**`projectedTotalCoursesThisRegistration`** (`Course Registration Eligibility`'s input, affecting 0 already-compiled records, since it was already correctly bucketed `derived_aggregate` and this fix only added a missing filter clause): ground truth's schema-field text already named the right aggregate recipe, `COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID`, but with no `WHERE` keyword for `_try_extract_aggregate_recipe` to extract a `filter_text` from. Verified directly against `Flex1.sql` that `COURSE_REGISTRATION` really does have both `ROLL_NO` and `SEM_ID` columns, exactly as the existing note already claimed (matching §13.14's own footnote that all 25 of FLEX2's `COURSE_REGISTRATION`-table SQL-compiler warnings traced to this one recurring unresolved fact). The fix was purely mechanical: rewrote the schema-field text to `COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>`, confirmed by direct re-check that `resolve_variable` now returns a real `filter_text` instead of `None`. This variable is no longer why `Course Registration Eligibility::Rule_3` is blocked — its sole remaining blocker, confirmed by re-reading `compile_report.json`'s blocking-variable list directly, is the unrelated `maxCoursesAllowed`/`semesterType` chain above.
+
+**Program totals after both fixes, and after re-running the full pipeline in order** (`compile_constraints.py` → `sql_compiler.py` → `taxonomy/build_construct_taxonomy.py`): 222 total target branches (down from 260), 196 compiled (down from 239, 88.3%), 26 blocked (up from 21) — `schema_gap` rose from 6 to 10, `chained_dependency_unexpandable` from 2 to 3. `sql_compiler.py`'s clean rate rose sharply, 173/239 (72.4%) → 173/196 (88.3%), with FLEX2 alone jumping from 48.0% to 84.2%, since the branches that used to compile carrying a `semesterType` warning no longer compile at all (they now honestly block upstream instead), and `projectedTotalCoursesThisRegistration`'s records lost their "prose, not SQL" warning. §13.12's taxonomy was regenerated the same way: Schema Gap rose from 11 to 12 (4.0%→4.4%) and Compound/Unclassified Derivation fell from 21 to 20 (7.7%→7.3%), exactly the one row moving categories; usage-shape negation's share fell back from 22.6% to 8.2%, since the removed `Course Load Limit`/`Course Registration Eligibility` variants were exactly the records whose compound conditions encoded FIRST/UNIQUE suppression as `not(...)` clauses.
+
+Verified the same way as every previous pass in this section: the recursive `find_blocking_issues` self-check confirmed zero leaked unresolved values across all 196 compiled records, and the flagship attendance worked example (unrelated to either fix) was re-diffed and still matches exactly. Fully documented (not swept away) in `generator/README.md`'s "Two ground-truth fixes" section and `taxonomy/README.md`'s updated tables.
+
+### 13.16 Correction: `semesterType` is not a schema gap — `SEMESTER.TITLE` is the type field (2026-09-11, same day)
+
+The project owner corrected §13.15's `semesterType` conclusion directly: *"semester title is actually semester type we have three semester fall and spring and summer thats why i was asking you to ask questions because i have domain knowledge."* This names precisely why the earlier conclusion was wrong, not just that it was: DDL shows column definitions, never the data in them, so there was no mechanical way to distinguish "TITLE is free text" from "TITLE is a clean categorical column typed as text" — exactly the kind of fact domain knowledge settles and DDL inspection cannot, and exactly why standing permission to ask a clarifying question existed. It was guessed at instead of asked about.
+
+**Asked a follow-up rather than assuming the correction's exact shape**: whether `TITLE` holds the bare type or type-plus-year (e.g. `'Fall 2021'`), since that changes whether the fix is a clean equality lookup or a pattern match. Confirmed: exactly `'Fall'` / `'Spring'` / `'Summer'`, nothing else — a plain equality-comparable categorical column.
+
+**Fix**: `variable_to_schema_mapping.csv`'s `semesterType` row changed from `SCHEMA GAP (partial)` back to `direct`, mapped to `SEMESTER.TITLE`, with both the correction and the superseded wrong conclusion recorded in the row's own notes field (not silently overwritten). `resolve_variable` now returns a plain `schema_column` resolution (`semester.title`) rather than a `schema_gap` block.
+
+**Consequence, reversed cleanly**: `Course Load Limit`'s 4 rules compile again, restoring every upstream grounding `Course Registration Eligibility`'s `maxCoursesAllowed` dependency needs — program totals return to §13.13's original 260 total / 239 compiled (91.9%) figures exactly, and `taxonomy/`'s tables (§13.12) return to their pre-§13.15 state (Direct Attribute Reference 92/33.6%, Schema Gap 11/4.0%, Compound/Unclassified Derivation 20/7.3%; usage-shape negation back to 54/22.6%). `sql_compiler.py`'s clean rate did not merely return to baseline, though — it improved past it: 216 of 239 compiled branches (90.4%) now compile clean, FLEX2 alone at 91/100 (91.0%), better than both the original 48.0% (before either fix) and the mistaken reclassification's own 84.2% (which had partly gained its apparent improvement by shrinking the denominator — blocking branches outright rather than compiling them cleanly). With `semesterType` correctly resolving to a real column, those branches now compile *and* compile clean, which is the genuine gain; `projectedTotalCoursesThisRegistration`'s independent fix (§13.15, unaffected by this correction) still removes its own "prose, not SQL" warning.
+
+Verified the same way as every previous pass: `find_blocking_issues` re-run over all 239 recompiled records found zero leaks, and the flagship attendance worked example (unrelated to this correction) was re-diffed and still matches exactly. Fully documented in `generator/README.md`'s "Two ground-truth fixes, one of them corrected" section and `taxonomy/README.md`'s updated tables — including the wrong conclusion, not just its correction, per this document's own convention of keeping superseded material as an honest historical record rather than erasing it.
+
+### 13.17 A third round: closest-table candidates for every remaining Schema Gap variable (2026-09-11, same day)
+
+Following directly from §13.16, the project owner asked for the same treatment applied program-wide: *"you admit that domain knowledge solve the schema gap rules now you can provide closest table i can provide you mapping just we did for semester type."* All 11 `Schema Gap`-bucketed ground-truth rows (`taxonomy/construct_taxonomy.csv`) were re-examined directly against DDL rather than re-stating existing notes.
+
+**Resolved without asking (DDL settled it directly, no domain knowledge needed)**: jBilling's `resultCode` had been filed `Schema Gap` on the strength of `PaymentBL.java` alone, never the DDL — `payment.result_id` is a real FK to `payment_result.id` (data has codes 1-4). This was corrected as a *framing* error, not claimed as the same kind of fix as `semesterType`: the note's actual "gap" concern is a distinct, already-verified question (whether the Java code ever writes the value back onto the row), not a column-identification failure. `taxCalculationMode` was re-verified directly against `item`'s real columns and **stands** as a genuine gap, confirmed rather than merely asserted.
+
+**Needed domain knowledge, same workflow as `semesterType`, and confirmed**: (1) FLEX2's `degreeMinimumCreditHours`/`degreeTotalCredits` — `PROGRAM` turned out to have no credit-hour column at all (the old note's claim had never actually been checked, caught this time before being asserted rather than after); closest candidate `BATCH_PROGRAM.MIN_CR_HRS`. Confirmed: `degreeMinimumCreditHours` **is** that column directly; `degreeTotalCredits` is a genuinely different figure, `SUM(COURSE.CREDIT_HRS)` over every course linked via `PROGRAM_COURSE`, not a stored scalar. (2) FLEX2's `isElectiveTaughtByVisitingScholarUnavailableOtherwise` — closest path `COURSE_OFFER.EMP_ID → EMPLOYEE.EMP_TYPE_ID → D_EMP_TYPE.TITLE`, the same coded-dimension shape as `semesterType`. Confirmed: the visiting-faculty value is `'Visiting'`, and the fact means "this offering's instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor" — a compound join-plus-negated-existence check. (3) jBilling's `resultCode` codes confirmed as `1=approved, 2=declined, 3=incorrect (data), 4=reject` (documentation only, doesn't change compilation status per the framing correction above).
+
+**Two new general resolution shapes** (`generator/compile_constraints.py`, `generator/sql_compiler.py`), built because a genuinely new kind of fact appeared twice, not hacked one-off: `derived_aggregate` gained an optional `value_column`, extracted by a new dotted-aggregate regex (`SUM(TABLE.COLUMN)`, with an optional explicit `FROM <tables>`) — the first real fact needing an aggregate over a *named* column reached via a join rather than a bare `COUNT(*)`; and a new `raw_sql_boolean` kind (a `RAW_SQL:`/`TABLES:` marker in a ground-truth row's notes) for a fact too bespoke for any structured shape — its SQL template still goes through the same `<placeholder>`-substitution and prose-shape checks as every other filter text, never trusted blindly, and is folded into the taxonomy's existing "Existence / Correlated Subquery" category rather than given a 14th one-off bucket. **A real bug found and fixed immediately while wiring the aggregate fix**: `degreeTotalCredits`' own `notes` prose repeated the literal `SUM(COURSE.CREDIT_HRS)` call text, and since `classify_derived` tries `notes` before the schema field, the prose's incomplete match (no `FROM`/`WHERE` to find) won and the real recipe was never reached — fixed by rewording the prose, and the caution is now documented directly in the extractor's own docstring for future ground-truth authors.
+
+**Investigated but left genuinely unresolved, honestly, per the project owner's "assume it yourself" instruction for the remaining Spree facts**: the real serialized preference keys for Spree's other 5 `preferences`-blob facts were confirmed directly against Spree's own source (`operator_min`/`amount_min`/`operator_max`/`amount_max` on `Promotion::Rules::ItemTotal`, `base_percent`/`tiers` on `Calculator::TieredPercent`, likely `customer_group_ids` on `Promotion::Rules::CustomerGroup`) and recorded in ground truth — but not wired into an actual SQL extraction, since these are genuinely serialized YAML/text blobs and no real sample row was available to confirm the exact serialization format a string/regex pull would need; inventing one would be exactly the kind of guess this whole exercise exists to avoid. `amountMaxSet`/`promotionTargetGroupsConfigured` stay unresolved for a further reason even with the keys known: `ItemTotal` declares its thresholds with hard non-null defaults, so "is the key present" cannot be what these booleans actually test.
+
+**A second real bug found, deliberately not fixed this pass**: `effectiveMinThreshold`/`effectiveMaxThreshold` show up as "unresolved: not found in ground truth" rather than correctly chaining into the blob-preference facts above, even though the DRD edges from `Promotion Item Total Eligibility` are present and correct in the DMN XML. Root cause, traced directly: both upstream decisions are literal expressions with no `<variable name="...">` element declared at all, so `Decision.own_variable` stays `None` and the DRD-priority check in `resolve_and_substitute` never matches, falling through to a ground-truth lookup under the wrong decision name. A safe general fix needs a way to infer the intended variable name for an unnamed literal-expression decision without misattributing it when a decision has more than one such upstream edge (this one has exactly two — Min and Max — so a naive "just accept it" fallback would pick the wrong one half the time); judged out of scope for a same-day fix and documented rather than patched speculatively.
+
+**Program totals after this round, full pipeline re-run in order**: 260 total target branches, **242 compiled (up from 239, 93.1%)**, 18 blocked (down from 21) — **FLEX2 now fully compiled, 103/103 (100.0%), 0 blocked** (down from 3). `sql_compiler.py`'s clean rate: 218/242 (90.1%), FLEX2 90.3%. `taxonomy/`'s tables updated correspondingly (Direct Attribute Reference 93/33.9%, Schema Gap 10/3.6%, Aggregate Function 10/3.6%, Existence/Correlated Subquery 9/3.3%, Compound/Unclassified Derivation 18/6.6%).
+
+Verified the same way as every previous pass: `find_blocking_issues` re-run over all 242 compiled records found zero leaks, and the flagship attendance worked example (unrelated to this round) was re-diffed and still matches exactly. Fully documented, including both bugs found and the facts deliberately left unresolved, in `generator/README.md`'s "A third round" section and `taxonomy/README.md`'s updated tables.
+
+### 13.18 `fitness.py` built — §6.3's branch-distance formula, the first piece of the search loop itself (2026-09-11, same day)
+
+Asked directly which to build next -- the fitness function (§6.3) or the mutation/crossover operators -- and whether DynaMOSA uses mutation or crossover. Answered both, then built the fitness function: **DynaMOSA uses both**, as any NSGA-II-descended genetic algorithm does (population, crossover, mutation, non-dominated-sorting survivor selection); the "Dyna" part is entirely about *which objectives currently receive search pressure* (a dependency graph gating activation -- DRD edges here, per §6.4's own already-settled choice), not about which variation operators it uses. Fitness first, not the operators, because crossover/mutation act on a candidate representation but are meaningless without a fitness signal to rank candidates by, and the fitness function is independently testable against `compiled_constraints.json` right now with no GA loop needed -- exactly the order §12 item 7 already named ("fitness function (§6.3) and search loop (§6.4)").
+
+**Genome, a design choice this module had to settle since nothing else in the repo had**: a flat `{free_variable_name: value}` dict, one entry per leaf free variable a branch's condition (and its DRD substitution chain) bottoms out at -- mirroring EvoSQL's own genome choice (§8) rather than a fully materialized row set. Turning a winning genome into real INSERT-able rows stays a separate, deterministic materialization step (§6.5), keeping the search's inner loop cheap exactly as §6.5 requires (no DB round-trip).
+
+**Implements**: the full §6.3 base distance table plus AND/OR/NOT/IN/BETWEEN composition, as a mutually recursive `distance_to_true`/`distance_to_false` pair (the same de Morgan-as-distance idea reused for both `not(...)` and the FIRST/UNIQUE suppression term, not re-derived twice); cross-variable comparisons need no special case at all, since both operands go through the same expression evaluator regardless of whether the right side is a literal or another variable -- §6.3's own flagged required extension, closed as a natural consequence of the design rather than a bolt-on; `substituted_decision` chains arithmetic-evaluated the same structure `sql_compiler.py` SQL-compiles, just producing a number; FEEL's `today()` treated as a scenario-level gene under the same logic `not_persisted` already gets as a bind parameter.
+
+**Honesty enforced as a hard error, not a silent pass-through**: `schema_gap`/`code_external`/`unresolved`/`chained_decision_output` are never accepted as legitimate genes even if a stray genome value exists under that name -- a real, reachable case found while building this, not merely theoretical: a FIRST/UNIQUE suppression term can depend on an *earlier* row's own free variable being itself unresolvable, even when the branch's own condition is perfectly fine. **12 of 242 compiled records (5.0%) are in exactly this position** -- their own condition already compiles and validates cleanly, but their suppression term can't be fully verified in-memory, deferred to the live-engine validation pass §6.7 already designs for. Named as this design's first concrete instance, not a new gap.
+
+**A real, general bug found in `compiled_constraints.json` itself, fixed at the source rather than worked around downstream**: `hit_policy_context.earlier_rows[i].condition` can reference free variables the record's *own* condition never does (different rows of a FIRST/UNIQUE table commonly test different declared inputs), and `variable_resolution` previously never covered them -- so a downstream consumer needing the *complete* suppression term had no way to resolve those variables at all. Fixed generally in `compile_constraints.py`: every earlier row's free variables are now resolved and merged into `variable_resolution` too, never causing a record to newly block. Purely additive, confirmed by re-running the full pipeline: identical 242/18 compiled/blocked counts and identical `sql_compiler.py`/taxonomy numbers before and after. Raised full-fitness evaluability from 162/242 (67.0%) to 230/242 (95.0%) in the module's own crash-test sweep across every compiled record.
+
+**Verified against the flagship worked example**: `lecturesAttended=40/lecturesHeldForOffering=45` reproduces §6.3's own `(88.9-80)+1=9.9` distance for the debarred rule's own condition (within the tolerance the doc's own rounded "88.9" display implies -- the exact value is 88.888...%); `=35/45` reproduces the doc's own "done" (distance exactly 0). Self-contained via `python3 generator/fitness.py`.
+
+**Not built this pass, deliberately**: the DynaMOSA search loop itself (§6.4) -- crossover/mutation over this genome, population management, the dynamic DRD-gated objective activation. Documented in `generator/README.md`'s new "`fitness.py`" section.
+
+### 13.19 Schema/DB constraint terms (§6.3's other half) — and the final deliverable clarified: real generated datasets (2026-09-11, same day)
+
+Asked for a worked example of the fitness equation and how schema constraints factor in; explaining it honestly meant admitting the constraint half wasn't built yet, so it was built the same day. Also asked directly, since §11's evaluation design was never settled: what final output is actually wanted. **Answer: real generated datasets** (CSV/SQL, produced by the finished search loop) — settling one open question, not the whole of §11, which is a separate reporting question this answer doesn't replace.
+
+**Built**: `not_null_distance`, `unique_distance`, `fk_distance`, `check_distance` in `generator/fitness.py`, reusing the exact base distance table and normalize-then-sum convention the DMN term already uses -- exactly §6.3's own point that both halves share one mechanism. These take a `candidate_rows: {table: [row, ...]}` view rather than the DMN term's flat genome dict, since UNIQUE/FK are properties of a row against the rest of the candidate, not a row in isolation; reconciling the two views is materialization's job (§6.5), not yet built.
+
+**A real bug found and fixed before any of this could even be tested, not a hypothetical one**: `flex2_schema_full.json` (the schema JSON `sql_compiler.py` already depends on) had **zero NOT NULL columns recorded across all 2081 columns**, including declared primary keys — `parse_flex2_ddl.py`'s own docstring had already, honestly, flagged this as a known limitation (NOT NULL inferred only from inline tokens; FLEX2's real export uses a separate `ALTER TABLE ... MODIFY`) that had simply never been followed up on. Separately, all four case studies' schema parsers discard FK detail down to just the target table name, never which column — insufficient for a real FK distance. Fixed both in `parse_flex2_ddl.py` (FLEX2 only, the design doc's own stated first testbed): 328 NOT NULL columns now correctly detected (matching 328 raw statements, zero missed), and per-column FK detail preserved as a new `fk_columns` field. Verified directly against `Flex1.sql`: `COURSE_OFFER`'s 5 NOT NULL columns, `STUDENT_ATTENDANCE`'s composite PK, and all 7 of `COURSE_OFFER`'s FK columns match exactly. Re-ran the full pipeline afterward — identical 242/18 compiled/blocked and identical `sql_compiler.py`/taxonomy numbers, confirming this only added previously-missing detail.
+
+**Scope stated plainly, not glossed over**: FK distance only works for FLEX2 right now — OpenMRS/Spree/jBilling's parsers still discard per-column FK detail the same way FLEX2's did before today, named here as a shared, not-yet-fixed gap; `fk_distance` raises loudly rather than silently returning 0 when this data is missing.
+
+**CHECK constraints**: a minimal parser for the SQL boolean grammar actually surveyed across the program's own 3 declared CHECK bodies (all Spree — two simple comparisons, one XOR-shaped null check), deliberately not a general SQL expression parser, the same discipline `feel_parser.py` used for FEEL. Found and fixed a real, general gap while testing the XOR-shaped one: `evaluate_expression` had no notion of a comparison node used in *value* position (needed for `(a IS NULL) <> (b IS NULL)`) — fixed generally, not special-cased to this one constraint.
+
+**Verified against real values**: `COURSE_OFFER.SEM_ID` NOT NULL (`None`→1.0, `7`→0), `STUDENT_ATTENDANCE`'s composite PK (duplicate pair→1.0, distinct→0), `COURSE_OFFER.SEM_ID→SEMESTER.SEM_ID` FK (present→0, absent→1.0), and all three of Spree's real CHECK constraints. Run directly via `python3 generator/fitness.py`. Documented in `generator/README.md`'s new "Schema/DB constraint terms" section.
+
+### 13.20 FK-column fix extended to the other three case studies (2026-09-11, same day)
+
+Asked directly to close the gap §13.19 named but left open: FK distance only worked for FLEX2. Fixed for all three remaining case studies, each a genuinely different situation rather than one mechanical repeat:
+
+**OpenMRS and jBilling**: the exact same shape of bug as FLEX2's own parser, fixed the same way. `parse_openmrs_liquibase.py`'s `addForeignKeyConstraint` handling already named `baseColumnNames`/`referencedColumnNames` in its own docstring's element description — the attributes were just never read off the actual XML element. `parse_jbilling_ddl.py`'s `FK_RE` regex already captured the local/ref column groups (`_fkcols`, `_refcols`, underscore-prefixed to mark them as deliberately unused) and discarded them. Both now preserve `fk_columns`. Verified directly: OpenMRS's `encounter.patient_id -> patient.patient_id`, jBilling's `payment.result_id -> payment_result.id` (the same column this session traced by hand earlier the same day, in the closest-table pass).
+
+**Spree: a different problem, not a mechanical fix.** Its historical migration files (what `parse_spree_migrations.py` needs to parse) were only ever available in a prior session's own environment (`/home/claude/spree_research/...`) and were never checked into this repository — confirmed by direct search, not assumed. That source cannot be re-parsed here at all. Rather than leave Spree's FK distance permanently unresolvable, a new, small, dedicated script (`add_spree_fk_columns.py`) parses `schemas/spree_schema.rb` directly instead — the already-checked-in, already-used-elsewhere-this-session consolidated schema dump, arguably a better source than replaying migration history anyway since it's the one definitive final state. Spree declares exactly 6 `add_foreign_key` calls, all the simple two-argument form relying on Rails' default naming convention (local column = singularize(target table) + `_id`, ref column = `id`) — each of the 6 was verified directly against its target table's real declared columns before being trusted, not assumed to follow the convention blindly.
+
+**A real bug caught in the new script itself, before it shipped**: the first version's regex used `$` without `re.MULTILINE`, so it matched zero of the six real `add_foreign_key` lines despite being textually correct — caught by checking the actual match count (0) against the known expected count (6) rather than trusting a script that ran without erroring. Also caught and fixed a duplicate-entry bug from a first successful run (re-running the script naively double-appended the same 6 entries) before committing the corrected output, by checking the output file's actual entry count rather than assuming a clean run meant a clean result.
+
+**Program totals**: unaffected — re-ran the full pipeline (`compile_constraints.py` → `sql_compiler.py` → `taxonomy/build_construct_taxonomy.py`) and got the identical 242/18 compiled/blocked counts and identical `sql_compiler.py`/taxonomy numbers as before touching any of the three schema JSONs, confirming this was purely additive detail, not a change to anything already working. `fitness.py`'s own self-check (`python3 generator/fitness.py`) now verifies FK distance against real data from all four case studies, not just FLEX2.
+
+### 13.21 `candidate.py` — checking, not assuming, that the fitness design generalizes (2026-09-11, same day)
+
+Asked directly whether the current fitness design would work for all rules. Answering that honestly meant checking it, not reasoning about it in the abstract — `fitness.py`'s genome had only ever been driven by hand-picked scalars, never by values computed from real candidate rows the way an actual search loop would have to supply them. Built `generator/candidate.py`: a `Candidate` (`{table: [row, ...]}`, §6.2's own representation) plus `derive_genome()`, walking a compiled record's `variable_resolution` and computing each free variable's real current value from the candidate's actual rows — the in-memory-row-set analogue of what `sql_compiler.py` does for SQL text, feeding directly into `fitness.branch_fitness` unchanged.
+
+**The flagship example, with real rows instead of a scalar**: a candidate with 40 genuine `STUDENT_ATTENDANCE` rows for the student *plus 5 deliberate noise rows* a correct filter must exclude (3 for a different student, 2 marked absent), and 45 real `LECTURE` rows. `derive_genome` correctly excludes all 5 noise rows, reproduces the exact same `{lecturesAttended: 40, lecturesHeldForOffering: 45}` genome and `1.8163` fitness score as the earlier hand-picked-scalar test. A second candidate with 35 real attended rows reaches fitness exactly `0.0` — independently cross-checked by materializing the same rows into a real SQLite database and running the DMN condition as an actual query, confirming "fitness says 0" and "a real database agrees" for this case.
+
+**Full-corpus honesty check, not a curated sample**: built a minimal, auto-generated candidate for all 242 currently-compiled records and asked whether `derive_genome` could produce a complete genome for each. **216/242 (89.3%) could.** The other 26 are exactly the already-documented categories, not new surprises: 12 already-known suppression-only unresolvable variables (§13.19's own 5.0% gap), 9 unclassified `derived`-kind facts (§7b's "Compound / Unclassified Derivation" catch-all — genuinely no more structure to compute from than `classify_derived` itself had), and 2 from a division-by-zero bug this sweep itself surfaced and let get fixed.
+
+**A real robustness bug found and fixed while running the sweep**: dividing by a `derived_aggregate` gene that lands on 0 (e.g. an offering with no lectures yet) crashed the whole evaluation with a raw `ZeroDivisionError` — a genuinely reachable candidate state during search, not hypothetical. Fixed in `fitness.py`'s arithmetic evaluator to raise a clear `FitnessEvaluationError` instead, the same way every other unevaluable case in the module already does.
+
+**What this settles, and what it still doesn't**: the branch-distance formula itself is confirmed consistent whether fed a hand-picked scalar or a value derived from real, noisy rows — the equation is not the weak point. What remains genuinely untested: whether every "fitness = 0" genome the eventual search finds is buildable as fully consistent rows across a *shared* candidate spanning many branches at once (DynaMOSA's own per-case-study population, not one branch in isolation) — `derive_genome` is stateless and takes whatever candidate it's given, so nothing architecturally prevents sharing one, but it has not been exercised with more than two branches sharing a candidate. That is the search loop's own job to prove, not this bridge's — named honestly as the next open question rather than assumed solved.
+
+**Known, stated limitation**: the mechanical filter matcher only recognizes plain `COLUMN = VALUE`/`COLUMN = <placeholder>` conjuncts joined by `AND`, exactly the shape actually surveyed (the same discipline `feel_parser.py`/the CHECK-constraint parser already use elsewhere). A conjunct like the flagship's own `"LECTURE_ID IN (LECTURE for that OFFER_ID)"` (a join description in prose) is skipped and reported, not silently dropped — a derived count can be a real over-count on exactly the skipped conjuncts' account, the same honesty tradeoff `sql_compiler.py` already makes for the identical filter text.
+
+Documented in `generator/README.md`'s new "`candidate.py`" section. Self-contained via `python3 generator/candidate.py`.
+
+### 13.22 `mutation.py` — the mutation operator (§6.4), and a real correctness bug it caught in `semesterType` (2026-09-11, same day)
+
+Asked what the mutation and crossover operators would be, specified both precisely, then asked which to build first. Answer: mutation, since it converges on real branches by itself (§7a's own finding that most rule rows test one dedicated variable, even under FIRST hit policy) and is independently testable, where crossover only pays off once a population of diverse candidates already exists to recombine.
+
+**Built**: two sub-operators in `generator/mutation.py`, selected automatically by the mutated leaf's own resolution kind — M1 (field mutation: `schema_column`/`null_check`/`any_not_null`/`join_lookup`/`join_null_check`/`regex_match`/`derived_case`, perturbing one row's one column) and M2 (row-count mutation: `derived_aggregate`/`exists`, adding or removing a whole row). Direction for both is decided the same way — try each candidate replacement value in the genome, keep whichever `branch_fitness` call is lowest — rather than duplicating per-kind logic. Field mutations prefer an *enumerable domain* drawn directly from the branch's own condition literals over a random string. `hillclimb()` wraps repeated mutation into a (1+1) local search, §6.4's own legitimate "local search" mode, not a stand-in for DynaMOSA's own population loop (which will reuse this same `mutate()` as its variation operator).
+
+**Verified on the flagship rule from a deliberately wrong start** (44/45 attended lectures, well on the wrong side of the 80% threshold): converges to fitness exactly 0.0 in 11 monotonically-improving steps — and does so by *increasing* `lecturesHeldForOffering` rather than decreasing `lecturesAttended`, confirming the operator explores rather than following one expected path.
+
+**A second real, previously undiscovered bug, caught by testing the operator against a different rule than the one it was built against**: running mutation against `Course Load Limit::Rule_1` (which compares `semesterType`) exposed that this session's own earlier `semesterType` fix (§13.16/§13.17 — mapping it as a plain passthrough of `SEMESTER.TITLE`) was itself incomplete. The DMN rules compare `semesterType` against `'Regular'`/`'Summer'`, a genuinely different two-category vocabulary than `TITLE`'s own three real values (`'Fall'`/`'Spring'`/`'Summer'`) — a raw passthrough can never equal `'Regular'` for any real row. Confirmed concretely, not just argued: the mutation operator itself exploited exactly this gap, "solving" the branch by writing the impossible value `TITLE='Regular'` directly into a candidate row — fitness said 0, the row was fiction. This is precisely the risk named when `candidate.py` was built (§13.21: "not every fitness=0 genome is buildable as real rows"), now caught in practice rather than left as an abstract worry.
+
+**Fix**: a new resolution kind, `derived_case` — a real column value mapped through an *exhaustive*, hand-authored `CASE_MAP:` enumeration (parsed by a new `compile_constraints.py` extractor, `_try_extract_case_map`), deliberately with no ELSE/default: an unmapped real value must surface as a hard error, never silently fall through to a guessed category. `semesterType`'s ground truth now reads `CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'`. Wired into every consumer: `candidate.py` reads the real value and maps forward (raising on an unmapped one); `sql_compiler.py` compiles a real `CASE WHEN` SQL expression (no ELSE, same honesty); `mutation.py`'s field mutation **inverts** the mapping when writing back — mutating toward `'Regular'` writes a real `'Fall'`/`'Spring'`, never the literal string `'Regular'` itself. `fitness.py` needed no change at all: `derived_case` is just another leaf gene to it, exactly like `derived_aggregate` already is.
+
+**Verified in both directions**: `mutation.py`'s own self-check confirms mutating toward `'Summer'` writes `'Summer'`, and mutating toward `'Regular'` writes `'Fall'` or `'Spring'` — never the impossible label itself. Re-ran the full pipeline afterward: identical 242/18 compiled/blocked counts and identical `sql_compiler.py` clean-rate numbers, confirming this was a resolution-shape correction, not a new gap or a closed one. The only visible shift is in `taxonomy/`'s storage-shape table, where `semesterType` moves from "Direct Attribute Reference" to "Single-Column Predicate" (93→92, 28→29) — folded into that existing category rather than given a 15th one-off bucket, since it still decomposes to one real column compared against a named constant, just through a `CASE` expression.
+
+Documented in `generator/README.md`'s new "`mutation.py`" section. Self-contained via `python3 generator/mutation.py`.
+
+### 13.23 Stress-testing `mutation.py` against tricker rules — three more real bugs found and fixed (2026-09-11/12)
+
+Asked explicitly to check the mutation operator against 3-4 more rules, chosen to be harder than the flagship: a deeply-nested `AND`/`NOT IN` condition with a FIRST-hit suppression row (`Course Registration Eligibility::Rule_2`, both a feasible and a deliberately structurally-infeasible grounding), `derived_case` exercised through the full `mutate()`/`hillclimb()` loop rather than `apply_mutation` alone (`Course Load Limit::Rule_2`), a branch combining a `raw_sql_boolean` leaf with a permanently-unclassified `derived` leaf (`Summer Semester Registration::Rule_2`), and a genuine cross-variable comparison plus `derived_case` plus a 2-level chained suppression (`Course Registration Eligibility::Rule_3`).
+
+**Bug 1 — `unmetPrerequisiteCount` collided with `previousGradeInCourse` on the same physical column.** The very first test crashed (`TypeError: '>' not supported between 'str' and 'int'`). Root cause: `unmetPrerequisiteCount`'s raw text, `"COUNT via COURSE_PREREQ join COURSE_REGISTRATION.GRADE"`, is a real join-based aggregate, but `_try_extract_aggregate_recipe`'s regexes all require a literal `AGG(...)` call, so it fell through to a plain `schema_column` on `course_registration.grade` — the same column `previousGradeInCourse` (a string) resolves to. Fixed with a new resolution kind, `derived_join_count`, built from the real DDL-confirmed join (`COURSE_PREREQ.COURSE_ID`/`COURSE_PREREQ` against `COURSE_REGISTRATION.ROLL_NO`/`COURSE_ID`/`GRADE`, excluding the same `{F,D,D+,C-}` blocklist), wired through `candidate.py`, `mutation.py`, `sql_compiler.py`, and the taxonomy categorizer. Occurs exactly twice in the whole program (both FLEX2); "this" course/student context is found by matching whichever focal row carries both key columns, not a fixed table name (`COURSE_REGISTRATION` for one decision, `EXEMPTED_COURSES` for the other). Full pipeline re-run: identical 242/18 compiled/blocked; `candidate.py`'s own full-corpus coverage rose 216/242 → 218/242.
+
+**Bug 2 — mutating toward a `NOT IN` target cycled among the blocked values themselves, never escaping the set.** `previousGradeInCourse NOT IN {F,D,D+,C-}` stalled at fitness 0.5: `candidate_values`' only candidates for this leaf (`'D'`, `'D+'`, `'C-'`) were themselves still-blocked grades, scoring identically to the wrong start. `enumerable_domain` never distinguished "hitting one of these helps" from "avoiding all of these does" — a genuine polarity blindness. Fixed by tracking `not`-polarity while walking the condition (`_collect_domain_facts`) to split literals into `hit`/`avoid`, adding an escape-value candidate (guaranteed outside the avoid-set) whenever `avoid` is non-empty. Test A's feasible grounding then reached fitness 0.0 in 4 steps.
+
+**Bug 3 — `mutate()` crashed outright the moment a `raw_sql_boolean` leaf looked improvable.** `raw_sql_boolean` is deliberately unmutatable (`apply_mutation` explicitly refuses it) but is *also* listed among `BOOLEAN_LEAF_KINDS`, so `best_value_for` happily calls it "improvable" — and `mutate()` never caught `apply_mutation`'s own refusal, so the exception propagated straight out of `mutate()`/`hillclimb()`, killing the whole search. Reproduced directly with a minimal synthetic record (the same shape as `Summer Semester Registration::Rule_2`'s own visiting-scholar fact). Fixed by catching `FitnessEvaluationError` around the `apply_mutation` call and treating it like "not improved."
+
+**Two honest, non-bug findings, left as-is**: (1) the cross-variable test (D) needed a 96-unit numeric gap closed one step at a time — 500 iterations wasn't enough budget (stalled at 97/100), but 5000 reached fitness exactly 0.0 in 99 monotonic steps, confirming the operator is correct and simply has no AVM-style step-doubling yet (a real, named follow-up before DynaMOSA is expected to close large gaps efficiently, not a defect in what exists today). (2) `Summer Semester Registration::Rule_2` can never be generated end to end regardless of candidate quality, because of `isNeededToGraduateThisSummer`'s permanently-unclassified `derived` catch-all (§7b's own ~7% gap) — confirmed as the *only* remaining blocker by first supplying a fully-materialized candidate for the record's `raw_sql_boolean` leaf and watching it compile cleanly.
+
+Documented in `generator/README.md`'s new "Testing `mutation.py` against tricker rules" section. All fixes re-verified against `mutation.py`'s own flagship self-check (no regression) and the full `compile_constraints.py`/`candidate.py` pipeline (242/18 unchanged; coverage up).
+
+### 13.24 Wiring schema/DB constraints into the mutation objective, and what that surfaced (2026-09-12)
+
+Asked directly whether row mutation checks FK/schema constraints. Checked, didn't assume: no — `mutation.py` only ever optimized `branch_fitness` (the DMN term); `fitness.py`'s own constraint-distance functions (§13.19) existed and worked but were never called from mutation.py. Demonstrated concretely: the D test candidate from §13.23, having converged to `branch_fitness == 0.0`, scored `candidate_constraint_fitness == 68.3` on the exact same rows (96 near-empty `COURSE_REGISTRATION` rows, missing FKs and required columns, several duplicates).
+
+**Fix, chosen as the "correct" of two offered options**: mutation's objective is now `branch_fitness + candidate_constraint_fitness`. Since the constraint term needs real materialized rows, the old cheap in-genome hypothetical had to become a real trial-application-and-score step (`best_value_for` now deep-copies candidate/focal/scenario, applies each candidate value for real, and scores that copy) — which also cleanly subsumed the earlier "crash on an unmutatable-but-improvable leaf" fix from §13.23 (a refused value now just fails its own trial and is skipped).
+
+**Verified working** on tests A and B from §13.23: both still solve the DMN term (`branch_fitness == 0.0`), with the constraint residual now visible rather than invisible (A: DMN 0.0 / constraint 1.33; B: DMN 0.0 / constraint 0.67). The flagship attendance self-check now reports a real, correctly-identified `0.5` residual too — a genuine `LECTURE.OFFER_ID -> COURSE_OFFER.OFFER_ID` FK violation.
+
+**A genuine emergent problem this surfaced, not a bug**: re-running test D (needing a count to climb from 4 toward >99), hillclimb got trapped at combined fitness 1.657 after 6 steps, having greedily *deleted* rows toward `projectedTotalCoursesThisRegistration = 0` — each constraint-incomplete row `derived_aggregate`'s M2 adds costs a full-scale constraint penalty while contributing only a tiny fractional DMN improvement toward a target 99 units away, so a one-step-lookahead greedy search always prefers removing rows over adding the (still-incomplete) ones actually needed. This is exactly the reason §6.4 keeps the DMN and constraint terms as *separate* DynaMOSA objectives (Pareto-compared, never summed) rather than one scalar — a single-objective (1+1) hillclimb has no way to see past one objective's large per-step cost to another's necessary long-range gain. Documented plainly in `hillclimb()`'s own docstring as a known consequence of the local-search mode, not a hidden gap, and as concrete evidence for why the population/Pareto version of DynaMOSA (not yet built) is not optional polish.
+
+**Still open, unchanged by this fix**: M2 still has no way to *repair* a constraint violation it can now measure — no candidate-value dimension for "also fill this table's other NOT NULL columns" or "also add the FK's parent row." A real next refinement, not attempted here.
+
+Documented in `generator/README.md`'s new "Wiring schema/DB constraints into the mutation objective" section.
+
+### 13.25 The real fix: repair-by-construction, not a search objective (2026-09-12, same day)
+
+Asked what to do about §13.24's finding (a summed DMN+constraint objective let one objective's per-step cost mask the other's necessary long-range gain), the recommendation was to stop treating NOT NULL/UNIQUE/FK as something for the search to *discover* at all -- they're mechanically decidable from the schema alone, with no DMN-relevant ambiguity. CHECK constraints are the one real exception (they constrain the same values a DMN branch may care about) and are left as a stated scope boundary for whenever a real population/Pareto DynaMOSA loop exists to give them their own objective (rare: 3 CHECK constraints total, Spree only).
+
+**Fix, approved and built**: reverted `hillclimb`/`best_value_for` to the original, cheap, genome-only `branch_fitness`-alone design, and gave `apply_mutation` a mandatory repair step (`_repair_row`) making every row M1/M2 touches or constructs schema-legal *immediately*, by construction -- fills required NOT NULL columns with a type-appropriate placeholder (a fresh, never-reused value when that column is also part of a declared key, so repair itself never manufactures a new UNIQUE collision across M2's own near-identical aggregate rows), and auto-materializes a minimal parent row for any FK column that's set but has no match yet, recursively repairing that new parent row too. `candidate_constraint_fitness` stays available purely as a post-hoc audit metric.
+
+**A second real bug found while building this**: `copy.deepcopy(candidate)` and `copy.deepcopy(focal)` as two separate top-level calls silently breaks the object aliasing between a focal row and its own entry in the candidate's row list -- a field mutation could then write into a focal copy that `candidate` itself never actually contained, meaning the genome a mutation was scored on could diverge from the adopted candidate. Fixed by deep-copying `(candidate, focal)` together in one call.
+
+**Verified**: the flagship self-check (seeded with a deliberately incomplete `STUDENT_PROGRAM` row) reaches `branch_fitness == 0.0` with `candidate_constraint_fitness == 0.667`, and that residual is entirely the pre-seeded row repair was never responsible for -- everything mutation itself built is schema-clean, confirmed row-by-row. Tests A and B from §13.23 now reach **both** `branch_fitness == 0.0` **and** `candidate_constraint_fitness == 0.0`. Test D -- the exact case trapped under the summed objective -- converges again in 99 steps (matching its pre-constraint-work behavior), with its residual traced entirely to 4 hand-seeded test rows outside repair's scope, not anything mutation constructed.
+
+Documented in `generator/README.md`'s "The actual fix: repair-by-construction, not a search objective" section.
+
+### 13.26 `crossover.py` -- the crossover operator (§6.4, built 2026-09-12)
+
+Built the second of the two variation operators named back when mutation.py was built first (§13.22): **uniform table-mask crossover** -- recombines two parent `Candidate`s into two complementary children by choosing, independently per table, which parent's entire row-set for that table the child inherits. Table, not row, is the unit of recombination: individual rows across two unrelated parents have no stable identity to align gene-by-gene, but a whole table's row-set is a clean, atomic unit every candidate shares regardless of population history.
+
+**Mandatory FK-repair pass**: reuses `mutation.py`'s own `_repair_row` directly (the same schema-legal-by-construction discipline from §13.25, not a second mechanism) -- swapping a table's row-set wholesale very often leaves a dangling FK, and repair closes it the same way it does after a mutation.
+
+**Verified concretely**: built two independently DMN-solved, schema-clean parents with deliberately zero row-identity overlap, so any crossed table pairing is guaranteed to produce a real dangling FK. Confirmed the raw unrepaired swap really does score `candidate_constraint_fitness == 25.17`, and the real operator's repair pass closes it to exactly `0.0` on both children; confirmed the children are complementary and parents untouched.
+
+**A real reproducibility bug found and fixed while testing this**: iterating a bare `set` of table names to build the coin-flip mask meant the same rng seed could silently produce a different mask across separate process runs, since Python randomizes string hashing (and set iteration order) per process by default. Confirmed directly with three different `PYTHONHASHSEED` values producing three different orderings of the same table set. Fixed by iterating `sorted(...)` instead; re-verified byte-identical output across hash seeds afterward.
+
+**Honest closing observation, not asserted away**: crossover guarantees schema-legality unconditionally but makes no promise about DMN branch fitness -- a child built from two parents solving different scenarios can end up genuinely invalid for either parent's own scenario (reproduced concretely: a real `0/0` `FitnessEvaluationError`, not a crash). Ordinary GA behavior -- population fitness improves through selection pressure across many events and generations, not every single recombination.
+
+Documented in `generator/README.md`'s new "`crossover.py`" section. Self-contained via `python3 generator/crossover.py`.
+
+### 13.27 `search.py` -- do we need crossover? Escalation, not automatic use (2026-09-12)
+
+Asked directly whether crossover is needed at all, right after building it (§13.26). Honest answer: not always, and not on its own -- crossover's own self-test already proved recombination alone doesn't preserve or improve DMN fitness, and §7a's own finding (most rows test one dedicated variable) means mutation-only hillclimb already suffices for the common case. Recommended, and built: `solve_branch()` in `generator/search.py` -- mutation-only hillclimb first; escalates to a small population + crossover GA only when hillclimb stalls within its budget, directly following §6.4's own already-stated hybrid strategy rather than a new decision. Explicitly **not** the full per-case-study DynaMOSA population/Pareto loop (one shared population across every branch, DRD-gated activation, non-dominated sorting) -- that remains a separate, larger, not-yet-built piece.
+
+**A real bug in crossover.py found while wiring this in**: `_repair_row`'s FK-repair branch can add a brand-new table to a child mid-loop, and `crossover()`'s own repair pass was iterating the live dict, raising `RuntimeError: dictionary changed size during iteration` the first time a crossed pair actually needed a new table. Fixed by snapshotting with `list(...)`.
+
+**`crossover()` extended to carry `focal`**: added optional `focal1`/`focal2` parameters so a crossed child still knows which row is "this" for every leaf (needed for `mutate()`'s further polish inside the escalation loop) -- built the same joint-deepcopy-preserves-aliasing way as mutation.py's own `(candidate, focal)` fix (§13.25).
+
+**Verified, honestly, both ways**: escalation correctly never triggers when mutation alone suffices (flagship rule, `population_history` stays `None`); genuinely rescues a budget-starved but tractable branch (`Course Load Limit::Rule_2`, independent facts on two separate tables -- exactly table-mask crossover's target shape -- reaches fitness `0.0` in 2 generations after mutation alone barely moved); honestly fails to rescue a branch whose real bottleneck is a large single-scalar numeric gap (confirmed: table recombination has no lever for that, a separate AVM-step-doubling follow-up would); and correctly reports genuine structural infeasibility as `solved: False`, never a false success.
+
+Documented in `generator/README.md`'s new "`search.py`" section. Self-contained via `python3 generator/search.py`.
+
+### 13.28 AVM step acceleration -- the follow-up §13.23/§13.27 both flagged, now built (2026-09-12)
+
+Built the "still-unbuilt AVM step" named as the honest limitation in §13.27's own Case 2b: mutation's numeric leaves now use AVM's real "probe and accelerate" discipline in `best_value_for` -- step=1 both ways, double the step each time the same direction keeps improving, halve on overshoot -- gated by a small eligibility check so every other leaf kind (boolean, domain-based, string edit) is completely unaffected.
+
+**A real companion bug forced into the open**: `_apply_row_count_mutation` still only added/removed one row per call regardless of the step `best_value_for` now legitimately decides on, silently diverging the scored genome from the real candidate the moment it was applied. Fixed by moving the full `value - current` distance in one call, for both the generic aggregate branch and `derived_join_count`.
+
+**Verified with dramatic before/after numbers**: the flagship attendance self-check, previously 11 accepted steps, now converges in 2 (the very first leaf pick jumps `lecturesHeldForOffering` by 1+2+4+8=15 in one doubling sequence). The cross-variable `Rule_3` case from §13.23, previously needing ~99 individual steps and a 5000-iteration budget, now converges in 4 steps with the default 300-iteration budget. `search.py`'s own Case 2b had to be re-measured: mutation alone now solves that branch from a budget of 10 (previously needed the full population/crossover escalation at budget 20) -- the bar for "starved" moved a lot, though escalation is still real and demonstrable at a tighter budget.
+
+Every existing test in this session's record was re-run after this change: compiled/blocked counts unchanged, and the full A/B/C/D tricky-rules sweep still passes with identical DMN-convergence verdicts, just in far fewer steps.
+
+Documented in `generator/README.md`'s new "AVM step acceleration" section. Self-contained via `python3 generator/mutation.py`.
