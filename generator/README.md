@@ -963,6 +963,91 @@ single recombination individually preserves it.
 
 Self-contained via `python3 generator/crossover.py`.
 
+## `search.py` -- do we need crossover? Escalation, not automatic use (2026-09-12)
+
+Asked directly whether crossover is needed at all. Honest answer: not
+always, and not on its own -- `crossover.py`'s own self-test already
+proved recombination alone doesn't preserve or improve DMN fitness (its
+payoff only comes from *selection* choosing which children survive), and
+§7a's own finding (most rule rows test one dedicated variable, even
+under FIRST hit policy) means mutation-only hillclimb already suffices
+for the common case, confirmed repeatedly across this session's own
+tricky-rule tests. Building the full per-case-study DynaMOSA population
+loop (§6.4's settled algorithm-of-record) to make crossover pay off
+everywhere is a substantially larger build than either operator alone.
+
+**What was actually built**: `solve_branch()` -- mutation-only hillclimb
+first (cheap, proven); escalates to a small population + crossover GA
+*only* when hillclimb stalls within its iteration budget. This directly
+follows §6.4's own already-stated hybrid strategy ("Escalate to a genetic
+algorithm ... when (a) many targets need to be covered together
+efficiently ... or (b) a target requires jointly consistent values...")
+rather than a new decision -- and is explicitly **not** the full
+per-case-study population/Pareto loop (one shared population across
+every branch, DRD-gated dynamic objective activation, non-dominated
+sorting): that's a substantially larger, separate build, not attempted
+here. This is the smaller, immediately useful piece -- a single-branch,
+single-objective escalation, matching what SchemaAnalyst/EvoSQL already
+do per-target below the DynaMOSA framing.
+
+The escalation loop itself: seeds a small population with the mutation
+phase's own best-so-far (never discarded) plus several independent
+shorter hillclimbs from the *original* start (different rng streams) for
+diversity -- each member is itself already a locally-optimized candidate,
+not a naive random one. Each generation: sort by fitness, keep the top
+half as elite parents, recombine pairs via `crossover.py`'s table-mask
+crossover (which now also carries `focal` through the same table-parent
+choice -- extended for this, see below), then polish each child with 1-3
+mutation steps. Replace the population with elites + offspring, truncate
+back to size.
+
+**A real bug in `crossover.py` found while wiring this in**:
+`_repair_row`'s FK-repair branch can add a brand-new table key to a
+child (synthesizing a minimal parent row for a table the mask never
+selected at all) -- `crossover()`'s own repair loop was iterating
+`child.as_dict().items()` live, so this raised
+`RuntimeError: dictionary changed size during iteration` the first time
+a crossed pair actually needed a new table. Fixed by snapshotting with
+`list(...)` before iterating (safe: any row `_repair_row` itself creates
+is already repaired recursively before it returns, so there's nothing
+left for the outer loop to do for a newly-added table).
+
+**`crossover()` extended to carry `focal`**: added optional
+`focal1`/`focal2` parameters, returning `child_focal1`/`child_focal2`
+built the same way the row-sets are -- whichever parent supplies a
+table's rows also supplies that table's focal entry, copied via the same
+joint `copy.deepcopy` call as the row list (mutation.py's own
+`(candidate, focal)` aliasing fix, §13.25, applied here too, since a
+focal row is frequently the identical object as one of that table's own
+rows). Needed because `mutate()`/`hillclimb()` require a `focal` to know
+which row is "this" for every leaf -- without it, further mutation
+polish on a crossed child would silently create disconnected duplicate
+rows instead of editing the right one.
+
+**Verified, honestly, with results that go both ways**:
+- **Escalation correctly never triggers when unneeded**: the flagship
+  attendance rule with a generous budget solves via mutation alone;
+  `population_history` stays `None`.
+- **Escalation genuinely rescues a budget-starved but tractable branch**:
+  `Course Load Limit::Rule_2` (independent facts on two separate tables,
+  `SEMESTER` and `STUDENT_PROGRAM` -- exactly the shape table-mask
+  crossover targets) given only 1 mutation iteration barely moves
+  (`0.909 -> 0.9`), but the population phase reaches fitness exactly
+  `0.0` in 2 generations.
+- **An honest limit, not hidden**: the same escalation applied to the
+  cross-variable `Rule_3` case (needing `projectedTotalCoursesThisRegistration`
+  to climb ~99 units) triggers, never regresses below the mutation
+  phase's own best, but does **not** rescue it -- table-level
+  recombination has no lever for a large single-scalar numeric gap;
+  that needs AVM-style step-doubling (a separate, still-unbuilt
+  follow-up, unchanged by this work).
+- **Structural infeasibility is still reported honestly**: a branch with
+  a fixed literal that can never match its own requirement stays
+  `solved: False` after the full escalation budget, never a false
+  success.
+
+Self-contained via `python3 generator/search.py`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

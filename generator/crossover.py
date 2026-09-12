@@ -56,14 +56,27 @@ from candidate import Candidate  # noqa: E402
 from mutation import _repair_row  # noqa: E402 -- reused, not reimplemented
 
 
-def crossover(parent1, parent2, case_study, rng=None):
+def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None):
     """Uniform table-mask crossover with mandatory FK-repair. Returns
-    (child1, child2) -- complementary children built from the same mask
-    and its inverse, each independently repaired for NOT NULL/FK by
-    construction. Neither parent is mutated (each row is deep-copied into
-    its child, the same "parents are never touched" discipline
-    mutation.py's own mutate() follows)."""
+    (child1, child2, child_focal1, child_focal2) -- complementary children
+    built from the same mask and its inverse, each independently repaired
+    for NOT NULL/FK by construction. Neither parent is mutated (each row
+    is deep-copied into its child, the same "parents are never touched"
+    discipline mutation.py's own mutate() follows).
+
+    `focal1`/`focal2` (optional -- default `{}`, in which case the
+    returned child focals are also `{}`) are the per-branch "which row is
+    *this* one" views mutation.py's own mutate()/hillclimb() need to keep
+    operating on the result -- added when wiring crossover into a real
+    escalation loop (2026-09-12): a focal row for a table that swaps
+    parents must swap with it (whichever parent supplied a table's rows
+    also supplies that table's focal row), copied via the SAME joint
+    `copy.deepcopy` call as that table's own row list -- exactly
+    mutation.py's own `(candidate, focal)` aliasing fix, applied here too,
+    since a focal row is frequently the identical object as one of that
+    table's own rows and copying them apart would silently break that."""
     rng = rng or random
+    focal1, focal2 = focal1 or {}, focal2 or {}
     # sorted(), not a raw set iteration -- found necessary while testing
     # (2026-09-12): Python's string hashing is randomized per process by
     # default, so iterating a bare `set` of table names visits them in a
@@ -73,25 +86,40 @@ def crossover(parent1, parent2, case_study, rng=None):
     # randomization alone -- a real reproducibility bug for anything that
     # needs a deterministic replay from a fixed seed (as a search run
     # generally does).
-    tables = sorted(set(parent1.as_dict()) | set(parent2.as_dict()))
+    tables = sorted(set(parent1.as_dict()) | set(parent2.as_dict()) | set(focal1) | set(focal2))
     from_parent1 = {table: rng.random() < 0.5 for table in tables}
 
     def build(mask):
         child = Candidate()
+        child_focal = {}
         for table in tables:
-            source = parent1 if mask[table] else parent2
-            for row in source.rows(table):
-                child.add_row(table, copy.deepcopy(row))
-        return child
+            source, source_focal = (parent1, focal1) if mask[table] else (parent2, focal2)
+            rows_copy, focal_copy = copy.deepcopy((source.rows(table), source_focal.get(table)))
+            for row in rows_copy:
+                child.add_row(table, row)
+            if focal_copy is not None:
+                child_focal[table] = focal_copy
+        return child, child_focal
 
     inverted = {table: not v for table, v in from_parent1.items()}
-    child1, child2 = build(from_parent1), build(inverted)
+    (child1, child_focal1), (child2, child_focal2) = build(from_parent1), build(inverted)
 
     for child in (child1, child2):
-        for table, rows in child.as_dict().items():
-            for row in rows:
+        # list(...) snapshots, not a live dict view -- a real bug found
+        # testing search.py's escalation loop (2026-09-12): _repair_row's
+        # FK-repair branch can add a brand-new table key to `child`
+        # (synthesizing a minimal parent row for a table the mask never
+        # selected at all), which raises "dictionary changed size during
+        # iteration" if this loop is still iterating child.as_dict()
+        # live. Safe to snapshot rather than also visit newly-added
+        # tables: any row _repair_row itself creates is already repaired
+        # recursively before it returns (see _repair_row's own
+        # docstring), so there is nothing left for this outer loop to do
+        # for a table it never touches directly.
+        for table, rows in list(child.as_dict().items()):
+            for row in list(rows):
                 _repair_row(child, table, row, case_study)
-    return child1, child2
+    return child1, child2, child_focal1, child_focal2
 
 
 if __name__ == '__main__':
@@ -179,7 +207,7 @@ if __name__ == '__main__':
     print()
     print("crossover() -- with its mandatory FK-repair pass:")
     rng = random.Random(2)
-    child1, child2 = crossover(p1, p2, 'FLEX2', rng)
+    child1, child2, child_focal1, child_focal2 = crossover(p1, p2, 'FLEX2', rng)
     for label, child in [('child1', child1), ('child2', child2)]:
         cf = candidate_constraint_fitness(child.as_dict(), schema)
         print(f"  {label}: tables={sorted(child.as_dict())}, constraint_fitness={cf:.6f}")
