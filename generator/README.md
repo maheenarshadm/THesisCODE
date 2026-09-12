@@ -903,6 +903,66 @@ call, preserving the same shared references they had before copying.
   hand-seeded `COURSE_REGISTRATION` rows (never touched by mutation, so
   never repair's to fix) rather than anything mutation constructed.
 
+## `crossover.py` -- the crossover operator (§6.4, built 2026-09-12)
+
+**Uniform table-mask crossover**: recombines two parent `Candidate`s into
+two complementary children by choosing, independently per table, which
+parent's *entire* row-set for that table the child inherits -- a coin
+flip per table, the same "uniform crossover" a GA applies per-locus to a
+fixed-length chromosome, except the locus here is a whole table's
+row-list, not a scalar gene. Table, not row, is the unit of
+recombination: individual rows across two unrelated parent candidates
+have no stable identity to align gene-by-gene the way two same-length
+chromosomes would (parent1's 5th `STUDENT_ATTENDANCE` row and parent2's
+5th are arbitrary, unrelated list entries), but a whole table's row-set
+is a clean, atomic unit every candidate shares regardless of population
+history.
+
+**Mandatory FK-repair pass**: swapping a table's row-set wholesale from a
+different parent very often leaves a dangling FK -- reuses
+`mutation.py`'s own `_repair_row` directly (the same schema-legal-by
+-construction discipline mutation's M1/M2 already apply, 2026-09-12,
+§ above), not a second, competing repair mechanism, so a crossover child
+and a mutation child are schema-legal by the exact same rule.
+
+**Verified concretely, not just asserted**: built two independently
+DMN-solved, schema-clean parents for the flagship attendance rule with
+deliberately zero row-identity overlap (different student, different
+course offering, disjoint `LECTURE_ID`/`OFFER_ID` ranges), so any
+crossed table pairing is *guaranteed* to produce a real dangling FK, not
+a hopeful example. Confirmed the raw, unrepaired table swap really does
+score `candidate_constraint_fitness == 25.17` (the `STUDENT_ATTENDANCE`
+rows reference `LECTURE_ID`s the swapped-in `LECTURE` table doesn't
+have), then confirmed the real operator's own repair pass closes it to
+exactly `0.0` on both children. Also confirmed: the two children are
+complementary (each content-distinguishable table comes from the
+opposite parent across the pair), parents are never mutated, and the
+mask is fully reproducible from a given `rng` seed.
+
+**A real reproducibility bug found and fixed while testing this**:
+iterating a bare `set` of table names to build the coin-flip mask meant
+the *same* rng seed could silently produce a *different* mask across
+separate process runs, since Python randomizes string hashing (and
+therefore set iteration order) per process by default unless
+`PYTHONHASHSEED` is fixed. Confirmed directly: three processes with
+`PYTHONHASHSEED=1/2/3` printed three different orderings of the same
+four-table set. Fixed by iterating `sorted(...)` instead of the raw set;
+re-verified three full self-test runs under different `PYTHONHASHSEED`
+values now produce byte-identical output.
+
+**Honest, not asserted, closing observation**: crossover guarantees
+schema-legality unconditionally, but makes no promise at all about DMN
+branch fitness -- a child built from two parents solving *different*
+scenarios can end up genuinely invalid for either parent's own scenario
+(concretely reproduced: `rng.Random(2)` on these two parents leaves both
+children's `lecturesHeldForOffering` at `0` for either original
+scenario, a real `0/0` `FitnessEvaluationError`, not a crash). This is
+ordinary GA behavior -- a population's fitness improves through selection
+pressure across many crossover events and generations, not because every
+single recombination individually preserves it.
+
+Self-contained via `python3 generator/crossover.py`.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
