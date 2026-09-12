@@ -1,7 +1,7 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 391,
+   "compiled": 151,
    "blocked": 0
   },
   "OpenMRS": {
@@ -17,7 +17,7 @@
    "blocked": 13
   }
  },
- "total_compiled": 531,
+ "total_compiled": 291,
  "total_blocked": 18,
  "blocked_reason_counts": {
   "unresolved_variable": 16,

@@ -52,7 +52,6 @@ import csv
 import json
 import re
 import argparse
-import itertools
 from collections import deque, Counter
 from xml.etree import ElementTree as ET
 
@@ -932,7 +931,7 @@ def build_hit_policy_truth_condition(decision, row_idx):
     return {'op': 'and', 'clauses': clauses}, True
 
 
-def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, by_name, seen):
+def _grounding_options(cs, gt, upstream_decision, wanted_var, by_id, by_name, seen, commitment):
     """The actual resolution of `chained_decision_output` (generator/README.md's
     documented scope boundary): rather than silently pick one of
     `upstream_decision`'s rules as "the" answer, or leave the dependency
@@ -943,32 +942,65 @@ def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, 
     extra machinery to solve one target before another, exactly what
     inlining exists to avoid).
 
+    `commitment` (a shared, mutated-and-restored dict, decision_name ->
+    already-chosen rule_id) is this function's own fix for a real,
+    measured compile-time bug found 2026-09-12: the SAME upstream
+    decision can be needed at more than one place within one record --
+    once directly (e.g. a fact this record's own condition or an earlier
+    row's suppression term references), once nested (e.g. INSIDE some
+    OTHER upstream decision's own further chained dependency) -- and the
+    old code enumerated each occurrence completely independently, with
+    no shared memory between them. Concretely, one real FLEX2 record
+    ended up requiring `priorWarningCount` to be BOTH 0 (from Academic
+    Warning Status::Rule_1, chosen to ground a nested dependency of
+    Course Load Limit) AND 1 (from Academic Warning Status::Rule_2,
+    chosen independently to ground this record's own earlier-row
+    suppression term) simultaneously under one top-level AND --
+    mathematically unsatisfiable by construction, not merely hard.
+    Measured impact: 192 of FLEX2's 391 compiled records (49%) had this
+    exact shape. If `upstream_decision.name` is already in `commitment`,
+    this function considers ONLY that already-chosen rule (never
+    offering a different one as an alternative); otherwise it tries each
+    of the decision's own rules in turn, temporarily committing to it
+    while exploring what THAT rule's own further chained dependencies
+    need (so a still-deeper reference to the SAME decision, or one this
+    decision's own rule condition needs, sees and honors the same
+    choice), then backtracks (removes the tentative commitment) before
+    trying the next rule if that path doesn't work out.
+
     A grounding option is only offered if EVERY variable its own truth
     condition depends on resolves cleanly -- recursively, including
     further chained_decision_output dependencies (multi-level DRD chains,
     e.g. FLEX2's Academic Warning Status -> Course Load Limit ->
-    Course Registration Eligibility) -- via the same cross-product
-    expansion this function applies to itself. A dependency that can't be
-    fully grounded is dropped from the option list rather than silently
-    included half-resolved; if that empties the list entirely, the caller
-    (compile_case_study) leaves the downstream branch blocked, same as
-    before this function existed.
+    Course Registration Eligibility) -- via `_enumerate_needs`, the same
+    commitment-respecting backtracking search this function's own further
+    dependencies use. A dependency that can't be fully grounded yields no
+    options for that rule rather than one silently half-resolved; if that
+    empties the option list entirely, the caller (compile_case_study)
+    leaves the downstream branch blocked, same as before this function
+    existed.
 
-    Returns a list of {'value', 'condition', 'extra_resolutions',
-    'source_rule_id', 'source_decision'} dicts, one per fully-grounded
-    upstream rule (or per further-chained combination beneath it)."""
+    A generator, not a list: yields {'value', 'condition',
+    'extra_resolutions', 'source_rule_id', 'source_decision',
+    'provenance'} dicts, one per fully-grounded upstream rule (or per
+    further-chained combination beneath it) consistent with `commitment`."""
     key = (upstream_decision.name, wanted_var)
     if key in seen:
-        return []  # circular DRD dependency guard
+        return  # circular DRD dependency guard
     seen = seen | {key}
 
     out_names = [o for o, _ in upstream_decision.outputs]
     if wanted_var not in out_names:
-        return []
+        return
     out_idx = out_names.index(wanted_var)
 
-    options = []
-    for row_idx, rule in enumerate(upstream_decision.rules):
+    dname = upstream_decision.name
+    already_committed = dname in commitment
+    row_indices = ([i for i, rule in enumerate(upstream_decision.rules) if rule['id'] == commitment[dname]]
+                   if already_committed else range(len(upstream_decision.rules)))
+
+    for row_idx in row_indices:
+        rule = upstream_decision.rules[row_idx]
         value_node = parse_output_value(rule['output_texts'][out_idx])
         truth_condition, ok = build_hit_policy_truth_condition(upstream_decision, row_idx)
         if not ok:
@@ -976,7 +1008,7 @@ def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, 
 
         referenced = sorted(set(find_all_variable_refs(truth_condition)))
         base_resolutions = {}
-        chained_vars = []  # [(var_name, [further grounding options]), ...]
+        needs = []  # [(var_name, further_upstream_decision), ...]
         clean = True
         for var in referenced:
             res = resolve_and_substitute(cs, gt, upstream_decision, var, by_id, by_name)
@@ -988,59 +1020,67 @@ def enumerate_upstream_groundings(cs, gt, upstream_decision, wanted_var, by_id, 
                 clean = False  # a genuine schema_gap/unresolved dependency -- no way to ground this option
                 break
             further_upstream = by_name.get(res['from_decision'])
-            further_options = enumerate_upstream_groundings(cs, gt, further_upstream, var, by_id, by_name, seen)
-            if not further_options:
+            if further_upstream is None:
                 clean = False
                 break
-            chained_vars.append((var, further_options))
+            needs.append((var, further_upstream))
         if not clean:
             continue
 
-        own_label = f"{upstream_decision.name}::{rule['id']}"
-        if not chained_vars:
-            options.append({'value': value_node, 'condition': truth_condition,
-                             'extra_resolutions': dict(base_resolutions),
-                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name,
-                             'provenance': [own_label]})
-            continue
+        own_label = f"{dname}::{rule['id']}"
+        set_here = not already_committed
+        if set_here:
+            commitment[dname] = rule['id']
+        try:
+            if not needs:
+                yield {'value': value_node, 'condition': truth_condition,
+                       'extra_resolutions': dict(base_resolutions),
+                       'source_rule_id': rule['id'], 'source_decision': dname,
+                       'provenance': [own_label]}
+                continue
+            for combo, combo_provenance in _enumerate_needs(cs, gt, needs, by_id, by_name, seen, commitment):
+                combo_clauses = [truth_condition]
+                combo_resolutions = dict(base_resolutions)
+                for var_name, sub_opt in combo.items():
+                    combo_resolutions[var_name] = {
+                        'kind': 'literal_via_upstream_branch', 'value': sub_opt['value'],
+                        'from_decision': sub_opt['source_decision'], 'from_rule_id': sub_opt['source_rule_id']}
+                    combo_clauses.append(sub_opt['condition'])
+                    combo_resolutions.update(sub_opt['extra_resolutions'])
+                combined_condition = combo_clauses[0] if len(combo_clauses) == 1 \
+                    else {'op': 'and', 'clauses': combo_clauses}
+                yield {'value': value_node, 'condition': combined_condition,
+                       'extra_resolutions': combo_resolutions,
+                       'source_rule_id': rule['id'], 'source_decision': dname,
+                       'provenance': [own_label] + combo_provenance}
+        finally:
+            # Backtrack: a commitment made HERE (not one this call
+            # inherited from an outer caller) must not leak into the
+            # NEXT rule of this same decision being tried, nor into a
+            # sibling branch of the caller's own search that has nothing
+            # to do with this particular choice.
+            if set_here:
+                del commitment[dname]
 
-        var_names = [v for v, _ in chained_vars]
-        option_lists = [opts for _, opts in chained_vars]
-        for combo in itertools.product(*option_lists):
-            combo_clauses = [truth_condition]
-            combo_resolutions = dict(base_resolutions)
-            # `provenance` accumulates the FULL grounding chain, not just
-            # this immediate rule -- a real bug found 2026-09-12 building
-            # the earlier-row grounding fix above: two DIFFERENT combos
-            # here (differing only in which FURTHER-upstream rule grounds
-            # one of THIS rule's own chained vars) previously returned the
-            # identical `source_rule_id`/`source_decision` label, so
-            # compile_case_study's own record_id/grounded_upstream_branches
-            # (built from exactly that label) silently collided -- two
-            # genuinely distinct, differently-conditioned records sharing
-            # one record_id, one overwriting the other wherever a
-            # consumer keys off record_id (dynamosa.py's own archive
-            # dict, confirmed directly: FLEX2's `Course Registration
-            # Eligibility::Rule_3::via::Course Load Limit::Rule_1..4` each
-            # turned out to already be 6 distinct, non-duplicate combos
-            # colliding under one id, not padding). Every provenance
-            # label is now included, so a combo's full chain is reflected
-            # in the record_id it produces.
-            provenance = [own_label]
-            for var_name, sub_opt in zip(var_names, combo):
-                combo_resolutions[var_name] = {
-                    'kind': 'literal_via_upstream_branch', 'value': sub_opt['value'],
-                    'from_decision': sub_opt['source_decision'], 'from_rule_id': sub_opt['source_rule_id']}
-                combo_clauses.append(sub_opt['condition'])
-                combo_resolutions.update(sub_opt['extra_resolutions'])
-                provenance.extend(sub_opt['provenance'])
-            combined_condition = combo_clauses[0] if len(combo_clauses) == 1 \
-                else {'op': 'and', 'clauses': combo_clauses}
-            options.append({'value': value_node, 'condition': combined_condition,
-                             'extra_resolutions': combo_resolutions,
-                             'source_rule_id': rule['id'], 'source_decision': upstream_decision.name,
-                             'provenance': provenance})
-    return options
+
+def _enumerate_needs(cs, gt, needs, by_id, by_name, seen, commitment):
+    """Generator: yields (combo, provenance) for a LIST of (var_name,
+    upstream_decision) needs, ALL sharing the SAME `commitment` dict --
+    a backtracking search, one need at a time, so two needs that trace
+    to the SAME upstream decision (however they were discovered -- both
+    top-level, both nested, or one of each) are forced to agree on one
+    real rule of it rather than being chosen independently (see
+    `_grounding_options`'s own docstring for the real bug this fixes).
+    `combo` maps var_name -> the option object that grounds it."""
+    if not needs:
+        yield {}, []
+        return
+    (var_name, upstream_decision), *rest = needs
+    for opt in _grounding_options(cs, gt, upstream_decision, var_name, by_id, by_name, seen, commitment):
+        for rest_combo, rest_provenance in _enumerate_needs(cs, gt, rest, by_id, by_name, seen, commitment):
+            combo = {var_name: opt}
+            combo.update(rest_combo)
+            yield combo, opt['provenance'] + rest_provenance
 
 
 def compile_case_study(cs, mapping_source='ground_truth'):
@@ -1122,15 +1162,16 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                             (v, k, d) for v, k, d in find_blocking_issues(var, res) if k == 'chained_decision_output')
 
             # A rule blocked ONLY by chained_decision_output dependencies
-            # is not a dead end -- enumerate_upstream_groundings expands
-            # each such dependency into every upstream rule that could
-            # produce it (generator/README.md's documented resolution for
-            # this scope boundary), producing one self-contained "variant"
-            # record per combination rather than leaving the branch
-            # unresolved. A mix of chained + genuinely unresolved/
-            # schema_gap blocking still blocks outright -- expansion can't
-            # fix those. Earlier-row-only chained variables are folded in
-            # here too (see above), expanded by the exact same mechanism.
+            # is not a dead end -- _enumerate_needs/_grounding_options
+            # expand each such dependency into every upstream rule that
+            # could produce it (generator/README.md's documented
+            # resolution for this scope boundary), producing one
+            # self-contained "variant" record per combination rather than
+            # leaving the branch unresolved. A mix of chained + genuinely
+            # unresolved/schema_gap blocking still blocks outright --
+            # expansion can't fix those. Earlier-row-only chained
+            # variables are folded in here too (see above), expanded by
+            # the exact same mechanism.
             blocking = own_blocking + earlier_chained_blocking
             chained_blocking = [b for b in own_blocking if b[1] == 'chained_decision_output'] + earlier_chained_blocking
             other_blocking = [b for b in own_blocking if b[1] != 'chained_decision_output']
@@ -1143,42 +1184,36 @@ def compile_case_study(cs, mapping_source='ground_truth'):
 
             variants = [(condition, variable_resolution, [])]  # (condition, variable_resolution, provenance_suffix)
             if chained_blocking:
-                per_var_options = []
-                expandable = True
-                for var, _kind, _detail in chained_blocking:
-                    upstream = by_name.get(variable_resolution[var]['from_decision'])
-                    opts = enumerate_upstream_groundings(cs, gt, upstream, var, by_id, by_name, set())
-                    if not opts:
-                        expandable = False
-                        break
-                    per_var_options.append((var, opts))
-                if not expandable:
-                    blocked.append({'record_id': record_id, 'reason': 'chained_dependency_unexpandable',
-                                     'blocking_variables': [{'variable': v, 'kind': k, 'detail': d}
-                                                             for v, k, d in blocking]})
-                    continue
+                # One SHARED `commitment` ({}) across every need of this
+                # record -- not a separate, independent enumeration per
+                # variable -- so two needs that trace to the SAME
+                # upstream decision (however each was discovered) are
+                # forced to agree on one real rule of it (see
+                # _grounding_options's own docstring for the real,
+                # measured bug this fixes: 192 of FLEX2's 391 compiled
+                # records, 49%, previously ended up requiring the same
+                # fact to hold two different values simultaneously,
+                # mathematically unsatisfiable by construction, because
+                # a nested grounding and a direct one picked different
+                # rules of the same upstream decision independently).
+                needs = [(var, by_name.get(variable_resolution[var]['from_decision']))
+                         for var, _kind, _detail in chained_blocking]
                 variants = []
-                var_names = [v for v, _ in per_var_options]
-                option_lists = [opts for _, opts in per_var_options]
-                for combo in itertools.product(*option_lists):
+                for combo, provenance in _enumerate_needs(cs, gt, needs, by_id, by_name, set(), {}):
                     vr = dict(variable_resolution)
                     extra_clauses = [condition]
-                    suffix = []
-                    for var_name, opt in zip(var_names, combo):
+                    for var_name, opt in combo.items():
                         vr[var_name] = {'kind': 'literal_via_upstream_branch', 'value': opt['value'],
                                          'from_decision': opt['source_decision'], 'from_rule_id': opt['source_rule_id']}
                         vr.update(opt['extra_resolutions'])
                         extra_clauses.append(opt['condition'])
-                        # The FULL chain (opt['provenance']), not just this
-                        # immediate upstream rule -- see
-                        # enumerate_upstream_groundings's own docstring/
-                        # comment on why: two combos differing only in a
-                        # FURTHER-upstream grounding previously produced
-                        # the identical suffix here, colliding two
-                        # genuinely distinct records under one record_id.
-                        suffix.extend(opt['provenance'])
                     combined = extra_clauses[0] if len(extra_clauses) == 1 else {'op': 'and', 'clauses': extra_clauses}
-                    variants.append((combined, vr, suffix))
+                    variants.append((combined, vr, provenance))
+                if not variants:
+                    blocked.append({'record_id': record_id, 'reason': 'chained_dependency_unexpandable',
+                                     'blocking_variables': [{'variable': v, 'kind': k, 'detail': d}
+                                                             for v, k, d in blocking]})
+                    continue
 
             for variant_condition, variant_resolution, provenance_suffix in variants:
                 variant_id = record_id if not provenance_suffix else f"{record_id}::via::{'+'.join(provenance_suffix)}"
