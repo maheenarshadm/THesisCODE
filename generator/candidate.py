@@ -78,6 +78,40 @@ class Candidate:
         return self._tables
 
 
+# A reserved, non-schema row key marking which objective a row was
+# created FOR -- the fix for a real, previously-flagged row-sharing bug
+# (2026-09-13, dynamosa.py's own module docstring): derived_aggregate/
+# exists/derived_join_count leaves used to scan a table's ENTIRE row set
+# with zero isolation, so two different DynaMOSA objectives sharing one
+# candidate could count each OTHER's own unrelated rows, actively
+# interfering once merged into one final materialized dataset (measured
+# directly: final-dataset coverage stuck at 20/151 regardless of rng
+# seed, versus 81/151 objectives the search could reach individually).
+# `materialize.py`'s own to_sql_inserts/write_csv_files strip this key
+# before emitting real SQL/CSV -- it is bookkeeping, never a real column.
+_OWNER_KEY = '__owner__'
+
+
+def _owned_rows(candidate, table, owner_id):
+    """Every row of `table` visible to objective `owner_id`'s own
+    aggregate/exists/derived_join_count leaves: rows never tagged with
+    ANY owner (untagged -- e.g. `_repair_row`'s own synthesized FK-parent
+    rows, which genuinely are shared reference data every objective
+    should be able to see) plus rows explicitly tagged as belonging to
+    `owner_id` itself. Rows tagged for a DIFFERENT objective are
+    invisible. `owner_id=None` (the single-objective case -- search.py's
+    own solve_branch/hillclimb, which never shares a candidate across
+    objectives at all, and every existing self-test's own hand-built
+    fixtures, which never tag anything) disables filtering entirely,
+    returning every row exactly like this function never existed --
+    a pure, backward-compatible addition, not a behavior change for any
+    caller that doesn't opt in by passing a real owner_id."""
+    rows = candidate.rows(table)
+    if owner_id is None:
+        return rows
+    return [r for r in rows if r.get(_OWNER_KEY) in (None, owner_id)]
+
+
 def _row_get(row, column, table_for_error=None):
     """Case-insensitive column lookup: ground-truth resolutions carry
     lowercased table.column names (compile_constraints.py's own
@@ -266,11 +300,19 @@ def _raw_sql_boolean_value(node, candidate, scenario, warnings):
     return bool(result)
 
 
-def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
+def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owner_id=None):
     """The in-memory-row-set analogue of fitness.py's evaluate_resolution
     and sql_compiler.py's compile_resolution_as_value: given a *real*
     candidate (not a hand-picked scalar), compute this leaf variable's
-    actual current value."""
+    actual current value.
+
+    `owner_id` (see `_owned_rows`'s own docstring) scopes
+    `derived_aggregate`/`exists`/`derived_join_count`'s own table scans
+    to one objective's own rows when given -- `None` (the default, used
+    by every single-objective caller: search.py's own solve_branch/
+    hillclimb, and every existing self-test's hand-built fixtures) keeps
+    this function's original, unscoped behavior exactly. Only
+    dynamosa.py's own shared-population code passes a real owner_id."""
     warnings = warnings if warnings is not None else []
     kind = node.get('kind')
     if kind == 'schema_column':
@@ -305,7 +347,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
             warnings.append(f"{var_name}: derived_aggregate filter has prose this bridge can't "
                              f"mechanically apply, counted without it: {skipped}")
         tables = [t.strip() for t in node['table'].split(',')]
-        rows = candidate.rows(tables[0])
+        rows = _owned_rows(candidate, tables[0], owner_id)
         matching = [r for r in rows if predicate(r)]
         if node.get('value_column'):
             value_table, col = node['value_column'].split('.')
@@ -324,7 +366,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
             # docstring already documents as this program's real,
             # surveyed FK convention.
             join_col = f'{value_table.upper()}_ID'
-            value_rows = candidate.rows(value_table)
+            value_rows = _owned_rows(candidate, value_table, owner_id)
             total = 0
             for r in matching:
                 try:
@@ -341,7 +383,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
             return False
-        return len(candidate.rows(table)) > 0
+        return len(_owned_rows(candidate, table, owner_id)) > 0
     if kind == 'raw_sql_boolean':
         return _raw_sql_boolean_value(node, candidate, scenario, warnings)
     if kind == 'derived_case':
@@ -371,7 +413,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
         course_id = _row_get(context_row, node['prereq_course_column'], context_table)
         roll_no = _row_get(context_row, node['registration_roll_column'], context_table)
         prereq_rows = []
-        for r in candidate.rows(node['prereq_table']):
+        for r in _owned_rows(candidate, node['prereq_table'], owner_id):
             try:
                 if _row_get(r, node['prereq_course_column']) == course_id:
                     prereq_rows.append(r)
@@ -384,7 +426,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
             except FitnessEvaluationError:
                 continue
             passed = False
-            for rr in candidate.rows(node['registration_table']):
+            for rr in _owned_rows(candidate, node['registration_table'], owner_id):
                 try:
                     if _row_get(rr, node['registration_roll_column']) != roll_no:
                         continue
@@ -426,14 +468,20 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None):
     raise FitnessEvaluationError(f"derive_value has no handling for resolution kind {kind!r} ({var_name!r})")
 
 
-def derive_genome(record, candidate, focal, scenario, warnings=None):
+def derive_genome(record, candidate, focal, scenario, warnings=None, owner_id=None):
     """Walks `record['variable_resolution']`, recursing through
     `substituted_decision`/`literal_via_upstream_branch` chains (those
     are formulas fitness.py's own evaluate_resolution already knows how
     to recompute from their free variables -- not genes themselves, so
     not populated here), and returns a genome with every true leaf
     variable's *real*, candidate-derived value -- ready to hand straight
-    to `fitness.branch_fitness` unchanged."""
+    to `fitness.branch_fitness` unchanged.
+
+    `owner_id` is threaded straight through to `derive_value` (see its
+    own docstring) -- `None` by default, so every existing single-
+    objective caller (search.py, every self-test) is completely
+    unaffected; only dynamosa.py's own shared-population code passes a
+    real one."""
     warnings = warnings if warnings is not None else []
     genome = {}
 
@@ -449,7 +497,7 @@ def derive_genome(record, candidate, focal, scenario, warnings=None):
             return
         if kind in ('schema_gap', 'code_external', 'unresolved', 'chained_decision_output'):
             return  # never a real gene -- fitness.py itself raises if this is actually needed
-        genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings)
+        genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings, owner_id=owner_id)
 
     for var, node in record.get('variable_resolution', {}).items():
         walk(var, node)

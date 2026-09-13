@@ -33,17 +33,45 @@ it, not just one record's.
 
 Not every table a record's own resolution mentions gets a dedicated
 focal row -- only the ones a leaf kind actually *reads through* a focal
-row at all (`_focal_tables_for_leaf`): `derived_aggregate`/`exists`
-kinds scan `candidate.rows(table)` directly, across the WHOLE shared
-candidate, and never consult focal -- handing them a fresh, empty
-dedicated row would be actively wrong for an unconditional
+row at all (`_focal_tables_for_leaf`): `derived_aggregate`/`exists`/
+`derived_join_count` kinds scan `candidate.rows(table)` directly, across
+the WHOLE shared candidate, and never consult focal -- handing them a
+fresh, empty dedicated row would be actively wrong for an unconditional
 `derived_aggregate` (an empty row can trivially match a filter with no
 real conjuncts, silently inflating the count by one for a row that
-carries no real data at all). This uneven table-sharing for
-aggregate/exists kinds is a real, known, DELIBERATELY UNCHANGED scope
-limitation carried over unmodified from the original design -- fixing it
-(so that different objects' rows don't cross-pollute each other's
-counts) is a distinct, larger refinement not attempted here.
+carries no real data at all).
+
+**Aggregate row-sharing fix (2026-09-13)**: the uneven table-sharing
+above WAS, until this fix, a real, measured cause of a large gap between
+archive coverage (how many objectives were EVER covered by SOME
+individual across the whole run, 81/151 on FLEX2) and final-dataset
+coverage (how many are covered SIMULTANEOUSLY by the ONE candidate
+`generate_dataset.py` actually materializes, stuck at exactly 20/151
+regardless of rng seed) -- confirmed directly by producing and
+inspecting a real `.sql` file, not assumed. Different objectives sharing
+an aggregate-relevant table counted/interfered with each other's rows
+the moment they were merged into one final candidate: objective A's own
+carefully-tuned three matching rows for its `derived_aggregate` could be
+outnumbered, diluted, or accidentally satisfied by objective B's own
+unrelated rows in the very same table, and vice versa. Fixed via row
+ownership tagging: every row this module creates (seed rows in
+`_seed_shared_population`, focal rows in `_focal_for_mutate`, and
+mutation-added/removed rows in `mutation.py`'s own
+`_apply_row_count_mutation`) is stamped with a reserved `_OWNER_KEY`
+('__owner__') naming the objective (`record_id`) that owns it;
+`derive_value`'s own aggregate/exists/join-count branches (candidate.py)
+now scan only rows owned by the CURRENT objective plus untagged rows
+(`_owned_rows`) -- untagged rows stay globally visible, which is
+exactly right for genuinely shared reference data (e.g. FK-repair
+-synthesized parent rows, added once wholesale after every objective's
+own seed rows are in, never tagged). `owner_id` defaults to `None`
+everywhere outside this module, so every single-objective caller
+(`mutate()`/`hillclimb()`/`solve_branch()`, every existing self-test)
+is completely unaffected -- the filtering is opt-in, activated only by
+DynaMOSA's own population loop, which is the only caller that actually
+shares one candidate across many concurrently-active objectives.
+`materialize.py` strips `_OWNER_KEY` from every emitted column before
+writing real SQL/CSV, since it is bookkeeping, not schema data.
 
 **Reused, not reimplemented**: `mutate()`'s own building blocks --
 `best_value_for`/`apply_mutation`/`_leaf_variables` (this module's own
@@ -89,7 +117,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from candidate import Candidate, derive_genome, build_seed_candidate  # noqa: E402
+from candidate import Candidate, derive_genome, build_seed_candidate, _OWNER_KEY  # noqa: E402
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
                        _leaf_variables, _schema_for, candidate_values)
@@ -189,7 +217,18 @@ def _focal_for_mutate(record, candidate, focal_maps, table_cache):
         tU = t.upper()
         row = rec_focal.get(tU)
         if row is None:
-            row = candidate.add_row(t, {})
+            # Tagged with this objective's own record_id even though
+            # nothing looks this row up by scanning the table (focal rows
+            # are found by direct dict reference, never by
+            # `_owned_rows`'s own scan) -- the aggregate row-sharing fix
+            # (2026-09-13, candidate.py's `_owned_rows`) needs this row to
+            # stay invisible to some OTHER record's `derived_aggregate`/
+            # `exists` scan of the SAME physical table, which is exactly
+            # the cross-objective interference this tag exists to
+            # prevent; an untagged focal row would otherwise silently
+            # count towards another objective's aggregate the moment both
+            # happen to touch the same table.
+            row = candidate.add_row(t, {_OWNER_KEY: record['record_id']})
             rec_focal[tU] = row
         focal[tU] = row
     return focal
@@ -198,7 +237,7 @@ def _focal_for_mutate(record, candidate, focal_maps, table_cache):
 def evaluate_objective(record, candidate, focal_maps, scenario, table_cache):
     try:
         focal = _focal_for_read(record, focal_maps)
-        genome = derive_genome(record, candidate, focal, scenario)
+        genome = derive_genome(record, candidate, focal, scenario, owner_id=record['record_id'])
         return branch_fitness(record, genome)
     except FitnessEvaluationError:
         return float('inf')  # not yet evaluable against this individual -- never "covered"
@@ -296,7 +335,7 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     scenario = scenario_cache[rid]
     focal = _focal_for_mutate(record, candidate, focal_maps, table_cache)
     try:
-        genome = derive_genome(record, candidate, focal, scenario)
+        genome = derive_genome(record, candidate, focal, scenario, owner_id=rid)
         leaves = [(v, n) for v, n in _leaf_variables(record) if v in genome]
         if not leaves:
             return candidate, focal_maps, False
@@ -316,7 +355,8 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     new_focal = new_focal_maps[rid]
     scenario_copy = dict(scenario)
     try:
-        apply_mutation(record, new_candidate, new_focal, scenario_copy, var_name, node, value, genome.get(var_name))
+        apply_mutation(record, new_candidate, new_focal, scenario_copy, var_name, node, value, genome.get(var_name),
+                        owner_id=rid)
     except FitnessEvaluationError:
         return candidate, focal_maps, False
     return new_candidate, new_focal_maps, True
@@ -511,7 +551,23 @@ def _seed_shared_population(records, case_study, population_size):
                         if col.upper() in key_cols and isinstance(row[col], (int, float)) \
                                 and not isinstance(row[col], bool):
                             row[col] = row[col] + offset
+                # Tagged with this objective's own record_id -- the
+                # aggregate row-sharing fix (2026-09-13): every seed row
+                # `build_seed_candidate` produced for THIS record (whether
+                # a focal-style row or a `derived_aggregate`/`exists`/
+                # `derived_join_count` row added directly, never through
+                # focal -- see this record's own leaf handling in
+                # candidate.py) must stay invisible to some OTHER
+                # objective's own aggregate/exists scan of the same
+                # physical table once every objective's seed rows are
+                # merged into one shared `base`. Harmless for focal-style
+                # rows (schema_column et al.): those are found by direct
+                # `focal_maps` dict reference, never by scanning the
+                # table, so the extra key changes nothing for their own
+                # readers -- it only stops them being miscounted by
+                # someone else's aggregate.
                 row_copy = dict(row)
+                row_copy[_OWNER_KEY] = rid
                 base.add_row(table, row_copy)
                 id_to_copy[id(row)] = row_copy
         rec_focal = {table: id_to_copy[id(row)] for table, row in f.items() if id(row) in id_to_copy}

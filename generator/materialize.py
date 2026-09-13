@@ -40,6 +40,19 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+from candidate import _OWNER_KEY  # noqa: E402
+
+
+def _real_columns(row):
+    """`row` minus dynamosa.py's own `_OWNER_KEY` bookkeeping tag (the
+    aggregate row-sharing fix, 2026-09-13: DynaMOSA-produced candidates
+    now stamp every row they create with which objective owns it, purely
+    an in-memory scoping device for `candidate.py`'s own `_owned_rows` --
+    it names no real schema column and must never reach actual SQL/CSV
+    output, or every emitted table would grow a bogus `__owner__` column
+    `validate_with_sqlite`'s own real DDL (built from the schema, which
+    of course has no such column) would then reject outright."""
+    return {k: v for k, v in row.items() if k != _OWNER_KEY}
 
 
 def topological_table_order(schema, tables):
@@ -95,6 +108,7 @@ def to_sql_inserts(candidate, schema):
     statements = []
     for table in order:
         for row in candidate.rows(table):
+            row = _real_columns(row)
             if not row:
                 continue
             cols = list(row.keys())
@@ -111,7 +125,8 @@ def write_csv_files(candidate, out_dir):
     was actually generated, not padded with columns nothing ever set."""
     os.makedirs(out_dir, exist_ok=True)
     written = []
-    for table, rows in candidate.as_dict().items():
+    for table, raw_rows in candidate.as_dict().items():
+        rows = [_real_columns(row) for row in raw_rows]
         if not rows:
             continue
         cols = sorted({c for row in rows for c in row})
@@ -206,6 +221,7 @@ def validate_with_sqlite(candidate, schema):
         if table not in created:
             continue
         for i, row in enumerate(candidate.rows(table)):
+            row = _real_columns(row)
             if not row:
                 continue
             cols = list(row.keys())

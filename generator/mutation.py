@@ -87,7 +87,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
-                        _mechanical_filter_predicate, _find_focal_with_columns, _row_get)
+                        _mechanical_filter_predicate, _find_focal_with_columns, _row_get,
+                        _owned_rows, _OWNER_KEY)
 from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
                       candidate_constraint_fitness, _unique_key_sets)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
@@ -566,7 +567,7 @@ def _apply_field_mutation(node, value, candidate, focal):
     return touched
 
 
-def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None):
+def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None, owner_id=None):
     """M2: add or remove rows -- moves the FULL distance from `current`
     to `value` in one call, not just one row, using the same
     mechanically-recognized filter_text conjuncts candidate.py's own
@@ -584,16 +585,35 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
     silently diverge the real candidate from the genome the search
     believed it was accepting -- exactly the gap that made the original
     step-1-only design need ~99 individual calls to grow one count from
-    4 to 100 (generator/README.md's own tricky-rules sweep)."""
+    4 to 100 (generator/README.md's own tricky-rules sweep).
+
+    `owner_id` (see candidate.py's own `_owned_rows` docstring, 2026-09-13):
+    every row this function creates gets tagged with it (when given),
+    and every existing-row scan/removal is scoped to owned rows only --
+    the fix for a real row-sharing bug: two different DynaMOSA objectives
+    sharing one candidate could otherwise create/count/remove each
+    OTHER's own unrelated rows in the same table. `None` (the default,
+    used by every single-objective caller) disables all of this exactly
+    like before -- new rows go untagged and every scan sees the whole
+    table, unchanged from this function's original behavior."""
     if node['kind'] == 'exists':
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
             return []
-        if value and not candidate.rows(table):
-            row = candidate.add_row(table, {})
+        if value and not _owned_rows(candidate, table, owner_id):
+            row = {} if owner_id is None else {_OWNER_KEY: owner_id}
+            row = candidate.add_row(table, row)
             return [(table, row)]
         elif not value:
-            candidate._tables[table.upper()] = []
+            if owner_id is None:
+                candidate._tables[table.upper()] = []
+            else:
+                # Only OUR OWN tagged rows -- never wipe the whole table,
+                # which would destroy every OTHER objective's own rows
+                # (and any untagged, genuinely-shared reference rows)
+                # sharing this same table.
+                real_rows = candidate.rows(table)
+                real_rows[:] = [r for r in real_rows if r.get(_OWNER_KEY) != owner_id]
         return []
     if node['kind'] == 'derived_join_count':
         # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
@@ -611,7 +631,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         course_id = _row_get(context_row, node['prereq_course_column'])
         roll_no = _row_get(context_row, node['registration_roll_column'])
         prereq_rows = []
-        for r in candidate.rows(node['prereq_table']):
+        for r in _owned_rows(candidate, node['prereq_table'], owner_id):
             try:
                 if _row_get(r, node['prereq_course_column']) == course_id:
                     prereq_rows.append(r)
@@ -636,6 +656,8 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
                     new_prereq_id += 1
                 new_row = {node['prereq_course_column']: course_id,
                            node['prereq_target_column']: new_prereq_id}
+                if owner_id is not None:
+                    new_row[_OWNER_KEY] = owner_id
                 candidate.add_row(node['prereq_table'], new_row)
                 used_ids.add(new_prereq_id)
                 touched.append((node['prereq_table'], new_row))
@@ -646,9 +668,13 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
             # for courses this student was never registered for --
             # equally valid (the count is over COURSE_PREREQ rows), and
             # never touches COURSE_REGISTRATION/previousGradeInCourse's
-            # own row. Removes up to `-n` (never more than exist).
+            # own row. Removes up to `-n` (never more than exist). Always
+            # removed from the REAL row list (candidate.rows), never from
+            # the owned-only view `prereq_rows` was filtered from, so the
+            # mutation actually takes effect on the real candidate.
+            real_rows = candidate.rows(node['prereq_table'])
             for row in prereq_rows[:min(-n, len(prereq_rows))]:
-                candidate.rows(node['prereq_table']).remove(row)
+                real_rows.remove(row)
         return []
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
@@ -657,7 +683,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
     if n > 0:
         touched = []
         for _ in range(n):
-            row = {}
+            row = {} if owner_id is None else {_OWNER_KEY: owner_id}
             for conjunct in re.split(r'\bAND\b', node.get('filter_text') or '', flags=re.I):
                 cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
                 if not cm:
@@ -683,24 +709,32 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
             touched.append((table, row))
         return touched
     elif n < 0:
-        rows = candidate.rows(table)
+        rows = _owned_rows(candidate, table, owner_id)
         matching = [r for r in rows if predicate(r)] or rows
+        real_rows = candidate.rows(table)
         for row in matching[:min(-n, len(matching))]:
-            rows.remove(row)
+            real_rows.remove(row)
     return []
 
 
-def apply_mutation(record, candidate, focal, scenario, var_name, node, value, current):
+def apply_mutation(record, candidate, focal, scenario, var_name, node, value, current, owner_id=None):
     """Applies the winning value via M1 or M2, then repairs every row that
     call touched for NOT NULL/FK by construction (`_repair_row`) -- always,
     not conditionally, since a real Candidate should never leave M1/M2's
     own scope without being schema-legal on the parts that are mechanically
-    decidable regardless of what the DMN branch needed."""
+    decidable regardless of what the DMN branch needed.
+
+    `owner_id`, when given, tags every row this call creates for an
+    aggregate/exists/join-count leaf with `_OWNER_KEY` and confines the
+    rows it counts/removes to ones owned by this objective (or untagged
+    shared rows) -- see `_apply_row_count_mutation` and candidate.py's
+    `_owned_rows`. Field-leaf mutations (M1) are unaffected: they already
+    operate on a per-objective `focal` row."""
     kind = node.get('kind')
     if kind in FIELD_LEAF_KINDS:
         touched = _apply_field_mutation(node, value, candidate, focal)
     elif kind in AGGREGATE_LEAF_KINDS:
-        touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal)
+        touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal, owner_id=owner_id)
     elif kind == 'not_persisted':
         scenario[var_name] = value
         touched = []
