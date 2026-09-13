@@ -1473,6 +1473,18 @@ Diagnosed while investigating Spree's own remaining 7 uncovered objectives: two 
 
 **Verified, measured result**: full regression suite green throughout, FLEX2 unaffected (still 81/151, verified). Spree: **20/27 (74.1%) → 22/27 (81.5%) merged-archive coverage, VERIFIED, zero regressions** -- confirmed directly which two objectives newly solve and why (`purchaseQuantity=65` correctly inside its required window; `purchaseQuantity=-12554430` correctly below both suppression thresholds). See `docs/generationalgorithmdesign.md` §13.46 for the full trace.
 
+## Running the pipeline against jBilling (2026-09-13) -- a systemic schema gap, a stale placeholder, a merge-time collision bug, and a self-caught regression
+
+Ran `generate_dataset.py` against jBilling (42 compiled branches) for the first time -- `validate_with_sqlite` failed with 14 errors across 3 distinct root causes:
+
+1. **A systemic schema-extraction gap.** `jbilling_schema_full.json` contains ZERO `character varying`/`text`/precision-`numeric` columns anywhere across all 98 tables (confirmed by listing every distinct type string present). Cross-checked every table's real columns against the raw SQL DDL: **166 missing columns across 59 of 98 tables**. Fixed by parsing the raw SQL directly and merging in every genuinely-missing column, touching nothing already correct. Verified: 0 columns missing anywhere afterward.
+2. **A stale generic placeholder.** `exists`/`derived_aggregate`-bystander seed rows stamped a synthetic `{'X': ...}` column that `derive_value` never reads back (confirmed by reading it directly) and nothing ever stripped before SQL emission. Fixed by seeding an empty row instead, letting repair fill in whatever the real schema requires.
+3. **A real merge-time PK/UNIQUE-collision bug**, confirmed 2-way on `BASE_USER` and 4-way on `PURCHASE_ORDER`: two different covered objectives' own archived individuals can each independently synthesize the same small "fresh" key for a lazily-created row, with no way for either to know about the other. Fixed by giving `merge_archive_candidate` its own merge-time re-offsetting pass, reusing `_seed_shared_population`'s own proven mechanism (per-record index offset applied to PK/UNIQUE/FK columns) rather than inventing collision-detection-and-FK-patching from scratch.
+
+**A self-caught regression**, found only by re-testing every other case study after fix #3, not assumed safe: the first version also blindly re-offset every numeric scenario value, which corrupted `not_persisted` leaves compared directly to a literal (broke 2 Spree rules this same session's own `not_persisted` fix had just gotten working). Fixed by narrowing the scenario-offset to only keys that actually appear as a `<placeholder>` inside some leaf's own filter/SQL text -- the same signal `build_seed_candidate` already uses to discover them.
+
+**Verified, measured result**: jBilling -- **30/42 (71.4%) merged-archive coverage, VERIFIED, zero regressions**, `validate_with_sqlite: ok=True, 0 errors`. FLEX2 and Spree both re-verified unaffected after every step, including the self-correction. See `docs/generationalgorithmdesign.md` §13.47 for the full trace.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

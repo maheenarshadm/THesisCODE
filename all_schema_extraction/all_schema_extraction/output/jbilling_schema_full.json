@@ -17,6 +17,26 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "aba_routing": {
+        "type": "character varying(40)",
+        "null_false": true
+      },
+      "bank_account": {
+        "type": "character varying(60)",
+        "null_false": true
+      },
+      "bank_name": {
+        "type": "character varying(50)",
+        "null_false": true
+      },
+      "account_name": {
+        "type": "character varying(100)",
+        "null_false": true
+      },
+      "gateway_key": {
+        "type": "character varying(100)",
+        "null_false": false
       }
     },
     "fks": [
@@ -119,6 +139,14 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "password": {
+        "type": "character varying(40)",
+        "null_false": false
+      },
+      "user_name": {
+        "type": "character varying(50)",
+        "null_false": false
       }
     },
     "fks": [
@@ -391,6 +419,22 @@
       "version": {
         "type": "integer",
         "null_false": true
+      },
+      "controller": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "action": {
+        "type": "character varying(255)",
+        "null_false": false
+      },
+      "name": {
+        "type": "character varying(255)",
+        "null_false": false
+      },
+      "description": {
+        "type": "character varying(255)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -423,6 +467,54 @@
       },
       "ts": {
         "type": "timestamp without time zone",
+        "null_false": false
+      },
+      "accountcode": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "src": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "dst": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "dcontext": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "clid": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "channel": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "dstchannel": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "lastapp": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "lastdatat": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "disposition": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "amaflags": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "userfield": {
+        "type": "character varying(100)",
         "null_false": false
       }
     },
@@ -473,6 +565,62 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "organization_name": {
+        "type": "character varying(200)",
+        "null_false": false
+      },
+      "street_addres1": {
+        "type": "character varying(100)",
+        "null_false": false
+      },
+      "street_addres2": {
+        "type": "character varying(100)",
+        "null_false": false
+      },
+      "city": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "state_province": {
+        "type": "character varying(30)",
+        "null_false": false
+      },
+      "postal_code": {
+        "type": "character varying(15)",
+        "null_false": false
+      },
+      "country_code": {
+        "type": "character varying(2)",
+        "null_false": false
+      },
+      "last_name": {
+        "type": "character varying(30)",
+        "null_false": false
+      },
+      "first_name": {
+        "type": "character varying(30)",
+        "null_false": false
+      },
+      "person_initial": {
+        "type": "character varying(5)",
+        "null_false": false
+      },
+      "person_title": {
+        "type": "character varying(40)",
+        "null_false": false
+      },
+      "phone_phone_number": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "fax_phone_number": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "email": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -497,6 +645,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "content": {
+        "type": "character varying(100)",
         "null_false": true
       }
     },
@@ -536,6 +688,14 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "prompt_key": {
+        "type": "character varying(50)",
+        "null_false": true
+      },
+      "data_type": {
+        "type": "character varying(10)",
         "null_false": true
       }
     },
@@ -644,6 +804,10 @@
       "id": {
         "type": "integer",
         "null_false": true
+      },
+      "code": {
+        "type": "character varying(2)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -673,6 +837,22 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "cc_number": {
+        "type": "character varying(100)",
+        "null_false": true
+      },
+      "cc_number_plain": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "name": {
+        "type": "character varying(150)",
+        "null_false": false
+      },
+      "gateway_key": {
+        "type": "character varying(100)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -690,6 +870,18 @@
       "optlock": {
         "type": "integer",
         "null_false": false
+      },
+      "symbol": {
+        "type": "character varying(10)",
+        "null_false": true
+      },
+      "code": {
+        "type": "character varying(3)",
+        "null_false": true
+      },
+      "country_code": {
+        "type": "character varying(2)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -749,6 +941,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "rate": {
+        "type": "numeric(22,10)",
         "null_false": true
       }
     },
@@ -831,6 +1027,22 @@
       "balance_type": {
         "type": "integer",
         "null_false": true
+      },
+      "notes": {
+        "type": "character varying(1000)",
+        "null_false": false
+      },
+      "dynamic_balance": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "credit_limit": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "auto_recharge": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [
@@ -879,6 +1091,14 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "external_id": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "description": {
+        "type": "character varying(100)",
         "null_false": true
       }
     },
@@ -1048,6 +1268,10 @@
       "affected_user_id": {
         "type": "integer",
         "null_false": false
+      },
+      "old_str": {
+        "type": "character varying(1000)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1152,6 +1376,34 @@
       "boolean_value": {
         "type": "boolean",
         "null_false": false
+      },
+      "type": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "constraint_type": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "field": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "template": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "string_value": {
+        "type": "character varying(255)",
+        "null_false": false
+      },
+      "decimal_value": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "decimal_high_value": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -1172,6 +1424,10 @@
       },
       "version": {
         "type": "integer",
+        "null_false": true
+      },
+      "name": {
+        "type": "character varying(255)",
         "null_false": true
       }
     },
@@ -1211,6 +1467,10 @@
       "can_login": {
         "type": "smallint",
         "null_false": false
+      },
+      "dtype": {
+        "type": "character varying(50)",
+        "null_false": true
       }
     },
     "fks": [
@@ -1228,7 +1488,12 @@
   },
   "generic_status_type": {
     "pk": "id",
-    "columns": {},
+    "columns": {
+      "id": {
+        "type": "character varying(50)",
+        "null_false": true
+      }
+    },
     "fks": [],
     "fk_columns": [],
     "indexes": [],
@@ -1252,6 +1517,14 @@
       },
       "language_id": {
         "type": "integer",
+        "null_false": true
+      },
+      "psudo_column": {
+        "type": "character varying(20)",
+        "null_false": true
+      },
+      "content": {
+        "type": "character varying(4000)",
         "null_false": true
       }
     },
@@ -1338,6 +1611,26 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "total": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "balance": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "carried_balance": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "customer_notes": {
+        "type": "character varying(1000)",
+        "null_false": false
+      },
+      "public_number": {
+        "type": "character varying(40)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1418,6 +1711,22 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "quantity": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "price": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "description": {
+        "type": "character varying(1000)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1455,6 +1764,10 @@
       "order_position": {
         "type": "integer",
         "null_false": true
+      },
+      "description": {
+        "type": "character varying(50)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -1488,6 +1801,18 @@
       "price_manual": {
         "type": "smallint",
         "null_false": true
+      },
+      "internal_number": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "percentage": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "gl_code": {
+        "type": "character varying(50)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1520,6 +1845,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "price": {
+        "type": "numeric(22,10)",
         "null_false": true
       }
     },
@@ -1564,6 +1893,10 @@
       "internal": {
         "type": "boolean",
         "null_false": true
+      },
+      "description": {
+        "type": "character varying(100)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1650,6 +1983,10 @@
       "next_id": {
         "type": "integer",
         "null_false": false
+      },
+      "name": {
+        "type": "character varying(255)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -1663,6 +2000,10 @@
       "id": {
         "type": "integer",
         "null_false": true
+      },
+      "name": {
+        "type": "character varying(50)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -1675,6 +2016,14 @@
     "columns": {
       "id": {
         "type": "integer",
+        "null_false": true
+      },
+      "code": {
+        "type": "character varying(2)",
+        "null_false": true
+      },
+      "description": {
+        "type": "character varying(50)",
         "null_false": true
       }
     },
@@ -1708,6 +2057,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "name": {
+        "type": "character varying(50)",
         "null_false": true
       }
     },
@@ -1745,6 +2098,58 @@
       },
       "should_retry": {
         "type": "boolean",
+        "null_false": false
+      },
+      "accountcode": {
+        "type": "character varying(50)",
+        "null_false": true
+      },
+      "src": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "dst": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "dcontext": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "clid": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "channel": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "dstchannel": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "lastapp": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "lastdata": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "disposition": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "amaflags": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "userfield": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "error_message": {
+        "type": "character varying(200)",
         "null_false": false
       }
     },
@@ -1847,6 +2252,10 @@
       "id": {
         "type": "integer",
         "null_false": true
+      },
+      "id_key": {
+        "type": "character varying(100)",
+        "null_false": true
       }
     },
     "fks": [
@@ -1890,6 +2299,18 @@
       "mediation_record_id": {
         "type": "integer",
         "null_false": true
+      },
+      "amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "quantity": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "description": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [
@@ -1999,6 +2420,10 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "result_message": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -2023,6 +2448,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "content": {
+        "type": "character varying(1000)",
         "null_false": true
       }
     },
@@ -2052,6 +2481,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "content": {
+        "type": "character varying(1000)",
         "null_false": true
       }
     },
@@ -2185,6 +2618,26 @@
       "use_item": {
         "type": "boolean",
         "null_false": true
+      },
+      "amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "quantity": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "price": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "description": {
+        "type": "character varying(1000)",
+        "null_false": false
+      },
+      "provisioning_request_id": {
+        "type": "character varying(50)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2400,6 +2853,34 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "balance": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "total_payments": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "total_refunds": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "total_payouts": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "percentage_rate": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "referral_fee": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "due_payout": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2458,6 +2939,18 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "payments_amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "refunds_amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "balance_left": {
+        "type": "numeric(22,10)",
+        "null_false": true
       }
     },
     "fks": [
@@ -2495,6 +2988,14 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "percentage_rate": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "referral_fee": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -2576,6 +3077,18 @@
       "payment_period": {
         "type": "integer",
         "null_false": false
+      },
+      "amount": {
+        "type": "numeric(22,10)",
+        "null_false": true
+      },
+      "balance": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "payment_notes": {
+        "type": "character varying(500)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2639,6 +3152,46 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "processor": {
+        "type": "character varying(40)",
+        "null_false": true
+      },
+      "code1": {
+        "type": "character varying(40)",
+        "null_false": true
+      },
+      "code2": {
+        "type": "character varying(40)",
+        "null_false": false
+      },
+      "code3": {
+        "type": "character varying(40)",
+        "null_false": false
+      },
+      "approval_code": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "avs": {
+        "type": "character varying(20)",
+        "null_false": false
+      },
+      "transaction_id": {
+        "type": "character varying(40)",
+        "null_false": false
+      },
+      "md5": {
+        "type": "character varying(100)",
+        "null_false": false
+      },
+      "card_code": {
+        "type": "character varying(100)",
+        "null_false": false
+      },
+      "response_message": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2672,6 +3225,14 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "bank": {
+        "type": "character varying(50)",
+        "null_false": false
+      },
+      "cheque_number": {
+        "type": "character varying(50)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2709,6 +3270,10 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "amount": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2835,6 +3400,10 @@
       "id": {
         "type": "integer",
         "null_false": true
+      },
+      "description": {
+        "type": "character varying(30)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -2903,6 +3472,10 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "notes": {
+        "type": "character varying(1000)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2942,6 +3515,18 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "name": {
+        "type": "character varying(50)",
+        "null_false": true
+      },
+      "str_value": {
+        "type": "character varying(500)",
+        "null_false": false
+      },
+      "float_value": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [
@@ -2971,6 +3556,10 @@
       "min_parameters": {
         "type": "integer",
         "null_false": true
+      },
+      "class_name": {
+        "type": "character varying(200)",
+        "null_false": true
       }
     },
     "fks": [
@@ -2991,6 +3580,10 @@
     "columns": {
       "id": {
         "type": "integer",
+        "null_false": true
+      },
+      "interface_name": {
+        "type": "character varying(200)",
         "null_false": true
       }
     },
@@ -3017,6 +3610,10 @@
       "foreign_id": {
         "type": "integer",
         "null_false": true
+      },
+      "value": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [
@@ -3044,6 +3641,10 @@
       "id": {
         "type": "integer",
         "null_false": true
+      },
+      "def_value": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [],
@@ -3128,6 +3729,18 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "total_invoiced": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "total_paid": {
+        "type": "numeric(22,10)",
+        "null_false": false
+      },
+      "total_not_paid": {
+        "type": "numeric(22,10)",
+        "null_false": false
       }
     },
     "fks": [
@@ -3166,6 +3779,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "total": {
+        "type": "numeric(22,10)",
         "null_false": true
       }
     },
@@ -3250,6 +3867,14 @@
       },
       "until": {
         "type": "date",
+        "null_false": false
+      },
+      "code": {
+        "type": "character varying(50)",
+        "null_false": true
+      },
+      "notes": {
+        "type": "character varying(200)",
         "null_false": false
       }
     },
@@ -3395,6 +4020,10 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "notes": {
+        "type": "character varying(200)",
+        "null_false": false
       }
     },
     "fks": [
@@ -3451,6 +4080,10 @@
       "version": {
         "type": "integer",
         "null_false": true
+      },
+      "type": {
+        "type": "character varying(255)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -3472,6 +4105,14 @@
       "optlock": {
         "type": "integer",
         "null_false": true
+      },
+      "name": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "file_name": {
+        "type": "character varying(500)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -3489,6 +4130,14 @@
       "report_id": {
         "type": "integer",
         "null_false": true
+      },
+      "dtype": {
+        "type": "character varying(10)",
+        "null_false": true
+      },
+      "name": {
+        "type": "character varying(255)",
+        "null_false": true
       }
     },
     "fks": [],
@@ -3505,6 +4154,10 @@
       },
       "optlock": {
         "type": "integer",
+        "null_false": true
+      },
+      "name": {
+        "type": "character varying(255)",
         "null_false": true
       }
     },
@@ -3544,6 +4197,18 @@
       "version": {
         "type": "integer",
         "null_false": true
+      },
+      "controller": {
+        "type": "character varying(255)",
+        "null_false": true
+      },
+      "action": {
+        "type": "character varying(255)",
+        "null_false": false
+      },
+      "name": {
+        "type": "character varying(255)",
+        "null_false": false
       }
     },
     "fks": [],

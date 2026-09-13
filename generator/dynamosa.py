@@ -170,7 +170,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from candidate import Candidate, derive_genome, build_seed_candidate, _OWNER_KEY, known_constant  # noqa: E402
+from candidate import (Candidate, derive_genome, build_seed_candidate,  # noqa: E402
+                        _OWNER_KEY, known_constant, _PLACEHOLDER_RE)
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
                        _leaf_variables, _schema_for, candidate_values)
@@ -881,6 +882,55 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
 # generation's population happens to contain a single all-purpose winner.
 # ---------------------------------------------------------------------------
 
+def _scenario_keys_needing_offset(record):
+    """Which of this record's own scenario keys are tied to a ROW-key
+    correspondence -- i.e. genuinely need the SAME per-objective offset
+    `merge_archive_candidate` applies to its own rows' PK/UNIQUE/FK
+    columns, rather than being a `not_persisted` leaf compared DIRECTLY
+    to a literal in the record's own condition (e.g. `purchaseQuantity
+    >= 50`), which must be left exactly as the search tuned it.
+
+    A real, second bug found the same day as the PK-collision merge fix
+    this helper supports (2026-09-13): the first version of that fix
+    blindly offset EVERY numeric scenario value, mirroring
+    `_seed_shared_population`'s own blanket approach -- safe THERE only
+    because at seed time every `not_persisted` value is still a raw,
+    uniform placeholder the search has not yet tuned; applying the
+    identical blanket shift a SECOND time, AFTER the search already
+    found the one correct value that satisfies a direct literal
+    comparison, corrupts it. Confirmed directly: re-running Spree after
+    the first version of the merge-time offset fix regressed 3
+    objectives that had verified cleanly moments before, including both
+    `Price List Volume Adjustment Tier Selection` rules this same
+    session's own `not_persisted`-mutation fix (§13.46) had just gotten
+    working.
+
+    The real, narrower rule: a scenario key only needs to move in lockstep
+    with a row's own key column when some leaf's own `filter_text`/
+    `sql_template` actually names it as a `<placeholder>` -- exactly the
+    same signal `build_seed_candidate` already uses to discover which
+    scenario keys exist in the first place (`_PLACEHOLDER_RE`). A key
+    that never appears inside any leaf's own filter/SQL text (like a
+    bare `not_persisted` variable with no aggregate/join-count sibling)
+    has no row to stay synchronized with, and must be left alone."""
+    needed = set()
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get('kind') == 'substituted_decision':
+            for sub in node.get('free_variable_resolutions', {}).values():
+                walk(sub)
+            return
+        for field in ('filter_text', 'sql_template'):
+            for m in _PLACEHOLDER_RE.finditer(node.get(field) or ''):
+                needed.add(m.group(1))
+
+    for node in record.get('variable_resolution', {}).values():
+        walk(node)
+    return needed
+
+
 def merge_archive_candidate(archive, records, case_study):
     """Builds ONE consistent `(candidate, focal_maps)` by merging, for
     EVERY objective the archive ever covered (fitness 0.0), just that
@@ -955,35 +1005,91 @@ def merge_archive_candidate(archive, records, case_study):
     dict is never physically shared or aliased across different records
     the way a candidate row can be.
 
+    **Merge-time re-offsetting (2026-09-13) -- a real PK/UNIQUE-collision
+    bug found running this pipeline against jBilling for the first
+    time**: two DIFFERENT covered objectives' own archived individuals
+    can each independently synthesize the SAME small "fresh" key value
+    (e.g. `id=1`) for a LAZILY-created row (one `_focal_for_mutate`
+    creates fresh mid-run, never touched by `_seed_shared_population`'s
+    own seed-time offsetting) -- `_fresh_key_value`'s own "max existing
+    value in THIS candidate, plus one" is scoped to one individual's own
+    candidate, with no way to know what value some OTHER, entirely
+    separate individual (from a different objective's own archive entry)
+    already used for the same table. Confirmed directly: jBilling's own
+    `BASE_USER`/`PURCHASE_ORDER` tables both had multiple covered
+    objectives' own rows independently landing on `id=1`, a real
+    `UNIQUE constraint failed` once merged (up to 4-way on
+    `PURCHASE_ORDER`, not just 2).
+
+    Fixed by giving every covered record's own ENTIRE bundle of rows
+    (focal + owner-tagged) a fresh, per-objective-unique offset,
+    reusing `_seed_shared_population`'s own exact mechanism
+    (`_key_columns_for` + `_SEED_KEY_OFFSET_UNIT`) rather than
+    inventing a new one: `i * _SEED_KEY_OFFSET_UNIT` for this record's
+    own index `i` in `records` (the same list, same order,
+    `run_dynamosa` already seeded from) is added to every PK/UNIQUE/FK
+    column value in every row this record contributes, AND to every
+    numeric `scenario` value (mirroring `_seed_shared_population`'s own
+    reason: a `derived_aggregate` seed row can set a key column directly
+    FROM a matching scenario placeholder, e.g. `ROLL_NO = <student>` ->
+    `row['ROLL_NO'] = scenario['student']` -- shifting one without the
+    other would break that equality). Applying the SAME per-record
+    offset to a row that already carries a seed-time offset only makes
+    it larger, still uniquely identifying that same objective's own key
+    space (no new collision risk: `i` is unique per record, and
+    `_SEED_KEY_OFFSET_UNIT` dwarfs any realistic search-induced delta);
+    applying it to a NEVER-offset lazily-created row (like the `id=1`
+    case above) moves it into that exact same, guaranteed-unique-per
+    -objective range for the first time. A row referencing something
+    OUTSIDE this record's own bundle (e.g. an untagged parent row from
+    the archived individual's own prior repair pass, dropped during this
+    merge same as before) was already going to need `repair_candidate`'s
+    own FK-stub synthesis regardless of this fix -- offsetting changes
+    WHICH number a dangling reference points at, never WHETHER repair
+    needs to handle it.
+
     Returns (merged_candidate, merged_focal_maps, merged_scenario_maps,
     covered_record_ids) -- `covered_record_ids` is the archive's own view
     of what SHOULD be covered; it is the caller's job (`generate_dataset.py`)
     to re-`evaluate_objective` every one of them against the actual
     merged, repaired result and report the real, verified number, not
     this expected one, honestly side by side."""
+    schema = _schema_for(case_study)
     merged = Candidate()
     merged_focal_maps = {}
     merged_scenario_maps = {}
     id_to_copy = {}
     covered_record_ids = set()
 
-    def get_copy(table, row):
+    def get_copy(table, row, offset):
         key = id(row)
         row_copy = id_to_copy.get(key)
         if row_copy is None:
             row_copy = dict(row)
+            if offset:
+                key_cols = _key_columns_for(schema, table)
+                for col in list(row_copy):
+                    if col.upper() in key_cols and isinstance(row_copy[col], (int, float)) \
+                            and not isinstance(row_copy[col], bool):
+                        row_copy[col] = row_copy[col] + offset
             merged.add_row(table, row_copy)
             id_to_copy[key] = row_copy
         return row_copy
 
-    for r in records:
+    for i, r in enumerate(records):
         rid = r['record_id']
         fitness, individual = archive.get(rid, (float('inf'), None))
         if fitness != 0.0 or individual is None:
             continue
         covered_record_ids.add(rid)
         candidate, focal_maps, scenario_maps = individual
-        merged_scenario_maps[rid] = dict(scenario_maps.get(rid, {}))
+        offset = i * _SEED_KEY_OFFSET_UNIT
+        rec_scenario = dict(scenario_maps.get(rid, {}))
+        offsettable_keys = _scenario_keys_needing_offset(r)
+        for key, val in rec_scenario.items():
+            if key in offsettable_keys and isinstance(val, (int, float)) and not isinstance(val, bool):
+                rec_scenario[key] = val + offset
+        merged_scenario_maps[rid] = rec_scenario
 
         # (1) This record's own dedicated focal rows -- by identity,
         # never by "which table," so a different owned row on the same
@@ -991,7 +1097,7 @@ def merge_archive_candidate(archive, records, case_study):
         # docstring for the real bug this fixes).
         merged_rec_focal = {}
         for table, row in focal_maps.get(rid, {}).items():
-            merged_rec_focal[table] = get_copy(table, row)
+            merged_rec_focal[table] = get_copy(table, row, offset)
 
         # (2) Every OTHER row this record owns anywhere in the candidate
         # (derived_aggregate/exists/derived_join_count's own row SETs) --
@@ -1000,7 +1106,7 @@ def merge_archive_candidate(archive, records, case_study):
         for table, table_rows in candidate.as_dict().items():
             for row in table_rows:
                 if row.get(_OWNER_KEY) == rid:
-                    get_copy(table, row)
+                    get_copy(table, row, offset)
 
         if merged_rec_focal:
             merged_focal_maps[rid] = merged_rec_focal

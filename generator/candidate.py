@@ -661,11 +661,33 @@ def build_seed_candidate(record, today=20000):
             for t in tables[1:]:
                 if joined_value_table and t.upper() == value_table.upper():
                     continue  # already seeded with real, joinable rows above
-                candidate.add_row(t, {'X': 0})
+                # An empty row, not a bogus {'X': 0} placeholder -- a real
+                # bug found running this pipeline against jBilling for the
+                # first time (2026-09-13): derive_value's own
+                # derived_aggregate branch NEVER reads a bystander table
+                # (anything past tables[0], other than value_column's own
+                # joined-in table) at all, so 'X' served no functional
+                # purpose here, ever -- it was pure placeholder filler
+                # that also happened to not be a real schema column
+                # anywhere, and nothing ever stripped it before real SQL
+                # emission (unlike _OWNER_KEY, which materialize.py's own
+                # _real_columns explicitly strips). `_repair_row` (called
+                # once, wholesale, by repair_candidate/apply_mutation)
+                # already fills in whatever real NOT NULL columns this
+                # table's own schema actually requires -- an empty row
+                # gives it nothing extra to accidentally leave behind.
+                candidate.add_row(t, {})
         elif kind == 'exists':
             table = (node.get('candidate_tables') or [None])[0]
             if table:
-                candidate.add_row(table, {'X': 1})
+                # Likewise an empty row, not {'X': 1} -- derive_value's
+                # own `exists` branch is a bare row-COUNT check
+                # (`len(_owned_rows(...)) > 0`), never inspecting any
+                # column's content, so the row's presence is all that
+                # ever mattered; 'X' was never a real schema column
+                # either (see the derived_aggregate case above, same
+                # bug, same fix).
+                candidate.add_row(table, {})
         elif kind == 'raw_sql_boolean':
             # A real, found-not-guessed bug (2026-09-12, discovered only
             # once materialize.py's real SQLite validation checked these
