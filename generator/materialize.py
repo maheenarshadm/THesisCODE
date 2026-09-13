@@ -22,11 +22,14 @@ Three things, in the order §6.5 itself describes them:
 3. **Validation** (`validate_with_sqlite`): §6.5's own "non-negotiable"
    check -- attempts the actual inserts against a real SQLite database,
    built from the schema's own declared DDL (columns, types, NOT NULL,
-   PK, FK, with `PRAGMA foreign_keys = ON`), and reports every failure
-   honestly. The engine is the ground truth for constraint satisfaction,
-   not `fitness.py`'s own hand-written distance functions -- this is
-   what actually proves a materialized candidate is real, valid data,
-   independent of whether `candidate_constraint_fitness` agrees.
+   PK), then checks FK integrity separately via `PRAGMA foreign_key_
+   check` against the fully-populated data at rest (order-independent,
+   so a genuine FK cycle -- see point 1 -- is never mistaken for a real
+   violation), and reports every failure honestly. The engine is the
+   ground truth for constraint satisfaction, not `fitness.py`'s own
+   hand-written distance functions -- this is what actually proves a
+   materialized candidate is real, valid data, independent of whether
+   `candidate_constraint_fitness` agrees.
 
 Usage:
     from materialize import to_sql_inserts, write_csv_files, validate_with_sqlite
@@ -242,31 +245,74 @@ def create_table_ddl(table, schema, known_tables):
 
 def validate_with_sqlite(candidate, schema):
     """§6.5's own 'non-negotiable' validation pass: creates a throwaway
-    in-memory SQLite database from the schema's real DDL (FK enforcement
-    turned on), then attempts every one of the candidate's own rows as a
-    genuine INSERT. Returns (ok, errors) -- ok is True only when every
-    table got created AND every row inserted cleanly; errors names each
-    failure (which table, which row, the engine's own reason), never
-    swallowed. The engine is the ground truth here, not
-    candidate_constraint_fitness's own hand-written distance math --
-    this is what actually proves a materialized candidate is real, valid
-    data, independent of whether that separate check agrees."""
-    order, errors = topological_table_order(schema, candidate.as_dict().keys())
+    in-memory SQLite database from the schema's real DDL, attempts every
+    one of the candidate's own rows as a genuine INSERT, then checks FK
+    integrity for real via `PRAGMA foreign_key_check` against the data
+    at rest. Returns (ok, errors) -- ok is True only when every table
+    got created, every row inserted cleanly, AND no FK check violation
+    remains; errors names each failure (which table, which row, the
+    engine's own reason), never swallowed. The engine is the ground
+    truth here, not candidate_constraint_fitness's own hand-written
+    distance math -- this is what actually proves a materialized
+    candidate is real, valid data, independent of whether that separate
+    check agrees.
+
+    `topological_table_order`'s own FK-cycle notes are informational,
+    not failures -- its own docstring already calls them "warnings," and
+    (now that FK enforcement during INSERT is off, see below) a cycle
+    note no longer implies anything actually went wrong. Kept in the
+    returned `errors` list for visibility (a real schema shape worth
+    knowing about), but never counted toward `ok` -- a real bug in this
+    function's own earlier version, found the same day as the insert
+    -order fix below: a dataset that validated perfectly clean (zero
+    real INSERT/FK-check failures) was still reported `ok=False` purely
+    because its schema happens to have a cycle.
+
+    **FK enforcement is deliberately NOT turned on during the INSERT
+    loop itself** (a real bug found running OpenMRS end to end for the
+    first time, 2026-09-13): `topological_table_order` already documents
+    that a genuine FK cycle is broken by placing one table "out of
+    strict dependency order" -- but per-statement `PRAGMA foreign_keys =
+    ON` enforcement is fundamentally insert-ORDER-sensitive, so breaking
+    a cycle this way ALWAYS makes the row inserted first fail (its own
+    FK target genuinely isn't in the table yet), even when the full,
+    completed dataset would be entirely FK-consistent -- confirmed
+    directly: OpenMRS's own real schema has one large (28-table) FK
+    cycle (`USERS` -> `PERSON` -> ... -> `USERS` and similar), and 254 of
+    its own rows were flagged as FK failures purely as an artifact of
+    insertion order, not because any of them actually dangled. Fixed by
+    inserting with FK enforcement OFF (order-independent -- catches only
+    genuine per-statement failures: NOT NULL/CHECK/UNIQUE/type), then
+    running `PRAGMA foreign_key_check` once against the fully-populated,
+    at-rest database -- a read-only, order-independent scan that finds
+    every ACTUAL dangling reference (confirmed directly against a
+    hand-built 2-table cycle: a legitimately-cyclic pair of rows passes
+    clean, a genuinely dangling FK on a third row is still caught) while
+    never flagging a row purely for having been inserted before its own
+    target."""
+    order, cycle_warnings = topological_table_order(schema, candidate.as_dict().keys())
+    errors = list(cycle_warnings)
+    real_errors = []
     known_tables = set(order)
+
+    def add_error(msg):
+        errors.append(msg)
+        real_errors.append(msg)
+
     conn = sqlite3.connect(':memory:')
-    conn.execute('PRAGMA foreign_keys = ON;')
     cur = conn.cursor()
     created = set()
     for table in order:
         ddl = create_table_ddl(table, schema, known_tables)
         if ddl is None:
-            errors.append(f"{table}: no schema entry to build DDL from -- its rows are unvalidated")
+            add_error(f"{table}: no schema entry to build DDL from -- its rows are unvalidated")
             continue
         try:
             cur.execute(ddl)
             created.add(table)
         except sqlite3.Error as e:
-            errors.append(f"{table}: CREATE TABLE failed -- {e} (DDL: {ddl})")
+            add_error(f"{table}: CREATE TABLE failed -- {e} (DDL: {ddl})")
+    row_by_rowid = {}
     for table in order:
         if table not in created:
             continue
@@ -278,10 +324,14 @@ def validate_with_sqlite(candidate, schema):
             try:
                 cur.execute(f"INSERT INTO {table} ({', '.join(cols)}) VALUES "
                             f"({', '.join('?' for _ in cols)})", [row[c] for c in cols])
+                row_by_rowid[(table, cur.lastrowid)] = (i, row)
             except sqlite3.Error as e:
-                errors.append(f"{table} row {i} {row}: INSERT failed -- {e}")
+                add_error(f"{table} row {i} {row}: INSERT failed -- {e}")
+    for table, rowid, ref_table, fkid in cur.execute('PRAGMA foreign_key_check;').fetchall():
+        i, row = row_by_rowid.get((table, rowid), ('?', None))
+        add_error(f"{table} row {i} {row}: dangling FK into {ref_table} (constraint #{fkid})")
     conn.close()
-    return len(errors) == 0, errors
+    return len(real_errors) == 0, errors
 
 
 if __name__ == '__main__':

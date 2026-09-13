@@ -1052,6 +1052,50 @@ def _filter_columns_needing_offset(record):
     return cols
 
 
+def _join_lookup_pairs(record):
+    """(local_table, local_column, result_table, result_column) for
+    every `join_lookup`/`join_null_check` leaf. `candidate.py`'s own
+    `derive_value` (see its own docstring on the join_lookup branch)
+    finds the joined-to row by searching for a `result_table` row whose
+    OWN `result_column` VALUE equals `local_column`'s FK value --
+    result_column doubling as a synthetic join key is a documented,
+    narrow-scope trick (not a real PK lookup), but `build_seed_candidate`
+    and `mutation.py`'s own M1 join_lookup mutation both keep the two
+    values numerically EQUAL by construction, always. Merge-time
+    offsetting must preserve that same equality exactly like it already
+    does for scenario-placeholder-bound filter columns (see
+    `_filter_columns_needing_offset`) -- a real bug found running
+    OpenMRS end to end for the first time (2026-09-13): `orders.
+    encounter_id` (a declared FK, offset normally by `_key_columns_for`)
+    and `encounter.encounter_datetime` (a plain value column, never
+    itself a key) are kept numerically equal by this scheme's own
+    design; offsetting one without the other broke the join the moment
+    `Order Date Activated Consistency Violations::Rule_4` (which needs
+    this leaf) was merged -- confirmed directly: pre-merge, both
+    happened to already be offset to the identical number by the
+    RUN's own earlier seed-time offsetting, so the join "worked" only
+    because it was never tested against a SECOND, merge-time shift."""
+    pairs = []
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get('kind') == 'substituted_decision':
+            for sub in node.get('free_variable_resolutions', {}).values():
+                walk(sub)
+            return
+        if node.get('kind') in ('join_lookup', 'join_null_check'):
+            via = node.get('via') or {}
+            if via.get('local_table') and via.get('local_column') \
+                    and node.get('result_table') and node.get('result_column'):
+                pairs.append((via['local_table'], via['local_column'],
+                              node['result_table'], node['result_column']))
+
+    for node in record.get('variable_resolution', {}).values():
+        walk(node)
+    return pairs
+
+
 def merge_archive_candidate(archive, records, case_study):
     """Builds ONE consistent `(candidate, focal_maps)` by merging, for
     EVERY objective the archive ever covered (fitness 0.0), just that
@@ -1231,7 +1275,7 @@ def merge_archive_candidate(archive, records, case_study):
     # actually fires for a same-record, same-table, same-column clash.
     used_key_values = {}
 
-    def get_copy(table, row, offset, filter_cols=frozenset()):
+    def get_copy(table, row, offset, filter_cols=frozenset(), join_cols=frozenset()):
         key = id(row)
         row_copy = id_to_copy.get(key)
         if row_copy is None:
@@ -1286,6 +1330,21 @@ def merge_archive_candidate(archive, records, case_study):
                         # -name-only version of this check corrupted
                         # exactly that literal 0).
                         row_copy[col] = val + offset
+                    elif (table.upper(), col.upper()) in join_cols \
+                            and val in join_cols[(table.upper(), col.upper())]:
+                        # Not a declared PK/UNIQUE/FK column on THIS
+                        # table, but some `join_lookup`/`join_null_check`
+                        # leaf keeps it numerically equal to a DIFFERENT
+                        # row's own FK column by construction (see
+                        # `_join_lookup_pairs`'s own docstring) -- e.g.
+                        # `encounter.encounter_datetime` doubling as
+                        # `orders.encounter_id`'s own synthetic join
+                        # target. Table-scoped (unlike `filter_cols`,
+                        # which is deliberately cross-table by column
+                        # name alone) since this correspondence is
+                        # inherently between two SPECIFIC, different
+                        # tables, not just a column name.
+                        row_copy[col] = val + offset
             merged.add_row(table, row_copy)
             id_to_copy[key] = row_copy
         return row_copy
@@ -1317,13 +1376,29 @@ def merge_archive_candidate(archive, records, case_study):
                 rec_scenario[key] = val + offset
         merged_scenario_maps[rid] = rec_scenario
 
+        # {(result_table, result_column) -> {this record's own current
+        # FK values a join_lookup/join_null_check leaf expects it to
+        # equal}} -- read from the record's own RAW, pre-copy focal rows
+        # (never touched by get_copy), so this reflects exactly what the
+        # archived individual actually had, regardless of processing
+        # order below (see `_join_lookup_pairs`'s own docstring).
+        rec_focal_raw = focal_maps.get(rid, {})
+        join_cols = {}
+        for local_table, local_column, result_table, result_column in _join_lookup_pairs(r):
+            local_row = rec_focal_raw.get(local_table.upper())
+            if local_row is None:
+                continue
+            lv = local_row.get(local_column)
+            if isinstance(lv, (int, float)) and not isinstance(lv, bool):
+                join_cols.setdefault((result_table.upper(), result_column.upper()), set()).add(lv)
+
         # (1) This record's own dedicated focal rows -- by identity,
         # never by "which table," so a different owned row on the same
         # table can never be mistaken for it (see this function's own
         # docstring for the real bug this fixes).
         merged_rec_focal = {}
-        for table, row in focal_maps.get(rid, {}).items():
-            merged_rec_focal[table] = get_copy(table, row, offset, filter_cols)
+        for table, row in rec_focal_raw.items():
+            merged_rec_focal[table] = get_copy(table, row, offset, filter_cols, join_cols)
 
         # (2) Every OTHER row this record owns anywhere in the candidate
         # (derived_aggregate/exists/derived_join_count's own row SETs) --
@@ -1332,7 +1407,7 @@ def merge_archive_candidate(archive, records, case_study):
         for table, table_rows in candidate.as_dict().items():
             for row in table_rows:
                 if row.get(_OWNER_KEY) == rid:
-                    get_copy(table, row, offset, filter_cols)
+                    get_copy(table, row, offset, filter_cols, join_cols)
 
         if merged_rec_focal:
             merged_focal_maps[rid] = merged_rec_focal

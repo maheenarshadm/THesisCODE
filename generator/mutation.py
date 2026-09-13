@@ -118,6 +118,15 @@ def _column_type(case_study, table, column):
     return (col_meta or {}).get('type', '').upper()
 
 
+def _column_is_not_null(case_study, table, column):
+    schema = _schema_for(case_study)
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+    col_meta = (info.get('columns') or {}).get(column) \
+        or (info.get('columns') or {}).get(column.upper()) \
+        or (info.get('columns') or {}).get(column.lower())
+    return bool((col_meta or {}).get('null_false'))
+
+
 # ---------------------------------------------------------------------------
 # 1. Enumerable domains -- a leaf compared only via '=', '!=', or 'in'
 # against literal values *in this branch's own condition* has a natural,
@@ -530,7 +539,7 @@ def repair_candidate(candidate, case_study):
 # M2 (row-count), chosen by the leaf's own resolution kind, never guessed.
 # ---------------------------------------------------------------------------
 
-def _apply_field_mutation(node, value, candidate, focal):
+def _apply_field_mutation(node, value, candidate, focal, case_study=None):
     """M1: write one row's one column. For a boolean-valued leaf
     (null_check et al.), True/False means "make the underlying fact hold
     or not" -- realized as setting the column non-null vs null, the same
@@ -538,7 +547,12 @@ def _apply_field_mutation(node, value, candidate, focal):
     Returns every (table, row) pair this call touched or added, so
     apply_mutation can repair each one for NOT NULL/FK by construction
     afterward -- collected rather than repaired inline here, so this
-    function stays purely about the DMN-relevant write."""
+    function stays purely about the DMN-relevant write.
+
+    `case_study`, when given, lets `null_check`'s own "restore to any
+    non-null value" placeholder pick a type-appropriate one instead of a
+    hardcoded `1` -- see that branch's own docstring for the real bug
+    this fixes."""
     kind = node['kind']
     touched = []
     if kind == 'schema_column':
@@ -570,9 +584,51 @@ def _apply_field_mutation(node, value, candidate, focal):
         row = focal.setdefault(table.upper(), {})
         if row not in candidate.rows(table):
             candidate.add_row(table, row)
-        row[column] = (row.get(column, 1) if value else None) if value else None
-        if value and row.get(column) is None:
-            row[column] = 1  # any non-null placeholder satisfies "is set"
+        if not value:
+            # A literal database NULL is the obvious way to write
+            # "blank" -- except when the schema declares this column
+            # NOT NULL, where NULL is never legal at all regardless of
+            # what this leaf wants. A real bug found running OpenMRS end
+            # to end for the first time (2026-09-13): `Identifier Format
+            # Validity`'s own `identifierBlank` (a null_check on
+            # `patient_identifier.identifier`, itself compiled from a
+            # ground-truth condition reading "identifier IS NULL OR
+            # TRIM(identifier) = ''" -- the schema's own real NOT NULL
+            # constraint on this column is exactly WHY a real system
+            # represents "blank" via an empty string here, never a
+            # literal NULL) wrote `None` unconditionally, producing a
+            # genuine `NOT NULL constraint failed` at validation for
+            # every record needing this leaf false -- `repair_candidate`
+            # never fixes it either, since the column already carries an
+            # explicit (if illegal) value, not a missing one. Falls back
+            # to `None` when case_study isn't given (kept for any caller
+            # that doesn't pass one) or the schema allows NULL here.
+            row[column] = ('' if case_study is not None and _column_is_not_null(case_study, table, column)
+                            else None)
+        elif row.get(column) is None:
+            # Any non-null placeholder satisfies "is set" -- but a
+            # type-APPROPRIATE one, not a hardcoded `1`: a real bug
+            # found the same day. `Identifier Format Validity`'s own
+            # `formatSet` (a null_check on `patient_identifier_type.
+            # format`) shares that exact column with a SIBLING leaf in
+            # the same record, `identifierMatchesFormat` (a `regex_match`
+            # that reads `format` as a STRING regex pattern) -- both
+            # leaves read/write the SAME per-record focal row for this
+            # table. If `formatSet` mutates to False (nulling `format`)
+            # and later back to True, the old hardcoded `1` overwrote a
+            # previously-seeded valid pattern string with an INTEGER,
+            # crashing `re.search` ("first argument must be string or
+            # compiled pattern") the moment `identifierMatchesFormat` was
+            # next evaluated. Reuses `_placeholder_for_column_type` --
+            # the exact same schema-type-aware placeholder `_repair_row`
+            # already uses for this identical "fill in a DMN-irrelevant
+            # column" concept -- so a VARCHAR column restores to a
+            # string, a DATE to a date string, and only a genuinely
+            # numeric column still gets `1`. Falls back to the original
+            # bare `1` only when no `case_study` was given (kept for any
+            # caller that doesn't pass one).
+            col_type = _column_type(case_study, table, column) if case_study is not None else None
+            row[column] = _placeholder_for_column_type(col_type) if case_study is not None else 1
         touched.append((table, row))
     elif kind == 'any_not_null':
         # True: ensure at least one of the columns is set; False: null all
@@ -811,7 +867,7 @@ def apply_mutation(record, candidate, focal, scenario, var_name, node, value, cu
     operate on a per-objective `focal` row."""
     kind = node.get('kind')
     if kind in FIELD_LEAF_KINDS:
-        touched = _apply_field_mutation(node, value, candidate, focal)
+        touched = _apply_field_mutation(node, value, candidate, focal, case_study=record.get('case_study'))
     elif kind in AGGREGATE_LEAF_KINDS:
         touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal, owner_id=owner_id)
     elif kind == 'not_persisted':
