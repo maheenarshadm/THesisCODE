@@ -1446,6 +1446,14 @@ Built the follow-up the previous section named: instead of picking one individua
 
 **Final, measured result**: merged-archive coverage is **81/151 (53.6%), VERIFIED, zero regressions** -- exactly matching archive coverage, at both seed=0 and seed=1. A real ~4x improvement over the final-population strategy's own 17-21/151 across the same two seeds, delivered in one real, `validate_with_sqlite`-clean, schema-legal dataset. See `docs/generationalgorithmdesign.md` §13.43 for the full trace.
 
+## Known real-world constants (2026-09-13) -- a general mechanism for domain-realistic values the search has no reason to want on its own
+
+Asked why the generated dataset only had 5 `STUDENT_ATTENDANCE` rows for the Attendance Eligibility rules. Traced directly: only 2 of the 151 compiled records touch that table at all, and `lecturesHeldForOffering` (a `derived_aggregate` count of `LECTURE` rows) is a completely free leaf -- the search always converges to the cheapest value that proves the branch (as few rows as the ≥80%/<80% threshold needs), never a value chosen for realism. Not a bug -- the search was only ever asked to prove DMN/schema correctness -- but a real gap once pointed out: a real course offering holds around 30 lectures, a fact nothing in the DMN, schema, or generator encoded anywhere.
+
+Built a general, config-driven fix rather than a one-off hack for this rule: `known_constants.json` (`{case_study: {var_name: fixed_value}}`, keyed by the leaf's own free-variable name, e.g. `{"FLEX2": {"lecturesHeldForOffering": 30}}`). `known_constant(case_study, var_name)` (candidate.py) is the single shared lookup, consulted in three places: `best_value_for` (mutation.py) jumps straight to the pinned value instead of searching for the cheapest one that merely proves the branch; `build_seed_candidate` seeds a pinned `derived_aggregate` leaf at that count from generation 0 instead of the hardcoded 3; and DynaMOSA's own kick-mutation escape hatch (§ above) excludes pinned variables so it never randomly perturbs one away from its correct real-world value. One entry pins uniformly to every rule that resolves to that same variable name -- no per-decision special-casing anywhere.
+
+**Verified**: full regression suite green, full FLEX2 benchmark still gives **81/151 merged-archive coverage, VERIFIED, zero regressions**. Inspected the real generated SQL directly: both course offerings now carry exactly 30 `LECTURE` rows (up from 3), with `STUDENT_ATTENDANCE` correctly showing 25/30 ≈ 83.3% attended for the eligible student and 3/30 = 10% for the debarred one. See `docs/generationalgorithmdesign.md` §13.44 for the full trace.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

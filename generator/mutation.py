@@ -88,7 +88,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
                         _mechanical_filter_predicate, _find_focal_with_columns, _row_get,
-                        _owned_rows, _OWNER_KEY)
+                        _owned_rows, _OWNER_KEY, known_constant)
 from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
                       candidate_constraint_fitness, _unique_key_sets)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
@@ -327,10 +327,29 @@ def best_value_for(record, genome, var_name, node, case_study):
     calls without this -- doubling closes the same gap in ~7 (see this
     module's own docstring and generator/README.md's "AVM step
     acceleration" section for the worked-example numbers). Every other
-    leaf kind is unaffected: a single pass, exactly as before."""
+    leaf kind is unaffected: a single pass, exactly as before.
+
+    A known real-world constant (`known_constants.json`, e.g.
+    `lecturesHeldForOffering=30`, 2026-09-13) takes priority over ALL of
+    the above: this function jumps straight to that value the instant
+    var_name is pinned, skipping AVM/domain search entirely -- the
+    search's own "cheapest value that proves the branch" preference is
+    exactly the gap known_constant exists to override for a variable a
+    domain expert has said should carry a specific real-world value
+    regardless of what the DMN's own arithmetic strictly requires. Never
+    special-cased to any one leaf kind or rule: whatever var_name a
+    caller passes, if it's pinned for this case_study, it's honored --
+    unpinned variables (every leaf currently in the corpus except this
+    one) see zero change in behavior."""
     current = genome.get(var_name)
     current_fitness = branch_fitness(record, genome)
     best_value, best_fitness = current, current_fitness
+
+    pinned = known_constant(case_study, var_name)
+    if pinned is not None:
+        if pinned == current:
+            return current, current_fitness, False
+        return pinned, _hypothetical_fitness(record, genome, var_name, pinned), True
 
     if not _numeric_step_eligible(record, var_name, node, current):
         for value in candidate_values(record, var_name, node, current, case_study):

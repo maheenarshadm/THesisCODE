@@ -112,6 +112,50 @@ def _owned_rows(candidate, table, owner_id):
     return [r for r in rows if r.get(_OWNER_KEY) in (None, owner_id)]
 
 
+# ---------------------------------------------------------------------------
+# Known real-world constants (2026-09-13) -- a general, config-driven
+# mechanism for the gap found asking why the generated data showed only 5
+# STUDENT_ATTENDANCE rows for `Attendance Eligibility For Final Exam`: the
+# search has NO notion of "a real course offering holds ~30 lectures" --
+# `lecturesHeldForOffering` is just a free `derived_aggregate` leaf, and
+# `best_value_for` (mutation.py) always converges to the CHEAPEST value
+# that proves the branch (here, as few real rows as the DMN's own >=80%/
+# <80% threshold needs), never a value chosen for real-world plausibility.
+# This is not a bug -- the search was never asked to optimize for realism,
+# only for DMN/schema correctness -- but it is a real, named gap: some
+# leaf variables have a known, domain-true value a generated dataset
+# should honor regardless of what the DMN's own arithmetic strictly
+# requires. `known_constants.json` lets a domain expert name those
+# variables once, by their own real business name, and have every rule
+# that resolves to that same var_name -- there is no other case in FLEX2
+# right now, but this is deliberately NOT special-cased to Attendance
+# Eligibility -- pin to it, uniformly, without touching that rule's own
+# compiled resolution or hand-coding the value into any one leaf kind's
+# own logic.
+# ---------------------------------------------------------------------------
+_KNOWN_CONSTANTS_PATH = os.path.join(HERE, 'known_constants.json')
+_known_constants_cache = None
+
+
+def known_constant(case_study, var_name):
+    """The pinned real-world value for `var_name` in `case_study`, or
+    None if this variable isn't pinned -- the single lookup every
+    consumer (`best_value_for`, `build_seed_candidate`, dynamosa.py's own
+    kick-mutation guard) shares, so a domain expert only ever has to edit
+    `known_constants.json` once for the pin to take effect everywhere a
+    leaf resolves to that same variable name. Loaded once and cached
+    (mirrors `_schema_for`'s own pattern in mutation.py) -- the file is
+    static config, not something any run mutates."""
+    global _known_constants_cache
+    if _known_constants_cache is None:
+        try:
+            with open(_KNOWN_CONSTANTS_PATH) as f:
+                _known_constants_cache = json.load(f)
+        except FileNotFoundError:
+            _known_constants_cache = {}
+    return _known_constants_cache.get(case_study, {}).get(var_name)
+
+
 def _row_get(row, column, table_for_error=None):
     """Case-insensitive column lookup: ground-truth resolutions carry
     lowercased table.column names (compile_constraints.py's own
@@ -584,7 +628,16 @@ def build_seed_candidate(record, today=20000):
             tables = [t.strip() for t in node['table'].split(',')]
             value_table, value_col = (node['value_column'].split('.') if node.get('value_column') else (None, None))
             joined_value_table = value_table and value_table.upper() != tables[0].upper()
-            for i in range(1, 4):
+            # 3 by default (just enough to prove a >0-style branch cheaply)
+            # -- but a var_name with a known, pinned real-world constant
+            # (known_constants.json, e.g. lecturesHeldForOffering=30) is
+            # seeded at that count directly, so the generated dataset is
+            # realistic from generation 0 rather than relying on search to
+            # ever happen to pick this leaf for mutation before the run
+            # ends (best_value_for's own pin still applies if it IS picked
+            # -- this is belt-and-braces, not the only enforcement point).
+            seed_count = known_constant(record['case_study'], var) or 3
+            for i in range(1, seed_count + 1):
                 row = _row_from_filter_conjuncts(node.get('filter_text'), scenario)
                 # no artificial distinguishing key needed -- these are
                 # still 3 separate row objects in the list even with

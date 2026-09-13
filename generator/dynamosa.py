@@ -118,7 +118,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from candidate import Candidate, derive_genome, build_seed_candidate, _OWNER_KEY  # noqa: E402
+from candidate import Candidate, derive_genome, build_seed_candidate, _OWNER_KEY, known_constant  # noqa: E402
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
                        _leaf_variables, _schema_for, candidate_values)
@@ -330,7 +330,15 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     random jump instead of `best_value_for`'s own greedy best-value pick
     -- the escape hatch for genuine local optima a purely greedy search
     can never climb out of on its own. Applies uniformly to every
-    record/leaf, never targeted at any specific decision."""
+    record/leaf, never targeted at any specific decision -- EXCEPT a
+    leaf pinned to a known real-world constant (`known_constants.json`,
+    2026-09-13), which always goes through `best_value_for` instead
+    (whose own pin-check snaps it straight to that constant): kicking a
+    pinned variable would randomly perturb it away from the one value a
+    domain expert said it should always carry (e.g.
+    `lecturesHeldForOffering`, which should read 30 in every generated
+    row, never some large randomized jump `_kick_value_for`'s own
+    exploration step would otherwise produce)."""
     rng = rng or random
     rid = record['record_id']
     scenario = scenario_cache[rid]
@@ -341,7 +349,8 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
         if not leaves:
             return candidate, focal_maps, False
         var_name, node = rng.choice(leaves)
-        if rng.random() < kick_probability:
+        pinned = known_constant(record['case_study'], var_name)
+        if pinned is None and rng.random() < kick_probability:
             value = _kick_value_for(record, var_name, node, genome.get(var_name), record['case_study'], rng)
             if value is None:
                 return candidate, focal_maps, False
