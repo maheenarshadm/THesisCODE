@@ -1523,6 +1523,23 @@ Ran the pipeline against OpenMRS, the fourth and last case study, for the first 
 
 **Verified end to end, all four case studies re-run after every fix**: FLEX2 81/151, Spree 22/27, jBilling 33/42 (all zero regressions), OpenMRS crashed → **61/71 (85.9%)**, `validate_with_sqlite: ok=True`. One further regression (`Preferred Identifier Requirement::Rule_2`) was diagnosed to a DIFFERENT, compile-time root cause -- `identifierCount` reads a genuinely-declared FK column (`patient_id`) directly as a stand-in for "count," a modeling choice incompatible with FK-consistent merging -- and left honestly uncharacterized-further rather than touching curated ground truth without approval. OpenMRS's own 9 never-covered-by-archive objectives are likewise not yet exhaustively characterized the way the other three case studies' remainders were. Full trace: `docs/generationalgorithmdesign.md` §13.50.
 
+## Exhaustively characterizing OpenMRS's remaining gap, and fixing the one genuine algorithm bug in it (2026-09-13)
+
+Asked why OpenMRS's remaining 10 objectives weren't covered and which category each falls into. Ran each in an ISOLATED single-objective `hillclimb` (not just the shared-population archive) specifically to tell a true architectural block apart from search-budget bad luck. Five categories, all ten accounted for exactly:
+
+1. **One column, two conflicting boolean projections** (`Concept Preferred Name Validity::Rule_3`) -- two `schema_column` leaves reading the same column, each meant to derive a different boolean from its real string domain; should have been `derived_case`. Compile-time gap.
+2. **`exists`-kind self-join, beyond any filter mechanism** (`Identifier Uniqueness Check::Rule_3`) -- correlated self-joins (`pi2.patient_id <> this.patient_id`), no `filter_text` compiled at all, both collapse to the same bare "any row" check. Deeper than §13.49's own filter-support fix. Compile-time gap.
+3. **`null_check` can't express "null-or-empty" on a NOT NULL column** (`Identifier Format Validity::Rule_2/3/4`) -- the real fact is "IS NULL OR TRIM = ''", but the column is NOT NULL, leaving the only schema-legal branch (empty string) unexpressed by bare `null_check`. Compile-time gap.
+4. **A genuine, new generation-algorithm bug** (`Patient State Date Validity::Rule_2/4`) -- fixed, see below.
+5. **Search-budget, not architectural** (`Encounter Datetime Validity Violations::Rule_3/4`) -- isolated hillclimb solves both trivially; the shared 40-generation run just never gave them the chance.
+
+**Category 4 fix -- two stacked bugs, both general, both real:**
+
+1. `best_value_for`'s own genome-only hypothetical evaluation didn't know that `startDateSet` (`null_check` on `patient_state.start_date`) and `startDate` (`schema_column` on that SAME column) are physically coupled -- it promised fitness=0.0 for `startDateSet=False` while leaving `startDate` unrealistically fixed at its old value, a combination the real mutation could never produce. Fixed with `_sibling_field_leaves`, which finds every other leaf sharing the exact same `(table, column)` and updates its own hypothetical value the same way `_apply_field_mutation` would for real.
+2. The REAL root cause, exposed only once bug 1 made the hypothetical accurate: `fitness.py`'s `distance_to_false`'s own `and`-node used a plain `min()` over a generator, which must evaluate every clause to find the minimum -- so a LATER clause raising `FitnessEvaluationError` (an ordering comparison against a now-`None` value) discarded an EARLIER clause's already-perfect 0.0 answer. A general robustness gap in every min-combinator in the module, not just this record. Fixed with `_min_distance`, a shared helper that evaluates every term order-independently, short-circuits the moment any term proves 0.0, and only raises when no term produced a usable value at all.
+
+**Verified end to end, all four case studies re-run**: FLEX2 81/151, Spree 22/27, jBilling 33/42 (zero regressions despite touching fitness.py's own core distance machinery). OpenMRS archive coverage 62/71 → **64/71**; final materialized dataset 61/71 → **63/71**. Final, exhaustive OpenMRS tally: 63 covered + 1 merge-regression + 1 + 1 + 3 + 2 = 71 exactly, zero unexplained. Full trace: `docs/generationalgorithmdesign.md` §13.51.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

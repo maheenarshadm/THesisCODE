@@ -304,9 +304,88 @@ def _combined_fitness(record, candidate, focal, scenario, schema):
     return branch_fitness(record, genome) + candidate_constraint_fitness(candidate.as_dict(), schema)
 
 
-def _hypothetical_fitness(record, genome, var_name, value):
+def _sibling_field_leaves(record, var_name, node):
+    """Every OTHER leaf in this record's own `variable_resolution`
+    (recursing through `substituted_decision` chains, same as
+    `_leaf_kinds_for_seeding`'s own walk) that reads/writes the EXACT
+    SAME `(table, column)` as `var_name`'s own node -- `schema_column`
+    and `null_check` are the two kinds whose own genome value is
+    directly, physically coupled through one shared column: setting a
+    `null_check` to False/True means the underlying column becomes
+    None/non-null, which is EXACTLY what a sibling `schema_column`
+    leaf on that same column would then read too. Returns `[]` for
+    every other kind (nothing else in this corpus shares a column this
+    directly) -- see `_hypothetical_fitness`'s own docstring for the
+    real bug only this pairing produces."""
+    if node.get('kind') not in ('schema_column', 'null_check'):
+        return []
+    table, column = node.get('table'), node.get('column')
+    if not table or not column:
+        return []
+    siblings = []
+
+    def walk(name, n):
+        if not isinstance(n, dict) or name == var_name:
+            return
+        if n.get('kind') == 'substituted_decision':
+            for fv, sub in n.get('free_variable_resolutions', {}).items():
+                walk(fv, sub)
+            return
+        if n.get('kind') in ('schema_column', 'null_check') \
+                and n.get('table') == table and n.get('column') == column:
+            siblings.append((name, n))
+
+    for name, n in record.get('variable_resolution', {}).items():
+        walk(name, n)
+    return siblings
+
+
+def _hypothetical_fitness(record, genome, var_name, value, node=None, case_study=None):
+    """A trial `branch_fitness` for `var_name = value`, WITHOUT
+    materializing a real candidate row (see `best_value_for`'s own
+    docstring for why this stays genome-only). `node`/`case_study`, when
+    given, keep the trial genome PHYSICALLY CONSISTENT with any sibling
+    leaf reading the exact same underlying column (`_sibling_field_
+    leaves`) -- a real, confirmed bug found running OpenMRS end to end
+    (2026-09-13): trying `startDateSet = False` (a `null_check` on
+    `patient_state.start_date`) used to score the trial genome with
+    `startDate` (a DIFFERENT, `schema_column` leaf reading that SAME
+    column) left UNCHANGED at its old numeric value -- a physically
+    IMPOSSIBLE combination (the column can't simultaneously be null,
+    satisfying `startDateSet=False`, and hold a real number,
+    `startDate=1`), so `best_value_for` promised fitness=0.0 for a move
+    that could never actually be applied. `apply_mutation` then wrote
+    the real, correlated change (`start_date=None`), which broke an
+    EARLIER-ROW suppression term's own ordering comparison
+    (`endDate < startDate`, now comparing against `None`) with an
+    unrecoverable `FitnessEvaluationError` -- confirmed directly via an
+    isolated, 300-iteration single-objective `hillclimb`: the exact same
+    losing move got proposed and rejected every single time, a true,
+    deterministic dead end, not a budget problem. Fixed by updating
+    every sibling's OWN trial genome entry the same way the REAL
+    mutation would: a `null_check` sibling of a `schema_column` var
+    follows whether the new value is `None`; a `schema_column` sibling
+    of a `null_check` var becomes `None` (value=False) or a type-aware
+    placeholder via `_placeholder_for_column_type` (value=True, mirroring
+    `_apply_field_mutation`'s own real logic) -- but only when that
+    sibling doesn't ALREADY hold a real, non-None value (matching
+    `_apply_field_mutation`'s own `elif row.get(column) is None` guard:
+    the real mutation never overwrites an existing value either)."""
     trial = dict(genome)
     trial[var_name] = value
+    if node is not None:
+        kind = node.get('kind')
+        for sib_name, sib_node in _sibling_field_leaves(record, var_name, node):
+            sib_kind = sib_node.get('kind')
+            if kind == 'null_check' and sib_kind == 'schema_column':
+                if not value:
+                    trial[sib_name] = None
+                elif trial.get(sib_name) is None:
+                    col_type = _column_type(case_study, node['table'], node['column']) \
+                        if case_study is not None else None
+                    trial[sib_name] = _placeholder_for_column_type(col_type) if case_study is not None else 1
+            elif kind == 'schema_column' and sib_kind == 'null_check':
+                trial[sib_name] = value is not None
     try:
         return branch_fitness(record, trial)
     except FitnessEvaluationError:
@@ -387,11 +466,11 @@ def best_value_for(record, genome, var_name, node, case_study):
     if pinned is not None:
         if pinned == current:
             return current, current_fitness, False
-        return pinned, _hypothetical_fitness(record, genome, var_name, pinned), True
+        return pinned, _hypothetical_fitness(record, genome, var_name, pinned, node, case_study), True
 
     if not _numeric_step_eligible(record, var_name, node, current):
         for value in candidate_values(record, var_name, node, current, case_study):
-            f = _hypothetical_fitness(record, genome, var_name, value)
+            f = _hypothetical_fitness(record, genome, var_name, value, node, case_study)
             if f < best_fitness:
                 best_value, best_fitness = value, f
         return best_value, best_fitness, best_value != current
@@ -405,7 +484,7 @@ def best_value_for(record, genome, var_name, node, case_study):
             values = [v for v in values if (v > best_value) == (direction > 0)]
         round_value, round_fitness, round_direction = best_value, best_fitness, None
         for value in values:
-            f = _hypothetical_fitness(record, genome, var_name, value)
+            f = _hypothetical_fitness(record, genome, var_name, value, node, case_study)
             if f < round_fitness:
                 round_value, round_fitness, round_direction = value, f, (1 if value > best_value else -1)
         if round_fitness < best_fitness:

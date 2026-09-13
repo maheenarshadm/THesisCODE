@@ -237,6 +237,59 @@ def _comparison_distance_true(op, a, b):
     raise FitnessEvaluationError(f"unhandled comparison operator {op!r}")
 
 
+def _min_distance(terms):
+    """`min()` over a sequence of distance THUNKS (zero-arg callables,
+    not already-computed values) that tolerates -- rather than
+    immediately propagating -- a `FitnessEvaluationError` from any ONE
+    term, as long as some OTHER term in the same min-combinator already
+    proves the unambiguous best possible answer (0.0): a min-combinator
+    (`or`'s own `distance_to_true`, `and`'s own `distance_to_false`,
+    `in`, either side of `between`) is choosing the SINGLE EASIEST way
+    to reach the desired truth value, so once ANY term proves that's
+    already achieved, no other term's own evaluability is relevant to
+    the correct final answer, however that other term might behave.
+
+    A real bug found running OpenMRS end to end for the first time
+    (2026-09-13): `Patient State Date Validity::Rule_2`'s own
+    suppression term needed `distance_to_false` for an EARLIER row's
+    AND-condition whose FIRST clause (`startDateSet = true`) was
+    already, cleanly, unambiguously FALSE (distance 0.0) -- but Python's
+    own `min()` over a plain generator still evaluates every remaining
+    clause to determine the minimum, and a LATER clause (`endDate <
+    startDate`, with `startDate` now `None`) raised
+    `FitnessEvaluationError` before `min()` ever returned, discarding
+    the perfectly good answer the first clause had already provided.
+    Confirmed this was the actual root cause, not merely a search-budget
+    problem: an isolated, 300-iteration single-objective `hillclimb`
+    proposed and rejected the exact same losing move every time,
+    because `branch_fitness` itself could never return anything but
+    `FitnessEvaluationError` for that state, regardless of how many
+    other clauses had already settled the answer.
+
+    Order-independent by design (evaluates every term regardless of
+    position, so a raise on the FIRST term with the winning 0.0 on the
+    LAST is handled identically) -- only raises when NO term produced a
+    usable value at all, in which case the first error encountered is
+    the one raised (arbitrary but stable, matching every other
+    FitnessEvaluationError convention in this module: not evaluable
+    yet, never silently swallowed)."""
+    best = None
+    error = None
+    for term in terms:
+        try:
+            d = term()
+        except FitnessEvaluationError as e:
+            error = error if error is not None else e
+            continue
+        if best is None or d < best:
+            best = d
+        if best == 0.0:
+            return 0.0
+    if best is not None:
+        return best
+    raise error
+
+
 def distance_to_true(node, resolution_map, genome):
     """Distance for `node` (a condition, or a plain boolean-valued leaf
     used as one) to evaluate to TRUE."""
@@ -258,14 +311,14 @@ def distance_to_true(node, resolution_map, genome):
     if op == 'and':
         return sum(distance_to_true(c, resolution_map, genome) for c in node['clauses'])
     if op == 'or':
-        return min(distance_to_true(c, resolution_map, genome) for c in node['clauses'])
+        return _min_distance(lambda c=c: distance_to_true(c, resolution_map, genome) for c in node['clauses'])
     if op == 'not':
         return distance_to_false(node['clause'], resolution_map, genome)
     if op == 'in':
-        left = node['left']
-        return min(_comparison_distance_true('=', _leaf_value(left, resolution_map, genome),
-                                              _leaf_value(v, resolution_map, genome))
-                    for v in node['values'])
+        left_val = _leaf_value(node['left'], resolution_map, genome)
+        return _min_distance(
+            lambda v=v: _comparison_distance_true('=', left_val, _leaf_value(v, resolution_map, genome))
+            for v in node['values'])
     if op == 'between':
         low = _leaf_value(node['low'], resolution_map, genome)
         high = _leaf_value(node['high'], resolution_map, genome)
@@ -295,7 +348,7 @@ def distance_to_false(node, resolution_map, genome):
         b = _leaf_value(node['right'], resolution_map, genome)
         return _comparison_distance_true(_NEGATED_OP[op], a, b)
     if op == 'and':
-        return min(distance_to_false(c, resolution_map, genome) for c in node['clauses'])
+        return _min_distance(lambda c=c: distance_to_false(c, resolution_map, genome) for c in node['clauses'])
     if op == 'or':
         return sum(distance_to_false(c, resolution_map, genome) for c in node['clauses'])
     if op == 'not':
@@ -310,8 +363,8 @@ def distance_to_false(node, resolution_map, genome):
         high = _leaf_value(node['high'], resolution_map, genome)
         left = _leaf_value(node['left'], resolution_map, genome)
         # false means outside the range -- either side is enough (OR)
-        return min(_comparison_distance_true('<', left, low),
-                    _comparison_distance_true('>', left, high))
+        return _min_distance([lambda: _comparison_distance_true('<', left, low),
+                               lambda: _comparison_distance_true('>', left, high)])
     raise FitnessEvaluationError(f"unhandled condition node: {node!r}")
 
 
