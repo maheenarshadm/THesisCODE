@@ -60989,7 +60989,17 @@
     "candidate_tables": [
      "currency_exchange"
     ],
-    "candidate_columns": [],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND currency_id = <currency_id>",
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
     "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    }
@@ -61069,7 +61079,17 @@
     "candidate_tables": [
      "currency_exchange"
     ],
-    "candidate_columns": [],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND currency_id = <currency_id>",
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
     "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    },
@@ -61078,7 +61098,17 @@
     "candidate_tables": [
      "currency_exchange"
     ],
-    "candidate_columns": [],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = 0 AND currency_id = <currency_id>",
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; nothing in the schema marks entity_id=0 as special.",
     "raw_schema_field": "currency_exchange (entity_id=0, currency_id)"
    }
@@ -61190,7 +61220,17 @@
     "candidate_tables": [
      "currency_exchange"
     ],
-    "candidate_columns": [],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND currency_id = <currency_id>",
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
     "raw_schema_field": "currency_exchange (entity_id, currency_id)"
    },
@@ -61199,7 +61239,17 @@
     "candidate_tables": [
      "currency_exchange"
     ],
-    "candidate_columns": [],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = 0 AND currency_id = <currency_id>",
     "notes": "Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; nothing in the schema marks entity_id=0 as special.",
     "raw_schema_field": "currency_exchange (entity_id=0, currency_id)"
    }

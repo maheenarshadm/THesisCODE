@@ -166,12 +166,14 @@ import copy
 import math
 import os
 import random
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, build_seed_candidate,  # noqa: E402
-                        _OWNER_KEY, known_constant, _PLACEHOLDER_RE)
+                        _OWNER_KEY, known_constant, _PLACEHOLDER_RE,
+                        _SIMPLE_EQ_CONJUNCT_RE, _BARE_TABLE_DOT_COLUMN_RE)
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
                        _leaf_variables, _schema_for, candidate_values)
@@ -558,8 +560,62 @@ def _key_columns_for(schema, table):
         table.upper() if table.upper() in schema else (
             table.lower() if table.lower() in schema else table))
     info = schema.get(real, {})
-    cols = {c.upper() for keyset in _unique_key_sets(schema, real) for c in keyset}
+    cols = _own_unique_columns_for(schema, table)
     cols |= {fk['column'].upper() for fk in (info.get('fk_columns') or [])}
+    return cols
+
+
+def _own_unique_columns_for(schema, table):
+    """Just `table`'s own declared PK/UNIQUE columns, FLATTENED across
+    every keyset -- the subset of `_key_columns_for` that needs
+    OFFSETTING (moving in lockstep with the rest of this record's own
+    key/FK columns), deliberately excluding FK columns. Used only as
+    part of `_key_columns_for` -- NOT safe for `merge_archive_candidate`'s
+    own within-record collision DEDUP (`used_key_values`), which needs
+    `_own_solo_unique_columns_for` instead (see that function's own
+    docstring for why the flattening that's harmless for offsetting is
+    actively wrong for dedup)."""
+    real = table if table in schema else (
+        table.upper() if table.upper() in schema else (
+            table.lower() if table.lower() in schema else table))
+    return {c.upper() for keyset in _unique_key_sets(schema, real) for c in keyset}
+
+
+def _own_solo_unique_columns_for(schema, table):
+    """Only `table`'s own declared PK/UNIQUE columns that are ALONE
+    sufficient for row-level uniqueness -- i.e. a keyset of length 1 --
+    used exclusively by `merge_archive_candidate`'s own within-record
+    collision dedup (`used_key_values`). A real regression found running
+    FLEX2 (2026-09-13, immediately after the dedup fix that motivated
+    `_own_unique_columns_for` in the first place): `COURSE_REGISTRATION`'s
+    own PK is the COMPOSITE `(OFFER_ID, ROLL_NO)`, and it also carries a
+    COMPOSITE unique index on `(ROLL_NO, CAMP_ID, SEM_ID, COURSE_ID)`
+    -- `_own_unique_columns_for`'s flattening (correct for OFFSETTING,
+    which must shift every column in a composite key regardless) turns
+    this into "ROLL_NO and SEM_ID must each be unique ALONE," which is
+    flatly wrong: a single student's own `derived_aggregate` rows over
+    this table are SUPPOSED to share the identical ROLL_NO/SEM_ID across
+    many rows, differing only by COURSE_ID -- that's the entire point of
+    counting them. Treating either column as individually dedup-worthy
+    bumped it on every one of those legitimate repeats, corrupting 25
+    objectives (930 spurious bumps in one run, confirmed directly).
+    `CURRENCY_EXCHANGE`'s own PK (`id`, jBilling) and `BASE_USER`/
+    `PURCHASE_ORDER`'s own PKs (also bare `id`) that originally motivated
+    `used_key_values` are all single-column, so restricting dedup to
+    keysets of length 1 still catches every real collision found so far
+    while leaving every composite key's own legitimate row-to-row sharing
+    alone -- a genuine composite-PK collision (two of a record's own rows
+    landing on the exact same full tuple) is a real bug this narrowing
+    would miss, but none has been found yet, and guessing which ONE
+    column of an unowned composite key to bump would be arbitrary without
+    one; revisit if one is ever found."""
+    real = table if table in schema else (
+        table.upper() if table.upper() in schema else (
+            table.lower() if table.lower() in schema else table))
+    cols = set()
+    for keyset in _unique_key_sets(schema, real):
+        if len(keyset) == 1:
+            cols.add(keyset[0].upper())
     return cols
 
 
@@ -931,6 +987,71 @@ def _scenario_keys_needing_offset(record):
     return needed
 
 
+def _filter_columns_needing_offset(record):
+    """{column name (uppercased) -> {placeholder names it's bound to}}
+    for every column some leaf's own `filter_text` directly binds to an
+    offsettable scenario placeholder via a plain `COLUMN = <placeholder>`
+    conjunct -- i.e. exactly the columns `_row_from_filter_conjuncts`
+    copies that placeholder's CURRENT value into (`row[col] =
+    scenario[ph]`), whether or not that column also happens to be a
+    declared PK/UNIQUE/FK (`_key_columns_for`'s own narrower set already
+    covers those; this is the wider, structural fix for a column that
+    ISN'T one -- jBilling's own `entity_id` on `CURRENCY_EXCHANGE`, never
+    declared PK/FK in this schema extraction, yet exactly this kind of
+    filter-bound column).
+
+    Structural (parses `filter_text` the same way `_mechanical_filter_
+    predicate`/`_row_from_filter_conjuncts` do): merely knowing the
+    COLUMN NAME is bound to a placeholder in SOME leaf is not, by
+    itself, enough to decide a given ROW's own current value should be
+    offset -- a real regression found immediately after this function's
+    first version shipped (2026-09-13): `Currency Exchange Rate
+    Source::Rule_2` has TWO leaves sharing this same table, one binding
+    `entity_id` to the `<entity_id>` placeholder (`hasEntitySpecificExchange`),
+    the OTHER using a bare LITERAL `entity_id = 0`
+    (`hasSystemDefaultExchange`) -- offsetting every owned row's
+    `entity_id` just because the COLUMN NAME appears bound somewhere in
+    the record corrupted the second leaf's own literal-0 row into a
+    non-zero value, breaking its filter. The caller (`get_copy`) must
+    additionally verify, per ROW, that the row's CURRENT value for a
+    listed column actually equals the record's own (pre-merge) scenario
+    value for one of the returned placeholders before offsetting it --
+    never blanket, value-free, whole-column matching (an EARLIER, even
+    more permissive version of this same idea -- matching ANY numeric
+    column against ANY offsettable scenario value, no structural
+    grounding at all -- produced a much worse false-positive regression
+    at FLEX2's own scale, 25 objectives broken by 930 spurious matches on
+    completely unrelated `derived_aggregate` grouping columns like
+    `COURSE_REGISTRATION.ROLL_NO`/`SEM_ID`)."""
+    offsettable = _scenario_keys_needing_offset(record)
+    cols = {}
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get('kind') == 'substituted_decision':
+            for sub in node.get('free_variable_resolutions', {}).values():
+                walk(sub)
+            return
+        filter_text = node.get('filter_text')
+        if not filter_text:
+            return
+        for c in re.split(r'\bAND\b', filter_text, flags=re.I):
+            m = _SIMPLE_EQ_CONJUNCT_RE.match(c.strip())
+            if not m:
+                continue
+            col, raw_val = m.group(1), m.group(2).strip()
+            if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
+                continue
+            ph = _PLACEHOLDER_RE.fullmatch(raw_val)
+            if ph and ph.group(1) in offsettable:
+                cols.setdefault(col.upper(), set()).add(ph.group(1))
+
+    for node in record.get('variable_resolution', {}).values():
+        walk(node)
+    return cols
+
+
 def merge_archive_candidate(archive, records, case_study):
     """Builds ONE consistent `(candidate, focal_maps)` by merging, for
     EVERY objective the archive ever covered (fitness 0.0), just that
@@ -1048,6 +1169,34 @@ def merge_archive_candidate(archive, records, case_study):
     WHICH number a dangling reference points at, never WHETHER repair
     needs to handle it.
 
+    **A THIRD real bug found the same day, testing jBilling again right
+    after the `used_key_values` fix above**: `entity_id` on
+    `CURRENCY_EXCHANGE` is a plain business-value column, never declared
+    PK/UNIQUE/FK in this schema extraction, yet `_row_from_filter_conjuncts`
+    copies a scenario placeholder's value straight into it exactly the
+    same way it copies a genuine FK placeholder (`row['entity_id'] =
+    scenario['entity_id']`) -- `_key_columns_for`'s own offsetting above
+    never touches it, so once `rec_scenario['entity_id']` is offset
+    below, the row's own already-frozen copy silently falls out of sync,
+    and the `exists`-kind filter predicate's equality check
+    (`entity_id = <entity_id>`) breaks post-merge (confirmed directly:
+    `Currency Exchange Rate Source::Rule_1` regressed exactly this way --
+    its own `hasEntitySpecificExchange` row matched pre-merge, using the
+    RUN's own already-offset scenario value, then stopped matching once
+    merge applied a SECOND offset to scenario alone). Fixed by having
+    `get_copy` also offset any column `_filter_columns_needing_offset`
+    names -- STRUCTURALLY, by parsing which columns some leaf's own
+    `filter_text` actually binds to an offsettable placeholder, not by
+    comparing values: a first version of this fix matched by value
+    instead (any numeric column whose CURRENT value happened to equal
+    one of the record's own scenario values) and immediately produced a
+    much WORSE regression re-testing FLEX2 -- 25 objectives broke,
+    unrelated business-value columns that merely happened to coincide
+    with some other placeholder's small raw value got wrongly bumped.
+    The structural, filter_text-driven version covers every column a
+    leaf's own filter actually reads, without ever touching a column
+    that just happens to share a number.
+
     Returns (merged_candidate, merged_focal_maps, merged_scenario_maps,
     covered_record_ids) -- `covered_record_ids` is the archive's own view
     of what SHOULD be covered; it is the caller's job (`generate_dataset.py`)
@@ -1060,18 +1209,83 @@ def merge_archive_candidate(archive, records, case_study):
     merged_scenario_maps = {}
     id_to_copy = {}
     covered_record_ids = set()
+    # (table, column) -> every post-offset key value already assigned --
+    # a second, real bug found the same day as the offsetting fix itself
+    # (running this against jBilling's own `exists`-kind filter fix,
+    # 2026-09-13): the per-record offset above prevents CROSS-record
+    # collisions, but a SINGLE record can legitimately own MULTIPLE rows
+    # on the SAME table (e.g. `Currency Exchange Rate Source::Rule_2`
+    # owns both its own entity-specific and system-default
+    # `currency_exchange` rows), and each was independently repaired --
+    # possibly at completely different points in its own mutation
+    # history -- via `_fresh_key_value`'s own "max existing in THIS
+    # candidate, right now" logic, which can hand out the SAME small
+    # value (`id=1`) to both if neither saw the other yet at the moment
+    # it was repaired. The uniform per-record offset shifts BOTH by the
+    # identical amount, so they still collide with EACH OTHER after
+    # merging -- confirmed directly: two of `Rule_2`'s own
+    # `CURRENCY_EXCHANGE` rows both had `id=1` pre-merge. Tracked here,
+    # globally, not per-record: cross-record collisions are already
+    # structurally impossible once offset (different records occupy
+    # disjoint `_SEED_KEY_OFFSET_UNIT`-wide ranges), so this only ever
+    # actually fires for a same-record, same-table, same-column clash.
+    used_key_values = {}
 
-    def get_copy(table, row, offset):
+    def get_copy(table, row, offset, filter_cols=frozenset()):
         key = id(row)
         row_copy = id_to_copy.get(key)
         if row_copy is None:
             row_copy = dict(row)
             if offset:
                 key_cols = _key_columns_for(schema, table)
+                unique_cols = _own_solo_unique_columns_for(schema, table)
                 for col in list(row_copy):
-                    if col.upper() in key_cols and isinstance(row_copy[col], (int, float)) \
-                            and not isinstance(row_copy[col], bool):
-                        row_copy[col] = row_copy[col] + offset
+                    val = row_copy[col]
+                    if not isinstance(val, (int, float)) or isinstance(val, bool):
+                        continue
+                    if col.upper() in key_cols:
+                        new_val = val + offset
+                        # Only a genuine PK/UNIQUE column gets dedup-bumped
+                        # on a same-record, same-table clash -- an FK
+                        # column (in key_cols for the OFFSET shift above,
+                        # never here) can legitimately repeat identically
+                        # across this record's own rows (see
+                        # `_own_unique_columns_for`'s own docstring).
+                        if col.upper() in unique_cols:
+                            used = used_key_values.setdefault((table.upper(), col.upper()), set())
+                            while new_val in used:
+                                new_val += 1
+                            used.add(new_val)
+                        row_copy[col] = new_val
+                    elif col.upper() in filter_cols and val in filter_cols[col.upper()]:
+                        # Not a declared PK/UNIQUE/FK column, but some
+                        # leaf's own filter_text structurally binds it to
+                        # an offsettable scenario placeholder (see
+                        # `_filter_columns_needing_offset`'s own
+                        # docstring) -- `_row_from_filter_conjuncts`
+                        # copies that placeholder's value straight into
+                        # this column the exact same way it does for a
+                        # declared-key column, so it must move by the
+                        # identical offset the matching scenario key is
+                        # about to get below, or the `exists`-kind filter
+                        # predicate's own equality check breaks post-merge
+                        # (confirmed directly: `Currency Exchange Rate
+                        # Source::Rule_1`'s own `entity_id`, never
+                        # declared PK/FK in this schema extraction). The
+                        # column-name check alone is NOT enough -- `val
+                        # in filter_cols[col.upper()]` additionally
+                        # requires THIS row's own current value to
+                        # actually equal the record's own pre-merge
+                        # scenario value for one of the placeholders that
+                        # bind this column, or a DIFFERENT leaf's own
+                        # literal on the SAME column name (e.g. `Rule_2`'s
+                        # own `entity_id = 0` for `hasSystemDefaultExchange`,
+                        # sharing the table with `hasEntitySpecificExchange`'s
+                        # `entity_id = <entity_id>`) gets wrongly offset
+                        # too (confirmed directly: an earlier, column
+                        # -name-only version of this check corrupted
+                        # exactly that literal 0).
+                        row_copy[col] = val + offset
             merged.add_row(table, row_copy)
             id_to_copy[key] = row_copy
         return row_copy
@@ -1084,8 +1298,20 @@ def merge_archive_candidate(archive, records, case_study):
         covered_record_ids.add(rid)
         candidate, focal_maps, scenario_maps = individual
         offset = i * _SEED_KEY_OFFSET_UNIT
-        rec_scenario = dict(scenario_maps.get(rid, {}))
+        raw_scenario = scenario_maps.get(rid, {})
+        rec_scenario = dict(raw_scenario)
         offsettable_keys = _scenario_keys_needing_offset(r)
+        # {COLUMN -> {this record's own current values for every
+        # placeholder some leaf binds it to}} -- the actual per-row
+        # value check `get_copy` needs (see `_filter_columns_needing_
+        # offset`'s own docstring for why the column name alone isn't
+        # enough).
+        filter_cols = {
+            col: {raw_scenario[ph] for ph in phs
+                  if ph in raw_scenario and isinstance(raw_scenario[ph], (int, float))
+                  and not isinstance(raw_scenario[ph], bool)}
+            for col, phs in _filter_columns_needing_offset(r).items()
+        }
         for key, val in rec_scenario.items():
             if key in offsettable_keys and isinstance(val, (int, float)) and not isinstance(val, bool):
                 rec_scenario[key] = val + offset
@@ -1097,7 +1323,7 @@ def merge_archive_candidate(archive, records, case_study):
         # docstring for the real bug this fixes).
         merged_rec_focal = {}
         for table, row in focal_maps.get(rid, {}).items():
-            merged_rec_focal[table] = get_copy(table, row, offset)
+            merged_rec_focal[table] = get_copy(table, row, offset, filter_cols)
 
         # (2) Every OTHER row this record owns anywhere in the candidate
         # (derived_aggregate/exists/derived_join_count's own row SETs) --
@@ -1106,7 +1332,7 @@ def merge_archive_candidate(archive, records, case_study):
         for table, table_rows in candidate.as_dict().items():
             for row in table_rows:
                 if row.get(_OWNER_KEY) == rid:
-                    get_copy(table, row, offset)
+                    get_copy(table, row, offset, filter_cols)
 
         if merged_rec_focal:
             merged_focal_maps[rid] = merged_rec_focal

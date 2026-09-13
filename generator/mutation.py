@@ -615,6 +615,40 @@ def _apply_field_mutation(node, value, candidate, focal):
     return touched
 
 
+def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None):
+    """mutation.py's own independent construction mirror of candidate.py's
+    identically-named function -- kept separate, not imported, per that
+    function's own docstring ("the parsing rules must stay identical, so
+    any change to one belongs in the other too"). Builds a row satisfying
+    every mechanically-recognized `COLUMN = VALUE`/`COLUMN = <placeholder>`
+    conjunct in `filter_text`, tagged with `owner_id` when given. Factored
+    out of `_apply_row_count_mutation`'s own generic add-row path
+    (2026-09-13) so the `exists`-kind's own new filter-aware add-path
+    (see its own branch below) shares the EXACT same construction,
+    rather than a third, potentially-diverging reimplementation."""
+    row = {} if owner_id is None else {_OWNER_KEY: owner_id}
+    for conjunct in re.split(r'\bAND\b', filter_text or '', flags=re.I):
+        cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
+        if not cm:
+            continue
+        col, raw_val = cm.group(1), cm.group(2).strip()
+        ph = re.fullmatch(r'<([^>]+)>', raw_val)
+        if ph:
+            if ph.group(1) in scenario:
+                row[col] = scenario[ph.group(1)]
+        else:
+            v = raw_val.strip("'\"")
+            try:
+                v = int(v)
+            except ValueError:
+                try:
+                    v = float(v)
+                except ValueError:
+                    pass
+            row[col] = v
+    return row
+
+
 def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=None, owner_id=None):
     """M2: add or remove rows -- moves the FULL distance from `current`
     to `value` in one call, not just one row, using the same
@@ -648,20 +682,36 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
             return []
-        if value and not _owned_rows(candidate, table, owner_id):
-            row = {} if owner_id is None else {_OWNER_KEY: owner_id}
+        # Filter-aware since 2026-09-13 (the "known exists-kind filter
+        # gap") -- `_mechanical_filter_predicate` degrades to "match
+        # everything" when this leaf carries no `filter_text` (the
+        # overwhelming majority), so every existing exists-kind mutation
+        # keeps its exact old behavior; only a leaf whose own compiled
+        # node now carries a real filter (compile_constraints.py's own
+        # classify_derived, extended the same day) scopes add/remove to
+        # rows actually matching it, letting two differently-filtered
+        # `exists` facts on the same table finally diverge instead of
+        # both reading the identical "any row at all" answer.
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+        owned = _owned_rows(candidate, table, owner_id)
+        if value and not any(predicate(r) for r in owned):
+            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id)
             row = candidate.add_row(table, row)
             return [(table, row)]
         elif not value:
+            real_rows = candidate.rows(table)
             if owner_id is None:
-                candidate._tables[table.upper()] = []
+                real_rows[:] = [r for r in real_rows if not predicate(r)]
             else:
-                # Only OUR OWN tagged rows -- never wipe the whole table,
-                # which would destroy every OTHER objective's own rows
-                # (and any untagged, genuinely-shared reference rows)
-                # sharing this same table.
-                real_rows = candidate.rows(table)
-                real_rows[:] = [r for r in real_rows if r.get(_OWNER_KEY) != owner_id]
+                # Only OUR OWN tagged, matching rows -- never wipe the
+                # whole table (destroying every OTHER objective's own
+                # rows and any untagged, genuinely-shared reference rows
+                # sharing this same table), and never an owned row that
+                # doesn't even match this leaf's own filter in the first
+                # place (it was never this fact's own evidence to begin
+                # with).
+                real_rows[:] = [r for r in real_rows
+                                 if not (r.get(_OWNER_KEY) == owner_id and predicate(r))]
         return []
     if node['kind'] == 'derived_join_count':
         # unmetPrerequisiteCount / unmetPrerequisiteAlsoPassedCount (found
@@ -731,26 +781,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
     if n > 0:
         touched = []
         for _ in range(n):
-            row = {} if owner_id is None else {_OWNER_KEY: owner_id}
-            for conjunct in re.split(r'\bAND\b', node.get('filter_text') or '', flags=re.I):
-                cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
-                if not cm:
-                    continue
-                col, raw_val = cm.group(1), cm.group(2).strip()
-                ph = re.fullmatch(r'<([^>]+)>', raw_val)
-                if ph:
-                    if ph.group(1) in scenario:
-                        row[col] = scenario[ph.group(1)]
-                else:
-                    v = raw_val.strip("'\"")
-                    try:
-                        v = int(v)
-                    except ValueError:
-                        try:
-                            v = float(v)
-                        except ValueError:
-                            pass
-                    row[col] = v
+            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id)
             if node.get('value_column'):
                 row[node['value_column'].split('.')[1]] = 1
             candidate.add_row(table, row)

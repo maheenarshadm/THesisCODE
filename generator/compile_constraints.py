@@ -335,6 +335,15 @@ _EXISTENCE_WORDS = re.compile(
 _ANY_OF_WORDS = re.compile(r'\b(OR of|either|any of|either populated)\b', re.I)
 _EXISTS_ROW_WORDS = re.compile(
     r'\bexistence of\b|\(existence\)|\bEXISTS\(|self-join', re.I)
+# One token inside an `exists`-kind raw schema field's own parenthesized
+# column list -- a bare column name (`entity_id`) or one with a literal
+# value (`entity_id=0`). Deliberately narrow (identifier and optional
+# `=integer` only): the raw schema field's own convention never spells
+# out string/placeholder literals here the way `derived_aggregate`'s own
+# "WHERE ..." recipes do, so a token this can't parse aborts the whole
+# filter-text extraction rather than guessing (see classify_derived's
+# own comment on this).
+_EXISTS_FILTER_TOKEN_RE = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(-?\d+))?$')
 _JOINED_VIA_RE = re.compile(r'joined via ([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)', re.I)
 _CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)')
 # An escape hatch for a genuinely bespoke boolean fact that doesn't fit any
@@ -579,9 +588,53 @@ def classify_derived(row):
         # the table name can't be mechanically extracted, this adds no
         # more information than the generic fallback -- fall through to it
         # instead of returning a hollow, falsely-"resolved"-looking node.
-        m = re.match(r'\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(', raw)
+        m = re.match(r'\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*([^)]*?)\s*\)', raw)
         if m:
-            return {'kind': 'exists', 'candidate_tables': [m.group(1)],
+            table, inner = m.group(1), m.group(2)
+            # A real, general fix (2026-09-13, the "known exists-kind
+            # filter gap" named in generator/README.md): when the raw
+            # schema field's own parenthesized content is a genuine
+            # comma-separated column list (e.g. "currency_exchange
+            # (entity_id, currency_id)" or "currency_exchange
+            # (entity_id=0, currency_id)") rather than the bare "(existence)"
+            # sentinel, turn it into a real `filter_text` -- the exact
+            # same `COLUMN = VALUE`/`COLUMN = <placeholder>` shape
+            # `derived_aggregate` already produces, so `exists`-kind can
+            # reuse the SAME already-proven mechanical filter machinery
+            # (`_mechanical_filter_predicate`/`_row_from_filter_conjuncts`)
+            # instead of the current bare "does ANY row exist" check --
+            # which was the root cause of two objectives (jBilling's
+            # `hasEntitySpecificExchange`/`hasSystemDefaultExchange`)
+            # being structurally unable to differ from each other despite
+            # their own ground truth clearly describing different filters
+            # on the same table. A column with no literal (`entity_id`
+            # alone) becomes an auto-placeholder keyed by its own column
+            # name (`entity_id = <entity_id>`); a column with one
+            # (`entity_id=0`) becomes a literal-value conjunct. Any token
+            # that doesn't parse as a clean `col` or `col=value` shape
+            # aborts the whole parse (never a partial, silently-wrong
+            # filter) and falls through to the existing bare-table
+            # behavior below -- verified against every currently-compiled
+            # `exists`-kind record across all 4 case studies: only these
+            # 2 records have a non-"(existence)" parenthesized column
+            # list, so this is a strictly additive enrichment, not a
+            # reclassification risk.
+            if inner.strip().lower() != 'existence':
+                tokens = [t.strip() for t in inner.split(',') if t.strip()]
+                conjuncts, columns, parse_ok = [], [], bool(tokens)
+                for t in tokens:
+                    tm = _EXISTS_FILTER_TOKEN_RE.match(t)
+                    if not tm:
+                        parse_ok = False
+                        break
+                    col, lit = tm.group(1), tm.group(2)
+                    columns.append(col)
+                    conjuncts.append(f"{col} = {lit}" if lit is not None else f"{col} = <{col}>")
+                if parse_ok:
+                    return {'kind': 'exists', 'candidate_tables': [table],
+                             'candidate_columns': [{'table': table, 'column': c} for c in columns],
+                             'filter_text': ' AND '.join(conjuncts), 'notes': notes, 'raw_schema_field': raw}
+            return {'kind': 'exists', 'candidate_tables': [table],
                      'candidate_columns': [], 'notes': notes, 'raw_schema_field': raw}
 
     if raw.strip().lower() == 'n/a' and not pairs:

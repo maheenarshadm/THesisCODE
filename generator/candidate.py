@@ -427,7 +427,21 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
             return False
-        return len(_owned_rows(candidate, table, owner_id)) > 0
+        # A real fix (2026-09-13, the "known exists-kind filter gap"):
+        # `_mechanical_filter_predicate` already degrades to "match
+        # everything" when `filter_text` is None/absent, so this reduces
+        # to the exact old bare "does ANY owned row exist" check for
+        # every `exists`-kind leaf that has no filter (the overwhelming
+        # majority) -- only a leaf whose own compiled node NOW carries a
+        # real filter_text (compile_constraints.py's own classify_derived,
+        # extended the same day) narrows the count to matching rows,
+        # letting two differently-filtered `exists` facts on the SAME
+        # table (e.g. jBilling's `hasEntitySpecificExchange` vs
+        # `hasSystemDefaultExchange`, both over `currency_exchange`)
+        # finally read as genuinely different booleans instead of
+        # collapsing to the identical "any row at all" answer.
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+        return any(predicate(r) for r in _owned_rows(candidate, table, owner_id))
     if kind == 'raw_sql_boolean':
         return _raw_sql_boolean_value(node, candidate, scenario, warnings)
     if kind == 'derived_case':
@@ -701,14 +715,26 @@ def build_seed_candidate(record, today=20000):
         elif kind == 'exists':
             table = (node.get('candidate_tables') or [None])[0]
             if table:
-                # Likewise an empty row, not {'X': 1} -- derive_value's
-                # own `exists` branch is a bare row-COUNT check
-                # (`len(_owned_rows(...)) > 0`), never inspecting any
-                # column's content, so the row's presence is all that
-                # ever mattered; 'X' was never a real schema column
-                # either (see the derived_aggregate case above, same
-                # bug, same fix).
-                candidate.add_row(table, {})
+                # A real, matching row when this `exists`-kind leaf
+                # carries a `filter_text` (2026-09-13's own exists-kind
+                # filter-support fix) -- reuses `_row_from_filter_
+                # conjuncts`, the exact same construction `derived_
+                # aggregate`'s own seed rows already use, so a seeded
+                # `exists` row actually satisfies its OWN specific filter
+                # from generation 0 rather than merely being present.
+                # When there's no filter_text (the overwhelming majority
+                # of `exists`-kind leaves), an empty row -- not a bogus
+                # {'X': 1} placeholder: derive_value's own `exists`
+                # branch degrades to a bare row-COUNT check in that case
+                # (`_mechanical_filter_predicate` matches everything when
+                # given no filter), so the row's presence is all that
+                # ever mattered, and 'X' was never a real schema column
+                # either (see the derived_aggregate case above, same bug,
+                # same fix).
+                if node.get('filter_text'):
+                    candidate.add_row(table, _row_from_filter_conjuncts(node['filter_text'], scenario))
+                else:
+                    candidate.add_row(table, {})
         elif kind == 'raw_sql_boolean':
             # A real, found-not-guessed bug (2026-09-12, discovered only
             # once materialize.py's real SQLite validation checked these
