@@ -107,7 +107,8 @@ selection pressure at all, per §6.4's own framing).
 
 Usage:
     from dynamosa import run_dynamosa
-    archive, coverage_history, population = run_dynamosa(records, case_study, population_size=20, generations=50)
+    archive, coverage_history, population, scenario_cache = run_dynamosa(
+        records, case_study, population_size=20, generations=50)
 """
 import copy
 import math
@@ -607,9 +608,9 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
-    (archive, coverage_history, population) -- `archive` is {record_id:
-    (best_fitness_ever_found, individual_that_achieved_it)}, growing
-    monotonically across the whole run (DynaMOSA's own archive
+    (archive, coverage_history, population, scenario_cache) -- `archive`
+    is {record_id: (best_fitness_ever_found, individual_that_achieved_it)},
+    growing monotonically across the whole run (DynaMOSA's own archive
     discipline: a target's best answer is never lost even if the current
     population moves on); `coverage_history[g]` is how many objectives
     had reached fitness 0.0 by the end of generation g, for watching
@@ -619,6 +620,26 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     candidate to actually materialize, rather than the archive's own
     per-objective-best snapshots, which were captured at different points
     in the run and were never guaranteed consistent with each other.
+
+    `scenario_cache` (this run's OWN per-objective `{record_id:
+    scenario}`, exactly as `_seed_shared_population` built and offset it
+    -- see its own docstring on why every numeric scenario value is
+    shifted by that objective's own `i * _SEED_KEY_OFFSET_UNIT`) is
+    returned too, and MUST be reused for any later `evaluate_objective`
+    call against this run's own individuals or archive -- a real bug
+    found building the merge-the-archive feature (2026-09-13): a caller
+    that instead built its OWN fresh `scenario` (e.g. via a bare
+    `build_seed_candidate(r)[2]`) would silently disagree with the
+    OFFSET scenario actually used to construct/mutate every row a
+    scenario-dependent leaf (a filter conjunct or `_row_from_filter_
+    conjuncts` match against a `<placeholder>`) reads against, producing
+    spurious `FitnessEvaluationError`s (confirmed: a "0/0 division"
+    error appeared re-evaluating a record's own ALREADY-fitness-0.0
+    archived individual, using a mismatched fresh scenario) that make an
+    otherwise-solved objective look uncovered. `archive`'s own stored
+    fitness values are unaffected (computed once, during the run itself,
+    against the correct scenario, and simply read back) -- only a
+    caller's own RE-evaluation is at risk.
 
     Each "individual" throughout this function is a `(candidate,
     focal_maps)` pair, not a bare `Candidate` -- `focal_maps` is
@@ -769,7 +790,140 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                              if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0)
         coverage_history.append(covered_count)
 
-    return archive, coverage_history, population
+    return archive, coverage_history, population, scenario_cache
+
+
+# ---------------------------------------------------------------------------
+# Merge-the-archive final-dataset construction (2026-09-13) -- §13.42's own
+# named follow-up: picking one individual from the FINAL population (this
+# module's original `generate_dataset.py` strategy) caps out well below
+# archive coverage for a reason that has nothing to do with row-sharing --
+# DynaMOSA/NSGA-II deliberately SPREADS a population across Pareto-front
+# *specialists*, never converges it onto one *generalist* individual, which
+# is exactly why the archive (crediting an objective the moment ANY
+# individual, ANY generation, solves it) exists as a separate, more
+# permissive structure in the first place. This section builds the final
+# candidate FROM the archive instead: merge every covered objective's own
+# best-ever answer into one shared candidate, rather than hoping one
+# generation's population happens to contain a single all-purpose winner.
+# ---------------------------------------------------------------------------
+
+def merge_archive_candidate(archive, records, case_study):
+    """Builds ONE consistent `(candidate, focal_maps)` by merging, for
+    EVERY objective the archive ever covered (fitness 0.0), just that
+    objective's own rows from its own best-ever individual -- see this
+    section's own module comment for why this is a fundamentally
+    different (and structurally more promising) strategy than picking
+    one individual out of the final population.
+
+    For each covered record, two DIFFERENT kinds of "own rows" are
+    merged in, and -- a real bug found and fixed while building this
+    (2026-09-13) -- they must NEVER be conflated:
+
+    1. This record's own dedicated FOCAL rows (`focal_maps[record_id]`,
+       exactly the dict `_focal_for_read` would return) -- copied via
+       IDENTITY correspondence (`get_copy`) directly into
+       `merged_focal_maps[record_id]`, so a later `evaluate_objective`
+       call against the merged whole looks up EXACTLY this record's own
+       context row, never any other row that merely happens to sit on
+       the same table.
+    2. Every OTHER row anywhere in the archived candidate tagged
+       `_OWNER_KEY == record_id` (covers `derived_aggregate`/`exists`/
+       `derived_join_count` kinds, which read a whole SET of rows, not
+       one focal row) -- merged into the shared candidate too, but
+       NEVER assigned into `merged_focal_maps`.
+
+    The bug: an earlier version funneled BOTH kinds through one combined
+    list and reassigned `merged_focal_maps[record_id][table] = row_copy`
+    for ANY owned row sitting on a table this record ALSO has a focal
+    row for -- so a `derived_join_count` record's own second
+    COURSE_REGISTRATION row (the prerequisite's own passing-grade row,
+    added by `_apply_row_count_mutation`'s row-ADD path, tagged for this
+    same owner but never the dedicated focal row) silently overwrote the
+    TRUE focal row (the "this student/this course" context row
+    `_find_focal_with_columns` must resolve against) the moment both
+    rows lived in the same table -- confirmed directly: `unmetPrerequisite
+    Count` read back as 0 instead of the correct 1 after merging, because
+    `_find_focal_with_columns` was handed the wrong row as context.
+    Fixed by keeping the two loops separate, as above -- `merged_focal_maps`
+    is now built ONLY from `focal_maps.get(record_id, {}).items()`,
+    never from the owner-tag scan.
+
+    All rows are copied (never aliased -- an archived individual may
+    still be referenced elsewhere, e.g. by another record that shares
+    the exact same best-ever individual, and must never be mutated by
+    this merge or by the `repair_candidate` pass at the end), via a
+    GLOBAL `id_to_copy` correspondence so a row shared between two
+    DIFFERENT covered records' own archived individuals (the same
+    physical row, if a single crossover child happened to be the
+    best-ever answer for BOTH at once) is merged in exactly once, not
+    duplicated -- the same "no fresh key manufactured where none is
+    needed" discipline `_seed_shared_population` already follows for the
+    analogous seeding case.
+
+    `repair_candidate` runs exactly ONCE, on the fully assembled whole,
+    at the end -- each covered record's own rows were already
+    schema-legal in isolation, but a table now holding rows merged in
+    from MANY different, independently-evolved individuals was never
+    validated as a single combined whole before this, and a value one
+    objective's own row references (e.g. a foreign key) may have no
+    matching parent among what got merged in from every OTHER objective.
+    `_repair_row` only ever ADDS a missing NOT NULL/FK value, never
+    overwrites one already present, so no covered objective's own
+    carefully-tuned value is at risk from this pass -- verified by the
+    caller re-evaluating every objective against the result rather than
+    assumed here.
+
+    Returns (merged_candidate, merged_focal_maps, covered_record_ids) --
+    `covered_record_ids` is the archive's own view of what SHOULD be
+    covered; it is the caller's job (`generate_dataset.py`) to
+    re-`evaluate_objective` every one of them against the actual merged,
+    repaired result and report the real, verified number, not this
+    expected one, honestly side by side."""
+    merged = Candidate()
+    merged_focal_maps = {}
+    id_to_copy = {}
+    covered_record_ids = set()
+
+    def get_copy(table, row):
+        key = id(row)
+        row_copy = id_to_copy.get(key)
+        if row_copy is None:
+            row_copy = dict(row)
+            merged.add_row(table, row_copy)
+            id_to_copy[key] = row_copy
+        return row_copy
+
+    for r in records:
+        rid = r['record_id']
+        fitness, individual = archive.get(rid, (float('inf'), None))
+        if fitness != 0.0 or individual is None:
+            continue
+        covered_record_ids.add(rid)
+        candidate, focal_maps = individual
+
+        # (1) This record's own dedicated focal rows -- by identity,
+        # never by "which table," so a different owned row on the same
+        # table can never be mistaken for it (see this function's own
+        # docstring for the real bug this fixes).
+        merged_rec_focal = {}
+        for table, row in focal_maps.get(rid, {}).items():
+            merged_rec_focal[table] = get_copy(table, row)
+
+        # (2) Every OTHER row this record owns anywhere in the candidate
+        # (derived_aggregate/exists/derived_join_count's own row SETs) --
+        # merged in for scanning, deliberately never touching
+        # merged_rec_focal.
+        for table, table_rows in candidate.as_dict().items():
+            for row in table_rows:
+                if row.get(_OWNER_KEY) == rid:
+                    get_copy(table, row)
+
+        if merged_rec_focal:
+            merged_focal_maps[rid] = merged_rec_focal
+
+    repair_candidate(merged, case_study)
+    return merged, merged_focal_maps, covered_record_ids
 
 
 if __name__ == '__main__':
@@ -797,7 +951,8 @@ if __name__ == '__main__':
 
     start = time.time()
     rng = random.Random(0)
-    archive, coverage_history, _final_population = run_dynamosa(records, 'FLEX2', population_size=12, generations=25, rng=rng)
+    archive, coverage_history, _final_population, scenario_cache = run_dynamosa(
+        records, 'FLEX2', population_size=12, generations=25, rng=rng)
     elapsed = time.time() - start
 
     print(f"\nCoverage history across {len(coverage_history)} generations: {coverage_history}")
@@ -825,4 +980,29 @@ if __name__ == '__main__':
 
     print(f"\nCovered {sum(1 for r in records if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0)}"
           f"/{len(records)} objectives via the shared population.")
+
+    # merge_archive_candidate self-test: on this same small, real archive,
+    # merging every covered objective's own best-ever rows must reproduce
+    # AT LEAST the same covered set the archive itself claims -- verified
+    # by re-evaluating every objective against the actual merged, repaired
+    # result, never assumed correct just because the rows came from an
+    # already-solved individual (see merge_archive_candidate's own
+    # docstring on why a repair pass run on the merged whole could, in
+    # principle, still disturb an objective's own aggregate/exists count).
+    # Reuses `scenario_cache` as returned by `run_dynamosa` itself -- a
+    # freshly-rebuilt one (e.g. a bare `build_seed_candidate(r)[2]`) would
+    # disagree with the offset actually baked into this run's own rows
+    # (see run_dynamosa's own docstring on the real bug this caused).
+    table_cache = {}
+    merged_candidate, merged_focal_maps, expected_covered = merge_archive_candidate(archive, records, 'FLEX2')
+    actual_covered = {r['record_id'] for r in records
+                       if evaluate_objective(r, merged_candidate, merged_focal_maps,
+                                              scenario_cache[r['record_id']], table_cache) == 0.0}
+    regressions = expected_covered - actual_covered
+    assert not regressions, f"merge_archive_candidate regressed: {regressions}"
+    assert actual_covered == {r['record_id'] for r in records
+                               if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0}, \
+        "merged-archive coverage should exactly match the archive's own covered set on this small example"
+    print(f"Confirmed: merge_archive_candidate reproduces the archive's own {len(expected_covered)}/{len(records)} "
+          f"covered objectives simultaneously in ONE merged, repaired candidate -- zero regressions.")
 
