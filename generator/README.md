@@ -1464,6 +1464,15 @@ Ran `generate_dataset.py` against Spree for the first time (previously only FLEX
 
 **Verified, measured result**: Spree -- **20/27 (74.1%) merged-archive coverage, VERIFIED, zero regressions**, `validate_with_sqlite: ok=True, 0 errors`. All three fixes are general, not Spree-specific, and already benefit jBilling's own affected tables too. See `docs/generationalgorithmdesign.md` §13.45 for the full trace.
 
+## Fixing the not_persisted scenario-mutation bug (2026-09-13) -- two stacked defects
+
+Diagnosed while investigating Spree's own remaining 7 uncovered objectives: two rules needed `purchaseQuantity` (a `not_persisted` bind-parameter) to move away from its seeded value, and neither ever did across a full 40-generation run. Two real, stacked bugs, both required to fix it:
+
+1. **Scenario mutations were computed, then silently discarded.** Every individual shared the exact same scenario dict per objective; `_mutate_objective` mutated a throwaway copy and never persisted it (already flagged as a known limitation in the function's own docstring). Fixed by giving scenario the same per-individual treatment `focal_maps` already has: an individual is now a `(candidate, focal_maps, scenario_maps)` triple, evolving each objective's own scenario independently, deep-copied jointly on every mutation exactly like focal rows already are. `run_dynamosa` no longer returns a separate `scenario_cache` -- it's redundant now that every individual carries its own.
+2. **`candidate_values()` had no case at all for a `not_persisted` numeric leaf compared via an ordering operator** (only `=`/`!=`/`in` had a domain; `schema_column`/`derived_aggregate`/`derived_join_count` were the only kind-specific numeric branches) -- found only because re-testing after fix #1 alone showed ZERO change in Spree's coverage. `best_value_for` had nothing to even propose as a replacement value, so fix #1's persistence had nothing to persist. Fixed by adding a `not_persisted`-numeric branch (identical treatment to `schema_column`'s own) plus AVM step-doubling eligibility, since a seeded value can start millions away from its real target.
+
+**Verified, measured result**: full regression suite green throughout, FLEX2 unaffected (still 81/151, verified). Spree: **20/27 (74.1%) → 22/27 (81.5%) merged-archive coverage, VERIFIED, zero regressions** -- confirmed directly which two objectives newly solve and why (`purchaseQuantity=65` correctly inside its required window; `purchaseQuantity=-12554430` correctly below both suppression thresholds). See `docs/generationalgorithmdesign.md` §13.46 for the full trace.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

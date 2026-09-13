@@ -61,15 +61,19 @@ from materialize import to_sql_inserts, write_csv_files, validate_with_sqlite  #
 from mutation import _schema_for  # noqa: E402
 
 
-def _covered_set(individual, records, scenario_cache, table_cache):
-    """`individual` is a `(candidate, focal_maps)` pair -- dynamosa.py's
-    own focal-per-objective representation (2026-09-12), not a bare
-    Candidate anymore. Returns the SET of covered record_ids (not just a
+def _covered_set(individual, records, table_cache):
+    """`individual` is a `(candidate, focal_maps, scenario_maps)` triple
+    -- dynamosa.py's own per-individual representation (`scenario_maps`
+    added 2026-09-13, its own per-individual scenario fix -- see
+    dynamosa.py's own module docstring for the real `not_persisted`
+    -mutation bug this replaced; no separate `scenario_cache` is needed
+    or accepted anymore, since every individual already carries its own
+    current scenario). Returns the SET of covered record_ids (not just a
     count) so a caller can diff two strategies' own coverage, not just
     compare their totals."""
-    candidate, focal_maps = individual
+    candidate, focal_maps, scenario_maps = individual
     return {r['record_id'] for r in records
-            if evaluate_objective(r, candidate, focal_maps, scenario_cache[r['record_id']], table_cache) == 0.0}
+            if evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache) == 0.0}
 
 
 def generate_case_study_dataset(case_study, records=None, out_dir=None,
@@ -91,16 +95,12 @@ def generate_case_study_dataset(case_study, records=None, out_dir=None,
         records = [r for r in compiled if r['case_study'] == case_study]
 
     start = time.time()
-    # `scenario_cache` MUST be the one `run_dynamosa` itself built and
-    # offset (see its own docstring) -- a freshly-rebuilt one (a bare
-    # `build_seed_candidate(r)[2]` per record, this module's own former
-    # approach) silently disagrees with the offset scenario actually used
-    # to construct/mutate this run's own rows, a real bug found building
-    # the merge-the-archive feature (2026-09-13): re-evaluating even a
-    # record's own ALREADY-fitness-0.0 archived individual against the
-    # wrong scenario produced a spurious FitnessEvaluationError,
-    # understating every coverage number this module ever reported.
-    archive, coverage_history, population, scenario_cache = run_dynamosa(
+    # No separate scenario_cache to thread through anymore (2026-09-13's
+    # own per-individual scenario fix, dynamosa.py's own module docstring):
+    # every individual in `population`, and every archived one, already
+    # carries its own current `scenario_maps` as the third element of its
+    # own `(candidate, focal_maps, scenario_maps)` triple.
+    archive, coverage_history, population = run_dynamosa(
         records, case_study, population_size=population_size, generations=generations, rng=rng)
     elapsed = time.time() - start
 
@@ -110,7 +110,7 @@ def generate_case_study_dataset(case_study, records=None, out_dir=None,
 
     # Strategy 1 (the original, 2026-09-12): the final population's own
     # best individual.
-    pop_sets = [_covered_set(ind, records, scenario_cache, table_cache) for ind in population]
+    pop_sets = [_covered_set(ind, records, table_cache) for ind in population]
     best_pop_idx = max(range(len(population)), key=lambda i: len(pop_sets[i]))
     final_population_individual = population[best_pop_idx]
     final_population_covered = pop_sets[best_pop_idx]
@@ -122,10 +122,10 @@ def generate_case_study_dataset(case_study, records=None, out_dir=None,
     # a merge is exactly the kind of change that must never be trusted
     # just because it looks right on paper (this project's own standing
     # rule -- see e.g. §13.34/§13.41's own found-not-assumed bugs).
-    merged_candidate, merged_focal_maps, merged_archive_expected = merge_archive_candidate(
+    merged_candidate, merged_focal_maps, merged_scenario_maps, merged_archive_expected = merge_archive_candidate(
         archive, records, case_study)
     merged_archive_covered = _covered_set(
-        (merged_candidate, merged_focal_maps), records, scenario_cache, table_cache)
+        (merged_candidate, merged_focal_maps, merged_scenario_maps), records, table_cache)
     merged_archive_regressions = merged_archive_expected - merged_archive_covered
 
     # Pick whichever strategy actually verifies higher -- ties toward the

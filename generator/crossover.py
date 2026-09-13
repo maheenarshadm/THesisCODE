@@ -43,7 +43,7 @@ discarded.
 
 Usage:
     from crossover import crossover
-    child1, child2, f1, f2, fm1, fm2 = crossover(parent1, parent2, case_study, rng)
+    child1, child2, f1, f2, fm1, fm2, sm1, sm2 = crossover(parent1, parent2, case_study, rng)
 """
 import copy
 import os
@@ -57,14 +57,31 @@ from mutation import _repair_row  # noqa: E402 -- reused, not reimplemented
 
 
 def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None,
-              focal_maps1=None, focal_maps2=None):
+              focal_maps1=None, focal_maps2=None, scenario_maps1=None, scenario_maps2=None):
     """Uniform table-mask crossover with mandatory FK-repair. Returns
     (child1, child2, child_focal1, child_focal2, child_focal_maps1,
-    child_focal_maps2) -- complementary children built from the same mask
-    and its inverse, each independently repaired for NOT NULL/FK by
-    construction. Neither parent is mutated (each row is deep-copied into
-    its child, the same "parents are never touched" discipline
-    mutation.py's own mutate() follows).
+    child_focal_maps2, child_scenario_maps1, child_scenario_maps2) --
+    complementary children built from the same mask and its inverse, each
+    independently repaired for NOT NULL/FK by construction. Neither
+    parent is mutated (each row is deep-copied into its child, the same
+    "parents are never touched" discipline mutation.py's own mutate()
+    follows).
+
+    `scenario_maps1`/`scenario_maps2` (optional -- default `{}`,
+    2026-09-13, dynamosa.py's own per-individual scenario fix) are
+    dynamosa.py's own `{record_id: scenario}` per-objective bind-parameter
+    state -- NOT recombined by the table mask at all, unlike focal:
+    a `not_persisted` variable (e.g. `purchaseQuantity`) belongs entirely
+    to ONE record's own resolution and is never physically shared or
+    aliased across records or tables the way a candidate row can be, so
+    there is no "which parent supplied this table" question to answer
+    for it. Each child simply inherits its own originating parent's own
+    scenario_maps wholesale (deep-copied, parents untouched) --
+    `child_scenario_maps1` from `parent1`'s own `scenario_maps1`,
+    `child_scenario_maps2` from `parent2`'s own `scenario_maps2` --
+    exactly mirroring which parent's OWN candidate/focal each child is
+    itself built to diverge from, even though individual tables within
+    that child may still come from the OTHER parent via the mask below.
 
     `focal1`/`focal2` (optional -- default `{}`, in which case the
     returned child focals are also `{}`) are the per-branch "which row is
@@ -96,6 +113,7 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None,
     rng = rng or random
     focal1, focal2 = focal1 or {}, focal2 or {}
     focal_maps1, focal_maps2 = focal_maps1 or {}, focal_maps2 or {}
+    scenario_maps1, scenario_maps2 = scenario_maps1 or {}, scenario_maps2 or {}
     record_ids = sorted(set(focal_maps1) | set(focal_maps2))
     # sorted(), not a raw set iteration -- found necessary while testing
     # (2026-09-12): Python's string hashing is randomized per process by
@@ -137,6 +155,13 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None,
     (child1, child_focal1, child_focal_maps1), (child2, child_focal2, child_focal_maps2) = (
         build(from_parent1), build(inverted))
 
+    # Scenario is never table-shaped -- each child simply inherits its
+    # own originating parent's own scenario_maps wholesale (deep-copied,
+    # parent untouched), mirroring which parent build(from_parent1) vs
+    # build(inverted) each child itself defaults to.
+    child_scenario_maps1 = copy.deepcopy(scenario_maps1)
+    child_scenario_maps2 = copy.deepcopy(scenario_maps2)
+
     for child in (child1, child2):
         # list(...) snapshots, not a live dict view -- a real bug found
         # testing search.py's escalation loop (2026-09-12): _repair_row's
@@ -152,7 +177,8 @@ def crossover(parent1, parent2, case_study, rng=None, focal1=None, focal2=None,
         for table, rows in list(child.as_dict().items()):
             for row in list(rows):
                 _repair_row(child, table, row, case_study)
-    return child1, child2, child_focal1, child_focal2, child_focal_maps1, child_focal_maps2
+    return (child1, child2, child_focal1, child_focal2, child_focal_maps1, child_focal_maps2,
+            child_scenario_maps1, child_scenario_maps2)
 
 
 if __name__ == '__main__':
@@ -240,7 +266,7 @@ if __name__ == '__main__':
     print()
     print("crossover() -- with its mandatory FK-repair pass:")
     rng = random.Random(2)
-    child1, child2, child_focal1, child_focal2, _fm1, _fm2 = crossover(p1, p2, 'FLEX2', rng)
+    child1, child2, child_focal1, child_focal2, _fm1, _fm2, _sm1, _sm2 = crossover(p1, p2, 'FLEX2', rng)
     for label, child in [('child1', child1), ('child2', child2)]:
         cf = candidate_constraint_fitness(child.as_dict(), schema)
         print(f"  {label}: tables={sorted(child.as_dict())}, constraint_fitness={cf:.6f}")

@@ -261,6 +261,27 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
     if kind in ('derived_aggregate', 'derived_join_count'):
         base = current if isinstance(current, (int, float)) else 0
         return [max(0, base - step), base + step]
+    if kind == 'not_persisted' and isinstance(current, (int, float)) and not isinstance(current, bool):
+        # A real, previously-missing case (2026-09-13): a `not_persisted`
+        # bind-parameter (e.g. `purchaseQuantity`) compared ONLY via an
+        # ordering operator (`>=`/`<=`/...), never `=`/`!=`/`in`, has no
+        # enumerable domain (`enumerable_domain` only collects equality
+        # facts) and matched none of the kind-specific branches above --
+        # falling all the way through to the bare `return []` at the
+        # bottom, meaning `best_value_for` could NEVER propose a single
+        # replacement value for it, no matter how many generations ran.
+        # Confirmed directly running this pipeline against Spree
+        # (2026-09-13): `Price List Volume Adjustment Tier Selection::
+        # Rule_2`/`Rule_3` both need `purchaseQuantity` to move down from
+        # its own seeded value to reach fitness 0.0, and neither ever
+        # did -- found ALONGSIDE, not instead of, the separate
+        # per-individual scenario-persistence fix (dynamosa.py's own
+        # module docstring): that fix alone was not sufficient, since
+        # `best_value_for`/`_kick_value_for` had nothing to even try
+        # proposing in the first place. Treated exactly like
+        # `schema_column`'s own numeric case, since a `not_persisted`
+        # value is exactly as free to move as a real column's would be.
+        return [current - step, current + step]
     return []
 
 
@@ -290,18 +311,26 @@ _AVM_MAX_ROUNDS = 60  # generous: log2 of even a huge gap is small; guards patho
 def _numeric_step_eligible(record, var_name, node, current):
     """True only for the leaf shapes where growing `step` in
     candidate_values() actually produces a wider probe -- a numeric
-    schema_column/derived_aggregate/derived_join_count with no enumerable
-    domain. AVM-style step acceleration only makes sense for these; every
-    other kind (boolean, domain-based, string single-char edit) ignores
-    `step` entirely (candidate_values' own domain/boolean branches return
-    before ever looking at it), so "accelerating" them would just
-    re-probe the identical candidates for no benefit."""
+    schema_column/not_persisted/derived_aggregate/derived_join_count with
+    no enumerable domain (`not_persisted` added 2026-09-13 alongside
+    `candidate_values`'s own matching fix -- see its docstring for the
+    real bug this closes: without it, a `not_persisted` variable compared
+    only via an ordering operator had NO numeric-step branch to fall
+    into at all, so AVM's own step-doubling acceleration is exactly as
+    valuable here as for a real column -- a seeded value can start
+    millions away from its target, and step-1-only search would need a
+    comparable number of individual mutation attempts to close that gap).
+    AVM-style step acceleration only makes sense for these; every other
+    kind (boolean, domain-based, string single-char edit) ignores `step`
+    entirely (candidate_values' own domain/boolean branches return before
+    ever looking at it), so "accelerating" them would just re-probe the
+    identical candidates for no benefit."""
     kind = node.get('kind')
     if kind in BOOLEAN_LEAF_KINDS:
         return False
     if enumerable_domain(record, var_name):
         return False
-    if kind == 'schema_column':
+    if kind in ('schema_column', 'not_persisted'):
         return isinstance(current, (int, float)) and not isinstance(current, bool)
     return kind in ('derived_aggregate', 'derived_join_count')
 

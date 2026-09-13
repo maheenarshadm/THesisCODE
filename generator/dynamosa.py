@@ -73,6 +73,58 @@ shares one candidate across many concurrently-active objectives.
 `materialize.py` strips `_OWNER_KEY` from every emitted column before
 writing real SQL/CSV, since it is bookkeeping, not schema data.
 
+**Per-individual scenario (2026-09-13) -- fixing a real, previously-
+flagged-but-unaddressed bug**: a `not_persisted` leaf (a `<placeholder>`
+bind-parameter, e.g. `purchaseQuantity`, never a real row/column) is
+resolved through `scenario`, not `focal`. Until this fix, EVERY
+individual in the population shared the exact SAME scenario dict per
+objective (`scenario_cache: {record_id: scenario}`, built once,
+read-only from then on) -- `_mutate_objective`'s own mutation of a
+`not_persisted` variable was computed and applied to a throwaway COPY of
+that scenario, then silently discarded the moment the function returned,
+since nothing captured or persisted it anywhere. Confirmed directly
+running this pipeline against Spree for the first time (2026-09-13,
+after §13.42-13.44's fixes): `Price List Volume Adjustment Tier
+Selection::Rule_2`/`Rule_3` both need `purchaseQuantity` to move away
+from its seeded value to ever reach fitness 0.0, and both stayed stuck
+at a fixed, non-zero residual for the ENTIRE run -- inspecting
+`scenario_cache` directly after a full 40-generation run showed
+`purchaseQuantity` still sitting at its raw, unmutated per-objective
+seed offset, exactly as `build_seed_candidate` first set it, proving the
+mutation never once actually stuck. `mutate()`/`hillclimb()`'s own
+single-objective path (used by `search.py`'s own escalation loop) never
+had this bug -- it already threads `new_scenario` through correctly
+(`mutate()` returns it, the caller persists it into the next
+generation's own population entry) -- the bug was specific to this
+module's own `_mutate_objective`, which reimplements `mutate()`'s
+control flow but had never carried scenario along the same way it
+already carries `focal_maps`.
+
+Fixed by giving scenario the same per-individual treatment focal_maps
+already has: an individual is now a `(candidate, focal_maps,
+scenario_maps)` TRIPLE, `scenario_maps: {record_id: scenario}` -- one
+scenario dict per objective, per individual, evolving independently
+exactly like each objective's own dedicated focal rows already do.
+`_seed_shared_population` seeds one shared BASE `scenario_maps` (built
+once, offset per objective exactly as before) and deep-copies it into
+every initial population member, same as it already does for
+`base_focal_maps`; `_mutate_objective` now deep-copies `(candidate,
+focal_maps, scenario_maps)` jointly and returns the updated triple,
+so a `not_persisted` mutation that improves fitness can now actually
+survive into the next generation via ordinary NSGA-II selection, the
+same way a row mutation already does. `crossover()`'s own new
+`scenario_maps1`/`scenario_maps2` parameters do NOT recombine scenario
+by the table mask at all -- a `not_persisted` variable belongs entirely
+to one record, never shared/aliased across tables or records the way a
+row can be, so each child simply inherits its own originating parent's
+scenario_maps wholesale, deep-copied, unmodified by which parent
+supplied which table. `run_dynamosa` no longer returns a separate
+`scenario_cache` -- it is now redundant: every individual (and every
+archived one) already carries its own current scenario state, so
+`evaluate_objective`/`merge_archive_candidate`/`generate_dataset.py`
+read scenario directly off the individual/archive entry itself instead
+of a separately-threaded, run-global cache.
+
 **Reused, not reimplemented**: `mutate()`'s own building blocks --
 `best_value_for`/`apply_mutation`/`_leaf_variables` (this module's own
 `_mutate_objective` reimplements `mutate()`'s own control flow rather
@@ -107,7 +159,7 @@ selection pressure at all, per §6.4's own framing).
 
 Usage:
     from dynamosa import run_dynamosa
-    archive, coverage_history, population, scenario_cache = run_dynamosa(
+    archive, coverage_history, population = run_dynamosa(
         records, case_study, population_size=20, generations=50)
 """
 import copy
@@ -235,9 +287,16 @@ def _focal_for_mutate(record, candidate, focal_maps, table_cache):
     return focal
 
 
-def evaluate_objective(record, candidate, focal_maps, scenario, table_cache):
+def evaluate_objective(record, candidate, focal_maps, scenario_maps, table_cache):
+    """`scenario_maps` is the individual's own `{record_id: scenario}`
+    (2026-09-13's per-individual scenario fix, see this module's own
+    docstring) -- this objective's own current scenario is looked up by
+    `record_id` here, exactly like `_focal_for_read` already looks up
+    this objective's own focal rows from `focal_maps`, rather than a
+    caller pre-extracting one record's own scenario before calling."""
     try:
         focal = _focal_for_read(record, focal_maps)
+        scenario = scenario_maps.get(record['record_id'], {})
         genome = derive_genome(record, candidate, focal, scenario, owner_id=record['record_id'])
         return branch_fitness(record, genome)
     except FitnessEvaluationError:
@@ -285,7 +344,7 @@ def _kick_value_for(record, var_name, node, current, case_study, rng):
     return rng.choice(options) if options else None
 
 
-def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache, rng=None,
+def _mutate_objective(record, candidate, focal_maps, scenario_maps, table_cache, rng=None,
                        kick_probability=_KICK_PROBABILITY):
     """The population loop's own variation step for a single objective --
     reimplements mutation.py's own `mutate()` control flow (pick a random
@@ -297,17 +356,25 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     every OTHER objective's own focal entries still sitting in this same
     individual's `focal_maps` (the exact class of bug crossover.py's own
     `focal_maps1`/`focal_maps2` extension was built to avoid, applied
-    here too). `candidate`/`focal_maps` are only ever replaced together,
-    in one joint deepcopy, never touched in place -- parents are never
-    mutated, the same discipline `mutate()` itself follows.
+    here too). `candidate`/`focal_maps`/`scenario_maps` are only ever
+    replaced together, in one joint deepcopy, never touched in place --
+    parents are never mutated, the same discipline `mutate()` itself
+    follows.
 
-    Returns (new_candidate, new_focal_maps, improved) -- a scenario
-    mutation (the `not_persisted` leaf kind) is applied to a throwaway
-    copy of `scenario` and then discarded, exactly like the population
-    loop's own previous direct use of `mutate()` already did (that
-    `_new_scenario` return value was likewise never propagated back into
-    `scenario_cache`) -- a real, pre-existing, unchanged limitation, not
-    a new one introduced here.
+    Returns (new_candidate, new_focal_maps, new_scenario_maps, improved).
+    `scenario_maps` is this individual's own `{record_id: scenario}`
+    (2026-09-13's per-individual scenario fix -- see this module's own
+    docstring for the real bug it fixes: a `not_persisted` mutation used
+    to be applied to a throwaway scenario copy that was silently
+    discarded the moment this function returned, so a variable like
+    `purchaseQuantity` could never actually move away from its seeded
+    value across the whole run, no matter how many generations). This
+    objective's own current scenario is now looked up from, and written
+    back into, `scenario_maps[record_id]` -- exactly the same "one entry
+    per objective, deep-copied jointly with everything else" treatment
+    `focal_maps` already had, so a `not_persisted` mutation that improves
+    fitness now actually survives into the next generation via ordinary
+    NSGA-II selection, the same way a row mutation already does.
 
     Both the initial genome computation AND `best_value_for` itself are
     wrapped in one try/except, exactly the same real crash `mutate()`'s
@@ -341,35 +408,35 @@ def _mutate_objective(record, candidate, focal_maps, scenario_cache, table_cache
     exploration step would otherwise produce)."""
     rng = rng or random
     rid = record['record_id']
-    scenario = scenario_cache[rid]
+    scenario = scenario_maps.get(rid, {})
     focal = _focal_for_mutate(record, candidate, focal_maps, table_cache)
     try:
         genome = derive_genome(record, candidate, focal, scenario, owner_id=rid)
         leaves = [(v, n) for v, n in _leaf_variables(record) if v in genome]
         if not leaves:
-            return candidate, focal_maps, False
+            return candidate, focal_maps, scenario_maps, False
         var_name, node = rng.choice(leaves)
         pinned = known_constant(record['case_study'], var_name)
         if pinned is None and rng.random() < kick_probability:
             value = _kick_value_for(record, var_name, node, genome.get(var_name), record['case_study'], rng)
             if value is None:
-                return candidate, focal_maps, False
+                return candidate, focal_maps, scenario_maps, False
         else:
             value, _best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
             if not improved:
-                return candidate, focal_maps, False
+                return candidate, focal_maps, scenario_maps, False
     except FitnessEvaluationError:
-        return candidate, focal_maps, False
+        return candidate, focal_maps, scenario_maps, False
 
-    new_candidate, new_focal_maps = copy.deepcopy((candidate, focal_maps))
+    new_candidate, new_focal_maps, new_scenario_maps = copy.deepcopy((candidate, focal_maps, scenario_maps))
     new_focal = new_focal_maps[rid]
-    scenario_copy = dict(scenario)
+    new_scenario = new_scenario_maps.setdefault(rid, {})
     try:
-        apply_mutation(record, new_candidate, new_focal, scenario_copy, var_name, node, value, genome.get(var_name),
+        apply_mutation(record, new_candidate, new_focal, new_scenario, var_name, node, value, genome.get(var_name),
                         owner_id=rid)
     except FitnessEvaluationError:
-        return candidate, focal_maps, False
-    return new_candidate, new_focal_maps, True
+        return candidate, focal_maps, scenario_maps, False
+    return new_candidate, new_focal_maps, new_scenario_maps, True
 
 
 _LOCAL_BURST_CAP = 8  # bounds worst-case cost for a record with an unusually large leaf count
@@ -536,12 +603,17 @@ def _seed_shared_population(records, case_study, population_size):
 
     Repaired once, wholesale, after every objective's own rows are in --
     the population's common ancestor. Each individual starts as an
-    independent joint deep copy of `(base, base_focal_maps)` so
-    mutation/crossover on one never touches another (the same "parents
-    are never mutated in place" discipline mutate()/crossover() already
-    follow, extended to the population itself)."""
+    independent joint deep copy of `(base, base_focal_maps,
+    base_scenario_maps)` so mutation/crossover on one never touches
+    another (the same "parents are never mutated in place" discipline
+    mutate()/crossover() already follow, extended to the population
+    itself) -- `base_scenario_maps` (2026-09-13's per-individual
+    scenario fix) gives every individual its OWN independently-evolving
+    copy of each objective's own scenario, rather than every individual
+    forever sharing one frozen, run-global scenario per objective (see
+    this module's own docstring for the real bug that caused)."""
     schema = _schema_for(case_study)
-    scenario_cache = {}
+    base_scenario_maps = {}
     base = Candidate()
     base_focal_maps = {}
     for i, r in enumerate(records):
@@ -551,7 +623,7 @@ def _seed_shared_population(records, case_study, population_size):
         for key, val in s.items():
             if key != '__today__' and isinstance(val, (int, float)) and not isinstance(val, bool):
                 s[key] = val + offset
-        scenario_cache[rid] = s
+        base_scenario_maps[rid] = s
         id_to_copy = {}
         for table, rows in c.as_dict().items():
             key_cols = _key_columns_for(schema, table)
@@ -584,8 +656,8 @@ def _seed_shared_population(records, case_study, population_size):
         if rec_focal:
             base_focal_maps[rid] = rec_focal
     repair_candidate(base, case_study)
-    population = [copy.deepcopy((base, base_focal_maps)) for _ in range(population_size)]
-    return population, scenario_cache
+    population = [copy.deepcopy((base, base_focal_maps, base_scenario_maps)) for _ in range(population_size)]
+    return population
 
 
 def _mutations_per_child(active, population_size, mutations_per_child):
@@ -617,9 +689,9 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
-    (archive, coverage_history, population, scenario_cache) -- `archive`
-    is {record_id: (best_fitness_ever_found, individual_that_achieved_it)},
-    growing monotonically across the whole run (DynaMOSA's own archive
+    (archive, coverage_history, population) -- `archive` is {record_id:
+    (best_fitness_ever_found, individual_that_achieved_it)}, growing
+    monotonically across the whole run (DynaMOSA's own archive
     discipline: a target's best answer is never lost even if the current
     population moves on); `coverage_history[g]` is how many objectives
     had reached fitness 0.0 by the end of generation g, for watching
@@ -630,33 +702,24 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     per-objective-best snapshots, which were captured at different points
     in the run and were never guaranteed consistent with each other.
 
-    `scenario_cache` (this run's OWN per-objective `{record_id:
-    scenario}`, exactly as `_seed_shared_population` built and offset it
-    -- see its own docstring on why every numeric scenario value is
-    shifted by that objective's own `i * _SEED_KEY_OFFSET_UNIT`) is
-    returned too, and MUST be reused for any later `evaluate_objective`
-    call against this run's own individuals or archive -- a real bug
-    found building the merge-the-archive feature (2026-09-13): a caller
-    that instead built its OWN fresh `scenario` (e.g. via a bare
-    `build_seed_candidate(r)[2]`) would silently disagree with the
-    OFFSET scenario actually used to construct/mutate every row a
-    scenario-dependent leaf (a filter conjunct or `_row_from_filter_
-    conjuncts` match against a `<placeholder>`) reads against, producing
-    spurious `FitnessEvaluationError`s (confirmed: a "0/0 division"
-    error appeared re-evaluating a record's own ALREADY-fitness-0.0
-    archived individual, using a mismatched fresh scenario) that make an
-    otherwise-solved objective look uncovered. `archive`'s own stored
-    fitness values are unaffected (computed once, during the run itself,
-    against the correct scenario, and simply read back) -- only a
-    caller's own RE-evaluation is at risk.
-
     Each "individual" throughout this function is a `(candidate,
-    focal_maps)` pair, not a bare `Candidate` -- `focal_maps` is
-    `{record_id: {table: row}}`, this module's own focal-per-objective
-    refinement (see the module docstring): every objective's own
-    dedicated row per table travels WITH its candidate through crossover
-    and mutation, rather than every objective sharing whichever row
-    happens to be "first" in a bare `Candidate`.
+    focal_maps, scenario_maps)` TRIPLE, not a bare `Candidate` --
+    `focal_maps` is `{record_id: {table: row}}` (this module's own
+    focal-per-objective refinement, see the module docstring): every
+    objective's own dedicated row per table travels WITH its candidate
+    through crossover and mutation, rather than every objective sharing
+    whichever row happens to be "first" in a bare `Candidate`.
+    `scenario_maps` is `{record_id: scenario}` (2026-09-13's own
+    per-individual scenario fix, see the module docstring for the real
+    `not_persisted`-mutation bug this replaces): every objective's own
+    current bind-parameter state travels WITH its candidate the same
+    way, rather than every individual forever sharing one frozen,
+    run-global scenario per objective that a mutation could never
+    actually update. This also means a caller no longer needs (or gets)
+    a separately-returned `scenario_cache` -- every individual, and every
+    archived one, already carries its own current scenario, so
+    `evaluate_objective`/`merge_archive_candidate` read it directly off
+    whichever individual they're given.
 
     `mutations_per_child` (see `_mutations_per_child`'s own docstring)
     is this module's own multi-pick mutation fix (2026-09-12): each
@@ -707,7 +770,7 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     its own."""
     rng = rng or random.Random(0)
     table_cache = {}
-    population, scenario_cache = _seed_shared_population(records, case_study, population_size)
+    population = _seed_shared_population(records, case_study, population_size)
 
     # Every record gets a real entry from the start, even one that turns
     # out permanently unresolvable (inf against every individual all run)
@@ -720,10 +783,10 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     archive = {r['record_id']: (float('inf'), population[0]) for r in records}
 
     def update_archive(individual):
-        candidate, focal_maps = individual
+        candidate, focal_maps, scenario_maps = individual
         for r in records:
             rid = r['record_id']
-            f = evaluate_objective(r, candidate, focal_maps, scenario_cache[rid], table_cache)
+            f = evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache)
             if f < archive[rid][0]:
                 archive[rid] = (f, individual)
 
@@ -745,10 +808,11 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
         offspring = []
         while len(offspring) < population_size:
             p1, p2 = rng.sample(population, 2) if len(population) >= 2 else (population[0], population[0])
-            (p1_c, p1_fm), (p2_c, p2_fm) = p1, p2
-            c1, c2, _f1, _f2, fm1, fm2 = crossover(
-                p1_c, p2_c, case_study, rng, focal_maps1=p1_fm, focal_maps2=p2_fm)
-            for child_c, child_fm in ((c1, fm1), (c2, fm2)):
+            (p1_c, p1_fm, p1_sm), (p2_c, p2_fm, p2_sm) = p1, p2
+            c1, c2, _f1, _f2, fm1, fm2, sm1, sm2 = crossover(
+                p1_c, p2_c, case_study, rng, focal_maps1=p1_fm, focal_maps2=p2_fm,
+                scenario_maps1=p1_sm, scenario_maps2=p2_sm)
+            for child_c, child_fm, child_sm in ((c1, fm1, sm1), (c2, fm2, sm2)):
                 if active:
                     # k DISTINCT active objectives, not just one -- this
                     # module's own multi-pick mutation fix (see
@@ -771,17 +835,17 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                         # leaf of the same record genuinely unresolvable,
                         # an honest "not evaluable yet," never a crash.
                         for _ in range(_local_burst_size(r)):
-                            child_c, child_fm, _improved = _mutate_objective(
-                                r, child_c, child_fm, scenario_cache, table_cache, rng,
+                            child_c, child_fm, child_sm, _improved = _mutate_objective(
+                                r, child_c, child_fm, child_sm, table_cache, rng,
                                 kick_probability=kick_probability)
-                offspring.append((child_c, child_fm))
+                offspring.append((child_c, child_fm, child_sm))
         offspring = offspring[:population_size]
 
         for child in offspring:
             update_archive(child)
 
         combined = population + offspring
-        fitness_vectors = [[evaluate_objective(r, ind[0], ind[1], scenario_cache[r['record_id']], table_cache)
+        fitness_vectors = [[evaluate_objective(r, ind[0], ind[1], ind[2], table_cache)
                              for r in active] for ind in combined]
         fronts = fast_non_dominated_sort(fitness_vectors)
         new_population = []
@@ -799,7 +863,7 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                              if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0)
         coverage_history.append(covered_count)
 
-    return archive, coverage_history, population, scenario_cache
+    return archive, coverage_history, population
 
 
 # ---------------------------------------------------------------------------
@@ -883,14 +947,23 @@ def merge_archive_candidate(archive, records, case_study):
     caller re-evaluating every objective against the result rather than
     assumed here.
 
-    Returns (merged_candidate, merged_focal_maps, covered_record_ids) --
-    `covered_record_ids` is the archive's own view of what SHOULD be
-    covered; it is the caller's job (`generate_dataset.py`) to
-    re-`evaluate_objective` every one of them against the actual merged,
-    repaired result and report the real, verified number, not this
-    expected one, honestly side by side."""
+    `merged_scenario_maps` (2026-09-13's own per-individual scenario fix)
+    is built the same simple way for every covered record: a plain copy
+    of that record's own scenario dict, taken directly from its own
+    archived individual's `scenario_maps[record_id]` -- no identity-based
+    deduplication needed here the way rows need it, since a scenario
+    dict is never physically shared or aliased across different records
+    the way a candidate row can be.
+
+    Returns (merged_candidate, merged_focal_maps, merged_scenario_maps,
+    covered_record_ids) -- `covered_record_ids` is the archive's own view
+    of what SHOULD be covered; it is the caller's job (`generate_dataset.py`)
+    to re-`evaluate_objective` every one of them against the actual
+    merged, repaired result and report the real, verified number, not
+    this expected one, honestly side by side."""
     merged = Candidate()
     merged_focal_maps = {}
+    merged_scenario_maps = {}
     id_to_copy = {}
     covered_record_ids = set()
 
@@ -909,7 +982,8 @@ def merge_archive_candidate(archive, records, case_study):
         if fitness != 0.0 or individual is None:
             continue
         covered_record_ids.add(rid)
-        candidate, focal_maps = individual
+        candidate, focal_maps, scenario_maps = individual
+        merged_scenario_maps[rid] = dict(scenario_maps.get(rid, {}))
 
         # (1) This record's own dedicated focal rows -- by identity,
         # never by "which table," so a different owned row on the same
@@ -932,7 +1006,7 @@ def merge_archive_candidate(archive, records, case_study):
             merged_focal_maps[rid] = merged_rec_focal
 
     repair_candidate(merged, case_study)
-    return merged, merged_focal_maps, covered_record_ids
+    return merged, merged_focal_maps, merged_scenario_maps, covered_record_ids
 
 
 if __name__ == '__main__':
@@ -960,7 +1034,7 @@ if __name__ == '__main__':
 
     start = time.time()
     rng = random.Random(0)
-    archive, coverage_history, _final_population, scenario_cache = run_dynamosa(
+    archive, coverage_history, _final_population = run_dynamosa(
         records, 'FLEX2', population_size=12, generations=25, rng=rng)
     elapsed = time.time() - start
 
@@ -998,15 +1072,16 @@ if __name__ == '__main__':
     # already-solved individual (see merge_archive_candidate's own
     # docstring on why a repair pass run on the merged whole could, in
     # principle, still disturb an objective's own aggregate/exists count).
-    # Reuses `scenario_cache` as returned by `run_dynamosa` itself -- a
-    # freshly-rebuilt one (e.g. a bare `build_seed_candidate(r)[2]`) would
-    # disagree with the offset actually baked into this run's own rows
-    # (see run_dynamosa's own docstring on the real bug this caused).
+    # No separate scenario_cache needed here anymore (2026-09-13's own
+    # per-individual scenario fix) -- merge_archive_candidate's own
+    # merged_scenario_maps already carries each record's own scenario,
+    # taken directly from its own archived individual.
     table_cache = {}
-    merged_candidate, merged_focal_maps, expected_covered = merge_archive_candidate(archive, records, 'FLEX2')
+    merged_candidate, merged_focal_maps, merged_scenario_maps, expected_covered = merge_archive_candidate(
+        archive, records, 'FLEX2')
     actual_covered = {r['record_id'] for r in records
                        if evaluate_objective(r, merged_candidate, merged_focal_maps,
-                                              scenario_cache[r['record_id']], table_cache) == 0.0}
+                                              merged_scenario_maps, table_cache) == 0.0}
     regressions = expected_covered - actual_covered
     assert not regressions, f"merge_archive_candidate regressed: {regressions}"
     assert actual_covered == {r['record_id'] for r in records
