@@ -1485,6 +1485,19 @@ Ran `generate_dataset.py` against jBilling (42 compiled branches) for the first 
 
 **Verified, measured result**: jBilling -- **30/42 (71.4%) merged-archive coverage, VERIFIED, zero regressions**, `validate_with_sqlite: ok=True, 0 errors`. FLEX2 and Spree both re-verified unaffected after every step, including the self-correction. See `docs/generationalgorithmdesign.md` §13.47 for the full trace.
 
+## The missing __today__ gene, and jBilling's remaining 10 uncovered objectives, exhaustively characterized (2026-09-13)
+
+Asked why jBilling's 12 uncovered objectives weren't covered. Found one more real bug first: `derive_genome` never copied the scenario-level `__today__` value into the genome, so any record whose own condition calls FEEL's `today()` directly (never via a named leaf) was permanently stuck at `inf` -- `candidate.py`'s own sweep self-test never caught it because it already manually pre-seeds `__today__` before calling `derive_genome`, silently masking the gap from its own reported numbers while the real search path stayed broken. Fixed by copying it unconditionally inside `derive_genome`. Verified: jBilling rose 30/42 -> 32/42 (both `Invoice Overdue Check` rules now solve immediately), FLEX2/Spree unaffected.
+
+The remaining 10, all confirmed by inspecting real archived genomes, not guessed:
+- **4**: the already-known compile-time gap (`code_external`/unclassified-`derived` facts genuinely computed by Java application code, e.g. date arithmetic over multiple columns, a UI-only transient array index -- same class as FLEX2's §13.38).
+- **1**: provably infeasible by a self-comparison tautology (`nextBillableDay < nextBillableDay`) -- same class as Spree's `expiresAt > expiresAt`.
+- **2**: provably infeasible by a grounding conflict -- `resultCode` fixed to a value (one numeric, one an apparently-broken un-substituted string) that can never satisfy the record's own `IN [1,4]` requirement.
+- **2**: a genuine, NEW architectural limitation -- two `schema_column` leaves needing DIFFERENT values (`oldStatusCanLogin` vs `newStatusCanLogin`) both resolve to the identical `generic_status.can_login` column, since this module's per-table (not per-role) focal design gives one dedicated row per table, with no notion that two reads on the same table could mean two conceptually different rows. Confirmed directly: both values read back byte-identical in every archived individual.
+- **1**: the already-known `exists`-kind filter-support gap (no column-level filter at all, so two differently-intended existence checks on the same table collapse to the same bare check) -- same class as FLEX2's declined `courseOfferedInFollowingSemesters`.
+
+Corpus now exhaustively characterized: 32 covered + 4 compile-gap + 3 infeasible + 3 architectural-limitation = 42 exactly, zero unexplained. See `docs/generationalgorithmdesign.md` §13.48 for the full trace.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully

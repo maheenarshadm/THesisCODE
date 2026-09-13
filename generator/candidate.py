@@ -528,6 +528,27 @@ def derive_genome(record, candidate, focal, scenario, warnings=None, owner_id=No
     real one."""
     warnings = warnings if warnings is not None else []
     genome = {}
+    if '__today__' in scenario:
+        # A real, general gap found running this pipeline against
+        # jBilling for the first time (2026-09-13): `fitness.py`'s own
+        # `_leaf_value` reads `genome['__today__']` directly whenever a
+        # record's own CONDITION calls FEEL's `today()` (e.g. `dueDate
+        # PlusGrace < today()`) -- but `__today__` is a scenario-level
+        # construct, never a named entry in `variable_resolution`, so
+        # the walk below never had a reason to copy it into the genome
+        # unless some OTHER leaf happened to be `not_persisted` and
+        # coincidentally shared that exact name (it never does). Every
+        # such record was stuck at a permanent, spurious
+        # `FitnessEvaluationError` ("genome is missing the scenario
+        # -level '__today__' gene"), string-identical regardless of how
+        # good a candidate the search built, since nothing upstream of
+        # `branch_fitness` ever put it there. Copied unconditionally
+        # here (harmless when absent from `scenario`, and harmless as
+        # an unused genome key for a record whose own condition never
+        # calls `today()` at all) rather than requiring every such
+        # record to awkwardly declare a fake leaf just to smuggle it
+        # through.
+        genome['__today__'] = scenario['__today__']
 
     def walk(var_name, node):
         kind = node.get('kind')
