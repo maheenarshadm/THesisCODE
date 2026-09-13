@@ -35,6 +35,7 @@ Usage:
 """
 import csv
 import os
+import re
 import sqlite3
 import sys
 
@@ -140,12 +141,40 @@ def write_csv_files(candidate, out_dir):
     return written
 
 
+_VALID_TYPE_SUFFIX = re.compile(r'^\(\s*\d+(\s*,\s*\d+)?\s*\)$')
+
+
 def _sqlite_type(type_name):
     # SQLite's type affinity is lenient about the exact name -- pass the
     # schema's own declared type straight through (NUMBER/VARCHAR2/CHAR/
     # DATE/...) so the validation DDL matches what the schema actually
     # says, rather than translating to SQLite-native names no one wrote.
-    return type_name or 'TEXT'
+    #
+    # A parenthetical suffix is only ever real SQL when it's a length/
+    # precision modifier (VARCHAR(255), DECIMAL(10,2)) -- kept as-is.
+    # Anything else is stripped, not passed through: a real, widespread
+    # data-quality artifact found running this pipeline against Spree
+    # for the first time (2026-09-13), unrelated to any case study this
+    # pipeline had exercised before -- 242 columns in Spree's own
+    # ground-truth schema JSON carry a type string like "bigint(ref)"
+    # (traced to the source `schema.rb`'s own `t.bigint "col",
+    # null: false` line, which names no parenthetical at all -- an
+    # artifact of the separate schema-extraction pass that produced this
+    # JSON, not of anything in this pipeline). Passed straight through,
+    # "bigint(ref)" is not valid SQL and made every CREATE TABLE
+    # naming such a column fail outright with a syntax error --
+    # confirmed directly via `validate_with_sqlite`, not assumed. FLEX2/
+    # OpenMRS have zero such entries (a real data-quality difference
+    # between the four case studies' own schema-extraction runs, not
+    # something this fix special-cases per case study).
+    type_name = type_name or 'TEXT'
+    match = re.match(r'^([A-Za-z_][A-Za-z0-9_ ]*)(\(.*\))?$', type_name.strip())
+    if not match:
+        return type_name
+    base, suffix = match.group(1), match.group(2)
+    if suffix and not _VALID_TYPE_SUFFIX.match(suffix):
+        return base
+    return type_name
 
 
 def create_table_ddl(table, schema, known_tables):
@@ -182,6 +211,27 @@ def create_table_ddl(table, schema, known_tables):
         if meta.get('null_false'):
             parts.append('NOT NULL')
         defs.append(' '.join(parts))
+    # A declared PK column not itself among `columns` -- another real,
+    # widespread schema-JSON artifact found the same run as the type-
+    # string one above: Rails' own `schema.rb` never lists its implicit
+    # auto-increment `id` column among a table's explicit `t.<type>
+    # "col"` lines (it's added automatically by `create_table`), so a
+    # schema-extraction pass reading that file faithfully never sees it
+    # either -- yet the SAME extraction still records `"pk": "id"`
+    # (correctly, Rails' own default). SQLite's own `PRIMARY KEY (...)`
+    # table constraint requires every named column to already be
+    # declared, so emitting it unconditionally crashed CREATE TABLE with
+    # "no such column: id" -- confirmed on 196 of Spree's own tables
+    # (jBilling has 3 of the same shape too; FLEX2/OpenMRS have none,
+    # since their own extraction always declared PK columns explicitly).
+    # Synthesized here as a plain INTEGER column when missing -- SQLite
+    # treats a single-column INTEGER PRIMARY KEY as its own rowid alias,
+    # which is exactly the right semantics for an implicit Rails id
+    # column, and every row this pipeline ever inserts always supplies
+    # its own explicit value regardless.
+    for col in pk_cols:
+        if col not in columns:
+            defs.append(f"{col} INTEGER")
     if pk_cols:
         defs.append(f"PRIMARY KEY ({', '.join(pk_cols)})")
     for fk in info.get('fk_columns') or []:

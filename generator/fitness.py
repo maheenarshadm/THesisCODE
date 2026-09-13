@@ -194,11 +194,38 @@ def _numeric(v):
 
 
 def _comparison_distance_true(op, a, b):
-    """§6.3's base table, desired outcome = the comparison is TRUE."""
+    """§6.3's base table, desired outcome = the comparison is TRUE.
+
+    Ordering operators (<, <=, >, >=) require both operands to be
+    genuinely numeric -- unlike `=`/`!=`, which have a well-defined
+    fallback for non-numeric values (plain equality/inequality, e.g. two
+    equal strings or two `None`s), there is no principled distance for
+    "how far is `None` from being less than `None`," and Python's own
+    `<`/`>` raise a raw, uncaught TypeError on such operands rather than
+    a value this project's own established `FitnessEvaluationError`
+    convention ("not evaluable yet," never a crash) already covers
+    everywhere else. Found as a real crash (2026-09-13) running the full
+    population loop against Spree for the first time: a nullable
+    `expires_at` schema column, correctly `None` while its own paired
+    `expiresAtSet` boolean is False, reached an earlier-suppression-row's
+    own `expiresAt > expiresAt` ordering comparison (itself a
+    same-variable comparison, always false for any REAL value, but
+    `None > None` crashes outright instead of ever reaching that
+    always-false verdict). Raising `FitnessEvaluationError` here lets
+    every existing caller (`_mutate_objective`'s own try/except,
+    `_hypothetical_fitness`'s own catch-and-treat-as-inf) handle it
+    exactly like any other not-yet-evaluable state, rather than a
+    different caller needing its own special-cased guard against this
+    one operator family."""
     if op == '=':
         return abs(a - b) if _numeric(a) and _numeric(b) else (0.0 if a == b else K)
     if op == '!=':
         return K if a == b else 0.0
+    if not (_numeric(a) and _numeric(b)):
+        raise FitnessEvaluationError(
+            f"ordering comparison {op!r} needs two numeric operands, got {a!r} and {b!r} -- "
+            f"no principled distance for an ordering fact between non-numeric values "
+            f"(e.g. a nullable date/count that is currently unset)")
     if op == '<':
         return (a - b) + K if a >= b else 0.0
     if op == '<=':

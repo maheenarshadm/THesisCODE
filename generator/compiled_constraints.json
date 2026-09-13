@@ -58041,8 +58041,8 @@
    "customerIdPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL); column renamed from user_id"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    }
   },
   "fk_closure_tables": [
@@ -58120,8 +58120,8 @@
    "customerIdPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL); column renamed from user_id"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    },
    "promotionTargetGroupsConfigured": {
     "kind": "schema_gap",
@@ -58212,8 +58212,8 @@
    "customerIdPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL); column renamed from user_id"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    },
    "promotionTargetGroupsConfigured": {
     "kind": "schema_gap",
@@ -58272,14 +58272,14 @@
     "columns": [
      {
       "table": "spree_orders",
-      "column": "customer_id"
+      "column": "email"
      },
      {
       "table": "spree_orders",
-      "column": "email"
+      "column": "user_id"
      }
     ],
-    "notes": "existence check (either populated)"
+    "notes": "existence check (either populated); corrected 2026-09-13 -- real column is user_id"
    }
   },
   "fk_closure_tables": [
@@ -58344,14 +58344,14 @@
     "columns": [
      {
       "table": "spree_orders",
-      "column": "customer_id"
+      "column": "email"
      },
      {
       "table": "spree_orders",
-      "column": "email"
+      "column": "user_id"
      }
     ],
-    "notes": "existence check (either populated)"
+    "notes": "existence check (either populated); corrected 2026-09-13 -- real column is user_id"
    }
   },
   "fk_closure_tables": [
@@ -58419,14 +58419,14 @@
     "columns": [
      {
       "table": "spree_orders",
-      "column": "customer_id"
+      "column": "email"
      },
      {
       "table": "spree_orders",
-      "column": "email"
+      "column": "user_id"
      }
     ],
-    "notes": "existence check (either populated)"
+    "notes": "existence check (either populated); corrected 2026-09-13 -- real column is user_id"
    },
    "priorCompletedOrderCount": {
     "kind": "derived",
@@ -58473,8 +58473,8 @@
    "customerPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL)"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    }
   },
   "fk_closure_tables": [
@@ -58532,20 +58532,20 @@
    "priorPromotionUsageCount": {
     "kind": "schema_column",
     "table": "spree_orders",
-    "column": "customer_id",
+    "column": "user_id",
     "also_valid_in": [
      [
       "spree_promotion_actions",
       "promotion_id"
      ]
     ],
-    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?(); corrected 2026-09-13 -- real column is user_id, not customer_id"
    },
    "customerPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL)"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    }
   },
   "fk_closure_tables": [
@@ -58612,20 +58612,20 @@
    "customerPresent": {
     "kind": "null_check",
     "table": "spree_orders",
-    "column": "customer_id",
-    "notes": "existence check (IS NOT NULL)"
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    },
    "priorPromotionUsageCount": {
     "kind": "schema_column",
     "table": "spree_orders",
-    "column": "customer_id",
+    "column": "user_id",
     "also_valid_in": [
      [
       "spree_promotion_actions",
       "promotion_id"
      ]
     ],
-    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?(); corrected 2026-09-13 -- real column is user_id, not customer_id"
    }
   },
   "fk_closure_tables": [

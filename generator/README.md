@@ -1454,6 +1454,16 @@ Built a general, config-driven fix rather than a one-off hack for this rule: `kn
 
 **Verified**: full regression suite green, full FLEX2 benchmark still gives **81/151 merged-archive coverage, VERIFIED, zero regressions**. Inspected the real generated SQL directly: both course offerings now carry exactly 30 `LECTURE` rows (up from 3), with `STUDENT_ATTENDANCE` correctly showing 25/30 ≈ 83.3% attended for the eligible student and 3/30 = 10% for the debarred one. See `docs/generationalgorithmdesign.md` §13.44 for the full trace.
 
+## Running the pipeline against Spree for the first time (2026-09-13) -- three real bugs, none FLEX2-shaped
+
+Ran `generate_dataset.py` against Spree for the first time (previously only FLEX2 had gone through the full DynaMOSA population loop and real SQLite validation; the other case studies had only ever been exercised by `compile_constraints.py`/`candidate.py`'s own corpus-sweep self-tests). Found and fixed three real, general bugs:
+
+1. **Uncaught crash comparing `None` with an ordering operator** (`fitness.py`) -- `_comparison_distance_true` had a defined non-numeric fallback for `=`/`!=` but none for `<`/`<=`/`>`/`>=`, crashing outright (`TypeError`) the moment a nullable column (e.g. `expires_at`, correctly `None` while unset) reached an ordering comparison. Fixed by raising this project's own `FitnessEvaluationError` instead -- already handled safely everywhere in the pipeline, just never reached before.
+2. **Widespread schema-JSON artifacts `materialize.py` had never been forced to handle** -- measured directly, not assumed from a couple of examples: 242 columns in Spree's own schema JSON carry a malformed type string like `"bigint(ref)"`, and 196 of Spree's own tables declare a PK column (`id`) absent from their own column list (Rails' `schema.rb` never lists its implicit auto-increment `id` explicitly; jBilling has 3 tables of the same shape). `create_table_ddl`/`_sqlite_type` fixed generally: a parenthetical type suffix is kept only when it's a real length/precision modifier, stripped otherwise; a missing PK column is synthesized as a plain `INTEGER` column before the `PRIMARY KEY (...)` clause.
+3. **A hallucinated migration in the Spree ground-truth mapping** -- `spree_dmn/provenance/variable_to_schema_mapping.csv` mapped several `spree_orders` facts to a `customer_id` column, citing a migration file that does not exist anywhere in this repo; the real `schemas/spree_schema.rb` still has `user_id`. Confirmed directly before touching it (a curated ground-truth file, not generator code) and corrected with the user's confirmation: 6 CSV rows fixed, `compiled_constraints.json`/`compile_report.json` regenerated (291 compiled records unchanged, 18 blocked unchanged).
+
+**Verified, measured result**: Spree -- **20/27 (74.1%) merged-archive coverage, VERIFIED, zero regressions**, `validate_with_sqlite: ok=True, 0 errors`. All three fixes are general, not Spree-specific, and already benefit jBilling's own affected tables too. See `docs/generationalgorithmdesign.md` §13.45 for the full trace.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
