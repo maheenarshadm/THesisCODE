@@ -191,11 +191,23 @@ def enumerable_domain(record, var_name):
     that way (e.g. only via </>=, which has no finite domain to enumerate).
     Kept as the plain "candidate values to try" list this always was;
     candidate_values() itself calls _collect_domain_facts directly when it
-    also needs the hit/avoid split (to add an escape value)."""
+    also needs the hit/avoid split (to add an escape value).
+
+    An earlier row's own condition is walked with `negated=True`, not
+    `False` -- a real, general bug fixed 2026-09-13, found via a
+    record that never found an improving move despite having a single,
+    trivially satisfiable leaf: an earlier row's own condition must be
+    FALSE for the current (later) rule to fire at all (FIRST-hit-policy
+    suppression), so an `=` fact inside it is something this record
+    needs to AVOID, not something it should treat as a `hit` the same
+    way its OWN condition's facts are (which genuinely do need to hold).
+    Getting this backwards meant `_collect_domain_facts` classified an
+    earlier row's own equality fact as a value worth *trying*, when it
+    was in fact the one value that provably could never work."""
     hit, avoid = set(), set()
     _collect_domain_facts(record['condition'], var_name, False, hit, avoid)
     for row in record.get('hit_policy_context', {}).get('earlier_rows', []):
-        _collect_domain_facts(row['condition'], var_name, False, hit, avoid)
+        _collect_domain_facts(row['condition'], var_name, True, hit, avoid)
     found = hit | avoid
     if not found:
         return None
@@ -219,8 +231,13 @@ def candidate_values(record, var_name, node, current, case_study, step=1):
         values = [v for v in domain if v != current] or list(domain)
         hit, avoid = set(), set()
         _collect_domain_facts(record['condition'], var_name, False, hit, avoid)
+        # `negated=True` for earlier rows -- see enumerable_domain's own
+        # docstring for the real bug this fixes: an earlier row's own
+        # equality fact must be AVOIDED (it needs to be false for
+        # suppression), not walked with the same polarity as this
+        # record's own condition.
         for row in record.get('hit_policy_context', {}).get('earlier_rows', []):
-            _collect_domain_facts(row['condition'], var_name, False, hit, avoid)
+            _collect_domain_facts(row['condition'], var_name, True, hit, avoid)
         if avoid:
             values.append(_domain_escape_value(hit | avoid, current))
         return values
