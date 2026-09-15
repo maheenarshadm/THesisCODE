@@ -1,0 +1,243 @@
+case_study,record_id,decision_name,hit_policy,usage_shapes
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Academic Warning Status,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Load Limit,UNIQUE,negation (NOT)
+FLEX2,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Load Limit,UNIQUE,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Admission Closure Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5,Admission Closure Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_1,Course Registration Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6,Course Registration Eligibility,FIRST,negation (NOT); set-membership (IN)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4,Course Registration Eligibility,FIRST,cross-variable comparison; negation (NOT)
+FLEX2,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4,Course Registration Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_1,Course Replacement Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_2,Course Replacement Eligibility,FIRST,negation (NOT)
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3,Course Replacement Eligibility,FIRST,cross-variable comparison
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4,Course Replacement Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_5,Course Replacement Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_6,Course Replacement Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_1,Credit Transfer Exemption,FIRST,plain single comparison
+FLEX2,FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_2,Credit Transfer Exemption,FIRST,plain single comparison
+FLEX2,FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_3,Credit Transfer Exemption,FIRST,plain single comparison
+FLEX2,FLEX2::Attendance Eligibility For Final Exam::Decision_AttendanceEligibility_Rule_1,Attendance Eligibility For Final Exam,UNIQUE,plain single comparison
+FLEX2,FLEX2::Attendance Eligibility For Final Exam::Decision_AttendanceEligibility_Rule_2,Attendance Eligibility For Final Exam,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_1,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_2,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_3,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_4,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_5,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_6,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_7,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_8,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_9,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_10,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_11,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_12,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_13,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_14,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_15,Grade Points and Interpretation,UNIQUE,plain single comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1,Graduation Eligibility,FIRST,cross-variable comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_2,Graduation Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_3,Graduation Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_4,Graduation Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_5,Graduation Eligibility,FIRST,plain single comparison
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_1,Summer Semester Registration,FIRST,plain single comparison
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2,Summer Semester Registration,FIRST,negation (NOT)
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3,Summer Semester Registration,FIRST,negation (NOT)
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_4,Summer Semester Registration,FIRST,negation (NOT)
+FLEX2,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_5,Summer Semester Registration,FIRST,negation (NOT)
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_1,Obs Value Required By Datatype,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_2,Obs Value Required By Datatype,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_3,Obs Value Required By Datatype,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_4,Obs Value Required By Datatype,UNIQUE,set-membership (IN)
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_5,Obs Value Required By Datatype,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_6,Obs Value Required By Datatype,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_1,Obs Group Value Exclusivity,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_2,Obs Group Value Exclusivity,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_3,Obs Group Value Exclusivity,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_4,Obs Group Value Exclusivity,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_1,Numeric Precision Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_2,Numeric Precision Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_3,Numeric Precision Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_1,Numeric Absolute Range Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_2,Numeric Absolute Range Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_3,Numeric Absolute Range Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_1,Numeric Interpretation Classification,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_2,Numeric Interpretation Classification,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_3,Numeric Interpretation Classification,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_4,Numeric Interpretation Classification,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_5,Numeric Interpretation Classification,FIRST,plain single comparison
+OpenMRS,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_1,Concept Preferred Name Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_2,Concept Preferred Name Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_3,Concept Preferred Name Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_4,Concept Preferred Name Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_5,Concept Preferred Name Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_1,Order Date Activated Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_2,Order Date Activated Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_3,Order Date Activated Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_4,Order Date Activated Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_1,Order Scheduled Date Urgency Consistency,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_2,Order Scheduled Date Urgency Consistency,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_3,Order Scheduled Date Urgency Consistency,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_4,Order Scheduled Date Urgency Consistency,UNIQUE,plain single comparison
+OpenMRS,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_1,Preferred Identifier Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_2,Preferred Identifier Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_3,Preferred Identifier Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_1,Identifier Location Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_2,Identifier Location Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_3,Identifier Location Requirement,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_1,Identifier Uniqueness Check,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_2,Identifier Uniqueness Check,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_3,Identifier Uniqueness Check,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_4,Identifier Uniqueness Check,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_1,Identifier Format Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_2,Identifier Format Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_3,Identifier Format Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_4,Identifier Format Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_1,Birthdate Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_2,Birthdate Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_3,Birthdate Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_1,Death Record Consistency,FIRST,plain single comparison
+OpenMRS,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_2,Death Record Consistency,FIRST,plain single comparison
+OpenMRS,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_3,Death Record Consistency,FIRST,plain single comparison
+OpenMRS,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_4,Death Record Consistency,FIRST,plain single comparison
+OpenMRS,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_5,Death Record Consistency,FIRST,plain single comparison
+OpenMRS,OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_1,Death Date Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_2,Death Date Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_1,Program Enrollment Date Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_2,Program Enrollment Date Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_3,Program Enrollment Date Consistency Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_1,Patient State Date Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_2,Patient State Date Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_3,Patient State Date Validity,FIRST,cross-variable comparison
+OpenMRS,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_4,Patient State Date Validity,FIRST,plain single comparison
+OpenMRS,OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_1,Relationship Date Validity Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_2,Relationship Date Validity Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_1,Encounter Datetime Validity Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_2,Encounter Datetime Validity Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_3,Encounter Datetime Validity Violations,COLLECT,cross-variable comparison
+OpenMRS,OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_4,Encounter Datetime Validity Violations,COLLECT,cross-variable comparison
+Spree,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1,Promotion Customer Group Eligibility,FIRST,plain single comparison
+Spree,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_3,Promotion Customer Group Eligibility,FIRST,plain single comparison
+Spree,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_4,Promotion Customer Group Eligibility,FIRST,plain single comparison
+Spree,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1,First-Order Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2,First-Order Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3,First-Order Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1,One-Use-Per-User Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2,One-Use-Per-User Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3,One-Use-Per-User Promotion Eligibility,FIRST,plain single comparison
+Spree,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1,Promotion Temporal Availability,FIRST,cross-variable comparison
+Spree,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2,Promotion Temporal Availability,FIRST,cross-variable comparison
+Spree,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3,Promotion Temporal Availability,FIRST,plain single comparison
+Spree,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1,Promotion Usage Limit Exceeded,FIRST,plain single comparison
+Spree,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2,Promotion Usage Limit Exceeded,FIRST,plain single comparison
+Spree,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3,Promotion Usage Limit Exceeded,FIRST,cross-variable comparison
+Spree,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4,Promotion Usage Limit Exceeded,FIRST,plain single comparison
+Spree,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1,Promotion Tiered Percent Discount Selection,FIRST,plain single comparison
+Spree,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2,Promotion Tiered Percent Discount Selection,FIRST,plain single comparison
+Spree,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3,Promotion Tiered Percent Discount Selection,FIRST,plain single comparison
+Spree,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1,Price List Volume Adjustment Tier Selection,FIRST,plain single comparison
+Spree,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2,Price List Volume Adjustment Tier Selection,FIRST,plain single comparison
+Spree,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3,Price List Volume Adjustment Tier Selection,FIRST,plain single comparison
+Spree,Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_1,Price Adjustment Tier Validity Violations,COLLECT,plain single comparison
+Spree,Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_2,Price Adjustment Tier Validity Violations,COLLECT,plain single comparison
+Spree,Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_3,Price Adjustment Tier Validity Violations,COLLECT,plain single comparison
+Spree,Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_4,Price Adjustment Tier Validity Violations,COLLECT,plain single comparison
+Spree,Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_5,Price Adjustment Tier Validity Violations,COLLECT,plain single comparison
+jBilling,jBilling::Is Ageing Required::Decision_IsAgeingRequired_Rule_2,Is Ageing Required,FIRST,plain single comparison
+jBilling,jBilling::Invoice Overdue Check::Decision_InvoiceOverdue_Rule_1,Invoice Overdue Check,FIRST,plain single comparison
+jBilling,jBilling::Invoice Overdue Check::Decision_InvoiceOverdue_Rule_2,Invoice Overdue Check,FIRST,plain single comparison
+jBilling,jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_1,Ageing Step Advancement,FIRST,plain single comparison
+jBilling,jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_2,Ageing Step Advancement,FIRST,plain single comparison
+jBilling,jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_1,Ageing Status Change Order Action,FIRST,plain single comparison
+jBilling,jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_2,Ageing Status Change Order Action,FIRST,plain single comparison
+jBilling,jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_3,Ageing Status Change Order Action,FIRST,plain single comparison
+jBilling,jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_4,Ageing Status Change Order Action,FIRST,plain single comparison
+jBilling,jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_1,Ageing Step Config Validation,FIRST,plain single comparison
+jBilling,jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_2,Ageing Step Config Validation,FIRST,plain single comparison
+jBilling,jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_5,Ageing Step Config Validation,FIRST,plain single comparison
+jBilling,jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_1,Currency Exchange Rate Source,FIRST,plain single comparison
+jBilling,jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_2,Currency Exchange Rate Source,FIRST,plain single comparison
+jBilling,jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_3,Currency Exchange Rate Source,FIRST,plain single comparison
+jBilling,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_1,Order Period Already Invoiced,FIRST,plain single comparison
+jBilling,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_2,Order Period Already Invoiced,FIRST,plain single comparison
+jBilling,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_3,Order Period Already Invoiced,FIRST,cross-variable comparison
+jBilling,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_4,Order Period Already Invoiced,FIRST,cross-variable comparison
+jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_1,Order Date Range Valid,FIRST,plain single comparison
+jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_2,Order Date Range Valid,FIRST,plain single comparison
+jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_3,Order Date Range Valid,FIRST,plain single comparison
+jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_4,Order Date Range Valid,FIRST,cross-variable comparison
+jBilling,jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_5,Order Date Range Valid,FIRST,cross-variable comparison
+jBilling,jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1,Payment Outcome Resolution,FIRST,plain single comparison
+jBilling,jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2,Payment Outcome Resolution,FIRST,plain single comparison
+jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1,Payment Balance Assignment,FIRST,set-membership (IN)
+jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2,Payment Balance Assignment,FIRST,negation (NOT); set-membership (IN)
+jBilling,jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_2,Payment Balance Assignment,FIRST,plain single comparison
+jBilling,jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_1,Blacklist Filter Enabled,UNIQUE,plain single comparison
+jBilling,jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_2,Blacklist Filter Enabled,UNIQUE,plain single comparison
+jBilling,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_1,Cycle Start Source,FIRST,plain single comparison
+jBilling,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_2,Cycle Start Source,FIRST,plain single comparison
+jBilling,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_3,Cycle Start Source,FIRST,plain single comparison
+jBilling,jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_3,Daily Pro-Rate Amount,FIRST,plain single comparison
+jBilling,jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_1,Tax Calculation Needed,FIRST,plain single comparison
+jBilling,jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_2,Tax Calculation Needed,FIRST,plain single comparison
+jBilling,jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_3,Tax Calculation Needed,FIRST,plain single comparison
+jBilling,jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_4,Tax Calculation Needed,FIRST,plain single comparison
+jBilling,jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_1,Tax Calculation Mode,UNIQUE,plain single comparison
+jBilling,jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_2,Tax Calculation Mode,UNIQUE,plain single comparison

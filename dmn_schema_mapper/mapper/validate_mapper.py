@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Validates mapper.py's output against the four hand-built
-variable_to_schema_mapping.csv ground-truth files (291 rows total) that
-were produced manually across the whole case-study program.
+Validates mapper.py's output against the current four hand-built
+variable_to_schema_mapping.csv ground-truth files (274 rows total, per
+design doc §13.5) across the current case-study program.
 
-Ground truth's 5th column (name varies per case study: flex2_table_column /
-openmrs_table_column / ofbiz_entity_field / prestashop_table_column) is
-free text, not a strict schema -- it can be "table.column", multiple
-comma-separated "table.column" pairs, "n/a", "not-persisted", or a prose
-description of a derived/aggregate fact. We extract every "word.word" token
-pair from it as the set of true (table, column) references, case-insensitive.
+Ground truth's schema-location column (name/shape varies per case study --
+see GT_CONFIG) is free text, not a strict schema -- it can be
+"table.column", multiple comma-separated "table.column" pairs, "n/a",
+"not-persisted", or a prose description of a derived/aggregate fact. We
+extract every "word.word" token pair from it as the set of true (table,
+column) references, case-insensitive.
 
 Metrics reported, per case study and overall:
   - Not-persisted / schema-gap classification accuracy (did the mapper
@@ -25,17 +25,64 @@ Metrics reported, per case study and overall:
 This is the number that answers "is this actually usable as an input to
 the generator, or does someone still have to check every row" -- reported
 honestly, not rounded up.
+
+Fixed 2026-09-11: GT_FILES previously hard-coded absolute paths into a
+different session's scratchpad (`/tmp/claude-0/-home-claude/...`), none of
+which exist in this repository, and covered the pre-swap case-study set
+(FLEX2/OpenMRS/OFBiz/PrestaShop) -- neither Spree nor jBilling, which
+actually replaced OFBiz and PrestaShop, were ever validated against. This
+now points at the real, current ground-truth files for all four current
+case studies (design doc §13.1/§7e). Spree's mapping CSV uses a different,
+simpler column layout than the other three (decision/variable instead of
+decision_name/variable_name, and no dmn_file/io columns at all -- it was
+built by a different session's build script) -- GT_CONFIG captures that
+difference per case study instead of assuming one fixed header shape.
 """
 import csv
+import os
 import re
 import argparse
 from collections import defaultdict
 
-GT_FILES = {
-    'FLEX2': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/flex2_dmn/provenance/variable_to_schema_mapping.csv', 'flex2_table_column'),
-    'OpenMRS': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/openmrs_dmn/provenance/variable_to_schema_mapping.csv', 'openmrs_table_column'),
-    'OFBiz': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/ofbiz_dmn/provenance/variable_to_schema_mapping.csv', 'ofbiz_entity_field'),
-    'PrestaShop': ('/tmp/claude-0/-home-claude/e2e1be0e-4ab0-5014-8fee-c0b11233b10b/scratchpad/prestashop_dmn/provenance/variable_to_schema_mapping.csv', 'prestashop_table_column'),
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
+
+# key_cols determines how a ground-truth row is matched to a mapper
+# prediction: the standard four case studies were mined with the full
+# (dmn_file, decision_name, variable_name, io) key mapper.py's own output
+# uses; Spree's ground truth only recorded decision+variable, so it's
+# matched on that narrower key instead (safe here since no decision in
+# Spree's 14-decision program reuses one variable name as both an input
+# and an output).
+GT_CONFIG = {
+    'FLEX2': {
+        'path': os.path.join(REPO_ROOT, 'jbillingandflex', 'flex2_dmn', 'flex2_dmn',
+                              'provenance', 'variable_to_schema_mapping.csv'),
+        'decision_col': 'decision_name', 'variable_col': 'variable_name',
+        'schema_col': 'flex2_table_column', 'notes_col': 'notes',
+        'key_cols': ('dmn_file', 'decision_name', 'variable_name', 'io'),
+    },
+    'OpenMRS': {
+        'path': os.path.join(REPO_ROOT, 'openmrs_dmn',
+                              'provenance', 'variable_to_schema_mapping.csv'),
+        'decision_col': 'decision_name', 'variable_col': 'variable_name',
+        'schema_col': 'openmrs_table_column', 'notes_col': 'notes',
+        'key_cols': ('dmn_file', 'decision_name', 'variable_name', 'io'),
+    },
+    'jBilling': {
+        'path': os.path.join(REPO_ROOT, 'jbillingandflex', 'jbilling_dmn', 'jbilling_dmn',
+                              'provenance', 'variable_to_schema_mapping.csv'),
+        'decision_col': 'decision_name', 'variable_col': 'variable_name',
+        'schema_col': 'jbilling_column', 'notes_col': 'notes',
+        'key_cols': ('dmn_file', 'decision_name', 'variable_name', 'io'),
+    },
+    'Spree': {
+        'path': os.path.join(REPO_ROOT, 'spree_dmn',
+                              'provenance', 'variable_to_schema_mapping.csv'),
+        'decision_col': 'decision', 'variable_col': 'variable',
+        'schema_col': 'schema_location', 'notes_col': 'note',
+        'key_cols': ('decision_name', 'variable_name'),
+    },
 }
 
 PAIR_RE = re.compile(r'\b([A-Za-z][A-Za-z0-9_]*)\.([A-Za-z][A-Za-z0-9_]*)\b')
@@ -53,44 +100,62 @@ def is_gt_not_persisted(mapping_type, schema_field_text):
 
 def is_gt_derived(mapping_type, notes):
     mt = (mapping_type or '').lower()
-    return 'derived' in mt or 'schema gap' in mt.lower() and 'derived' in (notes or '').lower()
+    return 'derived' in mt or ('schema gap' in mt and 'derived' in (notes or '').lower())
 
 
 def load_ground_truth(cs):
-    path, colname = GT_FILES[cs]
+    cfg = GT_CONFIG[cs]
     rows = {}
-    with open(path, encoding='utf-8') as f:
+    with open(cfg['path'], encoding='utf-8') as f:
         for row in csv.DictReader(f):
-            key = (row['dmn_file'], row['decision_name'], row['variable_name'], row['io'])
+            decision_name = row[cfg['decision_col']]
+            variable_name = row[cfg['variable_col']]
+            schema_field = row.get(cfg['schema_col'], '')
+            if 'dmn_file' in cfg['key_cols']:
+                key = (row['dmn_file'], decision_name, variable_name, row['io'])
+            else:
+                key = (decision_name, variable_name)
             rows[key] = {
-                'mapping_type': row['mapping_type'],
-                'schema_field': row[colname],
-                'notes': row.get('notes', ''),
-                'true_pairs': true_pairs(row[colname]),
+                'mapping_type': row.get('mapping_type', ''),
+                'schema_field': schema_field,
+                'notes': row.get(cfg['notes_col'], ''),
+                'true_pairs': true_pairs(schema_field),
             }
     return rows
 
 
 def load_predictions(path):
-    preds = {}
+    """Two indices over mapping_auto.csv: the full (dmn_file, decision_name,
+    variable_name, io) key every case study's predictions carry, and a
+    narrower (decision_name, variable_name) key for case studies (Spree)
+    whose ground truth doesn't record dmn_file/io."""
+    full_index = {}
+    short_index = {}
     with open(path, encoding='utf-8') as f:
         for row in csv.DictReader(f):
-            key = (row['dmn_file'], row['decision_name'], row['variable_name'], row['io'])
             top3 = set()
             for part in row['top3_candidates'].split(';'):
                 m = re.match(r'\s*([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)', part)
                 if m:
                     top3.add((m.group(1).lower(), m.group(2).lower()))
-            preds[key] = {
+            pred = {
                 'predicted_table': row['predicted_table'],
                 'predicted_column': row['predicted_column'],
                 'predicted_mapping_type': row['predicted_mapping_type'],
                 'top3': top3,
             }
-    return preds
+            cs = row['case_study']
+            full_key = (cs, row['dmn_file'], row['decision_name'], row['variable_name'], row['io'])
+            short_key = (cs, row['decision_name'], row['variable_name'])
+            full_index[full_key] = pred
+            short_index.setdefault(short_key, pred)  # first match wins on collision
+    return full_index, short_index
 
 
-def evaluate(cs, gt, preds):
+def evaluate(cs, gt, full_index, short_index):
+    cfg = GT_CONFIG[cs]
+    uses_short_key = 'dmn_file' not in cfg['key_cols']
+
     n_total = 0
     n_np_correct = n_np_total = 0
     n_grounded_total = 0
@@ -101,7 +166,11 @@ def evaluate(cs, gt, preds):
 
     for key, g in gt.items():
         n_total += 1
-        p = preds.get(key)
+        if uses_short_key:
+            p = short_index.get((cs,) + key)
+        else:
+            dmn_file, decision_name, variable_name, io = key
+            p = full_index.get((cs, dmn_file, decision_name, variable_name, io))
         if p is None:
             unmatched_keys += 1
             continue
@@ -145,12 +214,12 @@ def main():
     ap.add_argument('--auto', default='mapping_auto.csv')
     args = ap.parse_args()
 
-    preds = load_predictions(args.auto)
+    full_index, short_index = load_predictions(args.auto)
 
     all_results = []
-    for cs in GT_FILES:
+    for cs in GT_CONFIG:
         gt = load_ground_truth(cs)
-        res = evaluate(cs, gt, preds)
+        res = evaluate(cs, gt, full_index, short_index)
         all_results.append(res)
 
     print(f"{'Case study':<12} {'N':>4} {'unmatch':>7} {'NP-acc':>7} {'NP-n':>5} "
