@@ -14,9 +14,24 @@ integrity constraints (NOT NULL, PRIMARY KEY / UNIQUE, FOREIGN KEY). Each
 compiled DMN rule (one row of one decision table, fully grounded against
 its own upstream dependencies) is treated as one search objective; the
 whole rule set for a case study is optimized simultaneously via a shared
-population, with coverage measured against a real, executable case
-study (FLEX2 -- a university academic-regulations system with 151
-compiled, grounded rule instances after fixes described below).
+population.
+
+Challenges 1-10 below were found and fixed entirely on the first case
+study, FLEX2 (a university academic-regulations system, 151 compiled,
+grounded rule instances after the fixes in Challenge 2). Challenges
+11 onward were found running the exact same, unmodified pipeline against
+three FURTHER, independently-sourced case studies for the first time --
+Spree (an e-commerce platform, 27 compiled rules), jBilling (a billing
+system, 42 compiled rules), and OpenMRS (an open-source medical-records
+system, 71 compiled rules) -- specifically because a pipeline that only
+works on the one case study it was developed against proves nothing
+general. Each new case study's own real schema, real DMN-compiled rule
+shapes, and real data-quality quirks surfaced bugs that FLEX2 alone
+never could have (a genuine FK cycle, a NOT NULL string column doing
+double duty as a boolean flag, a "join" that turns out to match on the
+wrong column, ground-truth CSV rows citing a migration that was never
+actually applied) -- each one a real, measured, fixed defect, not a
+hypothetical.
 
 Every challenge below was found through direct investigation of real
 data (compiled rule sets, archived search state, generated SQL validated
@@ -25,7 +40,22 @@ principles, and every fix was measured before and after with concrete
 numbers -- both because that discipline caught several of the bugs
 below, and because it is the standard this document tries to model for
 a methodology section: a claimed improvement is only a "finding" once
-someone has actually re-run the pipeline and looked at the number.
+someone has actually re-run the pipeline and looked at the number. A
+second discipline that recurs constantly from Challenge 11 onward: every
+fix, however narrowly targeted at the case study that exposed it, was
+re-verified against EVERY OTHER case study before being considered done
+-- because several of the bugs below (Challenges 15 and 17 especially)
+are examples of a fix for one case study silently breaking a different
+one through code both share, caught only by that discipline.
+
+Current, final, verified state across all four case studies (the
+numbers every result below builds toward): FLEX2 81/151 objectives
+covered (53.6%), Spree 22/27 (81.5%), jBilling 33/42 (78.6%), OpenMRS
+63/71 (88.7%) -- in every case the final MATERIALIZED dataset, not just
+the search archive, verified by re-evaluating every objective against
+the actual generated SQL, and in every case `validate_with_sqlite`
+(a real, live SQLite database with schema DDL, NOT NULL/UNIQUE/FK
+constraints) reports zero errors.
 
 
 CHALLENGE 1: Representing multi-level rule dependencies as search
@@ -444,6 +474,375 @@ tune search parameters speculatively, which is what led to discovering
 the actual grounding-consistency defect described in Challenge 2.
 
 
+CHALLENGE 11: One shared candidate cannot give two different objectives
+two different rows on the same table without losing track of "which
+row is whose" -- and neither the row NOR its business-meaning columns
+can be shared
+--------------------------------------------------------------------
+Problem. Even after Challenge 4's row-ownership fix, a specific and
+different failure mode surfaced building the final, merged dataset for
+the FIRST time end to end: an aggregate/existence leaf's own "how many
+matching rows are there" answer depends on comparing a row's columns
+against a per-objective SCENARIO value (e.g. "this student's roll
+number"), and those scenario values are themselves offset by a large,
+objective-specific constant during seeding, purely to keep two
+independent objectives' small placeholder numbers (student #1, course
+#1, ...) from numerically colliding once everything is merged into one
+shared candidate. The evaluation harness used to RE-VERIFY a merged
+result rebuilt a fresh, un-offset scenario from scratch instead of
+reusing the one the real search run had actually used -- silently
+breaking re-evaluation of every scenario-dependent fact, independent of
+whether the merge logic itself was correct.
+
+Diagnosis. Found by the same "always re-verify the merged result for
+real" discipline from Challenge 5: comparing the search's own reported
+archive count against the harness's own re-evaluated count for the
+merged candidate showed a mismatch traceable to specific scenario-keyed
+leaves reading stale, wrong values.
+
+Solution. Made the evaluation harness carry the search's own real,
+already-offset scenario state through to re-evaluation instead of
+reconstructing one independently.
+
+Result (measured). Eliminated as a source of false regressions in every
+subsequent merge-and-reverify cycle; a precondition for every later
+case study's own numbers in this document to be trustworthy at all.
+
+
+CHALLENGE 12: A `not_persisted` (bind-parameter) mutation was computed,
+then silently thrown away
+--------------------------------------------------------------------
+Problem. Running the exact same, unmodified pipeline against Spree (a
+second, independently-sourced case study) for the first time, two
+rules needing a `not_persisted` variable -- a pure bind-parameter value
+like "the purchase quantity," never backed by any real row/column -- to
+move away from its seeded starting value stayed stuck at a fixed,
+nonzero fitness for an ENTIRE 40-generation run, no matter the budget.
+
+Diagnosis. Every individual in the shared population was, until this
+point, given one COMMON, read-only scenario dictionary per objective,
+built once at seeding time and never touched again structurally. The
+per-generation mutation step DID compute a new, improved value for the
+`not_persisted` variable on a throwaway COPY of that scenario -- but
+nothing captured or persisted the copy anywhere once the mutation
+function returned, so the very next generation started again from the
+same original, unmutated value. Confirmed directly by inspecting the
+scenario state after a full run: the value had never once actually
+moved, despite the search believing, generation after generation, that
+it had just tried moving it.
+
+Solution. Gave scenario state the same per-individual treatment
+per-objective focal rows already had since Challenge 3: an individual
+in the population became a THREE-part unit (shared candidate,
+per-objective focal-row map, per-objective scenario map) instead of two,
+so a `not_persisted` mutation that actually improves fitness can now
+survive into the next generation through ordinary selection, the same
+way a row-level mutation already did.
+
+A second, closely related bug surfaced testing this same fix: the ONE
+leaf-value-generation function responsible for proposing candidate
+values for a mutation had literally no code path at all for a
+`not_persisted` numeric leaf compared via an ordering operator (only for
+equality) -- so even with the state now correctly persisted, there was
+still nothing to try. Both bugs had to be fixed together before either
+rule could actually be solved.
+
+Result (measured). Both previously-permanently-stuck Spree rules solve
+immediately once genuinely free to move; Spree's own final coverage
+reached 22/27 (81.5%) after this and two further, unrelated bugs found
+the same day (a fitness-evaluation crash on a non-numeric ordering
+comparison, and several real-world schema-DDL robustness gaps --
+malformed type strings, missing implicit primary-key columns -- found
+only once a SECOND case study's own real schema was actually
+materialized against a live database). Zero regressions on FLEX2.
+
+
+CHALLENGE 13: A ground-truth data file cited a migration that does not
+exist
+--------------------------------------------------------------------
+Problem. Still running Spree for the first time, a small number of rows
+in the curated "which real column does this DMN variable map to"
+ground-truth file pointed a variable at a `customer_id` column,
+citing a specific migration file as having renamed it FROM `user_id`.
+That migration file does not exist anywhere in Spree's real schema
+history.
+
+Diagnosis. Checked the actual, real Spree schema file directly rather
+than trusting the citation -- confirmed the column has always been, and
+still is, `user_id`; the cited migration was never real.
+
+Solution. This touches CURATED, hand-authored ground truth, not
+generated code -- flagged to the project owner and fixed only after
+explicit approval, rather than silently "corrected" on the pipeline's
+own authority. Six affected rows were updated to the real column name,
+with the false migration citation removed.
+
+Result (measured). The affected rules now resolve against a column that
+actually exists; folded into Spree's own 22/27 final count above.
+Recorded here as a standing methodological point: an LLM-authored or
+LLM-assisted ground-truth file can hallucinate a plausible-sounding but
+nonexistent citation, and the only real defense is checking the primary
+source (the actual schema) before trusting a note about it, every time,
+even for data treated as "already curated."
+
+
+CHALLENGE 14: Running against a third case study (jBilling) exposed a
+systemic schema-extraction gap, a stale seeding pattern, and a
+multi-layered merge-time key-collision bug
+--------------------------------------------------------------------
+Problem/diagnosis/solution, condensed (each independently confirmed,
+each with its own before/after check):
+  (a) 166 real columns across 59 of jBilling's 98 tables were simply
+      MISSING from the automatically-extracted schema JSON the whole
+      pipeline depends on for repair, validation, and offsetting --
+      traced by parsing jBilling's own raw SQL DDL directly and diffing
+      column lists. Fixed by re-extracting from the authoritative DDL,
+      not by hand-patching individual missing columns as they were
+      found to crash something.
+  (b) A stale placeholder pattern (`{'X': 0}` / `{'X': 1}`) used to seed
+      certain leaf kinds' own "bystander" rows was confirmed, by reading
+      the actual evaluation code, to never be read back by anything --
+      replaced with a genuinely empty row, since inventing a fake schema
+      column was pure risk with zero benefit.
+  (c) Merging two different objectives' own archived rows into one
+      final candidate could put two unrelated rows on the exact same
+      table at the exact same small, "fresh" primary-key value (e.g.
+      `id=1`), since each was independently repaired without ever
+      seeing the other -- fixed with the same per-objective numeric
+      offsetting Challenge 3's own seeding step already used, reused
+      rather than reinvented, at merge time.
+  (d) Fixing (c) exposed a SECOND, subtler version of the identical
+      problem: two rows OWNED BY THE SAME objective could ALSO
+      independently collide on the same small key, since the offset in
+      (c) shifts both by an identical amount, which does not separate
+      two colliding siblings from EACH OTHER. Fixed by additionally
+      tracking, and bumping past, every post-offset value already
+      claimed within one merge pass.
+
+Result (measured, after all four). jBilling's own final, verified
+coverage: 32/42 (76.2%), zero regressions on FLEX2 or Spree, confirmed
+by re-running both after every single one of the four fixes above, not
+just once at the end.
+
+
+CHALLENGE 15: Teaching `exists`-kind facts to respect a real filter,
+without breaking the composite keys and shared columns everything else
+depends on
+--------------------------------------------------------------------
+Problem. An `exists`-kind fact (does a matching row exist at all) had
+no notion of a column-level FILTER -- it degraded to a bare "is there
+ANY row on this table," so two DIFFERENT `exists`-kind facts on the
+SAME table (jBilling's own "does an entity-specific currency-exchange
+row exist" vs. "does the system-default one exist") collapsed to the
+exact same answer, making them impossible to hold different truth
+values at once.
+
+Diagnosis and solution. Reused, rather than reinvented, the identical
+mechanical filter-parsing machinery an earlier leaf kind
+(`derived_aggregate`) already had for exactly this purpose; extended
+the ground-truth compiler to recognize the same filter shape for
+`exists`-kind facts too. Verified narrowly scoped: re-diffing the
+compiled rule set confirmed only the 3 records that genuinely needed
+it changed at all.
+
+Fixing it for real, at population scale, surfaced THREE further,
+distinct, and increasingly subtle bugs in the merge-time logic that
+keeps independently-evolved objectives' own rows from colliding once
+combined -- each one caught only because the fix was re-verified
+against every OTHER case study, not just the one that motivated it:
+  (a) A first version of a new merge-time collision-avoidance step
+      (needed because the SAME objective can legitimately own two rows
+      on one table, as in Challenge 14d) treated every column bumped by
+      that fix identically -- but a plain foreign-key column is allowed
+      to repeat identically across a record's own several rows on
+      purpose (representing "the same referenced entity, two different
+      contexts"); bumping it anyway silently gave two rows that were
+      SUPPOSED to reference the same thing two DIFFERENT things instead.
+      Fixed by restricting the bump to genuinely single-column
+      primary/unique keys only.
+  (b) That narrower fix was then tested against FLEX2 (not just
+      jBilling) as a matter of course -- and immediately produced a
+      MUCH WORSE regression there: a real, if less common, table shape
+      has a COMPOSITE primary/unique key (several columns together, none
+      individually unique), and the fix's own column-set had silently
+      flattened that composite key into individually-bumped columns,
+      corrupting 25 objectives whose own aggregate counts legitimately
+      repeat those columns across many rows on purpose (a student's own
+      many course registrations, all sharing the same student/semester,
+      differing only by course). Fixed by scoping the bump to
+      single-COLUMN keys specifically, not merely non-foreign-key ones.
+  (c) A business-value column that is not a declared key at all still
+      needed to move in lockstep with a scenario placeholder's own
+      value once merged, exactly like a real key column would -- fixed
+      generally by having the merge step verify, per row, that a
+      column's CURRENT value actually matches the placeholder's own
+      pre-merge value before shifting it, rather than shifting every
+      column sharing a name (which, tried first, corrupted an unrelated
+      literal value on a DIFFERENT leaf sharing that same table).
+
+Result (measured, after all three, all four case studies re-run every
+time). jBilling's own final coverage rose 32/42 -> 33/42, zero
+regressions on FLEX2 (81/151), Spree (22/27), or the rest of jBilling.
+The clearest recurring lesson of this whole challenge: a fix verified
+against ONLY the case study that exposed the original bug produced, not
+once but twice, a regression on a DIFFERENT case study through code
+both happen to share -- re-testing every case study after every change,
+not just the one being actively worked on, is what caught both.
+
+
+CHALLENGE 16: A fourth, structurally very different case study
+(OpenMRS) crashed the pipeline outright, then exposed that the search's
+own validation step was fundamentally insert-order-sensitive
+--------------------------------------------------------------------
+Problem/diagnosis/solution, condensed:
+  (a) A generic "restore any non-null placeholder value" mutation used
+      a hardcoded, type-blind constant -- fine until a DIFFERENT leaf in
+      the SAME record read that exact same column expecting a specific
+      type (a regex pattern string), which the hardcoded placeholder was
+      not, crashing outright the moment both leaves shared one row.
+      Fixed by making the placeholder schema-type-aware, reusing the
+      exact same type-lookup machinery schema-repair already had for an
+      unrelated purpose. A parallel fix at data-SEEDING time (rather
+      than mutation time) was tried and immediately reverted after it
+      dropped an unrelated, previously-passing self-check by 15 records
+      -- kept narrowly scoped to where it was actually needed and
+      verified safe, not applied everywhere the same pattern appeared.
+  (b) The identical class of bug, the other direction: a column
+      genuinely required to be NOT NULL by the real schema was still
+      being set to a literal null to represent "this fact is blank,"
+      producing a real constraint violation at validation. Fixed by
+      writing an empty string instead when the schema says the column
+      cannot be null, matching how a real system would represent
+      "blank" on such a column.
+  (c) The validation step's own use of a live database's real
+      foreign-key enforcement -- previously assumed to be strictly
+      beneficial ("more real-database rigor is always more correct") --
+      turned out to be fundamentally sensitive to INSERT ORDER: OpenMRS
+      has one large, genuine cycle of foreign-key relationships among 28
+      real tables, and whichever table in that cycle gets inserted FIRST
+      will always, unavoidably, fail its own foreign-key check even when
+      the fully-populated data is completely consistent. Confirmed
+      directly: 254 rows were flagged as failures purely as an artifact
+      of insertion order, none of them actually broken. Fixed by
+      inserting with enforcement off (still catching every genuine
+      NOT NULL/type/uniqueness failure per row), then running a single,
+      separate, ORDER-INDEPENDENT integrity scan against the fully
+      -populated data at rest -- the same real database engine, used
+      correctly instead of naively.
+  (d) Fixing (c) exposed a smaller, previously-invisible reporting bug:
+      the validator's own informational note about (c)'s table-ordering
+      cycle was being counted as a real failure, so even a dataset with
+      ZERO actual errors was still reported as invalid. Separated
+      "things worth knowing about" from "things that actually failed."
+  (e) A `join_lookup` fact (follow a foreign key, then read a DIFFERENT
+      column on the row it points to) turns out to match its target row
+      by comparing that DIFFERENT column's own VALUE against the foreign
+      key, not by the target table's real primary key -- a narrow,
+      pre-existing design choice that happens to work as long as
+      whatever built the row kept both numbers equal by construction.
+      Merge-time offsetting (Challenge 14c) shifted the foreign-key side
+      of that equality without shifting the other side, breaking the
+      match. Two WRONG fixes were tried and rejected before the right
+      one: matching by the real primary key instead contradicted how
+      every other part of the pipeline already builds and mutates this
+      exact fact; matching by raw value alone (ignoring which specific
+      column pairing needed it) reproduced Challenge 15b's own composite
+      -key regression, at a different table. The right fix combined
+      both: know STRUCTURALLY which column pairs this equality applies
+      to, but still verify PER ROW that the value actually matches
+      before touching it.
+
+Result (measured, after all five, every case study re-run every time).
+OpenMRS went from an outright crash to 61/71 (85.9%) covered, verified
+against a real database. Zero regressions on FLEX2 (81/151), Spree
+(22/27), or jBilling (33/42).
+
+
+CHALLENGE 17: Distinguishing "this needs more search time" from "this
+is a real algorithm bug" from "this is a ground-truth compile-time
+gap" -- for a whole case study's remaining uncovered rules at once, not
+just one hand-picked example
+--------------------------------------------------------------------
+Problem. After Challenge 16, OpenMRS still had 10 uncovered objectives
+(9 the search's own archive never solved at all, plus 1 that regressed
+specifically during the final merge). Simply reporting "10 uncovered"
+answers nothing useful for a research paper -- the same raw number could
+mean ten genuine algorithm limitations, ten data-modeling gaps outside
+the algorithm's control, or ten cases that would resolve with a slightly
+longer run, and each of those implies a completely different conclusion
+about the work.
+
+Diagnosis. Every one of the 10 was run TWICE: once inside the real,
+shared, competing population (as always), and a second time in
+ISOLATION -- a single objective, alone, given a generous, dedicated
+local-search budget with no other objective competing for attention at
+all. This second run is the discriminator: an objective that solves
+instantly or quickly when run alone was never architecturally blocked,
+only starved of attention in the shared run (a real but comparatively
+mundane search-budget gap); an objective that STILL cannot move even
+completely alone, with a budget an order of magnitude larger than it
+would ever realistically get in the shared population, is a genuine
+structural or algorithmic limit, not a budget problem.
+
+This turned up five genuinely distinct categories, not one: (1) one
+column being asked to answer two different, conflicting yes/no
+questions at once through a modeling shortcut that cannot actually
+represent both simultaneously; (2) an existence check whose real
+meaning is "a DIFFERENT row with a specific relationship to this one
+exists," a correlated self-comparison no simple column-equality filter
+(even the general one built in Challenge 15) can express; (3) a
+not-blank/blank fact modeled as a plain null-check on a column the real
+schema forbids from ever being null at all, silently dropping the only
+schema-legal way the fact could ever actually be represented; (4) a
+genuine, general algorithm bug (below); and (5) plain search-budget
+bad luck, confirmed by the isolated re-run actually solving it.
+
+Category (4) -- the one real algorithm bug found this way -- had two
+layers, the second only visible once the first was fixed:
+  (a) The engine's own "try this value, see if it helps" evaluation
+      shortcut (used everywhere so the search never has to build a real
+      row just to test an idea) did not know that two DIFFERENT facts
+      -- one asking "is this column set at all," a completely separate
+      one asking "what value does this column hold" -- read the exact
+      SAME physical column. Testing "what if this column became unset"
+      left the OTHER fact's own hypothetical value unrealistically
+      frozen at its old, now-impossible number, promising a perfect
+      score for a combination that could never actually be built. Fixed
+      by keeping every such paired fact consistent inside the same
+      hypothetical check, mirroring exactly what a real mutation would
+      do.
+  (b) Fixing (a) exposed the REAL, deeper cause: the underlying
+      "how close is this whole AND-condition to being false" formula
+      picks the SINGLE EASIEST of several ways to falsify it -- but the
+      generic "smallest of several numbers" routine it was built from
+      has to look at every one of those ways before it can report the
+      smallest, and if a LATER one happens to be flatly unanswerable (an
+      ordering comparison against a value that is now missing), the
+      whole calculation was aborted right there and reported as
+      unanswerable -- even though an EARLIER way had already, cleanly,
+      settled the answer at the best possible score. This is a general
+      robustness gap in the formula itself, not specific to the one rule
+      that exposed it. Fixed by making that "smallest of several" check
+      tolerate an unanswerable option as long as some OTHER option
+      already proves the best possible score, regardless of which order
+      they happen to be checked in.
+
+Result (measured). Confirmed via the same isolated, dedicated-budget
+re-run: the two objectives behind category (4) went from a true,
+unmovable dead end (zero improvement across a budget an order of
+magnitude larger than anything the shared run would ever give them) to
+solving in one or two moves. OpenMRS's real, final, merged-and-verified
+coverage rose 61/71 -> 63/71 (88.7%), zero regressions on FLEX2, Spree,
+or jBilling (re-verified, as always, on every one of them). OpenMRS's
+own remaining 8 uncovered objectives are now exhaustively and exactly
+accounted for: 63 covered + 1 merge-time regression (a data-modeling
+gap, category-3-adjacent -- a genuinely-required foreign-key column
+doubling as a stand-in for a count) + 1 (category 1) + 1 (category 2)
++ 3 (category 3) + 2 (category 5) = 71 exactly, with zero unexplained
+remainder -- the same standard of exhaustive accounting Challenge 6
+first established for FLEX2, now met for all four case studies.
+
+
 SUMMARY TABLE
 -------------
 Challenge                                  | Key metric before -> after
@@ -479,19 +878,146 @@ Known real-world constants (Ch. 9)         | Generated denominator for one
 Kick-mutation escape hatch (Ch. 10)        | Honest negative result: no
                                             | change in coverage; motivated
                                             | the root-cause fix in Ch. 2
+Stale-scenario re-verification bug (Ch. 11)| Fixed a false-regression
+                                            | source in every later merge
+                                            | -and-reverify cycle
+not_persisted mutation discarded (Ch. 12)  | Spree: 2 permanently-stuck
+                                            | rules -> solve immediately;
+                                            | final Spree coverage 22/27
+Hallucinated ground-truth citation (Ch. 13)| 6 rows corrected after
+                                            | verifying against the real
+                                            | schema; approved before fixing
+jBilling schema/seed/merge bugs (Ch. 14)   | 166 missing columns restored;
+                                            | 2-layer merge-collision fix;
+                                            | final jBilling coverage 32/42
+exists-kind filter + 3 merge bugs (Ch. 15) | jBilling 32/42 -> 33/42;
+                                            | 0 regressions on FLEX2/Spree
+                                            | after 2 rounds of self-caught,
+                                            | cross-case-study regressions
+OpenMRS crash + 5 real bugs (Ch. 16)       | Crash -> 61/71 (85.9%)
+                                            | verified against a real DB;
+                                            | 0 regressions elsewhere
+Isolated-rerun categorization + the real   | OpenMRS 61/71 -> 63/71
+algorithm bug it found (Ch. 17)            | (88.7%); corpus exhaustively
+                                            | characterized, 71/71 accounted
+                                            | for; 0 regressions elsewhere
+
+
+REMAINING / OPEN CHALLENGES (as of this writing)
+-------------------------------------------------
+Not every uncovered rule across the four case studies is closed, and
+this document tries to be as honest about what is STILL a gap as it is
+about what has been fixed. Every item below has been diagnosed to a
+specific, named root cause (never left as an unexplained number) but
+NOT yet fixed, either because it requires changing curated ground truth
+rather than generated code (needing sign-off before touching it, by
+this project's own standing practice) or because it is a genuinely
+larger architectural change whose cost/benefit has only been scoped,
+not yet built.
+
+1. One physical column asked to represent two conflicting facts at
+   once through a modeling shortcut (a raw column value substituting
+   directly for a derived category, or a genuinely-required foreign key
+   also standing in for a business count) -- seen in jBilling (2 rules)
+   and OpenMRS (2 rules, one of them the Ch. 17 merge-regression). The
+   general shape is understood (needs the fact correctly re-derived
+   from the column's real domain at compile time, not read as a raw
+   value) but fixing it means re-classifying curated ground truth.
+
+2. `exists`-kind facts whose real meaning is a CORRELATED self-join
+   ("a DIFFERENT row related to this one exists") rather than a simple
+   per-column filter -- one confirmed instance in OpenMRS. The general,
+   simple-filter version of this exact class was fixed in Challenge 15;
+   this is a structurally deeper version the same mechanism cannot
+   reach without a genuine self-join capability, not yet built.
+
+3. A blank/not-blank fact modeled as a plain null-check on a column the
+   real schema declares can never be null at all -- 3 confirmed
+   instances in OpenMRS. The schema-legal representation of "blank" on
+   such a column is an empty string, which a bare null-check has no way
+   to express; needs a distinct compiled fact kind, not built.
+
+4. Two DIFFERENT rows physically representing conceptually different
+   ROLES (an "old" status vs. a "new" status, both read via the exact
+   same shared per-table context row) needing different simultaneous
+   values -- 2 confirmed instances in jBilling. Scoped but explicitly
+   NOT attempted: the estimated cost of a genuinely new per-role context
+   mechanism was judged high relative to the 2 rules it would help,
+   without more evidence that the pattern recurs elsewhere in the
+   corpus.
+
+5. A handful of objectives (2 in OpenMRS, confirmed via the Challenge 17
+   isolated-rerun methodology) that solve immediately in isolation but
+   never got the chance in the shared, competing population within the
+   generation/population budget actually used for the numbers in this
+   document -- a real, but comparatively mundane, search-budget
+   limitation rather than an architectural one.
+
+6. Facts genuinely computed by application code at runtime (a
+   multi-column date computation, a UI-only transient value, an
+   internationalization lookup) that were never stored as any single
+   column in the first place -- present in every case study's own
+   corpus in small numbers, named and excluded from the denominator
+   rather than silently miscounted, since no schema-reading approach
+   (this one included) can recover a value the real system never
+   persists.
+
+7. A small number of rules, in more than one case study, that are
+   PROVABLY infeasible by construction -- a self-comparison the DMN
+   model itself compares a fact against itself with no way it could
+   ever differ, or a grounding conflict where two different upstream
+   paths pin the same fact to two different literal values. These are
+   findings about the source DMN models themselves (very likely
+   authoring artifacts), not gaps in this pipeline, and are excluded
+   from each case study's own denominator on that basis, the same way
+   Challenge 6 first established for FLEX2.
+
+None of the seven items above is silently miscounted anywhere in this
+document or in the pipeline's own reporting: every final coverage number
+quoted (81/151, 22/27, 33/42, 63/71) is accompanied, in the underlying
+design documentation, by an exhaustive, itemized accounting of every
+single uncovered rule's own specific category -- a deliberate choice to
+make "why isn't this 100%" always answerable with a specific, checkable
+reason rather than a shrug.
 
 
 Methodological note for the paper
 ----------------------------------
-Two practices recur across nearly every challenge above and are worth
-stating explicitly as part of the methodology: (1) every claimed
-improvement was measured against a real, executable artifact -- a
-generated SQL file validated against a live database engine with
-referential-integrity enforcement turned on, never a hand-computed or
-assumed number -- and (2) every fix was cross-checked for regressions
-against the full existing test/self-check suite and, where the fix
-touched the search's own internal state, against an independent
-before/after diff of exactly which objectives changed status, not just
-the aggregate count. This is what surfaced several of the compounding
-bugs above (Challenges 4/5 in particular) that a purely aggregate-metric
-view would have missed or misattributed.
+Three practices recur across nearly every challenge above and are worth
+stating explicitly as part of the methodology:
+
+1. Every claimed improvement was measured against a real, executable
+   artifact -- a generated SQL file validated against a live database
+   engine with referential-integrity enforcement turned on, never a
+   hand-computed or assumed number.
+
+2. Every fix was cross-checked for regressions against the full
+   existing test/self-check suite and, where the fix touched the
+   search's own internal state, against an independent before/after
+   diff of exactly which objectives changed status, not just the
+   aggregate count. This is what surfaced several of the compounding
+   bugs above (Challenges 4/5 in particular) that a purely
+   aggregate-metric view would have missed or misattributed.
+
+3. From the moment a second case study entered the picture (Challenge
+   11 onward), every fix -- however narrowly it was scoped to the one
+   case study that exposed the bug -- was re-verified against EVERY
+   OTHER case study already working before being considered finished,
+   never just the one being actively debugged. This caught real,
+   otherwise-invisible regressions on multiple separate occasions
+   (Challenge 15 twice, in fact, on the same underlying fix) where a
+   correction for one case study's own bug silently broke a different
+   case study through code both happen to share. A single-case-study
+   view of "did my fix work" would have reported success both times
+   while shipping a real regression elsewhere.
+
+An isolated-rerun discipline was added specifically for this document's
+own Challenge 17: whenever a rule stays uncovered, it is run a second
+time completely alone, with a dedicated search budget an order of
+magnitude larger than anything the shared population would ever give
+it, before concluding anything about WHY. This is what makes it possible
+to state, with actual evidence rather than a guess, whether a given
+uncovered rule is a search-budget problem, an algorithm bug, or a
+data-modeling limitation outside the algorithm's own control -- three
+conclusions that call for three completely different responses, and
+that look identical from the outside if this check is skipped.
