@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+# generator output -- fully reproducible via generate_dataset.py/
+# materialize.py, not source, doesn't belong in version control
+generator/_generated_*/
+generator/_materialize_selftest_csv/

@@ -23,15 +23,26 @@ Oracle DDL structure this parser targets (confirmed against the actual file,
 Run: python3 parse_flex2_ddl.py /path/to/Flex1.sql
 Writes: flex2_schema_full.json (next to this script, or --out to override)
 
+FIXED 2026-09-11 (while building fitness.py's schema-constraint terms,
+§6.3): confirmed by direct count that the "NOT NULL only inline" gap below
+was not a theoretical risk but a total miss -- FLEX2's actual export
+declares NOT NULL exclusively via the separate ALTER TABLE ... MODIFY
+form this parser didn't track, so every one of 2081 columns across the
+whole schema was silently coming back null_false=False, including
+declared primary keys. Now also parses that form and merges it in.
+Per-column FK detail (local column -> target table.column) is also now
+preserved as `fk_columns`, rather than discarded down to just the target
+table name the way `fks` already was (and every other case study's own
+parser still does) -- needed for a real FK constraint distance, which
+needs to know *which* column to check, not just which tables are related.
+
 KNOWN LIMITATIONS:
-  - NOT NULL is inferred only from inline "NOT NULL" tokens on the column
-    definition line; Oracle exports occasionally express constraints via a
-    separate ALTER TABLE ... MODIFY, which this parser does not track.
   - CHECK constraints (if any) are captured by a dedicated regex but FLEX2's
     export is known to declare zero (confirmed by direct grep before writing
     this parser -- see case-study-selection.md).
-  - Multi-column PK/UNIQUE/FK constraints are captured as a list of columns,
-    not decomposed further.
+  - Multi-column PK/UNIQUE constraints are captured as a list of columns,
+    not decomposed further. Multi-column FKs are captured position-wise in
+    `fk_columns` (one entry per local/ref column pair, in declaration order).
 """
 import argparse
 import json
@@ -66,6 +77,13 @@ FK_RE = re.compile(
 )
 CHECK_RE = re.compile(
     r'ALTER TABLE\s+"FLEX2"\."(\w+)"\s+ADD CONSTRAINT\s+"\w+"\s+CHECK\s*\(([^)]+)\)',
+    re.I,
+)
+# The separate ALTER TABLE ... MODIFY ("COL" NOT NULL ENABLE) form the real
+# export actually uses program-wide, rather than the inline column-
+# definition form COLUMN_LINE_RE alone can see.
+NOT_NULL_MODIFY_RE = re.compile(
+    r'ALTER TABLE\s+"FLEX2"\."(\w+)"\s+MODIFY\s*\(\s*"(\w+)"\s+NOT NULL',
     re.I,
 )
 
@@ -123,7 +141,7 @@ def parse(text):
                           # project's established methodology (case-study-selection.md)
             tables[tname] = {
                 'pk': None, 'columns': parse_columns(body), 'fks': set(),
-                'indexes': [], 'checks': [],
+                'fk_columns': [], 'indexes': [], 'checks': [],
             }
 
     for m in PK_RE.finditer(text):
@@ -137,14 +155,22 @@ def parse(text):
             tables[tname]['indexes'].append({'unique': True, 'cols': cols})
 
     for m in FK_RE.finditer(text):
-        tname, _fkcols, ref_table, _refcols = m.group(1), m.group(2), m.group(3), m.group(4)
+        tname, fkcols, ref_table, refcols = m.group(1), quoted_cols(m.group(2)), m.group(3), quoted_cols(m.group(4))
         if tname in tables:
             tables[tname]['fks'].add(ref_table)
+            for local_col, ref_col in zip(fkcols, refcols):
+                tables[tname]['fk_columns'].append(
+                    {'column': local_col, 'ref_table': ref_table, 'ref_column': ref_col})
 
     for m in CHECK_RE.finditer(text):
         tname, body = m.group(1), m.group(2)
         if tname in tables:
             tables[tname]['checks'].append(body.strip())
+
+    for m in NOT_NULL_MODIFY_RE.finditer(text):
+        tname, col = m.group(1), m.group(2)
+        if tname in tables and col in tables[tname]['columns']:
+            tables[tname]['columns'][col]['null_false'] = True
 
     return tables
 
@@ -165,6 +191,7 @@ def main():
             'pk': t['pk'],
             'columns': t['columns'],
             'fks': sorted(t['fks']),
+            'fk_columns': t['fk_columns'],
             'indexes': t['indexes'],
             'checks': t['checks'],
         }
@@ -178,15 +205,21 @@ def main():
     n_pk = sum(1 for t in export.values() if t['pk'])
     n_fk_relationships = sum(len(t['fks']) for t in export.values())
     n_fk_raw = len(FK_RE.findall(text))
+    n_fk_columns = sum(len(t['fk_columns']) for t in export.values())
     n_unique = sum(1 for t in export.values() for idx in t['indexes'] if idx['unique'])
     n_checks = sum(len(t['checks']) for t in export.values())
+    n_not_null = sum(1 for t in export.values() for c in t['columns'].values() if c['null_false'])
+    n_not_null_via_modify = len(NOT_NULL_MODIFY_RE.findall(text))
     print(f"Tables: {n_tables}")
     print(f"Tables with PK: {n_pk}")
     print(f"Raw FK constraint declarations (ALTER TABLE ... ADD CONSTRAINT FOREIGN KEY statements): {n_fk_raw}")
     print(f"Distinct table-to-table FK relationships (deduplicated -- what's stored in the JSON's 'fks' list): {n_fk_relationships}")
     print(f"  (the two differ when a table has multiple FK columns pointing at the same parent table)")
+    print(f"Per-column FK entries (local column -> ref table.column, 'fk_columns'): {n_fk_columns}")
     print(f"Total UNIQUE constraints: {n_unique}")
     print(f"Total CHECK constraints: {n_checks}")
+    print(f"NOT NULL columns (inline + ALTER TABLE MODIFY, merged): {n_not_null}  "
+          f"(raw ALTER TABLE MODIFY NOT NULL statements matched: {n_not_null_via_modify})")
     print(f"Wrote {args.out}")
 
 

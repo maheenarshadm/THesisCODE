@@ -44,6 +44,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -92,6 +93,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -100,35 +102,35 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMP_CODE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_CODE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "NU_APPLS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NTS_APPLS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NTS_OFFER": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NU_OFFER": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SEATS": {
         "type": "NUMBER",
@@ -148,6 +150,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -160,11 +163,11 @@
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "PAGEHEADING": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "DESCRIPTION": {
         "type": "VARCHAR2",
@@ -192,6 +195,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -200,7 +204,7 @@
     "columns": {
       "ROLEID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -212,6 +216,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -220,11 +225,11 @@
     "columns": {
       "RM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLEID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MENUID": {
         "type": "NUMBER",
@@ -247,6 +252,18 @@
       "APPMENU",
       "APPROLE"
     ],
+    "fk_columns": [
+      {
+        "column": "ROLEID",
+        "ref_table": "APPROLE",
+        "ref_column": "ROLEID"
+      },
+      {
+        "column": "MENUID",
+        "ref_table": "APPMENU",
+        "ref_column": "MENUID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -255,15 +272,15 @@
     "columns": {
       "USERID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "USERNAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "USERPASSWORD": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "USERTYPE": {
         "type": "VARCHAR2",
@@ -293,6 +310,13 @@
     "fks": [
       "EMPLOYEE"
     ],
+    "fk_columns": [
+      {
+        "column": "EMP_ID",
+        "ref_table": "EMPLOYEE",
+        "ref_column": "EMP_ID"
+      }
+    ],
     "indexes": [
       {
         "unique": true,
@@ -308,7 +332,7 @@
     "columns": {
       "UM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MENUID": {
         "type": "NUMBER",
@@ -316,7 +340,7 @@
       },
       "USERID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "DISPLAYORDER": {
         "type": "NUMBER",
@@ -326,6 +350,13 @@
     "fks": [
       "APPUSER"
     ],
+    "fk_columns": [
+      {
+        "column": "USERID",
+        "ref_table": "APPUSER",
+        "ref_column": "USERID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -334,20 +365,32 @@
     "columns": {
       "UC_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "USERID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "APPUSER",
       "CAMPUS"
+    ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "APPUSER",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -357,20 +400,32 @@
     "columns": {
       "UD_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "USERID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "DEPT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "APPUSER",
       "DEPARTMENT"
+    ],
+    "fk_columns": [
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "APPUSER",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -380,20 +435,32 @@
     "columns": {
       "UR_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLEID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "USERID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "APPROLE",
       "APPUSER"
+    ],
+    "fk_columns": [
+      {
+        "column": "ROLEID",
+        "ref_table": "APPROLE",
+        "ref_column": "ROLEID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "APPUSER",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -403,15 +470,15 @@
     "columns": {
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "START_DATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "SHIFT_ID": {
         "type": "CHAR",
@@ -428,6 +495,13 @@
     },
     "fks": [
       "D_SHIFT"
+    ],
+    "fk_columns": [
+      {
+        "column": "SHIFT_ID",
+        "ref_table": "D_SHIFT",
+        "ref_column": "SHIFT_ID"
+      }
     ],
     "indexes": [
       {
@@ -447,39 +521,39 @@
     "columns": {
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MIN_CR_HRS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MIN_PASS_PNTS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MAX_RPT_PNTS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MIN_CGPA": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "AVG_COURSE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "AVG_CREDIT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_DATE": {
         "type": "DATE",
@@ -489,6 +563,18 @@
     "fks": [
       "BATCH",
       "PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -503,27 +589,27 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SECTION_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SHIFT_ID": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_DATE": {
         "type": "DATE",
@@ -537,6 +623,33 @@
       "PROGRAM",
       "SECTION"
     ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SECTION_ID",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      },
+      {
+        "column": "SHIFT_ID",
+        "ref_table": "D_SHIFT",
+        "ref_column": "SHIFT_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -545,27 +658,27 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ABBR": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ADDRESS": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CITY": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TELNO1": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TELNO2": {
         "type": "VARCHAR2",
@@ -593,6 +706,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -632,6 +746,18 @@
       "CAMPUS",
       "DEPARTMENT"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -643,11 +769,11 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
@@ -658,6 +784,18 @@
       "BATCH",
       "CAMPUS"
     ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -666,21 +804,38 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "DEPT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "CAMPUS",
       "DEPARTMENT",
       "SCHOOL"
+    ],
+    "fk_columns": [
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -690,18 +845,19 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "DEPT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -717,7 +873,7 @@
       },
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "RATING": {
         "type": "NUMBER",
@@ -732,6 +888,18 @@
       "CAMPUS",
       "STUDENT_PERSONAL_INFO"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -743,11 +911,11 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
@@ -757,6 +925,18 @@
     "fks": [
       "CAMPUS",
       "PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -769,11 +949,11 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SEM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "START_DATE": {
         "type": "DATE",
@@ -836,6 +1016,18 @@
       "CAMPUS",
       "SEMESTER"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -852,6 +1044,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -900,6 +1093,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -916,6 +1110,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -924,23 +1119,23 @@
     "columns": {
       "COURSE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SHORT_TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CREDIT_HRS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "DISP_CR_HR": {
         "type": "VARCHAR2",
@@ -992,6 +1187,23 @@
       "D_COURSE_LEVEL",
       "D_COURSE_TYPE"
     ],
+    "fk_columns": [
+      {
+        "column": "COURSE_TYPE_ID",
+        "ref_table": "D_COURSE_TYPE",
+        "ref_column": "TYPE_ID"
+      },
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "LEVEL_ID",
+        "ref_table": "D_COURSE_LEVEL",
+        "ref_column": "LEVEL_ID"
+      }
+    ],
     "indexes": [
       {
         "unique": true,
@@ -1007,7 +1219,7 @@
     "columns": {
       "COURSE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "COREQUISITE_COURSE": {
         "type": "NUMBER",
@@ -1016,6 +1228,13 @@
     },
     "fks": [
       "COURSE"
+    ],
+    "fk_columns": [
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1029,7 +1248,7 @@
       },
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EVAL_TYPE_ID": {
         "type": "NUMBER",
@@ -1097,6 +1316,23 @@
       "COURSE_OFFER",
       "D_COURSE_EVALUATION"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "EVAL_TYPE_ID",
+        "ref_table": "D_COURSE_EVALUATION",
+        "ref_column": "EVAL_TYPE_ID"
+      }
+    ],
     "indexes": [
       {
         "unique": true,
@@ -1117,7 +1353,7 @@
     "columns": {
       "EVAL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
@@ -1143,6 +1379,18 @@
     "fks": [
       "COURSE_EVALUATION",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "EVAL_ID",
+        "ref_table": "COURSE_EVALUATION",
+        "ref_column": "EVAL_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1200,6 +1448,23 @@
       "COURSE_OFFER",
       "D_COURSE_EVALUATION"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "EVAL_TYPE_ID",
+        "ref_table": "D_COURSE_EVALUATION",
+        "ref_column": "EVAL_TYPE_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1208,23 +1473,23 @@
     "columns": {
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SEM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "COURSE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SECTION_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BUILDING_NO": {
         "type": "VARCHAR2",
@@ -1284,6 +1549,43 @@
       "SECTION",
       "SEMESTER"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "EMP_ID",
+        "ref_table": "EMPLOYEE",
+        "ref_column": "EMP_ID"
+      },
+      {
+        "column": "OFFER_DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      },
+      {
+        "column": "SECTION_ID",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      },
+      {
+        "column": "SHIFT_ID",
+        "ref_table": "D_SHIFT",
+        "ref_column": "SHIFT_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1297,23 +1599,23 @@
     "columns": {
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCH_SECTION": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
@@ -1322,6 +1624,33 @@
       "COURSE_OFFER",
       "PROGRAM",
       "SECTION"
+    ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "BATCH_SECTION",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1334,19 +1663,19 @@
     "columns": {
       "COURSE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "COURSE_PREREQ": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_DATE": {
         "type": "DATE",
@@ -1356,6 +1685,18 @@
     "fks": [
       "COURSE",
       "SCHOOL"
+    ],
+    "fk_columns": [
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      },
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1457,6 +1798,48 @@
       "SEMESTER",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "RELATION_ID",
+        "ref_table": "D_COURSE_RELATION",
+        "ref_column": "RELATION_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SECTION_ID",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      },
+      {
+        "column": "REG_STATUS",
+        "ref_table": "D_REG_STATUS",
+        "ref_column": "STATUS_ID"
+      }
+    ],
     "indexes": [
       {
         "unique": true,
@@ -1555,6 +1938,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1575,6 +1959,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1583,15 +1968,15 @@
     "columns": {
       "DEPT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "ADDRESS": {
         "type": "VARCHAR2",
@@ -1615,11 +2000,18 @@
       },
       "DEPT_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "D_DEPT_TYPE"
+    ],
+    "fk_columns": [
+      {
+        "column": "DEPT_TYPE_ID",
+        "ref_table": "D_DEPT_TYPE",
+        "ref_column": "TYPE_ID"
+      }
     ],
     "indexes": [
       {
@@ -1651,6 +2043,18 @@
       "DEPARTMENT",
       "PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1666,7 +2070,7 @@
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "RATING": {
         "type": "NUMBER",
@@ -1688,6 +2092,18 @@
     "fks": [
       "PROGRAM",
       "STUDENT_PERSONAL_INFO"
+    ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -1748,6 +2164,18 @@
       "PROGRAM",
       "STUDENT_PERSONAL_INFO"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1776,6 +2204,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1796,6 +2225,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1816,6 +2246,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1836,6 +2267,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1844,7 +2276,7 @@
     "columns": {
       "DT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -1856,6 +2288,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -1869,15 +2302,15 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EVAL_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "WEIGHT_FROM": {
         "type": "NUMBER",
@@ -1929,6 +2362,23 @@
       "D_COURSE_EVALUATION",
       "SCHOOL"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "EVAL_TYPE_ID",
+        "ref_table": "D_COURSE_EVALUATION",
+        "ref_column": "EVAL_TYPE_ID"
+      },
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -1937,15 +2387,15 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EVAL_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "WEIGHT_FROM": {
         "type": "NUMBER",
@@ -1993,6 +2443,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2001,15 +2452,15 @@
     "columns": {
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EVAL_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "WEIGHT_FROM": {
         "type": "NUMBER",
@@ -2057,6 +2508,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2065,7 +2517,7 @@
     "columns": {
       "EVAL_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "WEIGHT_FROM": {
         "type": "NUMBER",
@@ -2113,6 +2565,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2121,18 +2574,19 @@
     "columns": {
       "TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2141,7 +2595,7 @@
     "columns": {
       "DESIGNATION_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -2165,6 +2619,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2173,7 +2628,7 @@
     "columns": {
       "EMP_STATUS_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -2189,6 +2644,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2197,7 +2653,7 @@
     "columns": {
       "EMP_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -2209,6 +2665,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2229,6 +2686,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2245,6 +2703,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2253,11 +2712,11 @@
     "columns": {
       "FUNDED_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "FUNDED_TEXT": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SHORT_NAME": {
         "type": "VARCHAR2",
@@ -2265,6 +2724,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2285,6 +2745,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2305,10 +2766,11 @@
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2325,6 +2787,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2333,11 +2796,11 @@
     "columns": {
       "SHIFT_ID": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
@@ -2345,6 +2808,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2365,6 +2829,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2385,6 +2850,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2393,15 +2859,15 @@
     "columns": {
       "ELECTIVE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SCH_DOM_ID": {
         "type": "VARCHAR2",
@@ -2414,6 +2880,13 @@
     },
     "fks": [
       "SCHOOL_DOMAIN"
+    ],
+    "fk_columns": [
+      {
+        "column": "SCH_DOM_ID",
+        "ref_table": "SCHOOL_DOMAIN",
+        "ref_column": "SCH_DOM_ID"
+      }
     ],
     "indexes": [
       {
@@ -2430,22 +2903,23 @@
     "columns": {
       "ACT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ACT_DESC": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "IS_DDL": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IS_ACTIVE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2454,7 +2928,7 @@
     "columns": {
       "USER_TYPE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
@@ -2466,6 +2940,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2474,11 +2949,11 @@
     "columns": {
       "EMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EMP_NAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "DOB": {
         "type": "DATE",
@@ -2594,7 +3069,7 @@
       },
       "IS_EXAMINER": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
@@ -2605,6 +3080,48 @@
       "D_EMP_DESIGNATION",
       "D_EMP_TYPE",
       "SCHOOL"
+    ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "CURR_CITY",
+        "ref_table": "CITY",
+        "ref_column": "CITY_ID"
+      },
+      {
+        "column": "DEPT_ID",
+        "ref_table": "DEPARTMENT",
+        "ref_column": "DEPT_ID"
+      },
+      {
+        "column": "DESIGNATION_ID",
+        "ref_table": "D_EMP_DESIGNATION",
+        "ref_column": "DESIGNATION_ID"
+      },
+      {
+        "column": "EMP_TYPE_ID",
+        "ref_table": "D_EMP_TYPE",
+        "ref_column": "EMP_TYPE_ID"
+      },
+      {
+        "column": "PERM_CITY",
+        "ref_table": "CITY",
+        "ref_column": "CITY_ID"
+      },
+      {
+        "column": "CURR_COUNTRY",
+        "ref_table": "COUNTRY",
+        "ref_column": "COUNTRY_ID"
+      },
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2640,6 +3157,13 @@
     "fks": [
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2674,6 +3198,18 @@
       "COURSE",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2690,6 +3226,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2706,6 +3243,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2752,6 +3290,13 @@
     "fks": [
       "FB_QUESTIONS_CATEGORY"
     ],
+    "fk_columns": [
+      {
+        "column": "CATEGORY_ID",
+        "ref_table": "FB_QUESTIONS_CATEGORY",
+        "ref_column": "CATEGORY_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2773,6 +3318,13 @@
     },
     "fks": [
       "FB_PERFORMA"
+    ],
+    "fk_columns": [
+      {
+        "column": "PID",
+        "ref_table": "FB_PERFORMA",
+        "ref_column": "PID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2815,6 +3367,13 @@
     "fks": [
       "FB_QUESTIONS"
     ],
+    "fk_columns": [
+      {
+        "column": "QUESTION_ID",
+        "ref_table": "FB_QUESTIONS",
+        "ref_column": "QUESTION_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -2852,7 +3411,7 @@
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SUBMITTED_ON": {
         "type": "DATE",
@@ -2864,6 +3423,28 @@
       "FB_CGPA_BAND",
       "FB_QUESTIONS",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "QUESTION_ID",
+        "ref_table": "FB_QUESTIONS",
+        "ref_column": "QUESTION_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "CGPA_BAND_ID",
+        "ref_table": "FB_CGPA_BAND",
+        "ref_column": "CGPA_BAND_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2905,6 +3486,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -2942,7 +3524,7 @@
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
@@ -2950,6 +3532,28 @@
       "FB_CGPA_BAND",
       "FB_QUESTIONS",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "CGPA_BAND_ID",
+        "ref_table": "FB_CGPA_BAND",
+        "ref_column": "CGPA_BAND_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "QUESTION_ID",
+        "ref_table": "FB_QUESTIONS",
+        "ref_column": "QUESTION_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -2983,10 +3587,11 @@
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3023,6 +3628,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3034,11 +3640,11 @@
     "columns": {
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "QUESTION_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TEXT": {
         "type": "VARCHAR2",
@@ -3054,6 +3660,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3137,6 +3744,18 @@
       "STUDENT_PERSONAL_INFO",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -3202,6 +3821,28 @@
       "STUDENT_PERSONAL_INFO",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -3251,6 +3892,13 @@
     "fks": [
       "FMSUBHEAD"
     ],
+    "fk_columns": [
+      {
+        "column": "SUBHEADID",
+        "ref_table": "FMSUBHEAD",
+        "ref_column": "SUBHEADID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -3279,6 +3927,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3318,6 +3967,23 @@
       "CAMPUS",
       "SEMESTER",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -3439,6 +4105,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3453,23 +4120,23 @@
     "columns": {
       "CAMPUSID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SEMID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCHNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROGRAMID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SECTIONID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "FEEDUEDDATE": {
         "type": "DATE",
@@ -3485,11 +4152,11 @@
       },
       "CREATEDBY": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CREATEDDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "MODIFIEDBY": {
         "type": "VARCHAR2",
@@ -3501,7 +4168,7 @@
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
@@ -3509,6 +4176,28 @@
       "CAMPUS",
       "PROGRAM",
       "SECTION"
+    ],
+    "fk_columns": [
+      {
+        "column": "BATCHNO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROGRAMID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SECTIONID",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -3585,6 +4274,38 @@
       "PROGRAM",
       "SEMESTER"
     ],
+    "fk_columns": [
+      {
+        "column": "SUBHEADID",
+        "ref_table": "FMSUBHEAD",
+        "ref_column": "SUBHEADID"
+      },
+      {
+        "column": "PROGRAMLEVEL",
+        "ref_table": "D_PROGRAM_LEVEL",
+        "ref_column": "LEVEL_ID"
+      },
+      {
+        "column": "BATCHNO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROGRAMID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -3621,6 +4342,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3661,6 +4383,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3737,6 +4460,28 @@
       "STUDENT_PERSONAL_INFO",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -3757,7 +4502,7 @@
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -3813,6 +4558,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3833,7 +4579,7 @@
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -3889,6 +4635,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3909,7 +4656,7 @@
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -3965,6 +4712,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -3985,7 +4733,7 @@
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -4041,6 +4789,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4061,7 +4810,7 @@
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -4117,6 +4866,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4171,6 +4921,18 @@
       "CAMPUS",
       "REGISTRATIONLOG"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "REGLOGID",
+        "ref_table": "REGISTRATIONLOG",
+        "ref_column": "REGLOGID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -4219,6 +4981,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4273,6 +5036,18 @@
       "CAMPUS",
       "FMSCROLLDETAIL"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "SCROLLDETAILID",
+        "ref_table": "FMSCROLLDETAIL",
+        "ref_column": "SCROLLDETAILID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -4321,6 +5096,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4369,6 +5145,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4409,6 +5186,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4455,6 +5233,18 @@
       "CAMPUS",
       "FMSPONSOREDSTUDENT"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "STUDENTSPONSID",
+        "ref_table": "FMSPONSOREDSTUDENT",
+        "ref_column": "STUDENT_SPONSID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -4488,6 +5278,13 @@
     },
     "fks": [
       "FMPAYMENTTYPE"
+    ],
+    "fk_columns": [
+      {
+        "column": "PAYMENTTYPE",
+        "ref_table": "FMPAYMENTTYPE",
+        "ref_column": "PAYMENTTYPE"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -4525,6 +5322,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4533,7 +5331,7 @@
     "columns": {
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCROLLDETAILID": {
         "type": "NUMBER",
@@ -4545,7 +5343,7 @@
       },
       "SPONSORSHIPID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLLNO": {
         "type": "NUMBER",
@@ -4561,19 +5359,19 @@
       },
       "AMOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "REMARKS": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ENTEREDBY": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ENTRYDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "MODIFIEDBY": {
         "type": "VARCHAR2",
@@ -4585,10 +5383,11 @@
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4669,6 +5468,23 @@
       "SEMESTER",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -4689,6 +5505,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4737,6 +5554,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -4834,6 +5652,28 @@
       "SEMESTER",
       "STUDENT_PERSONAL_INFO"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PAYMENTMODEID",
+        "ref_table": "FMPAYMENTMODE",
+        "ref_column": "PAYMENTMODEID"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -4926,6 +5766,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5018,6 +5859,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5110,6 +5952,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5175,6 +6018,13 @@
     "fks": [
       "CAMPUS"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -5219,7 +6069,7 @@
       },
       "SPONSOR": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SPONSHEAD": {
         "type": "VARCHAR2",
@@ -5291,6 +6141,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5335,7 +6186,7 @@
       },
       "SPONSOR": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SPONSHEAD": {
         "type": "VARCHAR2",
@@ -5407,6 +6258,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5489,6 +6341,33 @@
       "STUDENT_PERSONAL_INFO",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SPONSORSHIPID",
+        "ref_table": "FMSPONSORSHIP",
+        "ref_column": "SPONSORSHIPID"
+      },
+      {
+        "column": "SUBHEADID",
+        "ref_table": "FMSUBHEAD",
+        "ref_column": "SUBHEADID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -5567,6 +6446,13 @@
     "fks": [
       "CAMPUS"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -5621,6 +6507,13 @@
     "fks": [
       "FMSPONSORSHIP"
     ],
+    "fk_columns": [
+      {
+        "column": "SPONSORSHIPID",
+        "ref_table": "FMSPONSORSHIP",
+        "ref_column": "SPONSORSHIPID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -5649,6 +6542,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5709,6 +6603,28 @@
       "SEMESTER",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMPUSID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "FEETYPEID",
+        "ref_table": "FMFEETYPE",
+        "ref_column": "FEETYPEID"
+      },
+      {
+        "column": "ROLLNO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEMID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -5761,6 +6677,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5774,11 +6691,11 @@
     "columns": {
       "CAMPUSID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
@@ -5794,23 +6711,23 @@
       },
       "SPONSORSHIPID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STARTSEMID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ENDSEMID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TYPE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "AMOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MINSGPA": {
         "type": "NUMBER",
@@ -5834,11 +6751,11 @@
       },
       "ENTEREDBY": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ENTRYDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "MODIFIEDBY": {
         "type": "VARCHAR2",
@@ -5850,10 +6767,11 @@
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -5903,6 +6821,13 @@
     },
     "fks": [
       "FMHEAD"
+    ],
+    "fk_columns": [
+      {
+        "column": "HEADID",
+        "ref_table": "FMHEAD",
+        "ref_column": "HEADID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -6036,6 +6961,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6168,6 +7094,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6208,6 +7135,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6221,7 +7149,7 @@
     "columns": {
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMPUSID": {
         "type": "NUMBER",
@@ -6257,6 +7185,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6305,6 +7234,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6333,6 +7263,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6358,6 +7289,18 @@
     "fks": [
       "GRADE",
       "GRADEPOLICY_DETAIL"
+    ],
+    "fk_columns": [
+      {
+        "column": "GRADE_ID",
+        "ref_table": "GRADE",
+        "ref_column": "GRADE_ID"
+      },
+      {
+        "column": "GRADEPOLICYID",
+        "ref_table": "GRADEPOLICY_DETAIL",
+        "ref_column": "GRADEPOLICYID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -6390,6 +7333,18 @@
       "COURSE",
       "GRADEPOLICY_DETAIL"
     ],
+    "fk_columns": [
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "GRADEPOLICYID",
+        "ref_table": "GRADEPOLICY_DETAIL",
+        "ref_column": "GRADEPOLICYID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -6414,6 +7369,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6430,6 +7386,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6466,6 +7423,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6492,6 +7450,18 @@
     "fks": [
       "GRADE",
       "GRADING_SCHEME"
+    ],
+    "fk_columns": [
+      {
+        "column": "GRADE_ID",
+        "ref_table": "GRADE",
+        "ref_column": "GRADE_ID"
+      },
+      {
+        "column": "GS_ID",
+        "ref_table": "GRADING_SCHEME",
+        "ref_column": "GS_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -6529,6 +7499,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6553,6 +7524,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6597,6 +7569,23 @@
       "EMPLOYEE",
       "SEMESTER"
     ],
+    "fk_columns": [
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "EMP_ID",
+        "ref_table": "EMPLOYEE",
+        "ref_column": "EMP_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -6634,6 +7623,13 @@
     },
     "fks": [
       "COURSE_OFFER"
+    ],
+    "fk_columns": [
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -6711,6 +7707,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6743,7 +7740,7 @@
       },
       "PROG_CODE": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "FIRST_REG_SEM": {
         "type": "NUMBER",
@@ -6787,6 +7784,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6807,7 +7805,7 @@
       },
       "CANDIDATE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "QUESTION_ATTEMPTED": {
         "type": "NUMBER",
@@ -6843,6 +7841,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -6851,15 +7850,15 @@
     "columns": {
       "APPLICATIONNAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "LOWEREDAPPLICATIONNAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "DESCRIPTION": {
         "type": "NVARCHAR2",
@@ -6867,6 +7866,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [
       {
         "unique": true,
@@ -6888,23 +7888,23 @@
     "columns": {
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "USERID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "PASSWORD": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "PASSWORDFORMAT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PASSWORDSALT": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "MOBILEPIN": {
         "type": "NVARCHAR2",
@@ -6928,43 +7928,43 @@
       },
       "ISAPPROVED": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ISLOCKEDOUT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATEDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LASTLOGINDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LASTPASSWORDCHANGEDDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LASTLOCKOUTDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "FAILEDPWDATTEMPTCOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "FAILEDPWDATTEMPTWINSTART": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "FAILEDPWDANSWERATTEMPTCOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "FAILEDPWDANSWERATTEMPTWINSTART": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "COMMENTS": {
         "type": "NCLOB",
@@ -6975,6 +7975,18 @@
       "ORA_ASPNET_APPLICATIONS",
       "ORA_ASPNET_USERS"
     ],
+    "fk_columns": [
+      {
+        "column": "APPLICATIONID",
+        "ref_table": "ORA_ASPNET_APPLICATIONS",
+        "ref_column": "APPLICATIONID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "ORA_ASPNET_USERS",
+        "ref_column": "USERID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -6983,23 +7995,30 @@
     "columns": {
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "PATHID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "PATH": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "LOWEREDPATH": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_APPLICATIONS"
+    ],
+    "fk_columns": [
+      {
+        "column": "APPLICATIONID",
+        "ref_table": "ORA_ASPNET_APPLICATIONS",
+        "ref_column": "APPLICATIONID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7013,15 +8032,22 @@
       },
       "PAGESETTINGS": {
         "type": "BLOB",
-        "null_false": false
+        "null_false": true
       },
       "LASTUPDATEDDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_PATHS"
+    ],
+    "fk_columns": [
+      {
+        "column": "PATHID",
+        "ref_table": "ORA_ASPNET_PATHS",
+        "ref_column": "PATHID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7031,7 +8057,7 @@
     "columns": {
       "ID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "PATHID": {
         "type": "RAW",
@@ -7043,16 +8069,28 @@
       },
       "PAGESETTINGS": {
         "type": "BLOB",
-        "null_false": false
+        "null_false": true
       },
       "LASTUPDATEDDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_PATHS",
       "ORA_ASPNET_USERS"
+    ],
+    "fk_columns": [
+      {
+        "column": "PATHID",
+        "ref_table": "ORA_ASPNET_PATHS",
+        "ref_column": "PATHID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "ORA_ASPNET_USERS",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7062,27 +8100,34 @@
     "columns": {
       "USERID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "PROPERTYNAMES": {
         "type": "NCLOB",
-        "null_false": false
+        "null_false": true
       },
       "PROPERTYVALUESSTRING": {
         "type": "NCLOB",
-        "null_false": false
+        "null_false": true
       },
       "PROPERTYVALUESBINARY": {
         "type": "BLOB",
-        "null_false": false
+        "null_false": true
       },
       "LASTUPDATEDDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_USERS"
+    ],
+    "fk_columns": [
+      {
+        "column": "USERID",
+        "ref_table": "ORA_ASPNET_USERS",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7092,7 +8137,7 @@
     "columns": {
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "ROLEID": {
         "type": "RAW",
@@ -7100,11 +8145,11 @@
       },
       "ROLENAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "LOWEREDROLENAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "DESCRIPTION": {
         "type": "NVARCHAR2",
@@ -7114,6 +8159,13 @@
     "fks": [
       "ORA_ASPNET_APPLICATIONS"
     ],
+    "fk_columns": [
+      {
+        "column": "APPLICATIONID",
+        "ref_table": "ORA_ASPNET_APPLICATIONS",
+        "ref_column": "APPLICATIONID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -7122,14 +8174,15 @@
     "columns": {
       "APPID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "APPNAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7138,35 +8191,35 @@
     "columns": {
       "SESSIONID": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CREATED": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "EXPIRES": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LOCKDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LOCKDATELOCAL": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "LOCKCOOKIE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TIMEOUT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "LOCKED": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SESSIONITEMSHORT": {
         "type": "RAW",
@@ -7178,10 +8231,11 @@
       },
       "FLAGS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7193,11 +8247,11 @@
     "columns": {
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "NVARCHAR2",
@@ -7223,6 +8277,13 @@
     "fks": [
       "ORA_ASPNET_APPLICATIONS"
     ],
+    "fk_columns": [
+      {
+        "column": "APPLICATIONID",
+        "ref_table": "ORA_ASPNET_APPLICATIONS",
+        "ref_column": "APPLICATIONID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -7231,19 +8292,19 @@
     "columns": {
       "APPLICATIONID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "USERID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "USERNAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "LOWEREDUSERNAME": {
         "type": "NVARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "MOBILEALIAS": {
         "type": "NVARCHAR2",
@@ -7251,15 +8312,22 @@
       },
       "ISANONYMOUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "LASTACTIVITYDATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_APPLICATIONS"
+    ],
+    "fk_columns": [
+      {
+        "column": "APPLICATIONID",
+        "ref_table": "ORA_ASPNET_APPLICATIONS",
+        "ref_column": "APPLICATIONID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7272,16 +8340,28 @@
     "columns": {
       "USERID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       },
       "ROLEID": {
         "type": "RAW",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "ORA_ASPNET_ROLES",
       "ORA_ASPNET_USERS"
+    ],
+    "fk_columns": [
+      {
+        "column": "ROLEID",
+        "ref_table": "ORA_ASPNET_ROLES",
+        "ref_column": "ROLEID"
+      },
+      {
+        "column": "USERID",
+        "ref_table": "ORA_ASPNET_USERS",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -7351,6 +8431,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7363,15 +8444,15 @@
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CLOSURE_DATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "BASR_DATE": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "REASONS": {
         "type": "VARCHAR2",
@@ -7379,6 +8460,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7387,19 +8469,19 @@
     "columns": {
       "CT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ATTEMPT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "APPLIEDON": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "GSCACTIONON": {
         "type": "DATE",
@@ -7411,7 +8493,7 @@
       },
       "TESTTAKEN": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PERCENTAGE": {
         "type": "NUMBER",
@@ -7419,14 +8501,15 @@
       },
       "PROGRAMID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMPUSID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7435,7 +8518,7 @@
     "columns": {
       "FEVAL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NAME": {
         "type": "VARCHAR2",
@@ -7455,6 +8538,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7463,23 +8547,23 @@
     "columns": {
       "GID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TEST_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCORE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PERCENTILE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TEST_DATE": {
         "type": "VARCHAR2",
@@ -7487,6 +8571,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7495,19 +8580,19 @@
     "columns": {
       "GMA_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "MT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "AGENDA_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TOPIC": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "SUMMARY": {
         "type": "VARCHAR2",
@@ -7515,6 +8600,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7523,30 +8609,31 @@
     "columns": {
       "MT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "VENUE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TIMINGS": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "CREATEDBY": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CREATEDON": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7555,18 +8642,19 @@
     "columns": {
       "D_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "FOR_STUDENT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7575,14 +8663,15 @@
     "columns": {
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "TYPE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7594,14 +8683,15 @@
     "columns": {
       "EMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7618,6 +8708,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7626,11 +8717,11 @@
     "columns": {
       "LEVAL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "DEPARTMENT": {
         "type": "VARCHAR2",
@@ -7646,6 +8737,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7654,7 +8746,7 @@
     "columns": {
       "STD_EVAL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
@@ -7690,6 +8782,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7698,11 +8791,11 @@
     "columns": {
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "FUNDED_BY": {
         "type": "NUMBER",
@@ -7718,6 +8811,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7726,27 +8820,27 @@
     "columns": {
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ARN": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLLNO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SUPERVISOR_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "REQUESTEDON": {
         "type": "DATE",
@@ -7766,6 +8860,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7774,26 +8869,27 @@
     "columns": {
       "ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "STD_SUPERVISOR_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IS_DOC": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IDEA_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAN_CONTINUE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7802,11 +8898,11 @@
     "columns": {
       "PSSD_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SUPERVISOR_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
@@ -7814,7 +8910,7 @@
       },
       "STATUS": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "REASON": {
         "type": "VARCHAR2",
@@ -7822,7 +8918,7 @@
       },
       "ACTIONBY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ACTIONON": {
         "type": "DATE",
@@ -7850,6 +8946,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7858,19 +8955,19 @@
     "columns": {
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "LEVEL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SHORT_NAME": {
         "type": "VARCHAR2",
@@ -7878,7 +8975,7 @@
       },
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "NO_OF_SEM": {
         "type": "NUMBER",
@@ -7909,6 +9006,18 @@
       "D_PROGRAM_LEVEL",
       "SCHOOL"
     ],
+    "fk_columns": [
+      {
+        "column": "LEVEL_ID",
+        "ref_table": "D_PROGRAM_LEVEL",
+        "ref_column": "LEVEL_ID"
+      },
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
+    ],
     "indexes": [
       {
         "unique": true,
@@ -7932,6 +9041,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -7944,15 +9054,15 @@
     "columns": {
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "COURSE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "RELATOIN_ID": {
         "type": "CHAR",
@@ -7973,6 +9083,28 @@
       "D_COURSE_RELATION",
       "PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "RELATOIN_ID",
+        "ref_table": "D_COURSE_RELATION",
+        "ref_column": "RELATION_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -7985,15 +9117,15 @@
     "columns": {
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SCH_DOM_ID": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CORE_CR_HRS": {
         "type": "NUMBER",
@@ -8009,6 +9141,23 @@
       "PROGRAM",
       "SCHOOL_DOMAIN"
     ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SCH_DOM_ID",
+        "ref_table": "SCHOOL_DOMAIN",
+        "ref_column": "SCH_DOM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8021,7 +9170,7 @@
       },
       "REGLOGID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMPUSID": {
         "type": "NUMBER",
@@ -8073,6 +9222,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -8085,7 +9235,7 @@
       },
       "REGLOGID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMPUSID": {
         "type": "NUMBER",
@@ -8137,6 +9287,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -8149,7 +9300,7 @@
       },
       "REGLOGID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CAMPUSID": {
         "type": "NUMBER",
@@ -8201,6 +9352,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -8223,6 +9375,18 @@
     "fks": [
       "APPUSER",
       "COURSE_OFFER"
+    ],
+    "fk_columns": [
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "USER_ID",
+        "ref_table": "APPUSER",
+        "ref_column": "USERID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -8269,6 +9433,23 @@
       "PROGRAM",
       "SCHOOL"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SCHOOL_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8277,15 +9458,15 @@
     "columns": {
       "SCH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "NAME": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "ADDRESS": {
         "type": "VARCHAR2",
@@ -8313,7 +9494,7 @@
       },
       "CREATED_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_DATE": {
         "type": "DATE",
@@ -8321,6 +9502,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [
       {
         "unique": true,
@@ -8336,7 +9518,7 @@
     "columns": {
       "SCH_DOM_ID": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "CODE": {
         "type": "VARCHAR2",
@@ -8357,6 +9539,13 @@
     },
     "fks": [
       "SCHOOL"
+    ],
+    "fk_columns": [
+      {
+        "column": "SCH_ID",
+        "ref_table": "SCHOOL",
+        "ref_column": "SCH_ID"
+      }
     ],
     "indexes": [
       {
@@ -8389,6 +9578,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [
       {
         "unique": true,
@@ -8416,6 +9606,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -8424,31 +9615,31 @@
     "columns": {
       "STA_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "EMP_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ACT_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SEM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PROJ_COORD": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CRETED_BY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_ON": {
         "type": "DATE",
-        "null_false": false
+        "null_false": true
       },
       "MODIFIED_BY": {
         "type": "NUMBER",
@@ -8464,6 +9655,23 @@
       "EMPLOYEE",
       "SEMESTER"
     ],
+    "fk_columns": [
+      {
+        "column": "ACT_ID",
+        "ref_table": "D_TEACHER_ACTIVITY",
+        "ref_column": "ACT_ID"
+      },
+      {
+        "column": "EMP_ID",
+        "ref_table": "EMPLOYEE",
+        "ref_column": "EMP_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8475,11 +9683,11 @@
     "columns": {
       "LECTURE_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ATTEND_FLAG": {
         "type": "VARCHAR2",
@@ -8497,6 +9705,18 @@
     "fks": [
       "LECTURE",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "LECTURE_ID",
+        "ref_table": "LECTURE",
+        "ref_column": "LECTURE_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -8591,6 +9811,18 @@
     "fks": [
       "D_FAMILY_RELATION",
       "STUDENT_PERSONAL_INFO"
+    ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "REL_TYPE_ID",
+        "ref_table": "D_FAMILY_RELATION",
+        "ref_column": "REL_TYPE_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -8704,6 +9936,33 @@
       "CITY",
       "COUNTRY"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "CURR_CITY",
+        "ref_table": "CITY",
+        "ref_column": "CITY_ID"
+      },
+      {
+        "column": "CURR_COUNTRY",
+        "ref_table": "COUNTRY",
+        "ref_column": "COUNTRY_ID"
+      },
+      {
+        "column": "PERM_COUNTRY",
+        "ref_table": "COUNTRY",
+        "ref_column": "COUNTRY_ID"
+      },
+      {
+        "column": "PERM_CITY",
+        "ref_table": "CITY",
+        "ref_column": "CITY_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8728,11 +9987,11 @@
       },
       "PROG_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "BATCH_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SPECIALIZATION": {
         "type": "VARCHAR2",
@@ -8808,6 +10067,48 @@
       "SECTION",
       "STUDENT_PERSONAL_INFO"
     ],
+    "fk_columns": [
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      },
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "CURR_CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "PROG_STATUS",
+        "ref_table": "D_STUDENT_STATUS",
+        "ref_column": "STATUS_ID"
+      },
+      {
+        "column": "REG_STATUS",
+        "ref_table": "D_STUDENT_REG_STATUS",
+        "ref_column": "STATUS_ID"
+      },
+      {
+        "column": "STU_SECTION_ID",
+        "ref_table": "SECTION",
+        "ref_column": "SECTION_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8824,7 +10125,7 @@
       },
       "DEGREE": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SPECIALIZATION": {
         "type": "VARCHAR2",
@@ -8832,7 +10133,7 @@
       },
       "PASSING_YEAR": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "BOARD": {
         "type": "VARCHAR2",
@@ -8880,6 +10181,23 @@
       "D_DEGREE_TYPE",
       "STUDENT_PERSONAL_INFO"
     ],
+    "fk_columns": [
+      {
+        "column": "CITY",
+        "ref_table": "CITY",
+        "ref_column": "CITY_ID"
+      },
+      {
+        "column": "DEGREE",
+        "ref_table": "D_DEGREE_TYPE",
+        "ref_column": "DT_ID"
+      },
+      {
+        "column": "ARN",
+        "ref_table": "STUDENT_PERSONAL_INFO",
+        "ref_column": "ARN"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -8908,7 +10226,7 @@
       },
       "SRH_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "REFERANCE": {
         "type": "VARCHAR2",
@@ -8916,11 +10234,18 @@
       },
       "ROLL_NO": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -8977,6 +10302,23 @@
       "SEMESTER",
       "STUDENT_PROGRAM"
     ],
+    "fk_columns": [
+      {
+        "column": "CAMP_ID",
+        "ref_table": "CAMPUS",
+        "ref_column": "CAMP_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -9001,7 +10343,7 @@
       },
       "SEM_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "CREATED_BY": {
         "type": "NUMBER",
@@ -9016,6 +10358,23 @@
       "BATCH",
       "PROGRAM",
       "SEMESTER"
+    ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "BATCH",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "PROGRAM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -9058,6 +10417,33 @@
       "COURSE",
       "SEMESTER",
       "STUDY_PLAN_SEM"
+    ],
+    "fk_columns": [
+      {
+        "column": "BATCH_NO",
+        "ref_table": "STUDY_PLAN_SEM",
+        "ref_column": "BATCH_NO"
+      },
+      {
+        "column": "PROG_ID",
+        "ref_table": "STUDY_PLAN_SEM",
+        "ref_column": "PROG_ID"
+      },
+      {
+        "column": "SR_NO",
+        "ref_table": "STUDY_PLAN_SEM",
+        "ref_column": "SR_NO"
+      },
+      {
+        "column": "COURSE_ID",
+        "ref_table": "COURSE",
+        "ref_column": "COURSE_ID"
+      },
+      {
+        "column": "SEM_ID",
+        "ref_table": "SEMESTER",
+        "ref_column": "SEM_ID"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -9167,6 +10553,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9199,7 +10586,7 @@
       },
       "PROG_CODE": {
         "type": "CHAR",
-        "null_false": false
+        "null_false": true
       },
       "FIRST_REG_SEM": {
         "type": "NUMBER",
@@ -9243,6 +10630,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9255,6 +10643,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9266,11 +10655,11 @@
     "columns": {
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PRIORITY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IS_APPROVED": {
         "type": "NUMBER",
@@ -9345,6 +10734,18 @@
       "COURSE_OFFER",
       "GRADING_SCHEME"
     ],
+    "fk_columns": [
+      {
+        "column": "GS_ID",
+        "ref_table": "GRADING_SCHEME",
+        "ref_column": "GS_ID"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      }
+    ],
     "indexes": [],
     "checks": []
   },
@@ -9353,11 +10754,11 @@
     "columns": {
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PRIORITY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IS_APPROVED": {
         "type": "NUMBER",
@@ -9429,6 +10830,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9437,15 +10839,15 @@
     "columns": {
       "DEL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "OFFER_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "PRIORITY": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "IS_APPROVED": {
         "type": "NUMBER",
@@ -9517,6 +10919,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9569,12 +10972,24 @@
       },
       "TGD_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [
       "COURSE_OFFER",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      },
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      }
     ],
     "indexes": [
       {
@@ -9592,7 +11007,7 @@
     "columns": {
       "DEL_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "OFFER_ID": {
         "type": "NUMBER",
@@ -9640,10 +11055,11 @@
       },
       "TGD_ID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9678,6 +11094,18 @@
     "fks": [
       "COURSE_OFFER",
       "STUDENT_PROGRAM"
+    ],
+    "fk_columns": [
+      {
+        "column": "OFFER_ID",
+        "ref_table": "COURSE_OFFER",
+        "ref_column": "OFFER_ID"
+      },
+      {
+        "column": "ROLL_NO",
+        "ref_table": "STUDENT_PROGRAM",
+        "ref_column": "ROLL_NO"
+      }
     ],
     "indexes": [],
     "checks": []
@@ -9723,6 +11151,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9739,6 +11168,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9779,6 +11209,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9863,6 +11294,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -9935,6 +11367,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10019,6 +11452,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10103,6 +11537,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10191,6 +11626,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10275,6 +11711,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10363,6 +11800,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10451,6 +11889,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10507,6 +11946,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10563,6 +12003,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10571,18 +12012,19 @@
     "columns": {
       "ROLLNO": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "TITLE": {
         "type": "VARCHAR2",
-        "null_false": false
+        "null_false": true
       },
       "COLLECTION": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10595,7 +12037,7 @@
       },
       "SCROLLDETAILID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "LEDGERID": {
         "type": "NUMBER",
@@ -10603,11 +12045,11 @@
       },
       "SUBHEADID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "AMOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "ENTEREDBY": {
         "type": "DATE",
@@ -10623,6 +12065,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10631,18 +12074,19 @@
     "columns": {
       "SCROLLDETAILID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "SUBHEADID": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       },
       "AMOUNT": {
         "type": "NUMBER",
-        "null_false": false
+        "null_false": true
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   },
@@ -10663,6 +12107,7 @@
       }
     },
     "fks": [],
+    "fk_columns": [],
     "indexes": [],
     "checks": []
   }
