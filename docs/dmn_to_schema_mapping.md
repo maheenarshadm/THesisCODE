@@ -138,39 +138,39 @@ After classification and grounding, every compiled record (one entry of `compile
 
 **Compiled objective counts** (`compile_report.json`):
 
-| Case study | Compiled | Blocked (unresolved/schema-gap/code-external) |
+| Case study | Compiled | Blocked (infeasible / unresolved / schema-gap / code-external) |
 |---|---|---|
-| FLEX2 | 151 | 0 |
+| FLEX2 | 98 | 53 |
 | OpenMRS | 71 | 0 |
 | Spree | 27 | 5 |
-| jBilling | 42 | 13 |
-| **Total** | **291** | **18** |
+| jBilling | 40 | 15 |
+| **Total** | **236** | **73** |
 
-Blocked reasons: 16 `unresolved_variable`, 2 `chained_dependency_unexpandable`. Of the blocking leaves themselves: 5 `schema_gap`, 6 `unresolved`, 12 `code_external` — i.e. the large majority of what's excluded is genuinely computed by application code at runtime, not a mapping the classifier merely failed to find.
+Blocked reasons: 55 `infeasible`, 16 `unresolved_variable`, 2 `chained_dependency_unexpandable`. Of the blocking leaves behind the `unresolved_variable` reason: 5 `schema_gap`, 6 `unresolved`, 12 `code_external` — i.e. most of *that* bucket is genuinely computed by application code at runtime, not a mapping the classifier merely failed to find. The `infeasible` reason is a separate mechanism entirely: a record whose fully-assembled condition (own cells, plus any grounded upstream branch clauses, plus hit-policy earlier-row suppression) is proven unsatisfiable by three-valued constant folding *before* it ever reaches this file at all (`_fold_condition_three_valued` in `compile_constraints.py`; see `docs/complete_approach_writeup.md` §3.2) — 53 of FLEX2's original 151 rules and 2 of jBilling's original 42, none of which the search could ever have reached regardless.
 
-**Leaf-kind distribution across all 291 compiled records (1,081 total leaf variables)**:
+**Leaf-kind distribution across all 236 compiled records (756 total leaf variables)**:
 
 | Kind | Count | % |
 |---|---:|---:|
-| `schema_column` | 537 | 49.7% |
-| `literal_via_upstream_branch` | 160 | 14.8% |
-| `derived_case` | 72 | 6.7% |
-| `null_check` | 72 | 6.7% |
-| `derived_aggregate` | 69 | 6.4% |
-| `derived_join_count` | 57 | 5.3% |
-| `not_persisted` | 45 | 4.2% |
-| `derived` (unclassified, table hints only) | 25 | 2.3% |
-| `exists` | 17 | 1.6% |
-| `any_not_null` | 7 | 0.6% |
-| `raw_sql_boolean` | 4 | 0.4% |
-| `join_lookup` | 4 | 0.4% |
-| `code_external` | 4 | 0.4% |
-| `regex_match` | 3 | 0.3% |
-| `substituted_decision` | 2 | 0.2% |
-| `schema_gap` | 2 | 0.2% |
+| `schema_column` | 393 | 52.0% |
+| `literal_via_upstream_branch` | 79 | 10.4% |
+| `null_check` | 72 | 9.5% |
+| `derived_aggregate` | 43 | 5.7% |
+| `not_persisted` | 43 | 5.7% |
+| `derived_case` | 33 | 4.4% |
+| `derived_join_count` | 26 | 3.4% |
+| `derived` (unclassified, table hints only) | 23 | 3.0% |
+| `exists` | 17 | 2.2% |
+| `any_not_null` | 7 | 0.9% |
+| `raw_sql_boolean` | 4 | 0.5% |
+| `join_lookup` | 4 | 0.5% |
+| `code_external` | 4 | 0.5% |
+| `regex_match` | 3 | 0.4% |
+| `substituted_decision` | 2 | 0.3% |
+| `schema_gap` | 2 | 0.3% |
 | `join_null_check` | 1 | 0.1% |
 
-Roughly half of every leaf variable in the whole corpus is a plain, direct column read — which is exactly why the remaining half needed this much machinery: a system that only handled `schema_column` would have left the majority of the *interesting* facts (aggregates, existence checks, cross-decision outputs, categorical derivations) completely unaddressed.
+Roughly half of every leaf variable in the whole corpus is a plain, direct column read — which is exactly why the remaining half needed this much machinery: a system that only handled `schema_column` would have left the majority of the *interesting* facts (aggregates, existence checks, cross-decision outputs, categorical derivations) completely unaddressed. (These counts are lower than an earlier revision of this document reported — 236 compiled records/756 leaves rather than 291/1,081 — because the 55 records now correctly filtered out by the `infeasible` feasibility check no longer contribute their own leaves to this corpus at all; see the blocked-counts table above.)
 
 ---
 

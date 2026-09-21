@@ -1540,6 +1540,12 @@ Asked why OpenMRS's remaining 10 objectives weren't covered and which category e
 
 **Verified end to end, all four case studies re-run**: FLEX2 81/151, Spree 22/27, jBilling 33/42 (zero regressions despite touching fitness.py's own core distance machinery). OpenMRS archive coverage 62/71 → **64/71**; final materialized dataset 61/71 → **63/71**. Final, exhaustive OpenMRS tally: 63 covered + 1 merge-regression + 1 + 1 + 3 + 2 = 71 exactly, zero unexplained. Full trace: `docs/generationalgorithmdesign.md` §13.51.
 
+## Provable-infeasibility detection promoted from a one-off script to committed code (2026-09-21)
+
+The three-valued constant-folding evaluator described above (the one that found FLEX2's 53 provably-infeasible rules) had only ever existed as an uncommitted, one-off diagnostic script run once against FLEX2 -- never applied to the other three case studies, never part of this repository. Writing a paper subsection describing infeasibility detection as a standing part of compilation surfaced the gap: an exhaustive search of the actual codebase found no such code committed anywhere. Built for real this time: `_grounded_constant_for_variable`/`_fold_condition_three_valued` in `compile_constraints.py`, run inside `compile_case_study` itself against each variant's fully-assembled condition (own cells AND NOT every earlier FIRST/UNIQUE row). A record proven `False` is now recorded as `blocked` (reason `infeasible`) and never written to `compiled_constraints.json`, rather than being tallied afterward against an already-compiled corpus.
+
+Re-run against all four case studies: reproduces FLEX2's original 53 exactly (151 → 98 compiled) and finds 2 more in jBilling the original script never checked (42 → 40 compiled); zero effect on Spree or OpenMRS. Re-verified the full generation pipeline on all four: **FLEX2 81/98** (was 81/151), **Spree 22/27** (unchanged), **jBilling 33/40** (was 33/42), **OpenMRS 63/71** (unchanged) -- every covered count identical to before, confirming none of the 55 newly-filtered records were ever reachable; only the denominators shrank to the corpus's real searchable size. `validate_with_sqlite: ok=True` on all four. Full trace: `docs/generationalgorithmdesign.md` §13.52.
+
 ## Known scope limits (stated here, not discovered by a reader)
 
 - **Aggregate recipes carry a raw filter-text string, not §6.1's fully
