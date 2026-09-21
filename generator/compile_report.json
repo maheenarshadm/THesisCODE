@@ -1,8 +1,8 @@
 {
  "per_case_study": {
   "FLEX2": {
-   "compiled": 151,
-   "blocked": 0
+   "compiled": 98,
+   "blocked": 53
   },
   "OpenMRS": {
    "compiled": 71,
@@ -13,13 +13,14 @@
    "blocked": 5
   },
   "jBilling": {
-   "compiled": 42,
-   "blocked": 13
+   "compiled": 40,
+   "blocked": 15
   }
  },
- "total_compiled": 291,
- "total_blocked": 18,
+ "total_compiled": 236,
+ "total_blocked": 73,
  "blocked_reason_counts": {
+  "infeasible": 55,
   "unresolved_variable": 16,
   "chained_dependency_unexpandable": 2
  },
@@ -29,6 +30,324 @@
   "code_external": 12
  },
  "blocked_records": [
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
+  {
+   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "FLEX2"
+  },
   {
    "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2",
    "reason": "unresolved_variable",
@@ -249,6 +568,18 @@
      "detail": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
     }
    ],
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
+   "case_study": "jBilling"
+  },
+  {
+   "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_1::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2",
+   "reason": "infeasible",
+   "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
    "case_study": "jBilling"
   },
   {

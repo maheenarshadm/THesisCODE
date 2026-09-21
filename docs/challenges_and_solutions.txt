@@ -49,13 +49,21 @@ are examples of a fix for one case study silently breaking a different
 one through code both share, caught only by that discipline.
 
 Current, final, verified state across all four case studies (the
-numbers every result below builds toward): FLEX2 81/151 objectives
-covered (53.6%), Spree 22/27 (81.5%), jBilling 33/42 (78.6%), OpenMRS
+numbers every result below builds toward): FLEX2 81/98 objectives
+covered (82.7%), Spree 22/27 (81.5%), jBilling 33/40 (82.5%), OpenMRS
 63/71 (88.7%) -- in every case the final MATERIALIZED dataset, not just
 the search archive, verified by re-evaluating every objective against
 the actual generated SQL, and in every case `validate_with_sqlite`
 (a real, live SQLite database with schema DDL, NOT NULL/UNIQUE/FK
-constraints) reports zero errors.
+constraints) reports zero errors. (FLEX2's and jBilling's own
+denominators dropped from 151 and 42 -- Challenge 6's provable-
+infeasibility analysis, originally a one-off diagnostic script run only
+against FLEX2, was later turned into a permanent, committed part of
+`compile_case_study` itself; re-run as real code, it reproduced the
+exact same 53 FLEX2 rules the script had found, and additionally caught
+2 further provably-infeasible rules in jBilling the script was never
+run against. The covered COUNTS, 81 and 33, are unchanged -- confirming
+none of the removed rules were ever reachable in the first place.)
 
 
 CHALLENGE 1: Representing multi-level rule dependencies as search
@@ -309,7 +317,15 @@ leaving anything that still touches a genuine free variable as unknown.
 Applied to both a rule's own condition and to every earlier rule it must
 suppress (for first-applicable-rule hit-policy semantics), this proves
 infeasibility at compile time, mechanically, for the whole corpus at
-once, rather than one hand-traced example at a time.
+once, rather than one hand-traced example at a time. First built as a
+one-off diagnostic script (not committed) to answer the immediate
+question for FLEX2; later turned into a permanent, committed part of
+`compile_case_study` itself (`_fold_condition_three_valued` and
+`_grounded_constant_for_variable` in compile_constraints.py), gating
+compilation directly -- a provably-infeasible variant is now recorded
+as a `blocked` record with reason `infeasible` and never reaches
+`compiled_constraints.json` at all, rather than being a separate,
+after-the-fact accounting exercise over an already-compiled corpus.
 
 Result (measured). 53 of FLEX2's 151 compiled rules (35.1%) are provably
 infeasible this way, confirmed to have zero overlap with the set of
@@ -324,6 +340,12 @@ objectives are covered -- 100%. This reframes "why isn't coverage
 100%" from an open question into an exact, defensible characterization
 of the corpus's own real boundary conditions, which is itself a finding
 about the source DMN model, not a shortcoming of the search.
+Re-running the now-committed version against all four case studies
+(rather than just FLEX2, as the original diagnostic had) reproduced the
+exact same 53 FLEX2 rules and additionally found 2 further provably-
+infeasible rules in jBilling (42 -> 40 compiled), with zero effect on
+Spree or OpenMRS; jBilling's own covered count stayed exactly 33,
+confirming those 2 rules were never reachable either.
 
 
 CHALLENGE 7: A silent bug in domain-value enumeration made one rule
@@ -962,19 +984,24 @@ not yet built.
    (this one included) can recover a value the real system never
    persists.
 
-7. A small number of rules, in more than one case study, that are
-   PROVABLY infeasible by construction -- a self-comparison the DMN
-   model itself compares a fact against itself with no way it could
-   ever differ, or a grounding conflict where two different upstream
-   paths pin the same fact to two different literal values. These are
-   findings about the source DMN models themselves (very likely
-   authoring artifacts), not gaps in this pipeline, and are excluded
-   from each case study's own denominator on that basis, the same way
-   Challenge 6 first established for FLEX2.
+Item 7 (previously listed here): a small number of rules, in more than
+one case study, provably infeasible by construction -- a grounding
+conflict where two different upstream paths pin the same fact to two
+different literal values, or a hit-policy suppression clause that
+contradicts a rule's own condition. Previously an open item because
+Challenge 6's evaluator only ever ran as a one-off diagnostic script
+against FLEX2, never as committed code applied to every case study;
+CLOSED as of this writing by turning that evaluator into a permanent
+part of `compile_case_study` itself (`_fold_condition_three_valued`,
+compile_constraints.py), so a provably-infeasible variant is now
+filtered out -- and excluded from the denominator -- for all four case
+studies uniformly, not just FLEX2. Re-run this way it reproduced
+FLEX2's original 53 and additionally found 2 more in jBilling; Spree
+and OpenMRS had none.
 
-None of the seven items above is silently miscounted anywhere in this
+None of the six items above is silently miscounted anywhere in this
 document or in the pipeline's own reporting: every final coverage number
-quoted (81/151, 22/27, 33/42, 63/71) is accompanied, in the underlying
+quoted (81/98, 22/27, 33/40, 63/71) is accompanied, in the underlying
 design documentation, by an exhaustive, itemized accounting of every
 single uncovered rule's own specific category -- a deliberate choice to
 make "why isn't this 100%" always answerable with a specific, checkable

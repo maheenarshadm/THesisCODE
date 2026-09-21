@@ -1136,6 +1136,160 @@ def _enumerate_needs(cs, gt, needs, by_id, by_name, seen, commitment):
             yield combo, opt['provenance'] + rest_provenance
 
 
+# ---------------------------------------------------------------------------
+# 7. Feasibility analysis -- three-valued constant folding
+# ---------------------------------------------------------------------------
+#
+# Grounding (above) and hit-policy suppression can both add clauses to a
+# record's condition that were never in the DMN rule's own input cells --
+# an upstream branch's own truth_condition (_grounding_options), or an
+# earlier row's NOT(...) suppression term. Occasionally these combine into
+# something no database instance can ever satisfy: e.g. a rule's own cell
+# reads "semesterType = 'Summer'" while the upstream branch chosen to
+# ground one of its chained dependencies can only fire when
+# "semesterType != 'Summer'". Nothing upstream of this point ever checks
+# for that -- each piece is built to be locally correct on its own. This
+# pass is the check: fold the fully-assembled condition tree using ONLY
+# facts already fixed at compile time (literal constants, and variables
+# whose resolution is a grounded upstream branch value or a
+# fully-inlined literal-expression decision), leaving every value the
+# generator will only decide later at genuinely "unknown" -- then apply
+# three-valued (Kleene) logic through the tree's and/or/not structure. A
+# record is only ever dropped when this proves it False; True or unknown
+# alike are kept and left to the search (never assumed feasible from
+# silence, and never guessed at using anything the generator, not
+# compilation, is responsible for choosing).
+
+_NOT_GROUNDED = object()
+
+
+def _grounded_constant_for_variable(var_name, variable_resolution):
+    """The variable's compile-time-fixed value, or `_NOT_GROUNDED` if its
+    value is only decided once the generator picks concrete database rows
+    (a schema_column, null_check, derived_*, exists, join_*, not_persisted,
+    schema_gap, code_external, or any other database-dependent resolution
+    kind -- every kind except the two handled below)."""
+    res = variable_resolution.get(var_name)
+    if not isinstance(res, dict):
+        return _NOT_GROUNDED
+    kind = res.get('kind')
+    if kind == 'literal_via_upstream_branch':
+        value_node = res.get('value')
+        return value_node.get('value') if isinstance(value_node, dict) else _NOT_GROUNDED
+    if kind == 'substituted_decision':
+        # Fully inlined already (resolve_and_substitute) -- foldable exactly
+        # when every one of ITS OWN free variables is foldable, recursively,
+        # against ITS OWN free_variable_resolutions (a separate scope: the
+        # same variable name can mean something else in the upstream
+        # decision than it does here).
+        sub_resolutions = res.get('free_variable_resolutions', {})
+        return _evaluate_expr_to_constant(
+            res.get('expression'),
+            lambda v: _grounded_constant_for_variable(v, sub_resolutions))
+    return _NOT_GROUNDED
+
+
+def _evaluate_expr_to_constant(node, resolve_var):
+    """Constant-folds a FEEL expression node (feel_parser.py's vocabulary)
+    against `resolve_var`, returning `_NOT_GROUNDED` the moment any part of
+    it depends on something not yet fixed."""
+    if not isinstance(node, dict):
+        return _NOT_GROUNDED
+    if node.get('kind') == 'literal':
+        return node['value']
+    if node.get('kind') == 'variable':
+        return resolve_var(node['ref'])
+    op = node.get('op')
+    if op in ('+', '-', '*', '/'):
+        left = _evaluate_expr_to_constant(node['left'], resolve_var)
+        right = _evaluate_expr_to_constant(node['right'], resolve_var)
+        if left is _NOT_GROUNDED or right is _NOT_GROUNDED:
+            return _NOT_GROUNDED
+        try:
+            if op == '+': return left + right
+            if op == '-': return left - right
+            if op == '*': return left * right
+            if op == '/': return left / right
+        except (TypeError, ZeroDivisionError):
+            return _NOT_GROUNDED
+    if op == 'if':
+        cond = _fold_condition_three_valued(node['cond'], None, resolve_var)
+        if cond is True:
+            return _evaluate_expr_to_constant(node['then'], resolve_var)
+        if cond is False:
+            return _evaluate_expr_to_constant(node['else'], resolve_var)
+        return _NOT_GROUNDED
+    return _NOT_GROUNDED  # call / opaque_formula -- never evaluated at compile time
+
+
+def _fold_condition_three_valued(node, variable_resolution, resolve_var=None):
+    """Kleene three-valued evaluation of a condition tree: True, False, or
+    None ("unknown"). `resolve_var` lets `_evaluate_expr_to_constant`'s own
+    'if' branch reuse this function without needing a `variable_resolution`
+    dict of its own (a nested expression's 'if' condition is itself an
+    ordinary boolean sub-expression, so it recurses back into this same
+    function rather than duplicating the and/or/not propagation rules)."""
+    resolve = resolve_var or (lambda v: _grounded_constant_for_variable(v, variable_resolution))
+    if not isinstance(node, dict):
+        return None
+    if node.get('kind') == 'literal':
+        return bool(node['value']) if node.get('type') == 'boolean' else None
+    op = node.get('op')
+    if op == 'and':
+        values = [_fold_condition_three_valued(c, variable_resolution, resolve) for c in node['clauses']]
+        if any(v is False for v in values):
+            return False
+        if any(v is None for v in values):
+            return None
+        return True
+    if op == 'or':
+        values = [_fold_condition_three_valued(c, variable_resolution, resolve) for c in node['clauses']]
+        if any(v is True for v in values):
+            return True
+        if any(v is None for v in values):
+            return None
+        return False
+    if op == 'not':
+        value = _fold_condition_three_valued(node['clause'], variable_resolution, resolve)
+        return None if value is None else (not value)
+    if op in ('=', '!=', '<', '<=', '>', '>='):
+        left = _evaluate_expr_to_constant(node['left'], resolve)
+        right = _evaluate_expr_to_constant(node['right'], resolve)
+        if left is _NOT_GROUNDED or right is _NOT_GROUNDED:
+            return None
+        try:
+            if op == '=': return left == right
+            if op == '!=': return left != right
+            if op == '<': return left < right
+            if op == '<=': return left <= right
+            if op == '>': return left > right
+            if op == '>=': return left >= right
+        except TypeError:
+            return None  # incomparable types -- never guessed at
+    if op == 'in':
+        left = _evaluate_expr_to_constant(node['left'], resolve)
+        if left is _NOT_GROUNDED:
+            return None
+        values = [_evaluate_expr_to_constant(v, resolve) for v in node['values']]
+        if any(v is _NOT_GROUNDED for v in values):
+            return None
+        try:
+            return left in values
+        except TypeError:
+            return None
+    if op == 'between':
+        left = _evaluate_expr_to_constant(node['left'], resolve)
+        low = _evaluate_expr_to_constant(node['low'], resolve)
+        high = _evaluate_expr_to_constant(node['high'], resolve)
+        if _NOT_GROUNDED in (left, low, high):
+            return None
+        try:
+            return low <= left <= high
+        except TypeError:
+            return None
+    return None  # 'if' at boolean position, or any unrecognized node -- unknown, safe default
+
+
 def compile_case_study(cs, mapping_source='ground_truth'):
     by_id, by_name = load_case_study_decisions(cs)
     gt = load_case_study_ground_truth(cs)
@@ -1283,6 +1437,22 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                 # record, so no reason to redo it per variant.
                 hit_policy_context = {'earlier_rows': earlier_rows}
 
+                # Feasibility analysis (§7): fold the fully-assembled
+                # condition -- own cells, any grounded upstream branch
+                # clauses, everything -- using only what's fixed at
+                # compile time. Only ever drops a record when this proves
+                # it False; True/unknown are both kept for the search.
+                full_condition = variant_condition
+                if hit_policy_context['earlier_rows']:
+                    full_condition = {'op': 'and', 'clauses': [variant_condition] + [
+                        {'op': 'not', 'clause': er['condition']} for er in hit_policy_context['earlier_rows']]}
+                feasibility = _fold_condition_three_valued(full_condition, variant_resolution)
+                if feasibility is False:
+                    blocked.append({'record_id': variant_id, 'reason': 'infeasible',
+                                     'detail': 'condition provably unsatisfiable by three-valued '
+                                               'constant folding of grounded values'})
+                    continue
+
                 tables = set()
                 for res in variant_resolution.values():
                     collect_tables_from_resolution(res, tables)
@@ -1302,6 +1472,7 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                     'variable_resolution': variant_resolution,
                     'fk_closure_tables': fk_tables,
                     'cross_variable_reference': cross_variable_reference_flag(column_predicates),
+                    'feasibility': 'true' if feasibility is True else 'unknown',
                 }
                 if provenance_suffix:
                     record['grounded_upstream_branches'] = provenance_suffix
