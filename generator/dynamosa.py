@@ -742,7 +742,8 @@ def _mutations_per_child(active, population_size, mutations_per_child):
 
 
 def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
-                  mutations_per_child='auto', kick_probability=_KICK_PROBABILITY, dynamic_gating=True):
+                  mutations_per_child='auto', kick_probability=_KICK_PROBABILITY, dynamic_gating=True,
+                  use_local_burst=True):
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
@@ -826,6 +827,17 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     non-dominated sorting discards a kick with no compensating gain on
     its own.
 
+    `use_local_burst` (True by default -- exactly this function's own
+    prior, only behavior, unchanged): the other half of this project's
+    own evaluation-comparison ablation, alongside `mutations_per_child`
+    (already a parameter, no change needed there -- passing `1` reverts
+    to a single random pick per child, the design's own original,
+    pre-multi-pick behavior). When False, every pick gets exactly one
+    mutation attempt instead of `_local_burst_size`'s own leaf-count
+    -scaled repeat count -- isolating this module's own composite-leaf
+    fix specifically (see `_local_burst_size`'s own docstring for the
+    real, measured bottleneck it was built to fix).
+
     `dynamic_gating` (True by default -- exactly this function's own
     prior, only behavior, unchanged) controls the "Dyna" part specifically,
     for the ablation this project's own evaluation compares against
@@ -906,7 +918,8 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                         # still-empty dedicated row can leave some OTHER
                         # leaf of the same record genuinely unresolvable,
                         # an honest "not evaluable yet," never a crash.
-                        for _ in range(_local_burst_size(r)):
+                        burst = _local_burst_size(r) if use_local_burst else 1
+                        for _ in range(burst):
                             child_c, child_fm, child_sm, _improved = _mutate_objective(
                                 r, child_c, child_fm, child_sm, table_cache, rng,
                                 kick_probability=kick_probability)
