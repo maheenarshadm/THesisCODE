@@ -6974,9 +6974,10 @@
   },
   "variable_resolution": {
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -7023,6 +7024,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -7199,9 +7201,10 @@
   },
   "variable_resolution": {
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -7248,6 +7251,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -7456,9 +7460,10 @@
   },
   "variable_resolution": {
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -7505,6 +7510,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -7745,9 +7751,10 @@
   },
   "variable_resolution": {
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -7794,6 +7801,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -8066,9 +8074,10 @@
   },
   "variable_resolution": {
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "newWarningCount": {
     "kind": "literal_via_upstream_branch",
@@ -8115,6 +8124,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -8283,9 +8293,10 @@
     "column": "reg_status"
    },
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -8311,6 +8322,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -8516,9 +8528,10 @@
     "column": "reg_status"
    },
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -8544,6 +8557,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -8781,9 +8795,10 @@
     "column": "reg_status"
    },
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -8809,6 +8824,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -9078,9 +9094,10 @@
     "column": "reg_status"
    },
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -9106,6 +9123,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -9407,9 +9425,10 @@
     "column": "reg_status"
    },
    "newAdmissionEligibilityNotMet": {
-    "kind": "derived",
-    "notes": "admission-module cross-reference",
-    "table_hints": []
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
    },
    "cumulativeGPA": {
     "kind": "schema_column",
@@ -9435,6 +9454,7 @@
    }
   },
   "fk_closure_tables": [
+   "ADM_MERIT_LIST",
    "BATCH",
    "CAMPUS",
    "CITY",
@@ -22244,9 +22264,19 @@
   },
   "variable_resolution": {
    "courseOfferedInFollowingSemesters": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "exists",
+    "candidate_tables": [
+     "COURSE_OFFER"
+    ],
+    "candidate_columns": [
+     {
+      "table": "COURSE_OFFER",
+      "column": "COURSE_ID"
+     }
+    ],
+    "filter_text": "COURSE_ID = <COURSE_ID>",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
    },
    "courseTypeId": {
     "kind": "schema_column",
@@ -22432,9 +22462,19 @@
     "value_column": "COURSE.CREDIT_HRS"
    },
    "courseOfferedInFollowingSemesters": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "exists",
+    "candidate_tables": [
+     "COURSE_OFFER"
+    ],
+    "candidate_columns": [
+     {
+      "table": "COURSE_OFFER",
+      "column": "COURSE_ID"
+     }
+    ],
+    "filter_text": "COURSE_ID = <COURSE_ID>",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
    }
   },
   "fk_closure_tables": [
@@ -22600,9 +22640,19 @@
     "value_column": "COURSE.CREDIT_HRS"
    },
    "courseOfferedInFollowingSemesters": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "exists",
+    "candidate_tables": [
+     "COURSE_OFFER"
+    ],
+    "candidate_columns": [
+     {
+      "table": "COURSE_OFFER",
+      "column": "COURSE_ID"
+     }
+    ],
+    "filter_text": "COURSE_ID = <COURSE_ID>",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
    },
    "replacingCoursePassedAtLeastOneSemesterAfter": {
     "kind": "schema_column",
@@ -26689,9 +26739,14 @@
     "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
    },
    "isNeededToGraduateThisSummer": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "tables": [
+     "STUDENT_PROGRAM",
+     "COURSE",
+     "BATCH_PROGRAM"
+    ],
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
    },
    "priorRegistrationCount": {
     "kind": "derived_aggregate",
@@ -26703,6 +26758,7 @@
   },
   "fk_closure_tables": [
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -26894,14 +26950,20 @@
     "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
    },
    "isNeededToGraduateThisSummer": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "tables": [
+     "STUDENT_PROGRAM",
+     "COURSE",
+     "BATCH_PROGRAM"
+    ],
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
    }
   },
   "fk_closure_tables": [
    "APPUSER",
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -27128,9 +27190,14 @@
     "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
    },
    "isNeededToGraduateThisSummer": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "tables": [
+     "STUDENT_PROGRAM",
+     "COURSE",
+     "BATCH_PROGRAM"
+    ],
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
    },
    "repeatCourseCountRequested": {
     "kind": "derived_aggregate",
@@ -27144,6 +27211,7 @@
   "fk_closure_tables": [
    "APPUSER",
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",
@@ -27381,9 +27449,14 @@
     "notes": "Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
    },
    "isNeededToGraduateThisSummer": {
-    "kind": "derived",
-    "notes": "",
-    "table_hints": []
+    "kind": "raw_sql_boolean",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "tables": [
+     "STUDENT_PROGRAM",
+     "COURSE",
+     "BATCH_PROGRAM"
+    ],
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
    },
    "repeatCourseCountRequested": {
     "kind": "derived_aggregate",
@@ -27404,6 +27477,7 @@
   "fk_closure_tables": [
    "APPUSER",
    "BATCH",
+   "BATCH_PROGRAM",
    "CAMPUS",
    "CITY",
    "COUNTRY",

@@ -325,14 +325,39 @@ def _raw_sql_boolean_value(node, candidate, scenario, warnings):
     conn = sqlite3.connect(':memory:')
     cur = conn.cursor()
     for table in node['tables']:
-        cols = sorted({c for row in candidate.rows(table) for c in row})
+        # A table this leaf names can also carry rows written by a
+        # COMPLETELY DIFFERENT record's own leaf sharing the same shared
+        # candidate (raw_sql_boolean is, unlike derived_aggregate/exists,
+        # never owner-scoped -- it scans the whole table) -- and different
+        # leaf kinds write column keys under different casing conventions
+        # (a schema_column resolution's own lowercase ground-truth name vs.
+        # this SQL's own uppercase alias, e.g. real bug found running FLEX2
+        # end to end, 2026-09-22: 'credits_earned' and 'CREDITS_EARNED'
+        # both present on STUDENT_PROGRAM). SQLite's own column names are
+        # case-insensitive, so keeping both as distinct CREATE TABLE
+        # columns raises a real "duplicate column name" error the moment
+        # both appear on the same table. Deduplicated case-insensitively
+        # here, keeping one canonical (first-seen) casing per column, and
+        # each row's own value looked up the same case-insensitive way
+        # `_row_get` already does everywhere else in this module, so a row
+        # that only has the OTHER casing isn't silently read as missing.
+        seen = {}
+        for row in candidate.rows(table):
+            for c in row:
+                seen.setdefault(c.lower(), c)
+        cols = sorted(seen.values())
         if not cols:
             cols = ['_dummy']
         cur.execute(f'CREATE TABLE {table} ({", ".join(cols)})')
         for row in candidate.rows(table):
             placeholders = ', '.join('?' for _ in cols)
-            cur.execute(f'INSERT INTO {table} ({", ".join(cols)}) VALUES ({placeholders})',
-                        [row.get(c) for c in cols])
+            values = []
+            for c in cols:
+                try:
+                    values.append(_row_get(row, c))
+                except FitnessEvaluationError:
+                    values.append(None)
+            cur.execute(f'INSERT INTO {table} ({", ".join(cols)}) VALUES ({placeholders})', values)
     sql = _PLACEHOLDER_RE.sub(lambda m: str(scenario.get(m.group(1), 'NULL')), node['sql_template'])
     try:
         cur.execute(f'SELECT ({sql})')
