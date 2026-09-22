@@ -36286,96 +36286,6 @@
   "feasibility": "unknown"
  },
  {
-  "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_3",
-  "case_study": "Spree",
-  "dmn_file": "Customer_Segment_Eligibility.dmn",
-  "decision_name": "Promotion Customer Group Eligibility",
-  "hit_policy": "FIRST",
-  "rule_id": "Decision_PromotionCustomerGroupEligibility_rule_3",
-  "source_citation": "",
-  "condition": {
-   "op": ">",
-   "left": {
-    "kind": "variable",
-    "ref": "matchingCustomerGroupCount"
-   },
-   "right": {
-    "kind": "literal",
-    "value": 0,
-    "type": "number"
-   }
-  },
-  "outputs": {
-   "customerGroupEligible": {
-    "kind": "literal",
-    "value": true,
-    "type": "boolean"
-   }
-  },
-  "hit_policy_context": {
-   "earlier_rows": [
-    {
-     "rule_id": "Decision_PromotionCustomerGroupEligibility_rule_1",
-     "condition": {
-      "op": "=",
-      "left": {
-       "kind": "variable",
-       "ref": "customerIdPresent"
-      },
-      "right": {
-       "kind": "literal",
-       "value": false,
-       "type": "boolean"
-      }
-     }
-    },
-    {
-     "rule_id": "Decision_PromotionCustomerGroupEligibility_rule_2",
-     "condition": {
-      "op": "=",
-      "left": {
-       "kind": "variable",
-       "ref": "promotionTargetGroupsConfigured"
-      },
-      "right": {
-       "kind": "literal",
-       "value": false,
-       "type": "boolean"
-      }
-     }
-    }
-   ]
-  },
-  "variable_resolution": {
-   "matchingCustomerGroupCount": {
-    "kind": "derived",
-    "notes": "substituted from Customer Group Match Count per DRD edge",
-    "table_hints": []
-   },
-   "customerIdPresent": {
-    "kind": "null_check",
-    "table": "spree_orders",
-    "column": "user_id",
-    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
-   },
-   "promotionTargetGroupsConfigured": {
-    "kind": "schema_gap",
-    "notes": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row.",
-    "hinted_pairs": [
-     [
-      "spree_promotion_rules",
-      "preferences"
-     ]
-    ]
-   }
-  },
-  "fk_closure_tables": [
-   "spree_orders"
-  ],
-  "cross_variable_reference": false,
-  "feasibility": "unknown"
- },
- {
   "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_4",
   "case_study": "Spree",
   "dmn_file": "Customer_Segment_Eligibility.dmn",
@@ -36462,12 +36372,50 @@
     ]
    },
    "matchingCustomerGroupCount": {
-    "kind": "derived",
-    "notes": "substituted from Customer Group Match Count per DRD edge",
-    "table_hints": []
+    "kind": "substituted_decision",
+    "substituted_from": "Customer Group Match Count",
+    "expression": {
+     "kind": "call",
+     "name": "count",
+     "args": [
+      {
+       "kind": "call",
+       "name": "intersection",
+       "args": [
+        {
+         "kind": "variable",
+         "ref": "customerGroupIds"
+        },
+        {
+         "kind": "variable",
+         "ref": "promotionTargetGroupIds"
+        }
+       ]
+      }
+     ]
+    },
+    "free_variable_resolutions": {
+     "customerGroupIds": {
+      "kind": "schema_column",
+      "table": "spree_customer_group_users",
+      "column": "customer_group_id",
+      "notes": "join; corrected 2026-09-13 -- the real spree_schema.rb has no customer_id column on spree_customer_group_users or spree_orders, and no such rename migration exists in this repo; the real column is user_id"
+     },
+     "promotionTargetGroupIds": {
+      "kind": "schema_gap",
+      "notes": "CustomerGroup rule's customer_group_ids array lives in the serialized preferences blob, not a dedicated join table. Confirmed 2026-09-11: likely preference key customer_group_ids (an array of spree_customer_groups.id values -- that table and spree_customer_group_users, which record actual customer<->group membership, are real, normalized tables in this schema; only the promotion rule's own list of TARGETED group ids is still blob-serialized, not the groups themselves). Less certain than the amount/operator keys above -- current Spree source names the accessor preferred_customer_group_ids, which may reflect a newer version than this schema snapshot; not verified against a real row.",
+      "hinted_pairs": [
+       [
+        "spree_promotion_rules",
+        "preferences"
+       ]
+      ]
+     }
+    }
    }
   },
   "fk_closure_tables": [
+   "spree_customer_group_users",
    "spree_orders"
   ],
   "cross_variable_reference": false,
@@ -36573,9 +36521,29 @@
   },
   "variable_resolution": {
    "priorCompletedOrderCount": {
-    "kind": "derived",
-    "notes": "substituted from Prior Completed Order Count per DRD edge",
-    "table_hints": []
+    "kind": "substituted_decision",
+    "substituted_from": "Prior Completed Order Count",
+    "expression": {
+     "kind": "call",
+     "name": "count",
+     "args": [
+      {
+       "kind": "opaque_formula",
+       "feel_text": "order for order in store.orders where ( order.customer = customer or order.email = email ) and order.state = \"complete\" and order != currentOrder",
+       "free_variables": [
+        "currentOrder",
+        "customer",
+        "email",
+        "order",
+        "order.customer",
+        "order.email",
+        "order.state",
+        "store.orders"
+       ]
+      }
+     ]
+    },
+    "free_variable_resolutions": {}
    },
    "userOrEmailPresent": {
     "kind": "any_not_null",
@@ -36668,9 +36636,29 @@
     "notes": "existence check (either populated); corrected 2026-09-13 -- real column is user_id"
    },
    "priorCompletedOrderCount": {
-    "kind": "derived",
-    "notes": "substituted from Prior Completed Order Count per DRD edge",
-    "table_hints": []
+    "kind": "substituted_decision",
+    "substituted_from": "Prior Completed Order Count",
+    "expression": {
+     "kind": "call",
+     "name": "count",
+     "args": [
+      {
+       "kind": "opaque_formula",
+       "feel_text": "order for order in store.orders where ( order.customer = customer or order.email = email ) and order.state = \"complete\" and order != currentOrder",
+       "free_variables": [
+        "currentOrder",
+        "customer",
+        "email",
+        "order",
+        "order.customer",
+        "order.email",
+        "order.state",
+        "store.orders"
+       ]
+      }
+     ]
+    },
+    "free_variable_resolutions": {}
    }
   },
   "fk_closure_tables": [
@@ -38952,9 +38940,19 @@
     "notes": "Same loop index compared to the STATUS_DELETED constant."
    },
    "welcomeMessagePresent": {
-    "kind": "derived",
-    "notes": "Reads from a generic i18n description mechanism keyed by \"welcome_message\", not a direct column on ageing_entity_step.",
-    "table_hints": []
+    "kind": "exists",
+    "candidate_tables": [
+     "INTERNATIONAL_DESCRIPTION"
+    ],
+    "candidate_columns": [
+     {
+      "table": "INTERNATIONAL_DESCRIPTION",
+      "column": "PSUDO_COLUMN"
+     }
+    ],
+    "filter_text": "PSUDO_COLUMN = 'welcome_message'",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-22] Reads existence of a row in the real, general-purpose i18n description table INTERNATIONAL_DESCRIPTION (columns: table_id, foreign_id, language_id, psudo_column, content) filtered to PSUDO_COLUMN='welcome_message', matching this row's own original note ('generic i18n description mechanism'). Approximates existence across the whole table rather than scoped to this specific ageing step's own foreign_id/table_id, since correlating those requires more context than is available here -- a real, disclosed simplification, not a guess at the mechanism itself, which was independently confirmed to exist with exactly this shape.",
+    "raw_schema_field": "INTERNATIONAL_DESCRIPTION(PSUDO_COLUMN='welcome_message')"
    }
   },
   "fk_closure_tables": [
@@ -38964,6 +38962,7 @@
    "entity",
    "generic_status",
    "generic_status_type",
+   "international_description",
    "language"
   ],
   "cross_variable_reference": false,
@@ -39187,9 +39186,19 @@
     "notes": "Same loop index compared to the STATUS_DELETED constant."
    },
    "welcomeMessagePresent": {
-    "kind": "derived",
-    "notes": "Reads from a generic i18n description mechanism keyed by \"welcome_message\", not a direct column on ageing_entity_step.",
-    "table_hints": []
+    "kind": "exists",
+    "candidate_tables": [
+     "INTERNATIONAL_DESCRIPTION"
+    ],
+    "candidate_columns": [
+     {
+      "table": "INTERNATIONAL_DESCRIPTION",
+      "column": "PSUDO_COLUMN"
+     }
+    ],
+    "filter_text": "PSUDO_COLUMN = 'welcome_message'",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-22] Reads existence of a row in the real, general-purpose i18n description table INTERNATIONAL_DESCRIPTION (columns: table_id, foreign_id, language_id, psudo_column, content) filtered to PSUDO_COLUMN='welcome_message', matching this row's own original note ('generic i18n description mechanism'). Approximates existence across the whole table rather than scoped to this specific ageing step's own foreign_id/table_id, since correlating those requires more context than is available here -- a real, disclosed simplification, not a guess at the mechanism itself, which was independently confirmed to exist with exactly this shape.",
+    "raw_schema_field": "INTERNATIONAL_DESCRIPTION(PSUDO_COLUMN='welcome_message')"
    },
    "statusIsActive": {
     "kind": "schema_column",
@@ -39221,6 +39230,7 @@
    "entity",
    "generic_status",
    "generic_status_type",
+   "international_description",
    "language"
   ],
   "cross_variable_reference": false,

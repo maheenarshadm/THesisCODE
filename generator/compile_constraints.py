@@ -336,14 +336,19 @@ _ANY_OF_WORDS = re.compile(r'\b(OR of|either|any of|either populated)\b', re.I)
 _EXISTS_ROW_WORDS = re.compile(
     r'\bexistence of\b|\(existence\)|\bEXISTS\(|self-join', re.I)
 # One token inside an `exists`-kind raw schema field's own parenthesized
-# column list -- a bare column name (`entity_id`) or one with a literal
-# value (`entity_id=0`). Deliberately narrow (identifier and optional
-# `=integer` only): the raw schema field's own convention never spells
-# out string/placeholder literals here the way `derived_aggregate`'s own
-# "WHERE ..." recipes do, so a token this can't parse aborts the whole
-# filter-text extraction rather than guessing (see classify_derived's
-# own comment on this).
-_EXISTS_FILTER_TOKEN_RE = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(-?\d+))?$')
+# column list -- a bare column name (`entity_id`), one with an integer
+# literal (`entity_id=0`), or one with a quoted string literal
+# (`psudo_column='welcome_message'`, added 2026-09-22 for jBilling's
+# generic i18n description table, a real per-language, per-pseudo-column
+# lookup that genuinely needs a string key, not a number -- the runtime
+# filter machinery, _mechanical_filter_predicate/_row_from_filter_
+# conjuncts in candidate.py, already strips and compares quoted string
+# conjuncts exactly this way for every OTHER filter-text source, e.g.
+# derived_aggregate's own "WHERE ..." recipes; this only extends the
+# GROUND-TRUTH-TEXT parser to also accept one). A token that fits none of
+# these three shapes still aborts the whole filter-text extraction rather
+# than guessing (see classify_derived's own comment on this).
+_EXISTS_FILTER_TOKEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?:(-?\d+)|'([^']*)'))?$")
 _JOINED_VIA_RE = re.compile(r'joined via ([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)', re.I)
 _CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)')
 # An escape hatch for a genuinely bespoke boolean fact that doesn't fit any
@@ -627,9 +632,14 @@ def classify_derived(row):
                     if not tm:
                         parse_ok = False
                         break
-                    col, lit = tm.group(1), tm.group(2)
+                    col, int_lit, str_lit = tm.group(1), tm.group(2), tm.group(3)
                     columns.append(col)
-                    conjuncts.append(f"{col} = {lit}" if lit is not None else f"{col} = <{col}>")
+                    if int_lit is not None:
+                        conjuncts.append(f"{col} = {int_lit}")
+                    elif str_lit is not None:
+                        conjuncts.append(f"{col} = '{str_lit}'")
+                    else:
+                        conjuncts.append(f"{col} = <{col}>")
                 if parse_ok:
                     return {'kind': 'exists', 'candidate_tables': [table],
                              'candidate_columns': [{'table': table, 'column': c} for c in columns],
