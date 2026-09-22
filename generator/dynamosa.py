@@ -742,7 +742,7 @@ def _mutations_per_child(active, population_size, mutations_per_child):
 
 
 def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
-                  mutations_per_child='auto', kick_probability=_KICK_PROBABILITY):
+                  mutations_per_child='auto', kick_probability=_KICK_PROBABILITY, dynamic_gating=True):
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
@@ -824,7 +824,22 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     Safe at the population level: DynaMOSA's own archive never regresses
     from a kick that makes one child temporarily worse, and
     non-dominated sorting discards a kick with no compensating gain on
-    its own."""
+    its own.
+
+    `dynamic_gating` (True by default -- exactly this function's own
+    prior, only behavior, unchanged) controls the "Dyna" part specifically,
+    for the ablation this project's own evaluation compares against
+    (functionally equivalent to MOSA, DynaMOSA's direct predecessor,
+    applied over the identical representation/archive/NSGA-II core):
+    when False, every record is active from generation 1 regardless of
+    `grounded_upstream_branches`, i.e. dependency-gated activation is
+    switched off entirely while every other mechanism -- the archive,
+    non-dominated sorting, crowding distance, crossover, mutation --
+    stays byte-for-byte identical. This isolates exactly one variable
+    (whether unsatisfiable-dependency objectives are allowed to compete
+    for selection pressure before they're even reachable) rather than
+    comparing against a separately-implemented algorithm with its own,
+    potentially unfair, tuning and bugs."""
     rng = rng or random.Random(0)
     table_cache = {}
     population = _seed_shared_population(records, case_study, population_size)
@@ -854,7 +869,7 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     for _gen in range(generations):
         covered_keys = {_branch_key(r) for r in records
                          if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0}
-        active = [r for r in records if is_active(r, covered_keys)]
+        active = records if not dynamic_gating else [r for r in records if is_active(r, covered_keys)]
 
         # Computed once per generation (the active set itself only
         # changes between generations, as DRD gates open) -- not once per
@@ -1432,9 +1447,9 @@ if __name__ == '__main__':
     # gating on a case genuinely present in the corpus.
     records = [
         find('Decision_AcademicWarningStatus_Rule_1'),
-        find('Decision_AcademicWarningStatus_Rule_5'),
+        find('Decision_AcademicWarningStatus_Rule_2'),
         find('Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1'),
-        find('Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5'),
+        find('Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2'),
     ]
     for r in records:
         print(f"  {r['record_id']} <- {r.get('grounded_upstream_branches')}")
