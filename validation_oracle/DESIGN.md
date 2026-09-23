@@ -1,9 +1,85 @@
 # Independent rule-coverage validation oracle — design document
 
-**Status: design only. Nothing in this document is implemented yet.**
-This folder exists so the validator has a home that is architecturally
-separate from `generator/` (the search implementation) from day one — no
-code has been written here. Do not treat anything below as built.
+**Status: v1 built and passing its acceptance test.** See
+"Implementation status" below for exactly what's real, what's verified,
+and what's still a disclosed gap. Earlier revisions of this document said
+"design only, nothing implemented" — no longer true; treat this section
+and "Implementation status" as authoritative over any design prose below
+them that hasn't been updated to match.
+
+## Implementation status (kept current, not historical)
+
+Built, in `validation_oracle/`, all independent of `generator/`'s search
+path except the two explicit exceptions named in "Architectural
+separation requirement": `dmn_walk.py`, `phase1_utility.py`,
+`subject_table.py`, `schema_utility.py`, `db_resolver.py`,
+`rule_evaluator.py`, `drd_executor.py`.
+
+**Verified working, end to end, against real data:**
+- Single-table decision enumeration + rule selection (OpenMRS's
+  `Preferred Identifier Requirement`) — the acceptance test: independently
+  reproduced the OpenMRS merge regression from `DECISIONS_ALGORITHM.md`
+  §8 with zero prior knowledge fed in.
+- Multi-table decisions via forward-only FK join paths
+  (`schema_utility.build_join_path`, `subject_table._pick_root`) — 17 of
+  OpenMRS's 20 real decisions now resolve (up from 8 before join-path
+  support), verified against real cross-table queries (`Identifier
+  Location Requirement`).
+- `not_persisted` inputs via an explicit, visibly-flagged
+  `declared_not_persisted_value` parameter — verified it raises without
+  one and resolves (type `not_persisted_declared`, never confused with a
+  database-derived value) with one, against a real OpenMRS objective
+  (`Birthdate Validity::evaluationTime`).
+
+**Verified working via synthetic tests** (`tests/test_drd_chaining_synthetic.py`),
+not yet against a real case study (see "known gaps" for why):
+- `literal_via_upstream_branch` DRD chaining (`DecisionRunner`,
+  `UngroundedForCase`) — correctly distinguishes a real case where the
+  upstream decision actually selected the required rule (value applies)
+  from one where it selected a different rule (objective correctly
+  treated as not grounded for that case, not silently matched anyway).
+- `substituted_decision` expression evaluation
+  (`rule_evaluator.evaluate_expression`) — arithmetic over independently
+  resolved free variables.
+- `derived_aggregate`'s placeholder-to-column-name matching
+  (`db_resolver._resolve_placeholders`) — unit-verified in isolation
+  against real FLEX2 column names.
+
+**Known gaps found while building this, disclosed here (see also
+"Known gaps" below the original design prose):**
+- **Composite primary keys are not supported.** The subject-row
+  identification design assumes a single-column PK
+  (`subject_pk_column`/`subject_pk_value`). FLEX2's `COURSE_REGISTRATION`
+  table (needed for `derived_aggregate`/`derived_join_count` end-to-end
+  testing) has a composite PK (`[OFFER_ID, ROLL_NO]`) and cannot be used
+  as a subject table until this is extended.
+- **Some decisions have no single-row "subject" at all** — their real
+  unit of evaluation is a (entity, entity) PAIR (e.g. FLEX2's `Course
+  Load Limit` is really "per (student, semester)", not per row of any
+  one table), which no FK join path from a single root row can express.
+  All three of FLEX2's real `literal_via_upstream_branch`-needing
+  decisions (`Course Load Limit`, `Admission Closure Eligibility`,
+  `Course Registration Eligibility`) hit this, independent of and in
+  addition to the DRD-chaining mechanism itself (verified separately, and
+  working, via the synthetic tests above). Not yet designed.
+- `derived_join_count`'s own two-table-join-then-count shape doesn't
+  reduce to `derived_aggregate`'s single filter_text conjunct pattern;
+  `db_resolver.resolve` raises `NotImplementedError` naming this rather
+  than attempting it.
+- 3 of OpenMRS's 20 decisions remain genuinely unresolved by the
+  forward-only join-path rule: `Numeric Precision Validity`/`Numeric
+  Absolute Range Validity`/`Numeric Interpretation Classification` need
+  `obs` and `concept_numeric`, which share a common parent (`concept`)
+  rather than one having a direct FK to the other — correctly refused,
+  not guessed (see "No anchoring" section's own reasoning for why a
+  backward/shared-parent join is declined by design, not just unbuilt).
+
+Still not started: `coverage.py` + the three CSV/JSON output files, the
+remaining spec'd test cases (UNIQUE violation, join-based input against
+real data, merge-induced regression as an explicit test rather than an
+ad hoc script, duplicate-output disambiguation), and extending beyond
+OpenMRS's one fully-worked decision to the rest of OpenMRS and the other
+3 case studies.
 
 ## Why this exists
 

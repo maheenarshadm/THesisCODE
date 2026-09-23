@@ -67,14 +67,45 @@ def tables_referenced(node):
                       f"fail loudly rather than silently skip (node={node!r})")
 
 
-def subject_table_for_decision(records):
+def _pick_root(case_study, all_tables, closure_tables):
+    """Among a decision's own referenced tables, the ROOT is whichever
+    table can reach EVERY other referenced table via an FK join path
+    within the decision's own fk_closure (`schema_utility.build_join_path`
+    -- real multi-hop BFS, e.g. two sibling tables sharing a common
+    parent they both have an FK to, not just a direct one-hop edge).
+    Requires EXACTLY ONE referenced table to have this property; more
+    than one (genuine ambiguity) or none (no candidate reaches everyone)
+    is refused, not guessed."""
+    from schema_utility import build_join_path
+
+    candidates = []
+    for root in all_tables:
+        others = all_tables - {root}
+        if all(build_join_path(case_study, root, t, closure_tables) is not None for t in others):
+            candidates.append(root)
+
+    if len(candidates) != 1:
+        raise ValueError(
+            f"Cannot pick a unique root among {sorted(all_tables)}: "
+            f"{len(candidates)} table(s) can reach every other referenced table via a "
+            f"join path within the closure ({candidates}) -- need exactly 1. Refusing to guess.")
+    return candidates[0]
+
+
+def subject_table_for_decision(records, case_study):
     """`records` is every compiled objective for ONE decision (from
-    `phase1_utility.records_by_decision`). Returns the single subject
-    table name if every input across every objective resolves against
-    exactly one common table; raises otherwise, naming what was found,
-    rather than guessing which table is "the" subject."""
+    `phase1_utility.records_by_decision`). Returns
+    (subject_table, join_paths) -- `join_paths` is
+    {other_table: [hop, ...]} from `schema_utility.build_join_path`, for
+    every OTHER table this decision's inputs reference, empty when the
+    decision is single-table. Raises, naming what was found, rather than
+    guessing, when no unique root can be identified (see `_pick_root`)."""
+    from schema_utility import build_join_path
+
     all_tables = set()
+    closure_tables = set()
     for r in records:
+        closure_tables |= set(r.get('fk_closure_tables', []))
         for node in r.get('variable_resolution', {}).values():
             all_tables |= tables_referenced(node)
 
@@ -83,12 +114,22 @@ def subject_table_for_decision(records):
             f"No table-backed inputs found for decision {records[0]['decision_name']!r} -- "
             f"every input is non-table-backed (literal/upstream/not_persisted); "
             f"this decision cannot be independently entity-enumerated from the database alone.")
-    if len(all_tables) > 1:
-        raise ValueError(
-            f"Decision {records[0]['decision_name']!r} references multiple tables "
-            f"{sorted(all_tables)} -- multi-table subject-table derivation is not yet "
-            f"implemented (see validation_oracle/DESIGN.md open issues); refusing to guess.")
-    return next(iter(all_tables))
+
+    case_study = records[0]['case_study']
+    if len(all_tables) == 1:
+        return next(iter(all_tables)), {}
+
+    root = _pick_root(case_study, all_tables, closure_tables)
+    join_paths = {}
+    for t in all_tables:
+        if t == root:
+            continue
+        path = build_join_path(case_study, root, t, closure_tables)
+        if path is None:
+            raise ValueError(f"No FK join path found from root {root!r} to {t!r} "
+                              f"within closure {sorted(closure_tables)} -- refusing to guess.")
+        join_paths[t] = path
+    return root, join_paths
 
 
 if __name__ == '__main__':
@@ -96,7 +137,7 @@ if __name__ == '__main__':
 
     for decision_name, records in records_by_decision('OpenMRS').items():
         try:
-            subject = subject_table_for_decision(records)
-            print(f"{decision_name!r} -> subject table: {subject}")
+            subject, join_paths = subject_table_for_decision(records, 'OpenMRS')
+            print(f"{decision_name!r} -> subject table: {subject}  join_paths={join_paths}")
         except ValueError as e:
             print(f"{decision_name!r} -> UNRESOLVED: {e}")

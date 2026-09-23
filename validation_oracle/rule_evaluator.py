@@ -27,7 +27,36 @@ def _eval_operand(node, values):
         return values[node['ref']]
     if kind == 'literal':
         return node['value']
+    if 'op' in node:
+        return evaluate_expression(node, values)
     raise NotImplementedError(f"Unhandled operand kind {kind!r}: {node!r}")
+
+
+_ARITHMETIC = {
+    '+': lambda a, b: a + b,
+    '-': lambda a, b: a - b,
+    '*': lambda a, b: a * b,
+    '/': lambda a, b: a / b if b else None,
+}
+
+
+def evaluate_expression(expr, values):
+    """A `substituted_decision` node's own `expression` tree -- the SAME
+    op/left/right/kind shape `condition` uses, but with ARITHMETIC
+    operators instead of comparisons (this is a literal-expression
+    decision's own formula, inlined; see DESIGN.md's note on literal-
+    expression decisions having no rule/hit-policy concept of their
+    own). `values` is {var_name: resolved_value} for every free variable
+    the expression references, already independently resolved (never
+    from search state)."""
+    if 'op' not in expr:
+        return _eval_operand(expr, values)
+    op = expr['op']
+    if op in _ARITHMETIC:
+        left = _eval_operand(expr['left'], values)
+        right = _eval_operand(expr['right'], values)
+        return _ARITHMETIC[op](left, right)
+    raise NotImplementedError(f"Unhandled expression operator {op!r}: {expr!r}")
 
 
 def _ordered_compare(op, a, b):
