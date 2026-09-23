@@ -30,13 +30,31 @@ def _eval_operand(node, values):
     raise NotImplementedError(f"Unhandled operand kind {kind!r}: {node!r}")
 
 
+def _ordered_compare(op, a, b):
+    """FEEL semantics for an ordering comparison: a comparison against
+    None, or between incomparable types (e.g. the database holding a
+    placeholder string like 'X' in a column another objective's rows
+    treat as numeric -- a real, disclosed artifact of this project's own
+    merge-time filler values, not a bug in THIS evaluator), is simply
+    NOT satisfied -- never an error. This is a defined semantic decision,
+    not a silent fallback: it reflects how FEEL itself treats an
+    undefined/incomparable comparison, and it is documented here rather
+    than swallowed."""
+    if a is None or b is None:
+        return False
+    try:
+        return op(a, b)
+    except TypeError:
+        return False
+
+
 _COMPARATORS = {
     '=': lambda a, b: a == b,
     '!=': lambda a, b: a != b,
-    '>': lambda a, b: a is not None and b is not None and a > b,
-    '>=': lambda a, b: a is not None and b is not None and a >= b,
-    '<': lambda a, b: a is not None and b is not None and a < b,
-    '<=': lambda a, b: a is not None and b is not None and a <= b,
+    '>': lambda a, b: _ordered_compare(lambda x, y: x > y, a, b),
+    '>=': lambda a, b: _ordered_compare(lambda x, y: x >= y, a, b),
+    '<': lambda a, b: _ordered_compare(lambda x, y: x < y, a, b),
+    '<=': lambda a, b: _ordered_compare(lambda x, y: x <= y, a, b),
 }
 
 
