@@ -91,20 +91,20 @@ def test_literal_via_upstream_branch():
     conn = build_db()
     records_by_decision = build_records()
     subject_tables = {
-        'D1': ('student', {}),
-        'D2': ('course_load', {}),
+        'D1': ('student', ['student_id'], {}),
+        'D2': ('course_load', ['course_load_id'], {}),
     }
     runner = DecisionRunner(conn, 'T', records_by_decision, subject_tables)
 
-    result = run_decision(conn, 'D2', records_by_decision['D2'], 'course_load', 'course_load_id',
+    result = run_decision(conn, 'D2', records_by_decision['D2'], 'course_load', ['course_load_id'],
                            join_paths={}, runner=runner)
 
     # course_load_id=10 belongs to student_id=1, who D1 selects Rule_1 for
     # -- bonusUnits=5 applies, 5 >= 5 is true -> D2_Rule_1 selected.
-    assert result['selected_by_case'][10] == 'D2_Rule_1', result['selected_by_case']
+    assert result['selected_by_case'][(10,)] == 'D2_Rule_1', result['selected_by_case']
     # course_load_id=11 belongs to student_id=2, who D1 selects Rule_2 for
     # -- literal_via_upstream_branch's own precondition FAILS -> ungrounded, not selected.
-    assert result['selected_by_case'][11] is None, result['selected_by_case']
+    assert result['selected_by_case'][(11,)] is None, result['selected_by_case']
     print("test_literal_via_upstream_branch: PASS")
     print(f"  selected_by_case = {result['selected_by_case']}")
 
@@ -112,11 +112,11 @@ def test_literal_via_upstream_branch():
 def test_substituted_decision_expression():
     conn = build_db()
     records_by_decision = build_records()
-    result = run_decision(conn, 'D3', records_by_decision['D3'], 'course_load', 'course_load_id', join_paths={})
+    result = run_decision(conn, 'D3', records_by_decision['D3'], 'course_load', ['course_load_id'], join_paths={})
 
     # Both course_load rows have units=21 -> totalUnits = 21 + 0 = 21 -> >= 21 true.
-    assert result['selected_by_case'][10] == 'D3_Rule_1', result['selected_by_case']
-    assert result['selected_by_case'][11] == 'D3_Rule_1', result['selected_by_case']
+    assert result['selected_by_case'][(10,)] == 'D3_Rule_1', result['selected_by_case']
+    assert result['selected_by_case'][(11,)] == 'D3_Rule_1', result['selected_by_case']
     print("test_substituted_decision_expression: PASS")
     print(f"  selected_by_case = {result['selected_by_case']}")
 

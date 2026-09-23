@@ -68,39 +68,50 @@ def tables_referenced(node):
 
 
 def _pick_root(case_study, all_tables, closure_tables):
-    """Among a decision's own referenced tables, the ROOT is whichever
-    table can reach EVERY other referenced table via an FK join path
-    within the decision's own fk_closure (`schema_utility.build_join_path`
-    -- real multi-hop BFS, e.g. two sibling tables sharing a common
-    parent they both have an FK to, not just a direct one-hop edge).
-    Requires EXACTLY ONE referenced table to have this property; more
-    than one (genuine ambiguity) or none (no candidate reaches everyone)
-    is refused, not guessed."""
+    """The ROOT is whichever table can reach EVERY directly-referenced
+    table (`all_tables`) via a forward FK join path within the decision's
+    own fk_closure (`schema_utility.build_join_path` -- real multi-hop
+    BFS). Candidates are drawn from `closure_tables`, NOT just
+    `all_tables` -- a decision's own inputs may reference no common
+    table directly, while a genuine JUNCTION table elsewhere in the
+    closure (never itself read by any input) has forward FKs to every
+    one of them. Confirmed real, not hypothetical: FLEX2's `Course Load
+    Limit` reads only STUDENT_PROGRAM and SEMESTER, which have no FK
+    between them at all -- but STUDENT_SEMESTER (in the same decision's
+    own fk_closure_tables, referenced by no input) has forward FKs to
+    BOTH. Requires EXACTLY ONE table (from the closure OR from
+    all_tables itself) to have this reach-everything property; more than
+    one (genuine ambiguity between candidate junction tables) or none is
+    refused, not guessed."""
     from schema_utility import build_join_path
 
+    candidate_pool = closure_tables | all_tables
     candidates = []
-    for root in all_tables:
-        others = all_tables - {root}
-        if all(build_join_path(case_study, root, t, closure_tables) is not None for t in others):
+    for root in candidate_pool:
+        if all(build_join_path(case_study, root, t, closure_tables) is not None for t in all_tables - {root}):
             candidates.append(root)
 
     if len(candidates) != 1:
         raise ValueError(
-            f"Cannot pick a unique root among {sorted(all_tables)}: "
-            f"{len(candidates)} table(s) can reach every other referenced table via a "
-            f"join path within the closure ({candidates}) -- need exactly 1. Refusing to guess.")
+            f"Cannot pick a unique root reaching {sorted(all_tables)} among the closure: "
+            f"{len(candidates)} candidate(s) qualify ({sorted(candidates)}) -- "
+            f"need exactly 1. Refusing to guess.")
     return candidates[0]
 
 
 def subject_table_for_decision(records, case_study):
     """`records` is every compiled objective for ONE decision (from
     `phase1_utility.records_by_decision`). Returns
-    (subject_table, join_paths) -- `join_paths` is
-    {other_table: [hop, ...]} from `schema_utility.build_join_path`, for
-    every OTHER table this decision's inputs reference, empty when the
-    decision is single-table. Raises, naming what was found, rather than
-    guessing, when no unique root can be identified (see `_pick_root`)."""
-    from schema_utility import build_join_path
+    (subject_table, subject_pk_columns, join_paths) --
+    `subject_pk_columns` is the subject table's own real PK column list
+    (`schema_utility.pk_columns`, always a list even for a single-column
+    PK); `join_paths` is {other_table: [hop, ...]} from
+    `schema_utility.build_join_path`, for every table this decision's
+    inputs directly reference OTHER than the subject table itself
+    (which may not be any of them -- see `_pick_root`). Raises, naming
+    what was found, rather than guessing, when no unique root can be
+    identified."""
+    from schema_utility import build_join_path, pk_columns
 
     all_tables = set()
     closure_tables = set()
@@ -117,7 +128,8 @@ def subject_table_for_decision(records, case_study):
 
     case_study = records[0]['case_study']
     if len(all_tables) == 1:
-        return next(iter(all_tables)), {}
+        subject = next(iter(all_tables))
+        return subject, pk_columns(case_study, subject), {}
 
     root = _pick_root(case_study, all_tables, closure_tables)
     join_paths = {}
@@ -129,7 +141,7 @@ def subject_table_for_decision(records, case_study):
             raise ValueError(f"No FK join path found from root {root!r} to {t!r} "
                               f"within closure {sorted(closure_tables)} -- refusing to guess.")
         join_paths[t] = path
-    return root, join_paths
+    return root, pk_columns(case_study, root), join_paths
 
 
 if __name__ == '__main__':
@@ -137,7 +149,7 @@ if __name__ == '__main__':
 
     for decision_name, records in records_by_decision('OpenMRS').items():
         try:
-            subject, join_paths = subject_table_for_decision(records, 'OpenMRS')
-            print(f"{decision_name!r} -> subject table: {subject}  join_paths={join_paths}")
+            subject, pk_cols, join_paths = subject_table_for_decision(records, 'OpenMRS')
+            print(f"{decision_name!r} -> subject table: {subject}  pk={pk_cols}  join_paths={join_paths}")
         except ValueError as e:
             print(f"{decision_name!r} -> UNRESOLVED: {e}")

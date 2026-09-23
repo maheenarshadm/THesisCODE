@@ -59,9 +59,17 @@ def canonical_table_name(case_study, table):
     return table
 
 
-def pk_column(case_study, table):
+def pk_columns(case_study, table):
+    """Always a list, even for a single-column PK -- normalizes the
+    schema JSON's own `pk` field (a bare string for a single column, a
+    list for a composite one, confirmed directly: FLEX2's
+    COURSE_REGISTRATION/STUDENT_SEMESTER both have `pk: [...]` composite
+    keys) so every caller handles exactly one shape."""
     entry = _table_entry(load_schema(case_study), table)
-    return entry.get('pk') if entry else None
+    pk = (entry or {}).get('pk')
+    if pk is None:
+        return []
+    return pk if isinstance(pk, list) else [pk]
 
 
 def fk_edges(case_study, table):

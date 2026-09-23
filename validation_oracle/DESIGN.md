@@ -22,17 +22,29 @@ separation requirement": `dmn_walk.py`, `phase1_utility.py`,
   §8 with zero prior knowledge fed in.
 - Multi-table decisions via forward-only FK join paths
   (`schema_utility.build_join_path`, `subject_table._pick_root`) — 17 of
-  OpenMRS's 20 real decisions now resolve (up from 8 before join-path
-  support), verified against real cross-table queries (`Identifier
-  Location Requirement`).
+  OpenMRS's 20 real decisions now resolve, verified against real
+  cross-table queries (`Identifier Location Requirement`).
+- **Composite primary keys.** Subject identity is now always a
+  `(pk_cols, pk_vals)` pair of tuples throughout `db_resolver.py`/
+  `drd_executor.py`/`subject_table.py` (`schema_utility.pk_columns`
+  always returns a list). Verified against FLEX2's real composite-PK
+  tables directly.
+- **Broadened root search.** `subject_table._pick_root` now searches
+  every table in a decision's own `fk_closure_tables`, not only the
+  tables its inputs directly reference — a genuine junction table no
+  input ever reads can still be the correct subject. Confirmed real
+  against FLEX2's `Course Load Limit`: its own inputs reference only
+  `STUDENT_PROGRAM` and `SEMESTER` (no FK between them at all), but
+  `STUDENT_SEMESTER` — never read by any input, composite PK
+  `[SEM_ID, ROLL_NO]` — has forward FKs to both and is correctly found.
 - `not_persisted` inputs via an explicit, visibly-flagged
-  `declared_not_persisted_value` parameter — verified it raises without
-  one and resolves (type `not_persisted_declared`, never confused with a
-  database-derived value) with one, against a real OpenMRS objective
-  (`Birthdate Validity::evaluationTime`).
+  `declared_not_persisted_value` parameter — verified against a real
+  OpenMRS objective (`Birthdate Validity::evaluationTime`).
+- `derived_join_count` (unmet-prerequisite-style join+count) — implemented
+  and unit-verified (synthetic prerequisite/registration data: 3
+  prerequisites, 2 passed, 1 failed → correctly counts 1 unmet).
 
-**Verified working via synthetic tests** (`tests/test_drd_chaining_synthetic.py`),
-not yet against a real case study (see "known gaps" for why):
+**Verified working via synthetic tests** (`tests/test_drd_chaining_synthetic.py`):
 - `literal_via_upstream_branch` DRD chaining (`DecisionRunner`,
   `UngroundedForCase`) — correctly distinguishes a real case where the
   upstream decision actually selected the required rule (value applies)
@@ -42,44 +54,44 @@ not yet against a real case study (see "known gaps" for why):
   (`rule_evaluator.evaluate_expression`) — arithmetic over independently
   resolved free variables.
 - `derived_aggregate`'s placeholder-to-column-name matching
-  (`db_resolver._resolve_placeholders`) — unit-verified in isolation
-  against real FLEX2 column names.
+  (`db_resolver._resolve_placeholders`) — unit-verified against real
+  FLEX2 column names.
 
-**Known gaps found while building this, disclosed here (see also
-"Known gaps" below the original design prose):**
-- **Composite primary keys are not supported.** The subject-row
-  identification design assumes a single-column PK
-  (`subject_pk_column`/`subject_pk_value`). FLEX2's `COURSE_REGISTRATION`
-  table (needed for `derived_aggregate`/`derived_join_count` end-to-end
-  testing) has a composite PK (`[OFFER_ID, ROLL_NO]`) and cannot be used
-  as a subject table until this is extended.
-- **Some decisions have no single-row "subject" at all** — their real
-  unit of evaluation is a (entity, entity) PAIR (e.g. FLEX2's `Course
-  Load Limit` is really "per (student, semester)", not per row of any
-  one table), which no FK join path from a single root row can express.
-  All three of FLEX2's real `literal_via_upstream_branch`-needing
-  decisions (`Course Load Limit`, `Admission Closure Eligibility`,
-  `Course Registration Eligibility`) hit this, independent of and in
-  addition to the DRD-chaining mechanism itself (verified separately, and
-  working, via the synthetic tests above). Not yet designed.
-- `derived_join_count`'s own two-table-join-then-count shape doesn't
-  reduce to `derived_aggregate`'s single filter_text conjunct pattern;
-  `db_resolver.resolve` raises `NotImplementedError` naming this rather
-  than attempting it.
-- 3 of OpenMRS's 20 decisions remain genuinely unresolved by the
-  forward-only join-path rule: `Numeric Precision Validity`/`Numeric
-  Absolute Range Validity`/`Numeric Interpretation Classification` need
-  `obs` and `concept_numeric`, which share a common parent (`concept`)
-  rather than one having a direct FK to the other — correctly refused,
-  not guessed (see "No anchoring" section's own reasoning for why a
-  backward/shared-parent join is declined by design, not just unbuilt).
+**A major real finding, from running the now-complete pipeline against
+FLEX2's `Course Load Limit` (composite-PK root + DRD chaining together,
+not a synthetic test):** the search's own archive claims **11/11**
+`Course Load Limit` objectives covered. Independent verification finds
+**0/11** — because `STUDENT_SEMESTER` (the real subject table, per the
+broadened-root-search finding above) has **zero rows** in the generated
+database. No objective's own fitness function ever reads
+`STUDENT_SEMESTER` directly, so the search had no reason to populate it,
+even though the real DMN decision structurally cannot be evaluated
+without it. This is exactly the kind of discrepancy this validator was
+built to surface — a large one, on real data, found by the completed
+pipeline, not a synthetic example.
+
+**Remaining gap, left open BY DESIGN, not for lack of effort:** 3 of
+OpenMRS's 20 decisions (`Numeric Precision Validity`/`Numeric Absolute
+Range Validity`/`Numeric Interpretation Classification`) need `obs` and
+`concept_numeric`, which share a common parent (`concept`) rather than
+one having a forward FK to the other. Closing this would require
+following a BACKWARD FK (parent → child), which is genuinely
+one-to-many — "which of the many child rows" is a real ambiguity no
+single subject-row lookup can resolve without inventing an arbitrary
+tie-break. Forcing this closed would mean guessing, which this project's
+own research constraints (and every other decision documented in this
+file) explicitly rule out. The sound alternative, if this needs
+closing later, is enumerating and evaluating EVERY matching child row
+rather than picking one — a different, more expensive mechanism, not yet
+built, and a real design decision for whoever wants it (see "Open
+issues").
 
 Still not started: `coverage.py` + the three CSV/JSON output files, the
 remaining spec'd test cases (UNIQUE violation, join-based input against
 real data, merge-induced regression as an explicit test rather than an
 ad hoc script, duplicate-output disambiguation), and extending beyond
-OpenMRS's one fully-worked decision to the rest of OpenMRS and the other
-3 case studies.
+the decisions exercised so far to the rest of OpenMRS/FLEX2 and to
+Spree/jBilling.
 
 ## Why this exists
 
