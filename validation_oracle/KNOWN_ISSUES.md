@@ -111,8 +111,44 @@ excluded from all coverage numbers per an explicit decision below):
   `test_drd_chaining_synthetic.py` — including its own
   `test_literal_via_upstream_branch` case — `test_serialized_field_
   roundtrip.py`, `drd_executor.py`'s own OpenMRS acceptance test)
-  re-run and passing unchanged. Next step, not yet done: implement
-  `derived_case` in `db_resolver.py`'s own `resolve()`, then re-verify.
+  re-run and passing unchanged.
+
+  **`derived_case` implemented in `db_resolver.py`'s `resolve()`
+  (2026-09-24), closing this gap.** A direct, mechanical port of
+  `candidate.py`'s own handling: read the real column via the existing
+  `row_for(table)` helper, walk `node['cases']` for a matching real
+  value, return the mapped value, or raise (never silently default)
+  when the real value isn't covered by any case — same error wording as
+  the generator side. Verified directly against the real FLEX2 fixture
+  before trusting it (`SEMESTER.TITLE='Fall'` correctly resolves
+  `semesterType='Regular'`, etc.), then confirmed via a fresh
+  `coverage.py` run: `Course Load Limit` is no longer in
+  `unresolved_decisions` at all (FLEX2's own unresolved count: 8→7) —
+  every one of its 11 objectives is now genuinely, fully evaluated
+  end to end for the first time, with real resolved inputs and a real
+  rule-selection attempt, rather than failing before ever reaching
+  that point.
+
+  **Net effect on verified counts: still 0/11 for `Course Load
+  Limit`, but now for a real, disclosed reason instead of a validator
+  bug.** Inspecting `decision_trace.json` directly: most real subjects
+  correctly come back `ungrounded` (their real Academic Warning Status
+  outcome doesn't match this specific "via" variant's own assumption —
+  expected, since only a few subjects should ever ground any one
+  variant). The handful that DO ground (e.g. subject `(6, 6)`:
+  `newWarningCount=3` from a real, confirmed `Academic Warning
+  Status::Rule_6` match, `semesterType='Summer'`, `cumulativeGPA=-2`,
+  `priorWarningCount=2`) still select no rule at all — none of Course
+  Load Limit's own rule conditions match that real combination. This is
+  a genuine, separate, generator-side gap (the search's own merge never
+  aligned all 4 of this composite record's own independent leaves —
+  `newWarningCount`/`semesterType`/`cumulativeGPA`/`priorWarningCount`
+  — onto one mutually-consistent real subject), not a validator issue.
+  Both validator-side bugs found chasing this (`upstream_subject_value`'s
+  case-sensitivity gap, `derived_case` being unimplemented) are now
+  fully fixed; what's left is out of this investigation's scope, tracked
+  separately if pursued further. Full regression suite re-run and
+  passing again after this change too.
 
 ### Spree
 

@@ -233,10 +233,19 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
    join lookup (`upstream_subject_value`), comparing schema-declared
    uppercase column names against real lowercase SQLite row keys with
    no `.lower()` — every cross-decision lookup silently failed. Fixed;
-   verified directly against real data. Net effect on verified counts
-   so far: none — the fix unmasked a separate, previously-unreached
-   gap (`derived_case` resolution kind never implemented in the
-   validator at all, 33 FLEX2 records affected, not yet built).
+   verified directly against real data. That fix unmasked a second,
+   separate, previously-unreached validator gap: `derived_case` (a
+   categorical column mapping) was never implemented in
+   `db_resolver.py`'s `resolve()` at all — implemented the same day, a
+   direct port of `candidate.py`'s own existing logic. Net effect: both
+   validator bugs are now fixed and verified, but the FLEX2/jBilling
+   verified-rule counts don't move — `Course Load Limit` is no longer
+   stuck in `unresolved_decisions` (every one of its 11 objectives now
+   gets a genuine, complete evaluation for the first time), but it's
+   still 0/11 verified, now for a real, disclosed, generator-side
+   reason (the search's own merge never aligns all 4 of this composite
+   record's own independent leaves onto one consistent real subject) —
+   out of this investigation's own scope, not pursued further.
 
 ## 7. Planned / open work
 
@@ -253,9 +262,10 @@ Full, itemized list with root causes and what fixing each would require:
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
   for Spree/jBilling elsewhere); `Course Replacement Eligibility`
   (likely a one-line fix, reusing existing infrastructure); `Course Load
-  Limit` — root-caused (§6 above): implement `derived_case` in
-  `validation_oracle/db_resolver.py`'s `resolve()`, then re-verify; an
-  audit question on `Attendance Eligibility For Final Exam`.
+  Limit` — both validator bugs blocking it are now fixed (§6 above); the
+  remaining 0/11 is a genuine generator-side leaf-alignment gap, not yet
+  investigated further; an audit question on `Attendance Eligibility
+  For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

@@ -131,13 +131,27 @@ missing from this newer cross-decision copy of the same pattern. Every
 lookup silently returned `None`, misreported as "no corresponding
 upstream row." Fixed (2 lines, `drd_executor.py`); verified directly
 against real FLEX2 data that every previously-`None` lookup now
-resolves a real upstream rule. **Net effect on verified counts so far:
-none** -- the fix is correct and necessary, but unmasked a second,
-separate, previously-unreached gap: the validator never implemented the
+resolves a real upstream rule. That fix unmasked a second, separate,
+previously-unreached gap: the validator never implemented the
 `derived_case` resolution kind at all (33 FLEX2 records use it,
-including `Course Load Limit`'s own `semesterType`). Full regression
-suite re-run and passing. Next step, not yet done: implement
-`derived_case` in `db_resolver.py`, then re-verify.
+including `Course Load Limit`'s own `semesterType`) -- implemented the
+same day, a direct port of `candidate.py`'s own handling. **Net effect
+on the numbers above: none of the case-study totals move** -- FLEX2
+stays 21 verified, jBilling stays 10 (its own 2 chained records were
+never reachable through this code path at all, blocked earlier by an
+unrelated, pre-existing gap). What DID change, confirmed via a fresh
+coverage.py run: `Course Load Limit` moved out of `unresolved_decisions`
+entirely (FLEX2's own count: 8 -> 7) -- every one of its 11 objectives
+is now genuinely, fully evaluated (real resolved inputs, a real
+rule-selection attempt) for the first time, rather than failing before
+ever reaching that point. It's still 0/11 verified, but now for a real,
+disclosed reason: the handful of real subjects whose upstream branch
+genuinely matches still don't satisfy Course Load Limit's own condition
+with their other 3 leaves (`semesterType`/`cumulativeGPA`/
+`priorWarningCount`) simultaneously -- a genuine, separate,
+generator-side construction gap, not a validator bug; not pursued
+further as part of this investigation. Full regression suite re-run and
+passing after both fixes.
 
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)

@@ -141,9 +141,24 @@ function for this was wrong and has been retracted, see
 `KNOWN_ISSUES.md`) was ever even checked. Fixed with two `.lower()`
 calls; verified directly against real FLEX2 data that every
 previously-`None` lookup now resolves a real upstream selected rule.
-Unmasked a separate, previously-unreached gap: `derived_case`
-(a categorical column mapping) is not implemented anywhere in
-`db_resolver.py`'s own `resolve()` — added to "Known gaps" below.
+Unmasked a separate, previously-unreached gap, since fixed the same
+day: `derived_case` (a categorical column mapping, e.g. `SEMESTER.
+TITLE`: `'Fall'/'Spring' -> 'Regular'`, `'Summer' -> 'Summer'`) was not
+implemented anywhere in `db_resolver.py`'s own `resolve()` —
+`generator/candidate.py` already handled it on the generation side, the
+validator simply never needed to until this fix let evaluation reach
+that far. Implemented as a direct, mechanical port of `candidate.py`'s
+own logic (read the real column, walk `cases` for a match, raise on an
+unmapped value rather than defaulting); verified directly against real
+FLEX2 data before trusting it. Confirmed via a fresh `coverage.py` run:
+`Course Load Limit` is no longer in `unresolved_decisions` at all — every
+one of its 11 objectives is now genuinely, fully evaluated for the
+first time. Still 0/11 verified, but now for a real, disclosed,
+generator-side reason (the search's own merge never aligned all 4 of
+this composite record's own independent leaves onto one
+mutually-consistent real subject) rather than either of the two
+validator bugs above — that residual gap is generator-side, out of this
+investigation's own scope, and not pursued further here.
 
 **`coverage.py` built.** Aggregates every decision in a case study
 against one already-materialized database and writes the three spec'd
@@ -1041,19 +1056,6 @@ upstream value.
   rule-selecting decision-table steps.
 - **Risk 2 (FEEL mistranslation) is not closed by Level A** — see
   "Independence levels" above.
-- **`derived_case` resolution kind is not implemented in
-  `db_resolver.py`'s own `resolve()` at all (found 2026-09-24, fixing
-  the `upstream_subject_value` case-sensitivity bug above let evaluation
-  reach it for the first time).** `generator/candidate.py` already
-  handles it on the generation side (a categorical column mapping, e.g.
-  `SEMESTER.TITLE`: `'Fall'/'Spring' -> 'Regular'`, `'Summer' ->
-  'Summer'`), but the validator has no matching case, so any decision
-  using it fails outright with `Unhandled variable_resolution kind
-  'derived_case'` rather than being evaluated. Affects 33 FLEX2 records,
-  including `Course Load Limit`'s own `semesterType` — currently the
-  reason that decision's own 11 objectives still don't verify, now for
-  a real, disclosed reason rather than the fixed validator bug's false
-  one. Not yet built.
 
 ## Output schema (per the agreed specification)
 

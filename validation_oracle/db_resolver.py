@@ -243,6 +243,33 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         value = row[node['column'].lower()] if row is not None else None
         return ResolvedValue(value, 'schema_column', table, f'{table}.{node["column"]}', row)
 
+    if kind == 'derived_case':
+        # A DMN variable whose real value is a CATEGORICAL REMAPPING of a
+        # raw database column, not the column's own value directly --
+        # e.g. FLEX2's `semesterType`: `SEMESTER.TITLE` stores 'Fall'/
+        # 'Spring'/'Summer', but `Course Load Limit`'s own DMN condition
+        # compares against 'Regular'/'Summer', a different two-value
+        # vocabulary `compile_constraints.py` maps through at compile
+        # time (`cases`: a list of `[real_value, mapped_value]` pairs).
+        # Mirrors `generator/candidate.py`'s own `derive_value` handling
+        # of the identical kind exactly (never implemented on this side
+        # until 2026-09-24 -- found only once a separate `drd_executor.py`
+        # bug that had blocked every real case from ever reaching this
+        # far was fixed): read the real column, walk `cases` for a
+        # match, and raise -- never silently default -- when the real
+        # value isn't covered by any case.
+        table = node['table']
+        row = row_for(table)
+        real_value = row[node['column'].lower()] if row is not None else None
+        for real, mapped in node['cases']:
+            if real_value == real:
+                return ResolvedValue(mapped, 'derived_case', table,
+                                      f'{table}.{node["column"]} CASE_MAP', row)
+        raise NotImplementedError(
+            f"derived_case: real value {real_value!r} in {table}.{node['column']} isn't "
+            f"covered by any CASE_MAP case ({node['cases']}) -- an unmapped real value, "
+            f"not silently defaulted to one of the known categories")
+
     if kind == 'serialized_field':
         # The independent read side of generator/materialize.py's own
         # serialize_yaml_hash_blob (see that function's docstring for the
