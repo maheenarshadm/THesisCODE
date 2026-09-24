@@ -18,7 +18,7 @@ excluded from all coverage numbers per an explicit decision below):
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
 | OpenMRS | 42/56 (75.0%) | 14/14 (100%) |
-| FLEX2 | 25/55 (45.5%) | 3/10 |
+| FLEX2 | 28/55 (50.9%) | 4/10 |
 | Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
 
@@ -469,18 +469,28 @@ excluded from all coverage numbers per an explicit decision below):
   to be before that was corrected to a real column. Worth checking
   whether the SAME kind of mis-mapping exists here before accepting it
   as a genuine non-database fact.
-- **`Course Replacement Eligibility` — likely a quick win with
-  already-built infrastructure.** Fails with `filter_text placeholder
-  <program> binds to column 'prog_id', not present on the subject row`
-  — structurally the *exact same shape* as Spree's `Promotion Customer
-  Group Eligibility::promotion_id` gap that `filter_placeholder_sources.py`
-  was built to solve. `prog_id` likely lives on `STUDENT_PROGRAM`,
-  already confirmed reachable from this decision's subject
-  (`COURSE_REGISTRATION`) via a real join path. **Probably fixable by
-  just adding one entry** — `('FLEX2', 'program'): 'STUDENT_PROGRAM'`
-  (name TBD, needs confirming the exact placeholder name and target
-  column first) — no new mechanism needed, the join-aware placeholder
-  resolver already exists.
+- **`Course Replacement Eligibility` — FIXED 2026-09-24, partially: 3 of
+  its 6 rules now verify (`Rule_2`, `Rule_5`, `Rule_6`); `Rule_1`,
+  `Rule_3`, `Rule_4` remain open for a separate, unrelated reason — see
+  below.** See "Fixed issues" below for the full writeup.
+- **`Course Replacement Eligibility::Rule_1`/`Rule_3`/`Rule_4` — a
+  genuine data-construction gap, found while fixing the placeholder gap
+  above (2026-09-24), separate and unrelated to it.** All 544 real
+  `COURSE_REGISTRATION` subjects resolve `courseTypeId` (`Rule_1`'s own
+  condition), `creditsEarned`/`degreeTotalCredits` (`Rule_3`'s), and
+  `courseOfferedInFollowingSemesters` (`Rule_4`'s) to the SAME value —
+  `None`, `None`/`None`, and `False` respectively, with zero variation
+  across any real subject. Not a resolution bug: `course.course_type_id`
+  and `student_program.credits_earned` DO have real non-null values
+  elsewhere in the merged database (11/87 and 13/149 rows respectively)
+  — they just never land on a `course`/`student_program` row any real
+  `COURSE_REGISTRATION` subject actually joins to. `program_course` has
+  only 9 real rows total, likely why `degreeTotalCredits`'s own
+  aggregate (needing an exact `prog_id`/`batch_no`/`course_id` match)
+  never finds one. Looks like the same category of gap as the search
+  never constructing a subject that satisfies a rule's own real
+  precondition — not yet investigated further (out of scope for the
+  placeholder fix this was found alongside).
 
 ### OpenMRS
 
@@ -535,6 +545,55 @@ verified via the full regression suite (`test_spec_cases.py`,
 `drd_executor.py`) plus a before/after diff of the full compiled record
 set across all 4 case studies, confirming zero unintended adds/removes,
 before being counted as fixed here.
+
+- **FLEX2's `Course Replacement Eligibility` filter_text placeholder gap
+  (2026-09-24).** `degreeTotalCredits`'s own compiled `derived_aggregate`
+  reads `PROGRAM_COURSE.PROG_ID=<program> AND
+  PROGRAM_COURSE.BATCH_NO=<batch>` — neither `prog_id` nor `batch_no` is
+  a column on the decision's own subject row (`COURSE_REGISTRATION`),
+  the same shape as Spree's already-solved `Promotion Customer Group
+  Eligibility::promotion_id` gap. Confirmed both columns are real ones
+  on `STUDENT_PROGRAM`, reachable via `COURSE_REGISTRATION.ROLL_NO`'s
+  own real forward FK to `STUDENT_PROGRAM.ROLL_NO` (checked against
+  `flex2_schema_full.json` before changing anything). Fixed with two new
+  entries in `filter_placeholder_sources.py` — `('FLEX2', 'program')`
+  and `('FLEX2', 'batch')`, both `'STUDENT_PROGRAM'` — no new mechanism,
+  `subject_table.py`'s own `_placeholder_source_tables` and
+  `db_resolver.py`'s own `_resolve_placeholders` already handle this
+  generically (built for the Spree case). Verified `subject_table_for_
+  decision` still resolves a unique root for every decision in all 4
+  case studies afterward (zero collateral from widening this decision's
+  own join-path requirement).
+
+  **Fixing it surfaced a second, independent, previously-unreached bug**
+  in `db_resolver.py`'s own `derived_aggregate` SQL construction:
+  `degreeTotalCredits`'s own `table` field is `"PROGRAM_COURSE, COURSE"`
+  — a real, old-style implicit-join table LIST (the join condition
+  itself already lives in `filter_text`'s own WHERE clause) — but the
+  SQL builder wrapped the WHOLE string in one pair of double quotes
+  (`FROM "PROGRAM_COURSE, COURSE"`), a single, nonexistent identifier,
+  raising `no such table: PROGRAM_COURSE, COURSE` the moment resolution
+  actually reached it (this decision's own placeholder gap had
+  previously always intercepted it first). Confirmed via corpus-wide
+  query: the ONLY `derived_aggregate` record anywhere with a comma in
+  its own `table` field. Fixed by quoting each comma-separated table
+  name individually, and by keeping `value_column` fully qualified
+  (`COURSE.CREDIT_HRS`, never stripped to a bare `CREDIT_HRS`) — the
+  qualifier costs nothing when there is only one table (SQLite matches
+  it case-insensitively either way, confirmed against jBilling's own
+  single-table `ageing_entity_step.days` case, unaffected) but is
+  genuinely necessary once `table` names more than one.
+
+  **Verified result** (fresh per-objective before/after diff across all
+  4 case studies, code-only difference): `Course Replacement
+  Eligibility::Rule_2`/`Rule_5`/`Rule_6` flip `false_positive` →
+  `confirmed` (FLEX2 25→28 verified rules, decision-table coverage
+  3/10→4/10); zero flips anywhere else in FLEX2 or in
+  OpenMRS/Spree/jBilling (`Ageing Step Config Validation`'s own
+  single-table aggregate specifically re-checked and unaffected). This
+  decision's own `Rule_1`/`Rule_3`/`Rule_4` remain unverified for a
+  separate, disclosed, unrelated reason — see that decision's own entry
+  under "Open issues" above. Full regression suite re-run and passing.
 
 - **FLEX2 fixture: every row's own primary key was null.**
   `generator/mutation.py`'s `_repair_row` only assigned a NOT-NULL

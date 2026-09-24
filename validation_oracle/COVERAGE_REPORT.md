@@ -19,13 +19,22 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-24 `Course Replacement Eligibility` placeholder fix**
+— see "Run history" below for the full writeup. Tables above already
+reflect this: FLEX2 25→28 verified rules (45.5%→50.9% raw, 47.2%→52.8%
+solvable), decision-table coverage 3/10→4/10 (`Rule_2`/`Rule_5`/`Rule_6`
+newly confirmed; that decision's own `Rule_1`/`Rule_3`/`Rule_4` remain
+open for a separate, disclosed, unrelated data-construction gap);
+OpenMRS/Spree/jBilling unchanged (confirmed by a full per-objective
+diff, not just totals).
+
 **As of the 2026-09-24 `run_decision`/`rule_evaluator.py` three-bug fix
 (FLEX2's `Course Load Limit`, 0/11 → 11/11 confirmed)** — see "Run
 history" below for the full writeup and `KNOWN_ISSUES.md`'s
-cross-case-study entry for the root-cause detail. Tables above already
-reflect this: FLEX2 21→25 verified rules (38.2%→45.5% raw, 39.6%→47.2%
-solvable), decision-table coverage 2/10→3/10; OpenMRS/Spree/jBilling
-unchanged (confirmed by a full per-objective diff, not just totals).
+cross-case-study entry for the root-cause detail. FLEX2 21→25 verified
+rules (38.2%→45.5% raw, 39.6%→47.2% solvable), decision-table coverage
+2/10→3/10; OpenMRS/Spree/jBilling unchanged (confirmed by a full
+per-objective diff, not just totals).
 
 **As of the 2026-09-24 Spree IN-subquery/merge-offsetting round (after
 `f8a64150`), covering:** the two root-cause fixes for the 8 Spree rules
@@ -85,9 +94,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 25 | 45.5% |
+| FLEX2 | 98 | 55 | 28 | 50.9% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **95** | **48.5%** |
+| **Total** | **240** | **196** | **98** | **50.0%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -97,9 +106,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 25 | 47.2% |
+| FLEX2 | 55 | 0 | 2 | 53 | 28 | 52.8% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **95** | **65.1%** |
+| **Total** | **196** | **27** | **23** | **146** | **98** | **67.1%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -232,13 +241,58 @@ produce the numbers above)
 All 4 runs used `--algorithm dynamosa_nsga2 --construction-strategy
 merged_archive`. Decision-table coverage (≥1 rule verified per
 decision, COLLECT decisions excluded): OpenMRS 14/14 (100%), Spree 6/8,
-FLEX2 3/10 (previously 2/10; `Course Load Limit` newly covered — see the
-2026-09-24 `run_decision`/`rule_evaluator.py` fix in Run history below),
-jBilling 6/16.
+FLEX2 4/10 (previously 2/10; `Course Load Limit` and `Course Replacement
+Eligibility` newly covered — see the two 2026-09-24 entries in Run
+history below), jBilling 6/16.
 
 ---
 
 ## Run history
+
+### 2026-09-24 — `Course Replacement Eligibility` filter_text placeholder fix (partial)
+Numbers: FLEX2 25→28 verified rules (45.5%→50.9% raw, 47.2%→52.8%
+solvable), decision-table coverage 3/10→4/10. `degreeTotalCredits`'s own
+compiled `derived_aggregate` reads `PROGRAM_COURSE.PROG_ID=<program> AND
+PROGRAM_COURSE.BATCH_NO=<batch>` -- neither `prog_id` nor `batch_no` is a
+column on this decision's own subject row (`COURSE_REGISTRATION`), the
+same shape as Spree's already-solved `Promotion Customer Group
+Eligibility::promotion_id` gap. Confirmed both are real columns on
+`STUDENT_PROGRAM`, reachable via `COURSE_REGISTRATION.ROLL_NO`'s own
+real forward FK to `STUDENT_PROGRAM.ROLL_NO`. Fixed with two new
+`filter_placeholder_sources.py` entries (`('FLEX2', 'program')`,
+`('FLEX2', 'batch')`, both `'STUDENT_PROGRAM'`) -- no new mechanism, the
+join-aware placeholder resolver built for Spree already handles this
+generically.
+
+Surfaced a second, independent, previously-unreached bug in
+`db_resolver.py`'s own `derived_aggregate` SQL construction:
+`degreeTotalCredits`'s own `table` field is a real, old-style
+implicit-join LIST (`"PROGRAM_COURSE, COURSE"`, the join condition
+itself already living in `filter_text`'s own WHERE clause), but the SQL
+builder quoted the WHOLE string as ONE identifier, raising `no such
+table: PROGRAM_COURSE, COURSE` the moment resolution actually reached it
+(this decision's own placeholder gap had always intercepted it first).
+Confirmed via corpus query: the only `derived_aggregate` record anywhere
+with a comma in `table`. Fixed by quoting each comma-separated table
+name individually, and keeping `value_column` fully qualified rather
+than stripped to a bare column name (costs nothing for the existing
+single-table case -- checked against jBilling's own
+`ageing_entity_step.days`, unaffected -- but is necessary once `table`
+names more than one).
+
+Verified via a fresh per-objective before/after diff across all 4 case
+studies (code-only difference): `Rule_2`/`Rule_5`/`Rule_6` flip
+`false_positive`->`confirmed`; zero flips anywhere else in FLEX2 or in
+OpenMRS/Spree/jBilling. This decision's own `Rule_1`/`Rule_3`/`Rule_4`
+remain unverified -- ALL 544 real subjects resolve `courseTypeId`/
+`creditsEarned`/`degreeTotalCredits`/`courseOfferedInFollowingSemesters`
+to the exact same value with zero variation (`None`/`None`/`None`/
+`False`) -- not a resolution bug (the underlying columns DO have real
+non-null values elsewhere in the database, just never on a row any real
+`COURSE_REGISTRATION` subject actually joins to; `program_course` has
+only 9 real rows total). A separate, disclosed, not-yet-investigated
+gap -- see `KNOWN_ISSUES.md`'s FLEX2 section. Full regression suite
+re-run and passing.
 
 ### 2026-09-24 — `run_decision`/`rule_evaluator.py` three-bug fix (closes FLEX2's `Course Load Limit`)
 Numbers: FLEX2 21→25 verified rules (38.2%→45.5% raw, 39.6%→47.2%

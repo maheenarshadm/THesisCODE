@@ -466,8 +466,21 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         # entity/status correlation an exists-kind check nearby already
         # needed -- re-expressed as MAX over a single, uniquely-scoped
         # row, since a bare schema_column has no way to carry a filter).
-        target = node['value_column'].split('.', 1)[1] if node.get('value_column') else '*'
-        sql = f'SELECT {node["aggregate"]}({target}) FROM "{node["table"]}" WHERE {where}'
+        # Kept fully qualified (never stripped to a bare column name):
+        # SQLite matches an unquoted qualifier against a quoted FROM
+        # identifier case-insensitively either way, and an unqualified
+        # name would be genuinely ambiguous the moment `table` names more
+        # than one table (see below).
+        target = node['value_column'] if node.get('value_column') else '*'
+        # `table` can be a real, old-style implicit-join list ("A, B" --
+        # FLEX2's `Course Replacement Eligibility::degreeTotalCredits`,
+        # the join condition itself already lives in `filter_text`'s own
+        # WHERE clause) -- quoting the WHOLE string as one identifier
+        # produced `no such table: "A, B"`. Quote each real table name
+        # individually instead; a single-table `table` is unaffected
+        # (splits to a list of one).
+        from_tables = ', '.join(f'"{t.strip()}"' for t in node['table'].split(','))
+        sql = f'SELECT {node["aggregate"]}({target}) FROM {from_tables} WHERE {where}'
         cur = conn.execute(sql)
         value = cur.fetchone()[0]
         return ResolvedValue(value, 'derived_aggregate', node['table'], sql, None)

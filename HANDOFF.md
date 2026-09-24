@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-45.5%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+50.9%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 47.2%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 52.8%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -314,6 +314,26 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
    each) — flagged in `KNOWN_ISSUES.md`/`COVERAGE_REPORT.md` but not
    corrected here, since it's orthogonal to this fix and needs its own
    deliberate pass.
+10. **Fixed FLEX2's `Course Replacement Eligibility` filter_text
+    placeholder gap, on request — partially.** `degreeTotalCredits`'s
+    own `derived_aggregate` needed `PROGRAM_COURSE.PROG_ID`/`.BATCH_NO`,
+    neither on the subject row (`COURSE_REGISTRATION`) — same shape as
+    Spree's already-solved `promotion_id` gap. Both are real columns on
+    `STUDENT_PROGRAM`, reachable via a real FK. Fixed with two new
+    `filter_placeholder_sources.py` entries — no new mechanism needed.
+    Surfaced a second bug in `db_resolver.py`'s `derived_aggregate` SQL
+    construction: `degreeTotalCredits`'s own `table` field is a real,
+    comma-separated implicit-join list (`"PROGRAM_COURSE, COURSE"`), but
+    the SQL builder quoted the whole string as one identifier, raising
+    `no such table`. Fixed by quoting each table name individually and
+    keeping the aggregate's own column reference fully qualified.
+    Verified via a full per-objective diff across all 4 case studies:
+    `Rule_2`/`Rule_5`/`Rule_6` flip false_positive→confirmed (FLEX2
+    25→28 verified, decision-table 3/10→4/10), zero flips elsewhere.
+    This decision's own `Rule_1`/`Rule_3`/`Rule_4` remain open — a
+    separate, unrelated data-construction gap (every real subject
+    resolves the same 4 variables to the identical never-satisfying
+    value, zero variation) — not yet investigated further.
 
 ## 7. Planned / open work
 
@@ -331,11 +351,14 @@ Full, itemized list with root causes and what fixing each would require:
   (no constructed subject reaches `adjustedCreditsCount >= usageLimit`)
   — a distinct, not-yet-investigated issue.
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
-  for Spree/jBilling elsewhere); `Course Replacement Eligibility`
-  (likely a one-line fix, reusing existing infrastructure); an audit
-  question on `Attendance Eligibility For Final Exam`. `Course Load
-  Limit` is now fully closed (§6 items 8/9 above: the junction row and
-  all three compounding validator bugs are fixed, 11/11 confirmed).
+  for Spree/jBilling elsewhere); an audit question on `Attendance
+  Eligibility For Final Exam`. `Course Load Limit` is now fully closed
+  (§6 items 8/9 above: 11/11 confirmed). `Course Replacement
+  Eligibility` is now partially closed (§6 item 10: `Rule_2`/`Rule_5`/
+  `Rule_6` confirmed) — its own `Rule_1`/`Rule_3`/`Rule_4` remain open,
+  a separate, unrelated, not-yet-investigated data-construction gap
+  (every real subject resolves the same 4 variables to the identical
+  never-satisfying value).
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

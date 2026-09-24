@@ -218,6 +218,33 @@ coverage-run-methodology finding surfaced while establishing the
 before/after baseline, in `KNOWN_ISSUES.md`'s cross-case-study entry and
 `COVERAGE_REPORT.md`'s Run history.
 
+**Closed FLEX2's `Course Replacement Eligibility` filter_text
+placeholder gap (2026-09-24), partially.** `degreeTotalCredits`'s own
+compiled `derived_aggregate` reads `PROGRAM_COURSE.PROG_ID=<program> AND
+PROGRAM_COURSE.BATCH_NO=<batch>` — neither column is on the decision's
+own subject row (`COURSE_REGISTRATION`), the same shape as Spree's
+already-solved `Promotion Customer Group Eligibility::promotion_id` gap.
+Both are real columns on `STUDENT_PROGRAM`, reachable via
+`COURSE_REGISTRATION.ROLL_NO`'s own real forward FK. Fixed with two new
+`filter_placeholder_sources.py` entries — no new mechanism, the
+join-aware placeholder resolver already handles this generically.
+Surfaced a second, independent bug in `db_resolver.py`'s own
+`derived_aggregate` SQL construction: `degreeTotalCredits`'s own `table`
+field is a real, old-style implicit-join list (`"PROGRAM_COURSE,
+COURSE"`), but the SQL builder quoted the WHOLE string as one
+identifier, raising `no such table: PROGRAM_COURSE, COURSE`. Fixed by
+quoting each comma-separated table name individually, and keeping
+`value_column` fully qualified rather than stripped to a bare column
+name (necessary once `table` names more than one; free for the existing
+single-table case, checked against jBilling's own
+`ageing_entity_step.days`, unaffected). Verified: `Rule_2`/`Rule_5`/
+`Rule_6` flip false_positive → confirmed (FLEX2 25→28, decision-table
+3/10→4/10), zero flips anywhere else. This decision's own `Rule_1`/
+`Rule_3`/`Rule_4` remain open — a separate, unrelated data-construction
+gap where every real subject resolves the same four variables to the
+exact same (never-satisfying) value with zero variation — see
+`KNOWN_ISSUES.md`'s FLEX2 section.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

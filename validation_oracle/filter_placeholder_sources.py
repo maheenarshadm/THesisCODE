@@ -29,6 +29,15 @@ Table names must match the schema JSON's own canonical casing
 
 FILTER_PLACEHOLDER_SOURCES = {
     ('Spree', 'promotion_id'): 'spree_order_promotions',
+    # FLEX2's `Course Replacement Eligibility` (all 6 rules):
+    # `degreeTotalCredits`'s own filter_text reads `PROGRAM_COURSE.
+    # PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>` -- neither
+    # column is on the subject row (`COURSE_REGISTRATION`), but both are
+    # real columns on `STUDENT_PROGRAM`, reachable via COURSE_REGISTRATION
+    # .ROLL_NO's own real forward FK to STUDENT_PROGRAM.ROLL_NO (confirmed
+    # against flex2_schema_full.json, 2026-09-24).
+    ('FLEX2', 'program'): 'STUDENT_PROGRAM',
+    ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
     # Case study 'T' is this project's own synthetic test namespace
     # (tests/test_spec_cases.py) -- this entry is exercised only by
     # test_case_11_filter_placeholder_via_join, never by real data.
