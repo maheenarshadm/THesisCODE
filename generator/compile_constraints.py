@@ -355,6 +355,33 @@ def _try_extract_aggregate_recipe(text):
 _EXISTENCE_WORDS = re.compile(
     r'\b(IS NOT NULL|IS NULL|existence check|null-check|null check)\b', re.I)
 _ANY_OF_WORDS = re.compile(r'\b(OR of|either|any of|either populated)\b', re.I)
+# A `null_check`'s own boolean means "is the fact SET" everywhere in this
+# corpus EXCEPT the handful of ground-truth rows named/worded the
+# opposite way ("identifierBlank": "identifier IS NULL OR TRIM(identifier)
+# = ''" -- true means the column is EMPTY, not populated). A real, found
+# bug (2026-09-24): every null_check node used to carry the exact same
+# shape regardless of which of these two the notes actually described,
+# so BOTH generator/candidate.py's derive_value and validation_oracle/
+# db_resolver.py's resolve() had to pick ONE fixed polarity -- whichever
+# was chosen, it was necessarily right for one family of facts and wrong
+# for the other (confirmed directly: OpenMRS's `Identifier Format
+# Validity::Rule_1`, gated on `identifierBlank = true`, only verified
+# against real data once db_resolver.py's own IS-NOT-NULL fix was
+# reverted for exactly this negated case). Fixed at the one place that
+# can actually tell the two apart -- the ground truth's own notes text --
+# by adding a `negate` flag to the compiled node when the notes say "IS
+# NULL" without also saying "IS NOT NULL" (checked in that order so a
+# note mentioning both, if one ever does, keeps the ordinary polarity).
+# Every OTHER null_check consumer defaults `negate` to falsy via
+# `node.get('negate')`, so this is additive -- nothing already using the
+# ordinary (non-negated) shape changes.
+_NEGATED_NULL_CHECK_WORDS = re.compile(r'\bIS NULL\b', re.I)
+_NON_NEGATED_NULL_CHECK_WORDS = re.compile(r'\bIS NOT NULL\b', re.I)
+
+
+def _null_check_is_negated(notes):
+    notes = notes or ''
+    return bool(_NEGATED_NULL_CHECK_WORDS.search(notes)) and not _NON_NEGATED_NULL_CHECK_WORDS.search(notes)
 _EXISTS_ROW_WORDS = re.compile(
     r'\bexistence of\b|\(existence\)|\bEXISTS\(|self-join', re.I)
 # One token inside an `exists`-kind raw schema field's own parenthesized
@@ -569,6 +596,8 @@ def classify_derived(row):
     if pairs and _EXISTENCE_WORDS.search(notes) and not _ANY_OF_WORDS.search(notes):
         table, column = pairs[0]
         node = {'kind': 'null_check', 'table': table, 'column': column, 'notes': notes}
+        if _null_check_is_negated(notes):
+            node['negate'] = True
         if len(pairs) > 1:
             node['also_valid_in'] = pairs[1:]
         return node
@@ -708,7 +737,10 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
             # than inventing a parallel "is this set" kind, the same way
             # `direct`'s own existence-check rows already reuse
             # null_check instead of a schema_column-specific variant.
-            return {'kind': 'null_check', 'table': table, 'column': column, 'key': key, 'notes': row['notes']}
+            node = {'kind': 'null_check', 'table': table, 'column': column, 'key': key, 'notes': row['notes']}
+            if _null_check_is_negated(row['notes']):
+                node['negate'] = True
+            return node
         node = {'kind': 'serialized_field', 'table': table, 'column': column, 'key': key, 'notes': row['notes']}
         if default_text is not None:
             if default_text.startswith("'"):

@@ -33259,7 +33259,8 @@
     "kind": "null_check",
     "table": "patient_identifier",
     "column": "identifier",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
+    "negate": true
    }
   },
   "fk_closure_tables": [
@@ -33369,7 +33370,8 @@
     "kind": "null_check",
     "table": "patient_identifier",
     "column": "identifier",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
+    "negate": true
    },
    "identifierMatchesFormat": {
     "kind": "regex_match",
@@ -33535,7 +33537,8 @@
     "kind": "null_check",
     "table": "patient_identifier",
     "column": "identifier",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
+    "negate": true
    },
    "identifierMatchesFormat": {
     "kind": "regex_match",
@@ -33733,7 +33736,8 @@
     "kind": "null_check",
     "table": "patient_identifier",
     "column": "identifier",
-    "notes": "identifier IS NULL OR TRIM(identifier) = ''"
+    "notes": "identifier IS NULL OR TRIM(identifier) = ''",
+    "negate": true
    },
    "identifierMatchesFormat": {
     "kind": "regex_match",
@@ -36622,8 +36626,8 @@
       "kind": "derived_aggregate",
       "aggregate": "COUNT",
       "table": "spree_orders",
-      "filter_text": "(user_id = <user_id> OR email = <email>) AND completed_at IS NOT NULL AND id != self",
-      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\"."
+      "filter_text": "user_id = <user_id> AND completed_at IS NOT NULL AND id != self",
+      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\". A SECOND disclosed narrowing, added 2026-09-24: dropped the formula's own \"OR email = <email>\" guest-checkout alternative -- (A OR B) is a shape neither _mechanical_filter_predicate nor _row_from_filter_conjuncts (generator/candidate.py, generator/mutation.py) understands at all (both only recognize a flat AND of single-column conjuncts), so the whole parenthesized clause was previously skipped entirely -- no user_id OR email constraint ever actually applied to a seeded/mutated \"prior order\" row, which is what let the search claim First-Order Promotion Eligibility::rule_3 covered from its very first seeded candidate while the real validator (correctly requiring an actual matching user_id) disagreed. Matching by user_id alone is a real, narrower subset of the formula's true \"identified by user OR email\" semantics (loses the guest-checkout-by-email path), not a guess at missing schema -- the same kind of narrowing already disclosed for adjustedCreditsCount."
      }
     }
    },
@@ -36729,8 +36733,8 @@
       "kind": "derived_aggregate",
       "aggregate": "COUNT",
       "table": "spree_orders",
-      "filter_text": "(user_id = <user_id> OR email = <email>) AND completed_at IS NOT NULL AND id != self",
-      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\"."
+      "filter_text": "user_id = <user_id> AND completed_at IS NOT NULL AND id != self",
+      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\". A SECOND disclosed narrowing, added 2026-09-24: dropped the formula's own \"OR email = <email>\" guest-checkout alternative -- (A OR B) is a shape neither _mechanical_filter_predicate nor _row_from_filter_conjuncts (generator/candidate.py, generator/mutation.py) understands at all (both only recognize a flat AND of single-column conjuncts), so the whole parenthesized clause was previously skipped entirely -- no user_id OR email constraint ever actually applied to a seeded/mutated \"prior order\" row, which is what let the search claim First-Order Promotion Eligibility::rule_3 covered from its very first seeded candidate while the real validator (correctly requiring an actual matching user_id) disagreed. Matching by user_id alone is a real, narrower subset of the formula's true \"identified by user OR email\" semantics (loses the guest-checkout-by-email path), not a guess at missing schema -- the same kind of narrowing already disclosed for adjustedCreditsCount."
      }
     }
    }
@@ -36833,16 +36837,11 @@
   },
   "variable_resolution": {
    "priorPromotionUsageCount": {
-    "kind": "schema_column",
-    "table": "spree_orders",
-    "column": "user_id",
-    "also_valid_in": [
-     [
-      "spree_promotion_actions",
-      "promotion_id"
-     ]
-    ],
-    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?(); corrected 2026-09-13 -- real column is user_id, not customer_id"
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_discounts",
+    "filter_text": "order_id IN (SELECT id FROM spree_orders WHERE user_id = <user_id> AND completed_at IS NOT NULL AND id != self) AND 1=1",
+    "source_text": "COUNT(spree_discounts) WHERE order_id IN (SELECT id FROM spree_orders WHERE user_id = <user_id> AND completed_at IS NOT NULL AND id != self) AND 1=1"
    },
    "customerPresent": {
     "kind": "null_check",
@@ -36852,8 +36851,8 @@
    }
   },
   "fk_closure_tables": [
-   "spree_orders",
-   "spree_promotion_actions"
+   "spree_discounts",
+   "spree_orders"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown"
@@ -36920,21 +36919,16 @@
     "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    },
    "priorPromotionUsageCount": {
-    "kind": "schema_column",
-    "table": "spree_orders",
-    "column": "user_id",
-    "also_valid_in": [
-     [
-      "spree_promotion_actions",
-      "promotion_id"
-     ]
-    ],
-    "notes": "COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?(); corrected 2026-09-13 -- real column is user_id, not customer_id"
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_discounts",
+    "filter_text": "order_id IN (SELECT id FROM spree_orders WHERE user_id = <user_id> AND completed_at IS NOT NULL AND id != self) AND 1=1",
+    "source_text": "COUNT(spree_discounts) WHERE order_id IN (SELECT id FROM spree_orders WHERE user_id = <user_id> AND completed_at IS NOT NULL AND id != self) AND 1=1"
    }
   },
   "fk_closure_tables": [
-   "spree_orders",
-   "spree_promotion_actions"
+   "spree_discounts",
+   "spree_orders"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown"
@@ -37784,6 +37778,17 @@
    "op": "and",
    "clauses": [
     {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "expiresAt"
+     }
+    },
+    {
      "op": "=",
      "left": {
       "kind": "variable",
@@ -37793,17 +37798,6 @@
       "kind": "literal",
       "value": true,
       "type": "boolean"
-     }
-    },
-    {
-     "op": ">",
-     "left": {
-      "kind": "variable",
-      "ref": "expiresAt"
-     },
-     "right": {
-      "kind": "variable",
-      "ref": "expiresAt"
      }
     }
    ]
@@ -37834,6 +37828,9 @@
    ]
   },
   "variable_resolution": {
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
    "expiresAt": {
     "kind": "schema_column",
     "table": "spree_promotions",
@@ -37844,9 +37841,6 @@
     "table": "spree_promotions",
     "column": "expires_at",
     "notes": "existence check (IS NOT NULL)"
-   },
-   "evaluationTime": {
-    "kind": "not_persisted"
    },
    "startsAt": {
     "kind": "schema_column",
@@ -37902,6 +37896,17 @@
       "op": "and",
       "clauses": [
        {
+        "op": ">",
+        "left": {
+         "kind": "variable",
+         "ref": "evaluationTime"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "expiresAt"
+        }
+       },
+       {
         "op": "=",
         "left": {
          "kind": "variable",
@@ -37911,17 +37916,6 @@
          "kind": "literal",
          "value": true,
          "type": "boolean"
-        }
-       },
-       {
-        "op": ">",
-        "left": {
-         "kind": "variable",
-         "ref": "expiresAt"
-        },
-        "right": {
-         "kind": "variable",
-         "ref": "expiresAt"
         }
        }
       ]
@@ -37938,16 +37932,16 @@
     "table": "spree_promotions",
     "column": "starts_at"
    },
+   "expiresAt": {
+    "kind": "schema_column",
+    "table": "spree_promotions",
+    "column": "expires_at"
+   },
    "expiresAtSet": {
     "kind": "null_check",
     "table": "spree_promotions",
     "column": "expires_at",
     "notes": "existence check (IS NOT NULL)"
-   },
-   "expiresAt": {
-    "kind": "schema_column",
-    "table": "spree_promotions",
-    "column": "expires_at"
    }
   },
   "fk_closure_tables": [

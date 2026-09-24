@@ -73,10 +73,17 @@
           <outputEntry><text>"NOT_YET_STARTED"</text></outputEntry>
         </rule>
         <rule id="Decision_PromotionTemporalAvailability_rule_2">
-          <inputEntry><text>-</text></inputEntry>
+          <!-- Fixed 2026-09-24: this cell used to read "> expiresAt" on
+               the expiresAt column itself, a self-referential tautology
+               (expiresAt > expiresAt is impossible for any value, ever).
+               Given the decision's own declared inputs and this rule's
+               "EXPIRED" output, the evidently intended test is "now is
+               past the expiry date", moved here to the evaluationTime
+               column, where it belongs. -->
+          <inputEntry><text>&gt; expiresAt</text></inputEntry>
           <inputEntry><text>-</text></inputEntry>
           <inputEntry><text>true</text></inputEntry>
-          <inputEntry><text>&gt; expiresAt</text></inputEntry>
+          <inputEntry><text>-</text></inputEntry>
           <outputEntry><text>"EXPIRED"</text></outputEntry>
         </rule>
         <rule id="Decision_PromotionTemporalAvailability_rule_3">

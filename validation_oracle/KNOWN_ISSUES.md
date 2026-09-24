@@ -17,10 +17,10 @@ excluded from all coverage numbers per an explicit decision below):
 
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
-| OpenMRS | 37/56 (66.1%) | 14/14 (100%) |
+| OpenMRS | 41/56 (73.2%) | 14/14 (100%) |
 | FLEX2 | 21/55 (38.2%) | 2/10 |
-| Spree | 12/31 (38.7%) | 5/8 |
-| jBilling | 11/39 (28.2%) | 6/16 |
+| Spree | 14/31 (45.2%) | 5/8 |
+| jBilling | 10/40 (25.0%) | 6/16 |
 
 ---
 
@@ -109,56 +109,6 @@ excluded from all coverage numbers per an explicit decision below):
     regardless of how many generations the search runs. Needs the same
     kind of disclosed join-construction override as the row-finding
     gap above, not a bigger search budget.
-
-- **`One-Use-Per-User Promotion Eligibility::rule_2` — a real
-  compile-time bug, not a data gap.** Ground truth says
-  `priorPromotionUsageCount` should be `derived-aggregate` (a COUNT of
-  `spree_discounts` rows joined through `spree_promotion_actions`/
-  `spree_orders.user_id`). The COMPILED record instead shows
-  `{'kind': 'schema_column', 'table': 'spree_orders', 'column':
-  'user_id'}` — comparing a raw `user_id` against `0`, not a count at
-  all. Root cause: the ground-truth note's free-text shape ("joined via
-  A and B") matches none of `classify_derived`'s specific recognized
-  patterns, so it falls through to the generic multi-pair fallback,
-  which grabs the wrong column. It currently "works" by accident only
-  because no real `user_id` is ever `0`. **Fixable at the objective
-  level**: re-express this ground-truth row using the
-  `derived_aggregate`/`filter_text` mechanism already built and proven
-  this session (same shape as `adjustedCreditsCount`).
-
-- **`Promotion Temporal Availability::rule_2` — infeasible by nature,
-  not a data gap.** Compiled condition is `expiresAt > expiresAt`, a
-  self-referential tautology, impossible for any value, ever. Confirmed
-  in the raw DMN XML (`Promotion_Order_Level_Eligibility.dmn`): the
-  rule's `expires_at` input-column cell reads `<inputEntry><text>&gt;
-  expiresAt</text></inputEntry>` — compared against its own column.
-  Given the decision's declared inputs (`evaluationTime`, `startsAt`,
-  `expiresAtSet`, `expiresAt`) and the rule's own output (`"EXPIRED"`),
-  it almost certainly meant `evaluationTime > expiresAt` ("now is past
-  the expiry date"). Three-valued constant folding doesn't catch this
-  (it folds grounded literal comparisons, not "same free variable
-  compared to itself"). **Not fixable at the objective/data level at
-  all** — no generated data can satisfy a self-contradiction. Needs the
-  DMN source corrected (move the `> expiresAt` unary test to the
-  `evaluationTime` column), the same kind of fix as the `<variable>`
-  declaration fix already made for the threshold decisions.
-
-- **`First-Order Promotion Eligibility::rule_3` — an ordinary,
-  fixable-by-data FIRST-hit-policy gap, confirmed STILL open after the
-  search re-run.** Its condition is the bare catch-all (`true`), always
-  shadowed by `rule_1`/`rule_2` — across all 17 real `spree_orders` rows
-  in the freshly re-run/rebuilt fixture, still none represents an
-  identified customer who *also* has ≥1 other completed order
-  (confirmed directly via `decision_trace.json`: every traced order has
-  `priorCompletedOrderCount = 0`). The objective itself is already
-  correct (`branch_fitness` already requires "own condition true AND
-  every earlier row false," confirmed this session) — this was
-  predicted to "likely resolve on its own" once the search re-ran; it
-  did not, at the same population/generation budget (30/40, seed 0)
-  used everywhere else in this project. Not a new problem, just a
-  corrected prediction: closing it needs either a larger budget/more
-  seeds, or a dedicated construction, not merely "re-run the search,"
-  which has now actually been tried once.
 
 ### FLEX2
 
@@ -439,12 +389,14 @@ before being counted as fixed here.
   rule_1/rule_3 are now verified too (previously blocked on the
   `evaluationTime` override never having been supplied to this
   project's own `coverage.py` invocation for Spree specifically).
-  `First-Order Promotion Eligibility::rule_3` did NOT resolve as
-  predicted (see its own entry above, corrected). The remaining open
-  gaps (`Promotion Customer Group Eligibility`, `Promotion Item Total
-  Eligibility`, `Promotion Usage Limit Exceeded`, and the COLLECT-only
-  `Price Adjustment Tier Validity Violations`) are unchanged by the
-  re-run, exactly as the "2 fixture/row-finding gaps" entry above now
+  `First-Order Promotion Eligibility::rule_3` did NOT resolve at this
+  point (fixed in a later round the same day — see "Fixed the
+  First-Order Promotion Eligibility shadowing gap" below). The remaining
+  open gaps (`Promotion Customer Group Eligibility`, `Promotion Item
+  Total Eligibility`, `Promotion Usage Limit Exceeded`, and the
+  COLLECT-only `Price Adjustment Tier Validity Violations`) are
+  unchanged by the re-run, exactly as the "2 fixture/row-finding gaps"
+  entry above now
   precisely diagnoses for the two of them that are solvable, in-scope
   join gaps. `Promotion Item Total Eligibility` was subsequently
   reclassified as out of scope (blob-level data), not a bug to fix —
@@ -463,3 +415,124 @@ before being counted as fixed here.
   verify via it (`Promotion Item Total Eligibility`,
   `Promotion Customer Group Eligibility::rule_3`) are now tracked as
   out of scope in the Open Issues section above, not as pending work.
+
+- **Re-expressed `One-Use-Per-User Promotion Eligibility::rule_2`'s
+  compile bug, closing it.** `priorPromotionUsageCount`'s free-text
+  schema_location (`spree_discounts (joined via ...)`) matched none of
+  `classify_derived`'s recognized recipe shapes, so it silently compiled
+  to `{'kind': 'schema_column', 'table': 'spree_orders', 'column':
+  'user_id'}` — comparing a raw `user_id` against `0`, "working" only
+  because no real customer has `user_id = 0`. Re-expressed using the
+  same `COUNT(TABLE) WHERE <filter>` recipe `adjustedCreditsCount`
+  already uses: `COUNT(spree_discounts) WHERE order_id IN (SELECT id
+  FROM spree_orders WHERE user_id = <user_id> AND completed_at IS NOT
+  NULL AND id != self) AND 1=1`, with the same disclosed simplification
+  as `adjustedCreditsCount` (no promotion-scoping is possible — this
+  decision's own DMN declares no promotion input at all — so this counts
+  ANY prior promotional discount by this customer, not "this promotion"
+  specifically). One self-inflicted bug found and fixed while writing
+  the note: the note text itself accidentally contained a literal
+  `COUNT(TABLE)`-shaped phrase, which `classify_derived` matched (it
+  tries `notes` before `raw_schema_field`) before ever reaching the real
+  recipe — fixed by rewording the note to describe the shape without
+  literally spelling it out. **Verified, not just compiled**: re-ran the
+  Spree search; `rule_2` now verifies against real data (a real order
+  with zero attributable `spree_discounts` rows is the common case, so
+  `priorPromotionUsageCount = 0` is trivially reachable once it's a real
+  count instead of an impossible `user_id = 0`).
+
+- **Fixed the `Promotion Temporal Availability::rule_2` DMN authoring
+  bug.** The compiled condition was `expiresAt > expiresAt`, a
+  self-referential tautology — confirmed in the raw DMN XML
+  (`Promotion_Order_Level_Eligibility.dmn`): the rule's `expires_at`
+  input-column cell read `<inputEntry><text>&gt; expiresAt</text>
+  </inputEntry>`, compared against its own column. Fixed by moving the
+  `> expiresAt` unary test to the `evaluationTime` column, where it
+  evidently belonged (given the rule's own `"EXPIRED"` output and the
+  decision's declared inputs) — the condition now reads `evaluationTime
+  > expiresAt AND expiresAtSet = true`. **Verified against real data**
+  after also fixing the `null_check` polarity bug below (this rule
+  depends on `expiresAtSet`'s own correctness, which the tautology had
+  been masking): confirmed via `coverage.py`.
+
+- **Fixed the `First-Order Promotion Eligibility::rule_3` shadowing
+  gap — a real generator/validator mismatch, not a search-budget
+  problem.** `Prior Completed Order Count`'s own filter_text
+  (`literal_expression_overrides.py`) uses `completed_at IS NOT NULL`
+  and `(user_id = <user_id> OR email = <email>)`, neither of which
+  `_mechanical_filter_predicate`/`_row_from_filter_conjuncts`
+  (`generator/candidate.py`, `generator/mutation.py`) understood at
+  all — `IS NOT NULL` has no `=` sign (didn't match the only recognized
+  conjunct shape), and `(A OR B)` isn't a shape either function has ever
+  parsed. Net effect: the search's own approximate fitness reached
+  0.0 from the very first seeded candidate (every row silently counted
+  as "a prior completed order," since neither constraint was ever
+  actually applied), while the real validator, correctly requiring an
+  actual matching, completed order, found none — search_covered=True,
+  verified=False on every run, regardless of budget. Three real fixes,
+  found in sequence chasing this one gap:
+  1. Added recognition for `COLUMN IS NOT NULL`/`COLUMN IS NULL` as a
+     real conjunct shape, in both the read-side predicate and the two
+     write-side row-builders.
+  2. That fix alone mis-fired on `adjustedCreditsCount`-style filters:
+     `priorPromotionUsageCount`'s new filter_text (above) has an
+     `IS NOT NULL` fragment INSIDE a parenthesized IN-subquery, on a
+     DIFFERENT table than the outer filter's own — the naive
+     `re.split(r'\bAND\b', ...)` doesn't track paren depth, so this
+     fragment was misread as a top-level conjunct of the OUTER table,
+     stamping a nonexistent column onto the wrong row. Fixed with a new
+     shared `_top_level_and_conjuncts` helper (paren-depth-aware split,
+     used by all 3 call sites) — checked against every filter_text in
+     the compiled corpus that mixes `(` and `AND` (3, across
+     Spree/FLEX2) to confirm the other two don't regress.
+  3. Simplified `Prior Completed Order Count`'s own filter_text to drop
+     the `OR email = <email>` alternative (`(A OR B)` parsing was out of
+     scope to build) — a disclosed narrowing (loses the guest-checkout-
+     by-email path), same status as `adjustedCreditsCount`'s own
+     disclosed simplification, not a guess at missing schema.
+  **Verified, not just seeded-to-zero**: re-ran the Spree search;
+  `rule_3` now verifies against real data.
+
+- **Found and fixed a `null_check` polarity inversion in
+  `validation_oracle/db_resolver.py`, affecting every plain (non-key)
+  `null_check` fact across all 4 case studies (54 compiled records).**
+  Found while investigating why the `Promotion Temporal Availability`
+  DMN fix above still didn't verify: `db_resolver.py`'s `null_check`
+  resolution computed `column IS NULL`, while
+  `generator/candidate.py`'s own `derive_value` (the canonical
+  definition the search itself optimizes against) computes `column IS
+  NOT NULL` — flat-out inverted between the two sides that are supposed
+  to agree on the exact same fact. Confirmed with an isolated unit test
+  (a throwaway 2-row SQLite table) before touching anything: a row with
+  the column SET read back as `False`; a row with it `NULL` read back as
+  `True`. Fixed in `db_resolver.py` to match `candidate.py`'s
+  convention. A blind fix (always `IS NOT NULL`) then broke OpenMRS's
+  `identifierBlank` the other way — its own ground truth is worded
+  "identifier IS NULL OR TRIM(identifier) = ''", true meaning EMPTY, the
+  opposite polarity from every other null_check fact in this corpus
+  (`expiresAtSet`/`amountMaxSet`/`customerPresent`/etc., true meaning
+  SET) — caught by this project's own required before/after diff across
+  all 4 case studies, run precisely because a change this broad
+  (touching 54 records) could not be trusted from Spree's own numbers
+  alone. Fixed properly at the root: `compile_constraints.py` now adds
+  a `negate: true` flag to a compiled `null_check` node when its own
+  ground-truth notes say "IS NULL" without also saying "IS NOT NULL"
+  (`_null_check_is_negated`), and every consumer — `candidate.py`'s
+  `derive_value`/`build_seed_candidate`'s seeding, `mutation.py`'s
+  `_apply_field_mutation` (both plain and key-scoped) and
+  `_hypothetical_fitness`'s sibling-sync logic, and `db_resolver.py`'s
+  `resolve()` — honors the same flag consistently, rather than each
+  guessing its own fixed polarity or sniffing variable names. **Result,
+  confirmed via the full 4-case-study before/after diff (verified rule
+  ID sets, not just counts) before being trusted**: OpenMRS 35→41
+  verified (all gains real; the one rule whose `verified` flag flipped
+  to False, `Identifier Format Validity::Rule_2`, was itself a bug
+  artifact — a `false_negative` the OLD inverted code produced, not a
+  real capability lost — confirmed by checking `identifierBlank` against
+  real, populated `patient_identifier.identifier` values directly),
+  FLEX2 21→21 (no plain null_check fact there is negated or otherwise
+  affected), jBilling 9→10. Full regression suite
+  (`test_spec_cases.py`, `test_drd_chaining_synthetic.py`, the OpenMRS
+  acceptance test in `drd_executor.py`, `test_serialized_field_
+  roundtrip.py`) re-run and passing after every incremental step of
+  this fix, not just at the end.

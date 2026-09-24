@@ -216,6 +216,58 @@ def _find_row_by_pk(candidate, table, pk_column, value):
 # ---------------------------------------------------------------------------
 _SIMPLE_EQ_CONJUNCT_RE = re.compile(r'^\s*(?:[\w]+\.)?([\w]+)\s*=\s*(.+?)\s*$')
 _BARE_TABLE_DOT_COLUMN_RE = re.compile(r'^[A-Za-z_]\w*\.[A-Za-z_]\w*$')
+# A second recognized conjunct shape, found necessary running Spree's
+# `First-Order Promotion Eligibility::rule_3` for the first time
+# (2026-09-24): `literal_expression_overrides.py`'s own `Prior Completed
+# Order Count` filter_text uses `completed_at IS NOT NULL` (real SQL the
+# validator's own db_resolver.py runs correctly) to mean "this order is
+# complete" -- but neither this predicate nor `_row_from_filter_
+# conjuncts` recognized this shape at all, so it was silently SKIPPED
+# (no `=` sign, doesn't match `_SIMPLE_EQ_CONJUNCT_RE`): the predicate
+# treated it as "no constraint," and the row-builder never set
+# `completed_at` on a seeded/mutated "prior order" row. Net effect: the
+# search's own approximate fitness saw every candidate row as already
+# "a prior completed order" (an over-count), reaching fitness 0.0 from
+# the very first seeded candidate -- while the real validator, running
+# the actual `IS NOT NULL` check against rows that were never given a
+# real `completed_at`, correctly found none. A systematic generator-vs-
+# validator mismatch, not a search-budget problem.
+_IS_NOT_NULL_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NOT\s+NULL\s*$', re.I)
+_IS_NULL_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NULL\s*$', re.I)
+
+
+def _top_level_and_conjuncts(filter_text):
+    """Splits `filter_text` on 'AND', but only at paren-depth 0. A naive
+    `re.split(r'\\bAND\\b', ...)` doesn't know an 'AND' inside a
+    parenthesized IN-subquery (e.g. `adjustedCreditsCount`'s own
+    `promotion_action_id IN (SELECT ... WHERE a AND b)`) describes the
+    SUBQUERY's own filter, on a DIFFERENT table than the one this
+    filter_text's own top-level conjuncts apply to -- it must never be
+    treated as one of THIS filter's own conjuncts. A real bug found
+    2026-09-24, the same day `_IS_NOT_NULL_RE` was added:
+    `priorPromotionUsageCount`'s subquery-internal `completed_at IS NOT
+    NULL` (a fact about spree_orders) was misread as a top-level
+    conjunct of the OUTER filter (about spree_discounts), stamping a
+    nonexistent `completed_at` column onto a spree_discounts row --
+    only surfaced once IS NOT NULL conjuncts started being recognized
+    at all; before that, the same misread fragment was harmlessly
+    skipped since it never matched the plain `COLUMN = VALUE` shape
+    either. Any fragment starting inside an unclosed paren from an
+    earlier fragment is dropped here, restoring this project's own
+    long-standing default for text a conjunct-level parser can't
+    attribute to the right table: silently not a conjunct, never a
+    wrong guess. Checked against every filter_text in the current
+    compiled corpus that mixes '(' and 'AND' (3, across Spree/FLEX2) --
+    none of the other two regress, since their own parenthesized spans
+    already net to zero parens by the time a later 'AND' is reached."""
+    parts = re.split(r'\bAND\b', filter_text or '', flags=re.I)
+    result = []
+    depth = 0
+    for part in parts:
+        if depth == 0:
+            result.append(part)
+        depth += part.count('(') - part.count(')')
+    return result
 
 
 def _mechanical_filter_predicate(filter_text, scenario):
@@ -235,13 +287,22 @@ def _mechanical_filter_predicate(filter_text, scenario):
     approximation, not a silent exact (or silently wrong) answer."""
     if not filter_text:
         return (lambda row: True), []
-    conjuncts = re.split(r'\bAND\b', filter_text, flags=re.I)
+    conjuncts = _top_level_and_conjuncts(filter_text)
     checks = []
     skipped = []
     for c in conjuncts:
-        m = _SIMPLE_EQ_CONJUNCT_RE.match(c.strip())
+        c_stripped = c.strip()
+        m = _IS_NOT_NULL_RE.match(c_stripped)
+        if m:
+            checks.append((m.group(1), 'not_null', None))
+            continue
+        m = _IS_NULL_RE.match(c_stripped)
+        if m:
+            checks.append((m.group(1), 'is_null', None))
+            continue
+        m = _SIMPLE_EQ_CONJUNCT_RE.match(c_stripped)
         if not m:
-            skipped.append(c.strip())
+            skipped.append(c_stripped)
             continue
         col, raw_val = m.group(1), m.group(2).strip()
         if col.isdigit():
@@ -276,15 +337,22 @@ def _mechanical_filter_predicate(filter_text, scenario):
                     expected = float(expected)
                 except ValueError:
                     pass
-        checks.append((col, expected))
+        checks.append((col, 'eq', expected))
 
     def predicate(row):
-        for col, expected in checks:
+        for col, mode, expected in checks:
             try:
-                if _row_get(row, col) != expected:
-                    return False
+                value = _row_get(row, col)
             except FitnessEvaluationError:
                 return False  # row doesn't even have this column -- can't match
+            if mode == 'not_null':
+                if value is None:
+                    return False
+            elif mode == 'is_null':
+                if value is not None:
+                    return False
+            elif value != expected:
+                return False
         return True
 
     return predicate, skipped
@@ -303,8 +371,21 @@ def _row_from_filter_conjuncts(filter_text, scenario):
     `skipped` list -- a row missing an unparseable conjunct's column is
     an approximation, never a silent wrong guess at its value."""
     row = {}
-    for c in re.split(r'\bAND\b', filter_text or '', flags=re.I):
-        m = _SIMPLE_EQ_CONJUNCT_RE.match(c.strip())
+    for c in _top_level_and_conjuncts(filter_text):
+        c_stripped = c.strip()
+        m = _IS_NOT_NULL_RE.match(c_stripped)
+        if m:
+            # A generic non-null placeholder -- same convention as every
+            # other untyped placeholder in this module (e.g. ensure_row's
+            # own default val=1). Good enough to satisfy IS NOT NULL for
+            # any column type SQLite will actually store it as; the real,
+            # typed value (if the branch needs one) comes from whatever
+            # OTHER leaf/mutation targets this same column directly.
+            row[m.group(1)] = 1
+            continue
+        if _IS_NULL_RE.match(c_stripped):
+            continue  # leave the column unset -- absent already means None
+        m = _SIMPLE_EQ_CONJUNCT_RE.match(c_stripped)
         if not m:
             continue
         col, raw_val = m.group(1), m.group(2).strip()
@@ -423,6 +504,13 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
             blob = {}
         return blob.get(node['key'], node.get('default'))
     if kind == 'null_check':
+        # A null_check's own boolean means "is the fact SET" (`is not
+        # None`) UNLESS the ground truth's own notes described the
+        # opposite polarity (e.g. OpenMRS's identifierBlank: "identifier
+        # IS NULL OR TRIM(identifier) = ''" -- true means EMPTY, not
+        # populated) -- compile_constraints.py's own `negate` flag,
+        # confirmed against the notes text, not guessed here.
+        negate = bool(node.get('negate'))
         if node.get('key'):
             # null_check on a serialized_field's own key (e.g. Spree's
             # amountMaxSet) -- mirrors the plain-column branch below
@@ -436,8 +524,10 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
                     f"no focal row given for table {node['table']!r} -- can't read "
                     f"{node['table']}.{node['column']}[{node['key']}]")
             blob = row.get(node['column']) or {}
-            return blob.get(node['key']) is not None
-        return _lookup(focal, node['table'], node['column']) is not None
+            is_set = blob.get(node['key']) is not None
+            return (not is_set) if negate else is_set
+        is_set = _lookup(focal, node['table'], node['column']) is not None
+        return (not is_set) if negate else is_set
     if kind == 'any_not_null':
         return any(_lookup(focal, c['table'], c['column']) is not None for c in node['columns'])
     if kind in ('join_lookup', 'join_null_check'):

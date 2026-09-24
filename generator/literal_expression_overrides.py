@@ -69,14 +69,28 @@ _PRIOR_COMPLETED_ORDER_COUNT = {
             'kind': 'derived_aggregate',
             'aggregate': 'COUNT',
             'table': 'spree_orders',
-            'filter_text': '(user_id = <user_id> OR email = <email>) '
-                            'AND completed_at IS NOT NULL AND id != self',
+            'filter_text': 'user_id = <user_id> AND completed_at IS NOT NULL AND id != self',
             'notes': ('[ASSUMED -- see literal_expression_overrides.py\'s own module '
                       'docstring for the full disclosure] hand-translated from the FEEL '
                       'list comprehension feel_parser.py cannot parse; completed_at IS NOT '
                       'NULL stands in for the formula\'s own order.state = "complete", the '
                       'schema\'s real completion signal since no bare state/status column '
-                      'reads "complete".'),
+                      'reads "complete". A SECOND disclosed narrowing, added 2026-09-24: '
+                      'dropped the formula\'s own "OR email = <email>" guest-checkout '
+                      'alternative -- (A OR B) is a shape neither '
+                      '_mechanical_filter_predicate nor _row_from_filter_conjuncts '
+                      '(generator/candidate.py, generator/mutation.py) understands at all '
+                      '(both only recognize a flat AND of single-column conjuncts), so the '
+                      'whole parenthesized clause was previously skipped entirely -- no '
+                      'user_id OR email constraint ever actually applied to a seeded/mutated '
+                      '"prior order" row, which is what let the search claim '
+                      'First-Order Promotion Eligibility::rule_3 covered from its very first '
+                      'seeded candidate while the real validator (correctly requiring an '
+                      'actual matching user_id) disagreed. Matching by user_id alone is a '
+                      'real, narrower subset of the formula\'s true "identified by user OR '
+                      'email" semantics (loses the guest-checkout-by-email path), not a guess '
+                      'at missing schema -- the same kind of narrowing already disclosed for '
+                      'adjustedCreditsCount.'),
         },
     },
 }

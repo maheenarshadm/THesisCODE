@@ -88,7 +88,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
                         _mechanical_filter_predicate, _find_focal_with_columns, _row_get,
-                        _owned_rows, _OWNER_KEY, known_constant)
+                        _owned_rows, _OWNER_KEY, known_constant, _top_level_and_conjuncts)
 from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
                       candidate_constraint_fitness, _unique_key_sets)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
@@ -378,14 +378,24 @@ def _hypothetical_fitness(record, genome, var_name, value, node=None, case_study
         for sib_name, sib_node in _sibling_field_leaves(record, var_name, node):
             sib_kind = sib_node.get('kind')
             if kind == 'null_check' and sib_kind == 'schema_column':
-                if not value:
+                # `negate` (see compile_constraints.py's own
+                # `_null_check_is_negated`): a fact worded "... IS NULL"
+                # (identifierBlank) means true=EMPTY, so its trial value
+                # needs inverting before it decides the sibling column's
+                # null-ness -- otherwise this synchronization would push
+                # the sibling the WRONG way for exactly the same reason
+                # `_apply_field_mutation`'s own null_check branch needed
+                # the identical flip.
+                wants_set = (not value) if node.get('negate') else value
+                if not wants_set:
                     trial[sib_name] = None
                 elif trial.get(sib_name) is None:
                     col_type = _column_type(case_study, node['table'], node['column']) \
                         if case_study is not None else None
                     trial[sib_name] = _placeholder_for_column_type(col_type) if case_study is not None else 1
             elif kind == 'schema_column' and sib_kind == 'null_check':
-                trial[sib_name] = value is not None
+                is_set = value is not None
+                trial[sib_name] = (not is_set) if sib_node.get('negate') else is_set
     try:
         return branch_fitness(record, trial)
     except FitnessEvaluationError:
@@ -710,13 +720,18 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
         # DOWNSTREAM serialized_field read of this SAME key, if any,
         # would separately mutate it to whatever real value ITS OWN
         # branch actually needs; this leaf's own job is only "present or
-        # absent," never the specific value.
+        # absent," never the specific value. `negate` (compile_
+        # constraints.py's own flag for a ground-truth fact worded the
+        # opposite way, e.g. "...Blank") flips which physical state
+        # `value=True` maps to -- see the plain branch below for why this
+        # matters, found via the exact same identifierBlank case.
         table, column, key = node['table'], node['column'], node['key']
         row = focal.setdefault(table.upper(), {})
         if row not in candidate.rows(table):
             candidate.add_row(table, row)
         blob = row.setdefault(column, {})
-        if not value:
+        set_it = (not value) if node.get('negate') else value
+        if not set_it:
             blob.pop(key, None)
         else:
             blob[key] = 1
@@ -726,6 +741,19 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
         row = focal.setdefault(table.upper(), {})
         if row not in candidate.rows(table):
             candidate.add_row(table, row)
+        # `negate`: see compile_constraints.py's own module comment on
+        # `_null_check_is_negated` -- a ground-truth fact worded as "...
+        # IS NULL" (e.g. identifierBlank) means true=EMPTY, the opposite
+        # of every other null_check's true=SET. A real, confirmed bug
+        # (2026-09-24): this write side previously always treated
+        # value=True as "make the column non-null" regardless of wording,
+        # so asking for identifierBlank=True actually POPULATED the
+        # column -- the exact opposite of what the search believed it was
+        # constructing. Flipping `value` once here, up front, lets every
+        # line below stay unchanged (they already correctly implement
+        # "false clears the fact, true sets it" for the ordinary case).
+        if node.get('negate'):
+            value = not value
         if not value:
             # A literal database NULL is the obvious way to write
             # "blank" -- except when the schema declares this column
@@ -825,8 +853,15 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None):
     (see its own branch below) shares the EXACT same construction,
     rather than a third, potentially-diverging reimplementation."""
     row = {} if owner_id is None else {_OWNER_KEY: owner_id}
-    for conjunct in re.split(r'\bAND\b', filter_text or '', flags=re.I):
-        cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', conjunct.strip())
+    for conjunct in _top_level_and_conjuncts(filter_text):
+        c_stripped = conjunct.strip()
+        nn = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NOT\s+NULL\s*$', c_stripped, re.I)
+        if nn:
+            row[nn.group(1)] = 1  # generic non-null placeholder -- see candidate.py's own mirror fix
+            continue
+        if re.match(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NULL\s*$', c_stripped, re.I):
+            continue  # leave the column unset -- absent already means None
+        cm = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s*=\s*(.+?)\s*$', c_stripped)
         if not cm:
             continue
         col, raw_val = cm.group(1), cm.group(2).strip()

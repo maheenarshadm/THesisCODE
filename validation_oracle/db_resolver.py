@@ -281,11 +281,41 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
             raw = row.get(node['column']) if row is not None else None
             blob = yaml.safe_load(raw) if raw else None
             stored = (blob or {}).get(f":{node['key']}", (blob or {}).get(node['key'])) if blob else None
-            value = stored is None
+            # A null_check's own value means "is the fact SET" (matching
+            # every ground-truth variable named this way, e.g.
+            # amountMaxSet/expiresAtSet/customerPresent) -- `is not None`,
+            # NOT `is None` -- UNLESS the ground truth's own notes
+            # described the opposite polarity (e.g. OpenMRS's
+            # identifierBlank: "identifier IS NULL OR TRIM(identifier) =
+            # ''", true=EMPTY), in which case compile_constraints.py's own
+            # `_null_check_is_negated` already set `negate` on this node,
+            # confirmed against the notes text, not guessed here.
+            # Confirmed against generator/candidate.py's own derive_value,
+            # the canonical definition (both branches, and both honor
+            # `negate` the same way). This branch and the plain one below
+            # were BOTH found flat-out inverted (2026-09-24, while chasing
+            # why a DMN-tautology fix -- Promotion Temporal
+            # Availability::rule_2's `expiresAt > expiresAt` -- still
+            # didn't verify after being corrected to `evaluationTime >
+            # expiresAt`): confirmed with an isolated unit test against a
+            # throwaway two-row SQLite table (col SET -> this code
+            # returned False; col NULL -> returned True) before touching
+            # anything. Fixing it blind (always `is not None`) then broke
+            # identifierBlank the other way (real, populated identifiers
+            # started reading as "blank") -- caught by this project's own
+            # required before/after diff across all 4 case studies, which
+            # is what surfaced the negated-wording case and led to the
+            # `negate` flag instead of a single hardcoded polarity.
+            is_set = stored is not None
+            value = (not is_set) if node.get('negate') else is_set
             return ResolvedValue(value, 'null_check', table,
-                                  f"{table}.{node['column']}[{node['key']}] IS NULL (YAML)", row)
-        value = (row[node['column'].lower()] is None) if row is not None else True
-        return ResolvedValue(value, 'null_check', table, f'{table}.{node["column"]} IS NULL', row)
+                                  f"{table}.{node['column']}[{node['key']}] "
+                                  f"{'IS NULL' if node.get('negate') else 'IS NOT NULL'} (YAML)", row)
+        is_set = (row[node['column'].lower()] is not None) if row is not None else False
+        value = (not is_set) if node.get('negate') else is_set
+        return ResolvedValue(value, 'null_check', table,
+                              f'{table}.{node["column"]} '
+                              f'{"IS NULL" if node.get("negate") else "IS NOT NULL"}', row)
 
     if kind == 'any_not_null':
         row = None
