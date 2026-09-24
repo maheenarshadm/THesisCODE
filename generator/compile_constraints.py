@@ -61,6 +61,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(REPO_ROOT, 'dmn_schema_mapper', 'mapper'))
 
 from feel_parser import parse_unary_test, parse_expression, UnsupportedFeelConstruct  # noqa: E402
+from literal_expression_overrides import get_override as get_literal_expression_override  # noqa: E402
 import validate_mapper as vm  # noqa: E402 -- reused for GT_CONFIG / ground-truth loading, not re-implemented
 
 DMN_NS = "https://www.omg.org/spec/DMN/20191111/MODEL/"
@@ -772,6 +773,20 @@ def resolve_and_substitute(cs, gt, decision, var_name, by_id, by_name, seen=None
             if cache_key in seen:
                 return {'kind': 'unresolved', 'reason': 'circular DRD substitution detected',
                          'decision_chain': sorted(seen)}
+            # A DISCLOSED, hand-authored override takes priority over the
+            # real parse -- see literal_expression_overrides.py's own
+            # module docstring. Needed for formulas feel_parser.py cannot
+            # actually parse (e.g. a FEEL list comprehension, which
+            # degrades to an unevaluable `opaque_formula` node nested
+            # inside an otherwise-successful parse, rather than raising
+            # UnsupportedFeelConstruct at the top level -- so this check
+            # must happen before attempting the parse at all, not only in
+            # the except branch below).
+            override = get_literal_expression_override(cs, upstream.name)
+            if override is not None:
+                return {'kind': 'substituted_decision', 'substituted_from': upstream.name,
+                        'expression': override['expression'],
+                        'free_variable_resolutions': override['free_variable_resolutions']}
             try:
                 expr = parse_expression(upstream.literal_text)
             except UnsupportedFeelConstruct as e:

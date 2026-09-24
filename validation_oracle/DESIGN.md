@@ -461,6 +461,96 @@ worth flagging, not evidence of a bug (its own 2 unresolvable rules,
 `Rule_3`/`Rule_4`, are blocked by the pre-existing, disclosed
 `isLastSelectedStep` `code_external` gap, unrelated to this fix).
 
+**2026-09-24 (a third round): a merge/repair feasibility check, and one
+more Spree decision closed via a new, disclosed override kind.**
+
+A user question prompted a direct diagnostic before any further ground-
+truth edits: does the search's own `branch_fitness` re-verify an
+objective's fitness *after* `repair_candidate` runs on the merged
+whole, or only before? Traced the actual call order in `dynamosa.py`:
+`merge_archive_candidate` calls `repair_candidate` internally before
+returning; re-evaluating fitness afterward is the CALLER's own
+responsibility (`dynamosa.py`'s own `__main__` self-test does this
+explicitly) -- and `tests/build_fixture_from_generator.py`'s `build()`
+does NOT do it, discarding the pre-merge covered set it gets back
+without ever re-checking post-repair fitness. Replicated that same
+self-test pattern for Spree's real archive
+(`Spree__dynamosa_nsga2__budget1x__seed0.pkl`, the one `spree_merged.db`
+was built from): of 22/26 objectives search-covered pre-merge, only 1
+regresses after merge+repair when `branch_fitness` is re-evaluated on
+the actual merged, repaired candidate
+(`Promotion Usage Limit Exceeded::rule_3`, post-merge fitness 0.6667).
+**This is the important, disclosable result: at the search's own
+fitness-function level, merge/repair interference explains only 1 of
+Spree's ~15 missing rule IDs -- the rest of the objective-vs-verified-
+rule gap is validator SCOPE (decisions it cannot check at all yet), not
+evidence the search or the merge is systematically wrong.**
+
+Separately, also confirmed by reading `fitness.py`/`dynamosa.py`
+directly (correcting an earlier, wrong claim made in conversation before
+checking the code): `branch_fitness` already includes a "no earlier row
+also matches" suppression term for FIRST/UNIQUE hit policy
+(`hit_policy_context.earlier_rows` + `distance_to_false`, summed into
+the fitness value) -- this is not a missing piece of the fitness
+function; a proposal to add it as a new, separate objective was dropped
+once this was found, since it would have exactly duplicated an existing,
+already-running mechanism. One real, narrower gap remains disclosed:
+`earlier_rows` is only populated from rows *before* the current one, so
+it isn't fully rigorous for UNIQUE hit policy (which needs "no OTHER row
+matches," not just "no earlier one") -- not applicable to Spree, which
+has zero UNIQUE decisions, so not investigated further here.
+
+Of Spree's 5 unresolved decisions, 3 were assessed against the
+disclosed-override mechanism used throughout this project; only 1 turned
+out to be legitimately closeable that way:
+- **`First-Order Promotion Eligibility` -- closed.** Its own
+  dependency, the literal-expression decision `Prior Completed Order
+  Count`, has a real DMN formula `feel_parser.py` cannot parse (a FEEL
+  list comprehension with a filtered `count`), which degraded to an
+  unevaluable `opaque_formula` node nested inside an otherwise-successful
+  parse -- not caught by the existing `UnsupportedFeelConstruct`
+  exception path at all, since the top-level parse "succeeds." A new,
+  disclosed override mechanism, `generator/literal_expression_overrides.py`
+  (same status/precedent as `join_disambiguation.py`, one level up the
+  pipeline), lets `compile_constraints.resolve_and_substitute` swap in a
+  hand-translated `{expression, free_variable_resolutions}` pair --
+  reusing the SAME already-proven `derived_aggregate`/`filter_text`
+  machinery, zero new runtime evaluation code -- before ever attempting
+  the real parse. The hand translation itself is disclosed
+  `[ASSUMED]`: `order.state = "complete"` is re-expressed as
+  `completed_at IS NOT NULL` (no bare state/status column in this
+  schema reads "complete"; `completed_at` is Spree's own real,
+  well-known completion signal), and `order != currentOrder` as
+  `id != self` (the formula's own subject row, already this decision's
+  subject table). Re-run against the real database: 3 real cases now
+  genuinely verify `rule_1`/`rule_2` via an actual `COUNT` query.
+  Spree's `verified_covered_rules` rose from 7 to 9 (26.9% -> 34.6%),
+  unresolved decisions from 5 to 4.
+- **`Promotion Customer Group Eligibility` -- assessed and declined,
+  not a bug or an oversight.** Its own blocker traces deeper than the
+  existence-check ambiguity it first looked like: `matchingCustomerGroupCount`
+  needs the promotion's own list of targeted customer-group IDs, which
+  lives only inside a serialized preferences blob with NO real,
+  normalized table backing it at all (unlike every other disclosed fix
+  in this project, which reused REAL, existing columns with a merely
+  under-encoded correlation). Closing this would mean inventing a join
+  against a table structure that does not exist in the real schema, not
+  disclosing an assumed filter on real ones -- a materially different,
+  larger claim than this project's own `[ASSUMED]` discipline has made
+  anywhere else. Left disclosed and unresolved rather than fabricated.
+- **`Price List Volume Adjustment Tier Selection` -- assessed, technically
+  possible, deliberately not yet forced.** All 3 of its rules' conditions
+  are pure literal-threshold comparisons against `purchaseQuantity`
+  alone (`>= 100`, `>= 50`, catch-all) -- no real table column appears in
+  any of them, so there is no natural row to anchor enumeration on.
+  Closing it would need both an arbitrarily-chosen anchor table AND one
+  fixed, disclosed `purchaseQuantity` scenario constant (same precedent
+  as `evaluationTime`/`__today__`) -- but because it is one scalar
+  compared against literal thresholds, AT MOST 1 of its 3 rules could
+  ever show verified no matter which constant is picked, by construction,
+  not as a validator shortfall. Awaiting an explicit decision on whether
+  that capped result is worth forcing open before doing it.
+
 ## Why this exists
 
 Everything the search produces and reports as "coverage" — archive

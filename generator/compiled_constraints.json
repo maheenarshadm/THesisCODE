@@ -36524,26 +36524,18 @@
     "kind": "substituted_decision",
     "substituted_from": "Prior Completed Order Count",
     "expression": {
-     "kind": "call",
-     "name": "count",
-     "args": [
-      {
-       "kind": "opaque_formula",
-       "feel_text": "order for order in store.orders where ( order.customer = customer or order.email = email ) and order.state = \"complete\" and order != currentOrder",
-       "free_variables": [
-        "currentOrder",
-        "customer",
-        "email",
-        "order",
-        "order.customer",
-        "order.email",
-        "order.state",
-        "store.orders"
-       ]
-      }
-     ]
+     "kind": "variable",
+     "ref": "__prior_completed_order_count"
     },
-    "free_variable_resolutions": {}
+    "free_variable_resolutions": {
+     "__prior_completed_order_count": {
+      "kind": "derived_aggregate",
+      "aggregate": "COUNT",
+      "table": "spree_orders",
+      "filter_text": "(user_id = <user_id> OR email = <email>) AND completed_at IS NOT NULL AND id != self",
+      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\"."
+     }
+    }
    },
    "userOrEmailPresent": {
     "kind": "any_not_null",
@@ -36639,26 +36631,18 @@
     "kind": "substituted_decision",
     "substituted_from": "Prior Completed Order Count",
     "expression": {
-     "kind": "call",
-     "name": "count",
-     "args": [
-      {
-       "kind": "opaque_formula",
-       "feel_text": "order for order in store.orders where ( order.customer = customer or order.email = email ) and order.state = \"complete\" and order != currentOrder",
-       "free_variables": [
-        "currentOrder",
-        "customer",
-        "email",
-        "order",
-        "order.customer",
-        "order.email",
-        "order.state",
-        "store.orders"
-       ]
-      }
-     ]
+     "kind": "variable",
+     "ref": "__prior_completed_order_count"
     },
-    "free_variable_resolutions": {}
+    "free_variable_resolutions": {
+     "__prior_completed_order_count": {
+      "kind": "derived_aggregate",
+      "aggregate": "COUNT",
+      "table": "spree_orders",
+      "filter_text": "(user_id = <user_id> OR email = <email>) AND completed_at IS NOT NULL AND id != self",
+      "notes": "[ASSUMED -- see literal_expression_overrides.py's own module docstring for the full disclosure] hand-translated from the FEEL list comprehension feel_parser.py cannot parse; completed_at IS NOT NULL stands in for the formula's own order.state = \"complete\", the schema's real completion signal since no bare state/status column reads \"complete\"."
+     }
+    }
    }
   },
   "fk_closure_tables": [
