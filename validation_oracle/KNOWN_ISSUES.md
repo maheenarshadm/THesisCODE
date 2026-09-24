@@ -44,38 +44,56 @@ excluded from all coverage numbers per an explicit decision below):
 
 ### Spree
 
-- **Blob-decoding — CLOSED for 4 of 5 facts via a new `serialized_field`
-  mechanism; `promotionTargetGroupIds` deliberately left for later.**
-  See "Fixed issues" below for the full mechanism. `amountMaxSet`/
-  `operatorMin`/`amountMin`/`operatorMax`/`amountMax` now compile via a
-  confirmed-real (not guessed) YAML read/write convention, closing all 4
-  `Promotion Item Total Eligibility` rules at the compile level.
-  `Promotion Customer Group Eligibility::rule_3`'s own
-  `promotionTargetGroupIds` is a LIST-typed fact needing FEEL
-  `intersection`/`count` over two lists — a materially different, larger
-  piece of work than the scalar preferences closed here, not yet
-  attempted.
+- **OUT OF SCOPE, by explicit decision (2026-09-24): generating/
+  verifying data at blob/attribute level, inside a single serialized
+  column.** The `serialized_field` mechanism (see "Fixed issues" below)
+  was already built and does work — schema-declared, confirmed against
+  Spree's real source, round-trip tested — but reaching this deep is a
+  materially different, finer-grained kind of work than what this
+  project is meant to demonstrate: whether a search-based generator
+  resolves a real *data-backend* dependency (does the right ROW/COLUMN
+  exist, is it joined correctly), not whether it can also reverse-
+  engineer and populate a specific key inside one column's own
+  serialized/YAML content. Even where the schema and format are fully
+  known (as they are here — this isn't a case of missing information),
+  deliberately generating a value at that key-inside-a-column
+  granularity goes beyond the project's own scope. Reclassified from
+  "open bug to eventually fix" to **out of scope, not pursued further**:
+  - `Promotion Item Total Eligibility` (all 4 rules) — every rule reads
+    `amountMin`/`operatorMin`/`amountMax`/`operatorMax`/`amountMaxSet`
+    out of `spree_promotion_rules.preferences`'s serialized blob. Even
+    setting aside this decision's OWN separate row-finding gap (below),
+    the underlying facts are blob-level, so the decision stays out of
+    scope regardless of whether that gap ever gets fixed.
+  - `Promotion Customer Group Eligibility::rule_3` — `promotionTargetGroupIds`
+    is a LIST-typed fact inside the same kind of serialized blob, needing
+    FEEL `intersection`/`count` over two lists on top of the blob-decode
+    itself. `rule_1`/`rule_2` of this same decision are NOT affected —
+    they read `spree_promotion_rules.type`, an ordinary real column, not
+    blob content — and remain a solvable, in-scope gap (below).
 
-- **3 fixture/row-finding gaps (11 rules, 3 decisions) remain, after
-  the Spree search re-run closed the 4th
+- **2 fixture/row-finding gaps (7 rules, 2 decisions) remain, after the
+  Spree search re-run closed a 3rd
   (`Price List Volume Adjustment Tier Selection`, see "Fixed issues"
-  below).** Two genuinely different remedies, now confirmed (not just
-  predicted) by actually running the search re-run:
-  - `Promotion Customer Group Eligibility` (3 rules) and `Promotion
-    Item Total Eligibility` (4 rules) both still need to locate a
-    specific `spree_promotion_rules`/`spree_order_promotions` row from
-    the decision's subject (`spree_orders`) — a one-to-many backward
-    join `subject_table_for_decision` correctly refuses to guess at.
+  below) and the blob-dependent 4th
+  (`Promotion Item Total Eligibility`) was reclassified out of scope
+  above.** Neither of these two needs blob decoding — both are ordinary
+  schema/join gaps, confirmed solvable in principle:
+  - `Promotion Customer Group Eligibility` (rules 1, 2, 4 — not `rule_3`,
+    out of scope above) needs to locate a specific
+    `spree_promotion_rules`/`spree_order_promotions` row from the
+    decision's subject (`spree_orders`) — a one-to-many backward join
+    `subject_table_for_decision` correctly refuses to guess at.
     Confirmed after the re-run: `spree_order_promotions` still isn't in
-    the fresh fixture at all (`Promotion Customer Group Eligibility`
-    rule_1/rule_2 are search-covered but their own construction never
-    needed to materialize that table, since `promotionTargetGroupsConfigured`
-    reads `spree_promotion_rules.type` directly without an explicit,
-    real join). Re-running the search does NOT close this half — it
-    needs the one-to-many join question resolved (a disclosed override
-    naming which single `spree_promotion_rules`/`spree_order_promotions`
-    row is "the" one for a given promotion, since a real promotion can
-    have many rule/action rows).
+    the fresh fixture at all (`rule_1`/`rule_2` are search-covered but
+    their own construction never needed to materialize that table,
+    since `promotionTargetGroupsConfigured` reads
+    `spree_promotion_rules.type` directly without an explicit, real
+    join). Re-running the search does NOT close this — it needs the
+    one-to-many join question resolved (a disclosed override naming
+    which single `spree_promotion_rules`/`spree_order_promotions` row
+    is "the" one for a given promotion, since a real promotion can have
+    many rule/action rows).
   - `Promotion Usage Limit Exceeded` (4 rules) needs `spree_discounts`
     joined through `spree_promotion_actions` — confirmed this is NOT
     simply a missing-table/search-budget problem the way `Price List
@@ -426,6 +444,22 @@ before being counted as fixed here.
   gaps (`Promotion Customer Group Eligibility`, `Promotion Item Total
   Eligibility`, `Promotion Usage Limit Exceeded`, and the COLLECT-only
   `Price Adjustment Tier Validity Violations`) are unchanged by the
-  re-run, exactly as the "3 fixture/row-finding gaps" entry above now
-  precisely diagnoses for the two categories among them that are NOT
-  simply missing tables.
+  re-run, exactly as the "2 fixture/row-finding gaps" entry above now
+  precisely diagnoses for the two of them that are solvable, in-scope
+  join gaps. `Promotion Item Total Eligibility` was subsequently
+  reclassified as out of scope (blob-level data), not a bug to fix —
+  see the scope-decision entry above.
+
+  **Scope note added 2026-09-24, after this mechanism was already
+  built and shipped**: on reflection, deliberately generating/verifying
+  a value at the granularity of one key inside a serialized column's
+  own content — even with the schema/format fully known, as it is
+  here — goes beyond this project's intended scope (resolving
+  data-backend dependencies at the row/column level, not decoding
+  attribute-level structure within a column). The mechanism above
+  stays in the codebase (it's real, tested, working code, and closing
+  it made the compile-time picture measurably more honest), but it is
+  not being extended or exercised further, and the rules that only
+  verify via it (`Promotion Item Total Eligibility`,
+  `Promotion Customer Group Eligibility::rule_3`) are now tracked as
+  out of scope in the Open Issues section above, not as pending work.
