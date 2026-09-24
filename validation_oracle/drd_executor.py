@@ -20,8 +20,8 @@ never by injecting an assumed/expected value.
 """
 import sqlite3
 
-from db_resolver import resolve
-from rule_evaluator import select_rule, evaluate_expression, UniqueViolation
+from db_resolver import resolve, UnresolvableForCase
+from rule_evaluator import evaluate_condition, evaluate_expression, UniqueViolation
 
 
 def _distinct_subject_keys(conn, subject_table, pk_cols):
@@ -31,11 +31,18 @@ def _distinct_subject_keys(conn, subject_table, pk_cols):
 
 
 def _rules_with_conditions(records):
-    """One condition per DISTINCT rule_id, in real document order. A
-    decision can have several objectives per rule (DRD fan-out -- see
-    generator/DECISIONS_ALGORITHM.md's own rule/objective finding) but
-    they all share the same rule_id and condition; dedupe by first
-    occurrence, in the order Phase 1 already lists them."""
+    """One condition per DISTINCT rule_id, in real document order, kept
+    ONLY by first occurrence. Correction (2026-09-24): a decision CAN
+    have several objectives sharing one rule_id with DIFFERENT own
+    conditions/variable_resolution -- one per upstream branch it could be
+    chained on (DRD fan-out; see compile_constraints.py's own
+    `_grounding_options`), not the same condition as this function's own
+    docstring used to (wrongly) assert. `run_decision` no longer uses
+    this function for evaluation (it now tries every variant of a
+    rule_id independently -- see its own docstring); this helper remains
+    only for `coverage.py`'s own cosmetic per-rule index lookup
+    (`rule_index_by_id`), where picking one arbitrary variant's index is
+    harmless."""
     seen_rules = {}
     for r in records:
         if r['rule_id'] not in seen_rules:
@@ -190,8 +197,11 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
             raise UngroundedForCase(
                 f"{var}: upstream {upstream_decision!r} selected {actual_selected!r}, "
                 f"not the required {node['from_rule_id']!r}")
-        result = resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths,
-                          case_study=case_study)
+        try:
+            result = resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths,
+                              case_study=case_study)
+        except UnresolvableForCase as e:
+            raise UngroundedForCase(f"{var}: {e}")
         if trace is not None:
             trace[var] = {'value': result.value, 'resolution_type': 'literal_via_upstream_branch',
                           'source_table': None, 'upstream_decision': upstream_decision,
@@ -210,8 +220,11 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
                           'source_table': None, 'free_variables': free_values}
         return value
 
-    result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths,
-                      case_study=case_study)
+    try:
+        result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths,
+                          case_study=case_study)
+    except UnresolvableForCase as e:
+        raise UngroundedForCase(f"{var}: {e}")
     if trace is not None:
         trace[var] = {'value': result.value, 'resolution_type': result.resolution_type,
                       'source_table': result.source_table}
@@ -240,6 +253,22 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
     needs -- never derived from search state; a `not_persisted` variable
     with no matching entry here raises (see `_resolve_one`), it is never
     silently treated as covered.
+
+    A rule_id can appear on several of `records`' own entries with
+    DIFFERENT condition/variable_resolution (DRD fan-out variants, one
+    per upstream branch it could be chained on). Each real case tries
+    EVERY variant of EVERY rule_id independently, never a merged union
+    of their variable_resolution (that previously collapsed all variants
+    to one arbitrary definition -- a real bug, fixed 2026-09-24, that
+    silently mis-evaluated any decision with more than one variant per
+    rule_id). A variant whose own resolution raises `UngroundedForCase`
+    (or a per-row data gap such as `derived_case` hitting an
+    uncovered real value, translated to the same exception by
+    `_resolve_one`) simply does not count as matched for that variant;
+    other variants of the same rule_id, and every other rule_id, are
+    still tried for this same real case -- a resolution failure no
+    longer aborts the WHOLE decision for that case (a second real bug,
+    fixed alongside the first).
     Returns a dict: {
         'matched_by_case': {pk_vals_tuple: [rule_id, ...]},
         'selected_by_case': {pk_vals_tuple: rule_id_or_None},
@@ -248,13 +277,24 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
         'trace': {...} (only if collect_trace),
     }"""
     case_study = records[0]['case_study']
-    all_resolutions = {}
-    for r in records:
-        all_resolutions.update(r['variable_resolution'])
-
-    rules_with_conditions = _rules_with_conditions(records)
     rule_outputs = _rule_outputs(records) if collect_trace else None
     hit_policy = records[0]['hit_policy']
+
+    # A decision can have several compiled records sharing the SAME
+    # rule_id but DIFFERENT condition/variable_resolution -- one per
+    # upstream branch it could be chained on (DRD fan-out; see
+    # compile_constraints.py's own `_grounding_options`). Group by
+    # rule_id, preserving first-appearance document order (needed for
+    # FIRST hit policy), and try EACH variant independently per real
+    # case -- never merge variants' own variable_resolution/condition
+    # together (that silently collapsed to one arbitrary variant's own
+    # definition for the whole decision, a real bug fixed 2026-09-24).
+    # A rule_id counts as matched for a case if ANY of its own variants
+    # both grounds (no UngroundedForCase) and evaluates true.
+    variants_by_rule_id = {}
+    for r in records:
+        variants_by_rule_id.setdefault(r['rule_id'], []).append(r)
+    ordered_rule_ids = list(variants_by_rule_id.keys())
 
     subject_keys = [tuple(only_case)] if only_case is not None else \
         _distinct_subject_keys(conn, subject_table, subject_pk_cols)
@@ -272,40 +312,65 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
         # SAME disclosed not_persisted_overrides dict, under the SAME
         # '__today__' key generator/candidate.py's own convention uses,
         # rather than a separate parameter.
-        values = {}
+        base_values = {}
         if not_persisted_overrides and '__today__' in not_persisted_overrides:
-            values['__today__'] = not_persisted_overrides['__today__']
-        var_trace = {} if collect_trace else None
-        ungrounded = False
-        for var, node in all_resolutions.items():
-            try:
-                values[var] = _resolve_one(conn, case_study, var, node, subject_table,
-                                            subject_pk_cols, pk_vals, join_paths or {},
-                                            runner, decision_name, var_trace, not_persisted_overrides)
-            except UngroundedForCase:
-                ungrounded = True
-                break
-        if ungrounded:
-            matched_by_case[pk_vals] = []
-            selected_by_case[pk_vals] = None
-            if collect_trace:
-                trace_by_case[pk_vals] = {'resolved_inputs': var_trace, 'matched_rule_ids': [],
-                                          'selected_rule_id': None, 'ungrounded': True,
-                                          'decision_output': None}
-            continue
-        try:
-            matched, selected = select_rule(hit_policy, rules_with_conditions, values, decision_name)
-        except UniqueViolation as e:
-            violations.append((pk_vals, e))
-            continue
+            base_values['__today__'] = not_persisted_overrides['__today__']
+
+        matched = []
+        # Diagnostic-only merge of every variant that successfully
+        # grounded for this case, across every rule_id tried (last write
+        # wins on a variable name shared by two variants with DIFFERENT
+        # own resolutions -- e.g. two "via" variants of the same free
+        # variable name under different upstream-branch assumptions).
+        # Never used for matched/selected correctness, which is decided
+        # per-variant below, independently.
+        overall_var_trace = {} if collect_trace else None
+        any_variant_grounded = False
+
+        for rule_id in ordered_rule_ids:
+            rule_matched = False
+            for variant in variants_by_rule_id[rule_id]:
+                values = dict(base_values)
+                var_trace = {} if collect_trace else None
+                ungrounded = False
+                for var, node in variant['variable_resolution'].items():
+                    try:
+                        values[var] = _resolve_one(conn, case_study, var, node, subject_table,
+                                                    subject_pk_cols, pk_vals, join_paths or {},
+                                                    runner, decision_name, var_trace, not_persisted_overrides)
+                    except UngroundedForCase:
+                        ungrounded = True
+                        break
+                if ungrounded:
+                    continue  # this variant doesn't apply to this real case; try the next one
+                any_variant_grounded = True
+                if collect_trace:
+                    overall_var_trace.update(var_trace)
+                if evaluate_condition(variant['condition'], values):
+                    rule_matched = True
+                    break  # one grounded+true variant is enough for this rule_id
+            if rule_matched:
+                matched.append(rule_id)
+
+        if hit_policy == 'FIRST':
+            selected = matched[0] if matched else None
+        elif hit_policy == 'UNIQUE':
+            if len(matched) > 1:
+                violations.append((pk_vals, UniqueViolation(decision_name, matched)))
+                continue
+            selected = matched[0] if matched else None
+        else:
+            raise NotImplementedError(f"Hit policy {hit_policy!r} not yet supported "
+                                       f"(only FIRST/UNIQUE, matching this project's own scope)")
+
         matched_by_case[pk_vals] = matched
         selected_by_case[pk_vals] = selected
         if selected:
             verified_covered.add(selected)
         if collect_trace:
             trace_by_case[pk_vals] = {
-                'resolved_inputs': var_trace, 'matched_rule_ids': matched,
-                'selected_rule_id': selected, 'ungrounded': False,
+                'resolved_inputs': overall_var_trace, 'matched_rule_ids': matched,
+                'selected_rule_id': selected, 'ungrounded': not any_variant_grounded,
                 'decision_output': rule_outputs.get(selected) if selected else None,
             }
 

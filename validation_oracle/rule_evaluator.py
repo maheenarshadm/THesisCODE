@@ -131,6 +131,13 @@ def evaluate_condition(condition, values):
         left = _eval_operand(condition['left'], values)
         candidates = [_eval_operand(v, values) for v in condition['values']]
         return left in candidates
+    if op == 'not':
+        return not evaluate_condition(condition['clause'], values)
+    if op == 'between':
+        left = _eval_operand(condition['left'], values)
+        low = _eval_operand(condition['low'], values)
+        high = _eval_operand(condition['high'], values)
+        return _COMPARATORS['>='](left, low) and _COMPARATORS['<='](left, high)
     raise NotImplementedError(f"Unhandled condition operator {op!r}: {condition!r}")
 
 

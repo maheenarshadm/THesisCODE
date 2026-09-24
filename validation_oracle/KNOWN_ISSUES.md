@@ -18,7 +18,7 @@ excluded from all coverage numbers per an explicit decision below):
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
 | OpenMRS | 42/56 (75.0%) | 14/14 (100%) |
-| FLEX2 | 21/55 (38.2%) | 2/10 |
+| FLEX2 | 25/55 (45.5%) | 3/10 |
 | Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
 
@@ -129,25 +129,139 @@ excluded from all coverage numbers per an explicit decision below):
   rule-selection attempt, rather than failing before ever reaching
   that point.
 
-  **Net effect on verified counts: still 0/11 for `Course Load
-  Limit`, but now for a real, disclosed reason instead of a validator
-  bug.** Inspecting `decision_trace.json` directly: most real subjects
-  correctly come back `ungrounded` (their real Academic Warning Status
-  outcome doesn't match this specific "via" variant's own assumption —
-  expected, since only a few subjects should ever ground any one
-  variant). The handful that DO ground (e.g. subject `(6, 6)`:
+  **Net effect on verified counts at the time: still 0/11 for `Course
+  Load Limit`, but now for a real, disclosed reason instead of a
+  validator bug.** Inspecting `decision_trace.json` directly: most real
+  subjects correctly come back `ungrounded` (their real Academic Warning
+  Status outcome doesn't match this specific "via" variant's own
+  assumption — expected, since only a few subjects should ever ground
+  any one variant). The handful that DO ground (e.g. subject `(6, 6)`:
   `newWarningCount=3` from a real, confirmed `Academic Warning
   Status::Rule_6` match, `semesterType='Summer'`, `cumulativeGPA=-2`,
-  `priorWarningCount=2`) still select no rule at all — none of Course
-  Load Limit's own rule conditions match that real combination. This is
-  a genuine, separate, generator-side gap (the search's own merge never
-  aligned all 4 of this composite record's own independent leaves —
-  `newWarningCount`/`semesterType`/`cumulativeGPA`/`priorWarningCount`
-  — onto one mutually-consistent real subject), not a validator issue.
-  Both validator-side bugs found chasing this (`upstream_subject_value`'s
-  case-sensitivity gap, `derived_case` being unimplemented) are now
-  fully fixed; what's left is exactly the gap documented immediately
-  below — not a coincidence, the SAME root cause.
+  `priorWarningCount=2`) still selected no rule at all.
+
+  **RETRACTED (2026-09-24), same day: this was NOT a generator-side
+  value-alignment gap.** The paragraph above concluded "the search's own
+  merge never aligned all 4 of this composite record's own independent
+  leaves onto one mutually-consistent real subject" — this diagnosis was
+  never actually verified against the real resolved values, only
+  inferred from "no rule selected." Directly evaluating
+  `Rule_4::via::Academic Warning Status::Rule_6`'s own compiled
+  condition by hand against ITS OWN real resolved values
+  (`semesterType='Summer', cumulativeGPA=1, priorWarningCount=2`)
+  showed every clause SHOULD be true — the composite leaves WERE
+  correctly aligned. The real blocker was three compounding validator
+  bugs in `drd_executor.py`/`rule_evaluator.py`, unrelated to the search
+  or the merge:
+
+  1. **`run_decision` collapsed multiple DRD-fan-out variants of the
+     SAME `rule_id` to one arbitrary definition.** A decision can have
+     several compiled records sharing one `rule_id` but different
+     `condition`/`variable_resolution` — one per upstream branch it
+     could be chained on (`compile_constraints.py`'s own
+     `_grounding_options`; Course Load Limit's `Rule_4` alone has 6 such
+     variants, one per `Academic Warning Status` rule). `run_decision`
+     built ONE merged `all_resolutions` dict via `dict.update()` across
+     every record of the decision, silently keeping only the LAST
+     variant's own definition for any variable name the variants
+     shared, and `_rules_with_conditions` kept only the FIRST variant's
+     own `condition` per `rule_id` (its own docstring wrongly asserted
+     "they all share the same rule_id and condition"). Confirmed real:
+     for subject `(1, 7)`, the real upstream Academic Warning Status
+     decision selects `Rule_1`, but the merged dict's own
+     `newWarningCount` definition came from whichever variant was
+     processed LAST (`Rule_6`'s own, requiring the upstream to have
+     selected `Rule_6` instead) — a real, grounded match reported as
+     `ungrounded` because of a completely unrelated variant's own
+     precondition.
+  2. **No per-subject/per-variant exception isolation around resolution
+     failures other than `UngroundedForCase`.** `derived_case` (and any
+     other kind that can raise on a per-row data quirk) raised a plain
+     `NotImplementedError` when a real column value wasn't covered by
+     any declared case — uncaught by `run_decision`'s own per-variable
+     try/except (which only caught `UngroundedForCase`), aborting the
+     WHOLE decision for EVERY subject the moment ANY ONE subject hit
+     this. Confirmed real: 27 of FLEX2's 39 real `STUDENT_SEMESTER`
+     subjects belong to OTHER decisions and have no matching `SEMESTER`
+     row at all (`TITLE=None` via the LEFT JOIN), and `derived_case`
+     correctly refuses to guess a mapping for `None` — but that correct
+     refusal, unhandled, took down the entire decision instead of just
+     that one subject.
+  3. **`rule_evaluator.py`'s `evaluate_condition` never implemented the
+     `not` (or `between`) operator**, unlike `fitness.py`'s own full
+     `and/or/not/in/between` support on the generator side. Confirmed
+     real by direct isolated evaluation: `Rule_4::via::Academic Warning
+     Status::Rule_6`'s own compiled condition raised
+     `NotImplementedError: Unhandled condition operator 'not'` the
+     moment resolution actually reached it (bugs 1/2 above had
+     previously always intercepted this decision before evaluation ever
+     got this far). Corpus-wide, 54 compiled records use `not` in their
+     condition (52 FLEX2, 1 Spree, 1 jBilling) — none of them could ever
+     have verified before this fix, regardless of any other gap.
+
+  **Fixed, all three, 2026-09-24** (user-approved: "fix all three
+  bugs"): (1) `run_decision` restructured to group compiled records by
+  `rule_id` and try EVERY variant's own `variable_resolution`/`condition`
+  independently per real subject — a `rule_id` counts as matched if ANY
+  of its own variants both grounds and evaluates true; `matched_rule_ids`
+  still lists every matching rule in document order and `selected_rule_id`
+  is still chosen per FIRST/UNIQUE exactly as before (verified against
+  `test_spec_cases.py`'s own FIRST/UNIQUE precedence cases, unchanged).
+  `_rules_with_conditions`'s own docstring corrected; it now serves only
+  `coverage.py`'s cosmetic per-rule index lookup, no longer evaluation.
+  (2) `db_resolver.py`'s `derived_case` now raises a new, distinct
+  `UnresolvableForCase` (not `NotImplementedError`) for an uncovered
+  real value — a per-row data-quality gap, never guessed around, but
+  deliberately distinguishable from a genuinely-unimplemented resolution
+  kind; `drd_executor.py`'s `_resolve_one` catches it at both call sites
+  that invoke `db_resolver.resolve()` directly and re-raises it as
+  `UngroundedForCase`, so it is now isolated to the ONE variant/subject
+  it actually affects, exactly like an ordinary upstream-branch mismatch
+  — never swallowed at the decision level, and a genuinely-unimplemented
+  kind still correctly aborts the whole decision as before (unchanged:
+  `not_persisted`'s own missing-override error, for instance, still
+  needs the whole decision flagged unresolved, since no subject could
+  ever ground it either way). (3) `rule_evaluator.evaluate_condition`
+  now implements `not` (`{'op': 'not', 'clause': ...}`, De Morgan-free —
+  just negate the recursive evaluation) and `between` (`{'op': 'between',
+  'left', 'low', 'high'}`, mirroring `fitness.py`'s own key names
+  exactly), matching the generator side's full support.
+
+  **Verified result, confirmed via a fresh, per-objective before/after
+  diff across all 4 case studies** (identical `coverage.py` invocation
+  — same fixtures, same archive pickles, same `--not-persisted-json`
+  overrides — code-only difference, isolating the fix's own true effect
+  from an unrelated pre-existing question about whether earlier official
+  runs supplied `--not-persisted-json` at all): **`Course Load Limit`
+  now 11/11 confirmed** (all 4 distinct `rule_id`s — `Rule_1`, `Rule_2`,
+  `Rule_3`, `Rule_4` — flip `false_positive` → `confirmed`; FLEX2's own
+  verified rule count 21/55 → 25/55, 38.2% → 45.5%; verified
+  decision-table coverage 2/10 → 3/10), **zero flips anywhere else** —
+  OpenMRS, Spree, and jBilling show byte-identical `objective_results.csv`
+  agreement classes before and after, confirmed by a full 240-objective
+  diff, not just totals. Full regression suite (`candidate.py`,
+  `mutation.py`, `materialize.py`, `dynamosa.py`, `subject_table.py`,
+  `rule_evaluator.py`'s own `__main__` self-test, `drd_executor.py`'s
+  own OpenMRS acceptance test, `test_spec_cases.py` — all 8 of its own
+  FIRST/UNIQUE/aggregate/join-lookup/output cases, notably including the
+  two FIRST-policy precedence cases this restructuring could have most
+  easily broken — `test_drd_chaining_synthetic.py`,
+  `test_serialized_field_roundtrip.py`) re-run and passing unchanged.
+
+  **Separately disclosed, found while establishing the true baseline for
+  the diff above, NOT part of this fix**: re-running OpenMRS's coverage
+  WITH `--not-persisted-json {"evaluationTime": 20000}` on the
+  PRE-fix code already shows 44 verified rules (`Birthdate
+  Validity::Rule_2`/`Rule_3` newly confirmed), not the 42 currently
+  recorded above and throughout this file/`COVERAGE_REPORT.md` — meaning
+  whatever run originally produced the recorded "42" appears to have
+  been invoked without that override (jBilling shows the same shape: 12
+  vs. the recorded 10, using `--not-persisted-json
+  {"__today__": 20000}`). This is a coverage-run methodology question
+  entirely orthogonal to the three bugs fixed here — not touched or
+  "corrected" in this pass, since re-establishing OpenMRS/jBilling's own
+  official numbers needs its own deliberate, separately-verified pass,
+  not a side effect of an unrelated fix. Flagged here so it isn't lost.
 
 - **FIXED 2026-09-24: generator never constructed a decision's own real
   subject row when no leaf reads it directly.** `dynamosa.py`'s own
@@ -236,15 +350,16 @@ excluded from all coverage numbers per an explicit decision below):
   (`Identifier Uniqueness Check::rule_1` flips `false_positive` →
   `confirmed` — the fix's real, structural win), zero flips anywhere
   else in OpenMRS, and zero flips at all in FLEX2/Spree/jBilling.
-  `Course Load Limit` itself is STILL 0/11 — the junction row now
-  exists (confirmed directly: a real `STUDENT_SEMESTER` row correctly
-  cross-references the SAME objective's own `SEMESTER`/`STUDENT_PROGRAM`
-  rows), but the search's own values on each side still don't jointly
-  satisfy the DMN condition for any one real subject — a separate,
-  disclosed "composite-leaf value alignment" gap (see that decision's
-  own earlier entry above) this fix was never scoped to solve; it
-  solves the STRUCTURAL correspondence, not the search's own value
-  coordination. Full self-test suite (`candidate.py`, `mutation.py`,
+  `Course Load Limit` itself was STILL 0/11 at this point — the junction
+  row now existed (confirmed directly: a real `STUDENT_SEMESTER` row
+  correctly cross-references the SAME objective's own
+  `SEMESTER`/`STUDENT_PROGRAM` rows), attributed at the time to the
+  search's own values not jointly satisfying the DMN condition — a
+  "composite-leaf value alignment" diagnosis later RETRACTED (see that
+  decision's own earlier entry above): the real cause was three
+  validator bugs, fixed the same day, bringing it to 11/11. This fix
+  solved the STRUCTURAL correspondence only; it was never scoped to
+  solve rule evaluation itself. Full self-test suite (`candidate.py`, `mutation.py`,
   `materialize.py`, `dynamosa.py`, `subject_table.py`,
   `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
   `test_serialized_field_roundtrip.py`) re-run and passing.

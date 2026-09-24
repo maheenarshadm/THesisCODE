@@ -37,6 +37,17 @@ _PLACEHOLDER_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
 _CONJUNCT_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*<([A-Za-z_][A-Za-z0-9_ ]*)>')
 
 
+class UnresolvableForCase(Exception):
+    """Raised when a resolution KIND is structurally understood and
+    implemented, but THIS ONE real row's own data doesn't fit it -- e.g.
+    `derived_case`'s real column value isn't covered by any declared
+    CASE_MAP entry. A per-row data-quality gap, never guessed around, but
+    distinct from a genuinely unimplemented resolution kind
+    (NotImplementedError): the caller (drd_executor.py's `_resolve_one`)
+    treats this as grounds for skipping just this one real case/variant,
+    not the whole decision."""
+
+
 class ResolvedValue:
     def __init__(self, value, resolution_type, source_table, source_query, source_row=None):
         self.value = value
@@ -265,8 +276,8 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
             if real_value == real:
                 return ResolvedValue(mapped, 'derived_case', table,
                                       f'{table}.{node["column"]} CASE_MAP', row)
-        raise NotImplementedError(
-            f"derived_case: real value {real_value!r} in {table}.{node['column']} isn't "
+        raise UnresolvableForCase(
+            f"derived_case: real value {real_value!r} in {table}.{node['column']} isn't"
             f"covered by any CASE_MAP case ({node['cases']}) -- an unmapped real value, "
             f"not silently defaulted to one of the known categories")
 

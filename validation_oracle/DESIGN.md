@@ -183,6 +183,41 @@ the structural correspondence, not the search's own value coordination
 across it). Full details, including two more independently-found bugs
 fixed the same day, in `KNOWN_ISSUES.md`'s cross-case-study entry.
 
+**RETRACTED (2026-09-24, same day): the "value-alignment" diagnosis
+above for `Course Load Limit`'s 0/11 was wrong — it was never verified
+against real resolved values, only inferred from "no rule selected."**
+Directly evaluating a grounded variant's own compiled condition by hand
+against its real resolved values showed every clause should be true —
+the composite leaves WERE correctly aligned. The real cause was three
+compounding bugs in `drd_executor.py`/`rule_evaluator.py`: (1)
+`run_decision` merged every DRD-fan-out variant of a decision (several
+compiled records can share one `rule_id` with DIFFERENT own
+`condition`/`variable_resolution`, one per upstream branch — see
+"DRD-ordered execution" below) into ONE dict via `dict.update()`,
+silently keeping only the last-processed variant's own definition for
+a variable name shared across variants (`Course Load Limit::Rule_4`
+alone has 6 such variants); (2) no per-subject/per-variant isolation
+existed around a resolution failure other than `UngroundedForCase` — a
+`derived_case` hitting a real value uncovered by any declared case
+raised a plain `NotImplementedError` that aborted the WHOLE decision for
+EVERY subject, not just the one that hit it; (3) `rule_evaluator.
+evaluate_condition` never implemented `not`/`between` at all (unlike
+`fitness.py`'s own full support) — 54 compiled records corpus-wide use
+`not`. Fixed, all three: `run_decision` now tries every variant of a
+`rule_id` independently per real subject (a rule matches if ANY variant
+both grounds and evaluates true); `db_resolver.py`'s `derived_case`
+raises a new, distinct `UnresolvableForCase`, translated by
+`_resolve_one` into `UngroundedForCase` so it is isolated to the one
+variant/subject it affects; `not`/`between` added to
+`evaluate_condition`, mirroring `fitness.py`'s own key names. Verified
+via a full per-objective before/after diff across all 4 case studies
+(identical `coverage.py` invocation, code-only difference): `Course Load
+Limit` 0/11 → 11/11 confirmed (all 4 distinct rule_ids), zero flips
+anywhere else. Full writeup, including a separately-disclosed, unrelated
+coverage-run-methodology finding surfaced while establishing the
+before/after baseline, in `KNOWN_ISSUES.md`'s cross-case-study entry and
+`COVERAGE_REPORT.md`'s Run history.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated
@@ -1082,6 +1117,22 @@ upstream value.
 - The validator distinguishes matched rule IDs, the selected rule ID, and
   the decision output — never identifies a rule by its output value alone
   (two rules can share an output value).
+- **DRD fan-out variants.** A decision can have several compiled records
+  sharing one `rule_id` but DIFFERENT `condition`/`variable_resolution`
+  — one per possible upstream branch a `literal_via_upstream_branch`
+  input could be chained on (`compile_constraints.py`'s own
+  `_grounding_options`). `run_decision` tries EVERY variant of a
+  `rule_id` independently for each real case, never a merged union of
+  their `variable_resolution` (found and fixed 2026-09-24 — merging
+  silently collapsed to one arbitrary variant's own definition,
+  corrupting evaluation for any decision with more than one variant per
+  rule; see "Implementation status" above). A rule_id counts as matched
+  if ANY of its own variants both grounds (no `UngroundedForCase`) and
+  evaluates true; a variant that fails to ground (including a per-row
+  data-quality gap like `derived_case` hitting an uncovered real value)
+  simply doesn't count as matched for THAT variant — every other variant
+  of the same rule, and every other rule, is still tried for the same
+  real case.
 
 ## Known gaps (disclose, do not paper over)
 

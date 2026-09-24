@@ -19,6 +19,14 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-24 `run_decision`/`rule_evaluator.py` three-bug fix
+(FLEX2's `Course Load Limit`, 0/11 → 11/11 confirmed)** — see "Run
+history" below for the full writeup and `KNOWN_ISSUES.md`'s
+cross-case-study entry for the root-cause detail. Tables above already
+reflect this: FLEX2 21→25 verified rules (38.2%→45.5% raw, 39.6%→47.2%
+solvable), decision-table coverage 2/10→3/10; OpenMRS/Spree/jBilling
+unchanged (confirmed by a full per-objective diff, not just totals).
+
 **As of the 2026-09-24 Spree IN-subquery/merge-offsetting round (after
 `f8a64150`), covering:** the two root-cause fixes for the 8 Spree rules
 the search claimed but the validator couldn't confirm --
@@ -77,9 +85,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 21 | 38.2% |
+| FLEX2 | 98 | 55 | 25 | 45.5% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **91** | **46.4%** |
+| **Total** | **240** | **196** | **95** | **48.5%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -89,9 +97,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 21 | 39.6% |
+| FLEX2 | 55 | 0 | 2 | 53 | 25 | 47.2% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **91** | **62.3%** |
+| **Total** | **196** | **27** | **23** | **146** | **95** | **65.1%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -191,12 +199,14 @@ this session's own `fk_columns: []` schema gap, in
 fixture): **OpenMRS 41->42 verified** (`Identifier Uniqueness
 Check::rule_1` flips false_positive -> confirmed), zero flips anywhere
 else in OpenMRS, and zero flips in FLEX2/Spree/jBilling.
-`Course Load Limit` remains 0/11 -- the junction row now genuinely
-exists and correctly cross-references the same objective's other rows
-(confirmed directly), but the search's own values still don't jointly
-satisfy the DMN condition for any one real subject, the disclosed
-"composite-leaf value alignment" gap this fix was never scoped to
-solve. Full self-test suite re-run and passing.
+`Course Load Limit` was STILL 0/11 at this point -- the junction row now
+genuinely existed and correctly cross-referenced the same objective's
+other rows (confirmed directly), attributed at the time to a
+"composite-leaf value alignment" gap -- **RETRACTED same day**, see the
+"run_decision/rule_evaluator.py three-bug fix" entry at the top of "Run
+history" below: the real cause was three validator bugs, fixed the same
+day, bringing this decision to 11/11. Full self-test suite re-run and
+passing.
 
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)
@@ -222,15 +232,73 @@ produce the numbers above)
 All 4 runs used `--algorithm dynamosa_nsga2 --construction-strategy
 merged_archive`. Decision-table coverage (≥1 rule verified per
 decision, COLLECT decisions excluded): OpenMRS 14/14 (100%), Spree 6/8,
-FLEX2 2/10, jBilling 6/16 — unchanged by this session's fixes except
-Spree (previously 5/8; `Promotion Usage Limit Exceeded` newly covered
-earlier this session, `One-Use-Per-User Promotion Eligibility` was
-already ≥1-covered so the IN-subquery fix's own rule_3 fix doesn't move
-this count further).
+FLEX2 3/10 (previously 2/10; `Course Load Limit` newly covered — see the
+2026-09-24 `run_decision`/`rule_evaluator.py` fix in Run history below),
+jBilling 6/16.
 
 ---
 
 ## Run history
+
+### 2026-09-24 — `run_decision`/`rule_evaluator.py` three-bug fix (closes FLEX2's `Course Load Limit`)
+Numbers: FLEX2 21→25 verified rules (38.2%→45.5% raw, 39.6%→47.2%
+solvable), decision-table coverage 2/10→3/10. `Course Load Limit`'s own
+0/11 result (previously attributed, wrongly, to a generator-side
+"composite-leaf value alignment" gap — see `KNOWN_ISSUES.md`'s explicit
+retraction of that diagnosis) turned out to be three compounding
+validator-side bugs in `drd_executor.py`/`rule_evaluator.py`:
+
+1. `run_decision` merged every DRD-fan-out variant of a decision (several
+   compiled records can share one `rule_id` with DIFFERENT own
+   `condition`/`variable_resolution` — one per upstream branch, via
+   `compile_constraints.py`'s `_grounding_options`) into ONE dict via
+   `dict.update()`, silently keeping only the LAST-processed variant's
+   own definition for any variable name shared across variants —
+   `Course Load Limit::Rule_4` alone has 6 such variants.
+2. No per-subject/per-variant isolation around a resolution failure other
+   than `UngroundedForCase` — `derived_case` hitting a real column value
+   uncovered by any declared case raised a plain `NotImplementedError`,
+   which aborted the WHOLE decision for EVERY subject rather than just
+   the one subject that hit it (27 of FLEX2's 39 real `STUDENT_SEMESTER`
+   subjects belong to other decisions and have no matching `SEMESTER`
+   row at all).
+3. `rule_evaluator.evaluate_condition` never implemented `not`/`between`
+   (unlike `fitness.py`'s own full support) — 54 compiled records
+   corpus-wide use `not` (52 FLEX2, 1 Spree, 1 jBilling), none of which
+   could ever have verified regardless of bugs 1/2.
+
+Fixed: (1) `run_decision` restructured to try every variant of a
+`rule_id` independently per real subject, a rule counted as matched if
+ANY variant both grounds and evaluates true; (2) `db_resolver.py`'s
+`derived_case` now raises a new, distinct `UnresolvableForCase`,
+translated by `drd_executor.py`'s `_resolve_one` into `UngroundedForCase`
+so it is isolated to the one variant/subject it affects, never the whole
+decision; (3) `not`/`between` added to `evaluate_condition`, mirroring
+`fitness.py`'s own key names exactly.
+
+Verified via a fresh, per-objective before/after diff across all 4 case
+studies (identical `coverage.py` invocation, code-only difference):
+`Course Load Limit`'s all 4 distinct rule_ids (`Rule_1`–`Rule_4`, 11
+compiled objectives) flip `false_positive`→`confirmed`; zero flips
+anywhere else — OpenMRS/Spree/jBilling's `objective_results.csv`
+agreement classes are byte-identical before and after, across all 240
+objectives, not just totals. Full regression suite (`candidate.py`,
+`mutation.py`, `materialize.py`, `dynamosa.py`, `subject_table.py`,
+`rule_evaluator.py`'s own self-test, `drd_executor.py`'s own OpenMRS
+acceptance test, `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+`test_serialized_field_roundtrip.py`) re-run and passing.
+
+**Separately disclosed, found while establishing the true before/after
+baseline, NOT part of this fix:** re-running OpenMRS's coverage on the
+PRE-fix code WITH `--not-persisted-json {"evaluationTime": 20000}`
+already shows 44 verified rules (`Birthdate Validity::Rule_2`/`Rule_3`
+newly confirmed), not the 42 recorded in this file's own tables above —
+the original run that produced "42" (see its own provenance note below)
+used no `--not-persisted-json` at all. jBilling shows the same shape (12
+vs. the recorded 10, with `--not-persisted-json {"__today__": 20000}`).
+This is an orthogonal coverage-run methodology question, not touched or
+"corrected" here — re-establishing OpenMRS/jBilling's own official
+numbers needs its own deliberate, separately-verified pass.
 
 ### 2026-09-24 — `spree_promotion_actions.promotion_id` FK gap (closes the last of the original 8)
 Numbers: Spree 17→18 verified. `Promotion Usage Limit Exceeded::rule_3`

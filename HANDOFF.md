@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-38.2%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+45.5%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 39.6%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 47.2%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -276,6 +276,44 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
    but the search's own values still don't jointly satisfy the DMN
    condition for one real subject — a separate, disclosed gap this fix
    was never scoped to solve.
+9. **RETRACTED #8's closing claim, same day: `Course Load Limit`'s 0/11
+   was never actually a generator-side value-alignment problem** — that
+   conclusion was inferred from "no rule selected," never checked
+   against real resolved values. Direct hand-evaluation of a grounded
+   variant's own compiled condition against its real resolved values
+   showed every clause should be true. The real cause: three compounding
+   validator bugs in `drd_executor.py`/`rule_evaluator.py`. (1)
+   `run_decision` merged every DRD-fan-out variant of a decision (several
+   compiled records can share one `rule_id` with different own
+   `condition`/`variable_resolution`, one per upstream branch —
+   `Course Load Limit::Rule_4` alone has 6) into one dict via
+   `dict.update()`, silently keeping only the last-processed variant's
+   own definition for a shared variable name. (2) No per-subject/
+   per-variant isolation existed around a resolution failure other than
+   `UngroundedForCase` — `derived_case` hitting a real value uncovered by
+   any declared case raised a plain `NotImplementedError` that aborted
+   the WHOLE decision for every subject, not just the one that hit it.
+   (3) `rule_evaluator.evaluate_condition` never implemented `not`/
+   `between` at all (unlike `fitness.py`'s own full support) — 54
+   compiled records corpus-wide use `not` (52 FLEX2, 1 Spree, 1
+   jBilling). User approved fixing all three. Fixed: `run_decision` now
+   tries every variant of a `rule_id` independently per real case (a
+   rule matches if any variant both grounds and evaluates true);
+   `db_resolver.py`'s `derived_case` now raises a distinct
+   `UnresolvableForCase`, translated by `drd_executor.py`'s
+   `_resolve_one` into `UngroundedForCase` so it's isolated to the one
+   variant/subject it affects; `not`/`between` added to
+   `evaluate_condition`. Verified via a full per-objective before/after
+   diff across all 4 case studies (identical `coverage.py` invocation,
+   code-only difference): `Course Load Limit` 0/11 → 11/11 confirmed
+   (all 4 distinct rule_ids), zero flips anywhere else — FLEX2 21→25
+   verified rules, decision-table coverage 2/10→3/10. Also surfaced,
+   separately, an unrelated coverage-run-methodology finding (OpenMRS/
+   jBilling's own officially-recorded numbers appear to have been
+   produced without `--not-persisted-json`, undercounting by 2 rules
+   each) — flagged in `KNOWN_ISSUES.md`/`COVERAGE_REPORT.md` but not
+   corrected here, since it's orthogonal to this fix and needs its own
+   deliberate pass.
 
 ## 7. Planned / open work
 
@@ -294,13 +332,10 @@ Full, itemized list with root causes and what fixing each would require:
   — a distinct, not-yet-investigated issue.
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
   for Spree/jBilling elsewhere); `Course Replacement Eligibility`
-  (likely a one-line fix, reusing existing infrastructure); `Course Load
-  Limit` — the junction-row gap is now fixed (§6 item 8 above; the row
-  genuinely exists and cross-references correctly), but it's still
-  0/11 verified — the search's own values across its 4 independent
-  leaves don't jointly align for any one real subject, not yet
-  investigated further; an audit question on `Attendance Eligibility
-  For Final Exam`.
+  (likely a one-line fix, reusing existing infrastructure); an audit
+  question on `Attendance Eligibility For Final Exam`. `Course Load
+  Limit` is now fully closed (§6 items 8/9 above: the junction row and
+  all three compounding validator bugs are fixed, 11/11 confirmed).
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.
