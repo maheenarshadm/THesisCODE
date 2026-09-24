@@ -75,11 +75,19 @@ def pk_columns(case_study, table):
 def fk_edges(case_study, table):
     """[{column, ref_table, ref_column}, ...] -- this table's own
     OUTGOING foreign keys, exactly as all_schema_extraction produced
-    them. `ref_table` is normalized to the schema's own canonical casing
-    (see `canonical_table_name`) so a caller can compare it directly
-    against another canonicalized table name without a casing mismatch."""
+    them, PLUS any disclosed `supplementary_fk_edges.py` entries for
+    real FKs the extractor missed entirely (a real, pre-existing gap in
+    Spree's own extraction -- confirmed several join/association tables
+    have `fk_columns: []` despite an unambiguous real target by Rails
+    convention). Supplementary edges are ADDITIVE, never a replacement
+    for an extracted one -- disambiguating a wrong/ambiguous extracted
+    edge is `join_disambiguation.py`'s own, separate job. `ref_table` is
+    normalized to the schema's own canonical casing (see
+    `canonical_table_name`) so a caller can compare it directly against
+    another canonicalized table name without a casing mismatch."""
+    from supplementary_fk_edges import get_supplementary_edges
     entry = _table_entry(load_schema(case_study), table)
-    edges = (entry or {}).get('fk_columns', [])
+    edges = list((entry or {}).get('fk_columns', [])) + get_supplementary_edges(case_study, table)
     return [{**e, 'ref_table': canonical_table_name(case_study, e['ref_table'])} for e in edges]
 
 

@@ -9,23 +9,23 @@
    "blocked": 0
   },
   "Spree": {
-   "compiled": 26,
-   "blocked": 6
+   "compiled": 27,
+   "blocked": 5
   },
   "jBilling": {
    "compiled": 40,
    "blocked": 15
   }
  },
- "total_compiled": 235,
- "total_blocked": 74,
+ "total_compiled": 236,
+ "total_blocked": 73,
  "blocked_reason_counts": {
   "infeasible": 55,
-  "unresolved_variable": 17,
+  "unresolved_variable": 16,
   "chained_dependency_unexpandable": 2
  },
  "blocking_variable_kind_counts": {
-  "schema_gap": 6,
+  "schema_gap": 5,
   "unresolved": 6,
   "code_external": 12
  },
@@ -347,18 +347,6 @@
    "reason": "infeasible",
    "detail": "condition provably unsatisfiable by three-valued constant folding of grounded values",
    "case_study": "FLEX2"
-  },
-  {
-   "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2",
-   "reason": "unresolved_variable",
-   "blocking_variables": [
-    {
-     "variable": "promotionTargetGroupsConfigured",
-     "kind": "schema_gap",
-     "detail": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row."
-    }
-   ],
-   "case_study": "Spree"
   },
   {
    "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_3",

@@ -526,18 +526,67 @@ out to be legitimately closeable that way:
   genuinely verify `rule_1`/`rule_2` via an actual `COUNT` query.
   Spree's `verified_covered_rules` rose from 7 to 9 (26.9% -> 34.6%),
   unresolved decisions from 5 to 4.
-- **`Promotion Customer Group Eligibility` -- assessed and declined,
-  not a bug or an oversight.** Its own blocker traces deeper than the
-  existence-check ambiguity it first looked like: `matchingCustomerGroupCount`
-  needs the promotion's own list of targeted customer-group IDs, which
-  lives only inside a serialized preferences blob with NO real,
-  normalized table backing it at all (unlike every other disclosed fix
-  in this project, which reused REAL, existing columns with a merely
-  under-encoded correlation). Closing this would mean inventing a join
-  against a table structure that does not exist in the real schema, not
-  disclosing an assumed filter on real ones -- a materially different,
-  larger claim than this project's own `[ASSUMED]` discipline has made
-  anywhere else. Left disclosed and unresolved rather than fabricated.
+- **`Promotion Customer Group Eligibility` -- the first assessment here
+  was ALSO too broad (a user challenge caught this one too), correctly
+  split into two separately-diagnosed pieces, one closed for real, one
+  still blocked but now for the true reason.** rule_2's own blocker
+  (`promotionTargetGroupsConfigured`) and rule_3's (`promotionTargetGroupIds`,
+  nested inside `matchingCustomerGroupCount`) had been conflated as one
+  "blob" problem; they are not the same fact. `promotionTargetGroupsConfigured`
+  only needs to know THAT a customer-group rule is configured, which is
+  answerable from `spree_promotion_rules.type` -- a real, typed Rails STI
+  discriminator column, not blob content at all. Re-mapped to an
+  `exists`-kind check (`type = 'Spree::Promotion::Rules::CustomerGroup'`),
+  which correctly compiled a NEW record (rule_2, Spree 26 -> 27 compiled;
+  confirmed via full before/after diff: zero other adds/removes anywhere
+  in any of the 4 case studies).
+
+  Getting this to actually RUN surfaced two further, real, disclosed
+  findings:
+  1. A genuine bug in `db_resolver._substitute_self_and_colon`: its own
+     `:column_name` self-reference regex matched INSIDE the type
+     literal's own `Spree::Promotion::Rules::CustomerGroup` text (every
+     `::` misread as a `:placeholder`), raising a spurious "no matching
+     column" error for a token that was never meant to be a placeholder
+     at all. Fixed with a negative-lookaround regex excluding `::`
+     specifically; re-verified the existing legitimate `:column_name`
+     usage (`Price Adjustment Tier Validity Violations`'s own
+     `siblingTierCount`) still substitutes correctly.
+  2. The REAL remaining architectural gap, now precisely isolated (not
+     "no table exists," which was the earlier, too-broad framing): this
+     decision's natural subject row (`spree_orders`) has no `promotion_id`
+     column at all -- "the promotion" is never an explicit DMN input
+     anywhere in this decision or its upstream chain, and the real link
+     (`spree_order_promotions`, a genuine join table) was itself missing
+     from the extracted schema's own `fk_columns` (confirmed: `spree_
+     order_promotions`/`spree_promotion_rules` both `fk_columns: []`
+     despite unambiguous real targets by Rails convention -- an
+     already-disclosed, pre-existing Spree extraction gap, not new).
+     Added `supplementary_fk_edges.py` (same status/precedent as
+     `join_disambiguation.py`, for a MISSING edge rather than an
+     ambiguous one) so `schema_utility.fk_edges` now knows about both
+     real FKs. This closes the SCHEMA-GRAPH half of the gap, but
+     `exists`-with-`filter_text` (`db_resolver.py`) only ever binds a
+     `<placeholder>` to a SAME-NAMED column on the SUBJECT row itself --
+     it has no mechanism yet to resolve a placeholder via a JOIN hop when
+     the value lives on a different, joined table. Confirmed directly:
+     `run_decision` now fails with the precise, honest error
+     (`filter_text placeholder <promotion_id> ... not present on the
+     subject row`) instead of the earlier vague `schema_gap` message.
+     Extending `_resolve_placeholders`/`_substitute_self_and_colon` to
+     walk a join path for a placeholder not found on the subject row
+     would be a real, generalizable capability (useful beyond this one
+     decision) but a genuine mechanism change touching shared, heavily-
+     used code across all 4 case studies -- not attempted without
+     confirming it's wanted first.
+
+  Net, verified result: Spree's `searchable_objectives` rose to 27 (the
+  new rule_2 record); `verified_covered_rules` stays at 9 (rule_2 still
+  can't run yet); `unresolved_decisions` stays at 4, but this decision's
+  own listed reason is now the true one, not the earlier, too-broad "no
+  table backs this" framing. Re-verified: zero regressions across all 4
+  case studies (identical OpenMRS/FLEX2/jBilling numbers; full
+  regression suite unchanged).
 - **`Price List Volume Adjustment Tier Selection` -- the INITIAL
   assessment here was wrong, corrected after being challenged, and then
   actually fixed.** First pass wrongly trusted the ground truth's own

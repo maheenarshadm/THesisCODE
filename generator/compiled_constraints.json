@@ -36286,6 +36286,86 @@
   "feasibility": "unknown"
  },
  {
+  "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2",
+  "case_study": "Spree",
+  "dmn_file": "Customer_Segment_Eligibility.dmn",
+  "decision_name": "Promotion Customer Group Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_PromotionCustomerGroupEligibility_rule_2",
+  "source_citation": "",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "promotionTargetGroupsConfigured"
+   },
+   "right": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "customerGroupEligible": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_PromotionCustomerGroupEligibility_rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "customerIdPresent"
+      },
+      "right": {
+       "kind": "literal",
+       "value": false,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "promotionTargetGroupsConfigured": {
+    "kind": "exists",
+    "candidate_tables": [
+     "spree_promotion_rules"
+    ],
+    "candidate_columns": [
+     {
+      "table": "spree_promotion_rules",
+      "column": "promotion_id"
+     },
+     {
+      "table": "spree_promotion_rules",
+      "column": "type"
+     }
+    ],
+    "filter_text": "promotion_id = <promotion_id> AND type = 'Spree::Promotion::Rules::CustomerGroup'",
+    "notes": "[ASSUMED -- confident on the correlation (Rails STI type discriminator, a real column, not blob content), disclosed only because \"the promotion\" itself isn't an explicit DMN input anywhere in this decision or its upstream chain -- see supplementary_fk_edges.py for how it's identified via spree_order_promotions, 2026-09-24] Re-expressed as existence of a spree_promotion_rules row of the CustomerGroup rule type for this promotion -- a real, typed, non-blob check, corrected from the earlier SCHEMA GAP call which wrongly treated this as requiring the same undecoded preferences blob promotionTargetGroupIds needs. Does NOT need promotionTargetGroupIds's own blob content at all, only whether a rule of this type exists.",
+    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')"
+   },
+   "customerIdPresent": {
+    "kind": "null_check",
+    "table": "spree_orders",
+    "column": "user_id",
+    "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
   "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_4",
   "case_study": "Spree",
   "dmn_file": "Customer_Segment_Eligibility.dmn",
@@ -36362,14 +36442,23 @@
     "notes": "existence check (IS NOT NULL); corrected 2026-09-13 -- real column is user_id"
    },
    "promotionTargetGroupsConfigured": {
-    "kind": "schema_gap",
-    "notes": "existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row.",
-    "hinted_pairs": [
-     [
-      "spree_promotion_rules",
-      "preferences"
-     ]
-    ]
+    "kind": "exists",
+    "candidate_tables": [
+     "spree_promotion_rules"
+    ],
+    "candidate_columns": [
+     {
+      "table": "spree_promotion_rules",
+      "column": "promotion_id"
+     },
+     {
+      "table": "spree_promotion_rules",
+      "column": "type"
+     }
+    ],
+    "filter_text": "promotion_id = <promotion_id> AND type = 'Spree::Promotion::Rules::CustomerGroup'",
+    "notes": "[ASSUMED -- confident on the correlation (Rails STI type discriminator, a real column, not blob content), disclosed only because \"the promotion\" itself isn't an explicit DMN input anywhere in this decision or its upstream chain -- see supplementary_fk_edges.py for how it's identified via spree_order_promotions, 2026-09-24] Re-expressed as existence of a spree_promotion_rules row of the CustomerGroup rule type for this promotion -- a real, typed, non-blob check, corrected from the earlier SCHEMA GAP call which wrongly treated this as requiring the same undecoded preferences blob promotionTargetGroupIds needs. Does NOT need promotionTargetGroupIds's own blob content at all, only whether a rule of this type exists.",
+    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')"
    },
    "matchingCustomerGroupCount": {
     "kind": "substituted_decision",
@@ -36416,7 +36505,8 @@
   },
   "fk_closure_tables": [
    "spree_customer_group_users",
-   "spree_orders"
+   "spree_orders",
+   "spree_promotion_rules"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown"

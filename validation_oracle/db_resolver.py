@@ -134,7 +134,16 @@ def _resolve_placeholders(conn, filter_text, subject_row):
     return bindings
 
 
-_COLON_RE = re.compile(r':([A-Za-z_][A-Za-z0-9_]*)')
+# Excludes `::` (Ruby's own class/module namespace separator, e.g. a
+# type-discriminator string literal like 'Spree::Promotion::Rules
+# ::CustomerGroup') via the negative look-around on both sides -- a real
+# bug found once a filter_text needed to compare against such a literal
+# for the first time: the un-guarded version matched EVERY colon inside
+# it as if it were a `:column_name` self-reference placeholder, raising
+# a spurious "no matching column" error for a token (':promotion' out of
+# 'Spree::Promotion::...') that was never meant to be a placeholder at
+# all.
+_COLON_RE = re.compile(r'(?<!:):(?!:)([A-Za-z_][A-Za-z0-9_]*)')
 _SELF_RE = re.compile(r'\bself\b')
 
 
