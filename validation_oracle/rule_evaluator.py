@@ -113,6 +113,10 @@ def evaluate_condition(condition, values):
         left = _eval_operand(condition['left'], values)
         right = _eval_operand(condition['right'], values)
         return _COMPARATORS[op](left, right)
+    if op == 'in':
+        left = _eval_operand(condition['left'], values)
+        candidates = [_eval_operand(v, values) for v in condition['values']]
+        return left in candidates
     raise NotImplementedError(f"Unhandled condition operator {op!r}: {condition!r}")
 
 

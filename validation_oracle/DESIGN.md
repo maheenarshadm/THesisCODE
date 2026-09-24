@@ -122,12 +122,55 @@ discrepancies, on top of the `Preferred Identifier Requirement` and
 scope. What's left is ordinary unfinished work (below), not a declined
 mechanism.
 
-Still not started: `coverage.py` + the three CSV/JSON output files, the
-remaining spec'd test cases (UNIQUE violation, join-based input against
-real data, merge-induced regression as an explicit test rather than an
-ad hoc script, duplicate-output disambiguation), and extending beyond
-the decisions exercised so far to the rest of OpenMRS/FLEX2 and to
-Spree/jBilling.
+**`coverage.py` built.** Aggregates every decision in a case study
+against one already-materialized database and writes the three spec'd
+output files: `objective_results.csv` (one row per compiled objective:
+search_covered/verified_rule_selected/agreement_class),
+`validation_summary.csv` (one row per case_study/algorithm/run_id/
+construction_strategy: total_dmn_rules, statically_infeasible_rules
+[from `phase1_utility.statically_infeasible_count`, specifically
+`reason == 'infeasible'` in compile_report.json's own `blocked_records`
+— NOT the broader "blocked" total, which also covers schema-gap-style
+blocks, a different category], searchable_objectives,
+search_covered_objectives, verified_covered_rules,
+coverage_retention_percent, schema_valid [independent
+`PRAGMA foreign_key_check` against the live database, no
+`generator/materialize.py` import], dmn_validation_valid, total_rows,
+unresolved_decisions), and `decision_trace.json` (one entry per real
+case per resolvable decision: resolved_inputs with resolution_type/
+source_table, matched_rule_ids, selected_rule_id).
+
+**Run for real against OpenMRS's merged-archive database (71 objectives,
+19 decisions):** 64/71 search-covered, 35 distinct rule IDs
+independently verified, 53.1% coverage retention, schema and DMN
+validation both clean, 6 of 19 decisions correctly recorded as
+unresolved (all six are the already-disclosed `not_persisted`
+`evaluationTime` gap — `unresolved_decisions.json` names each one and
+why, not silently dropped from any denominator).
+
+**Two more real bugs found running this end to end, both fixed:**
+`evaluate_condition` didn't handle DMN's list-membership `in` operator
+(`{'op': 'in', 'left': ..., 'values': [...]}`, e.g. `conceptDatatype in
+("Datetime", "Date", "Time")`) — a real, previously-unexercised
+construct. And a single decision-level failure (e.g. the
+`not_persisted` gap) used to be fatal to the WHOLE report; `run_coverage`
+now catches a `NotImplementedError` per decision, records it in
+`unresolved_decisions.json`, and keeps verifying every other decision in
+the case study.
+
+**Known, disclosed gap in the output itself:** `first_generation_covered`
+is always blank in `objective_results.csv` — the raw archive pickle
+saves each objective's best-ever `(fitness, individual)`, not a history
+of when it was first reached. Populating this would need re-instrumenting
+`generator/dynamosa.py`'s own archive-update loop to record a
+per-objective first-covered generation, not a `coverage.py`-side fix;
+not done.
+
+Still not started: the remaining spec'd test cases (UNIQUE violation,
+join-based input against real data as an explicit test rather than an
+ad hoc script, merge-induced regression as an explicit test, duplicate-
+output disambiguation), and extending beyond the decisions exercised so
+far to the rest of FLEX2 and to Spree/jBilling.
 
 ## Why this exists
 

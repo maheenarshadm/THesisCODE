@@ -122,7 +122,7 @@ class DecisionRunner:
 
 
 def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, subject_pk_vals,
-                  join_paths, runner, decision_name):
+                  join_paths, runner, decision_name, trace=None):
     if node.get('kind') == 'literal_via_upstream_branch':
         upstream_decision = node['from_decision']
         upstream_pk_vals = runner.upstream_subject_value(
@@ -135,21 +135,34 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
             raise UngroundedForCase(
                 f"{var}: upstream {upstream_decision!r} selected {actual_selected!r}, "
                 f"not the required {node['from_rule_id']!r}")
-        return resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths).value
+        result = resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths)
+        if trace is not None:
+            trace[var] = {'value': result.value, 'resolution_type': 'literal_via_upstream_branch',
+                          'source_table': None, 'upstream_decision': upstream_decision,
+                          'upstream_selected_rule': actual_selected}
+        return result.value
 
     if node.get('kind') == 'substituted_decision':
         free_values = {}
         for free_var, free_node in node['free_variable_resolutions'].items():
             free_values[free_var] = _resolve_one(
                 conn, case_study, free_var, free_node, subject_table, subject_pk_cols,
-                subject_pk_vals, join_paths, runner, decision_name)
-        return evaluate_expression(node['expression'], free_values)
+                subject_pk_vals, join_paths, runner, decision_name, trace)
+        value = evaluate_expression(node['expression'], free_values)
+        if trace is not None:
+            trace[var] = {'value': value, 'resolution_type': 'substituted_decision',
+                          'source_table': None, 'free_variables': free_values}
+        return value
 
-    return resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths).value
+    result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths)
+    if trace is not None:
+        trace[var] = {'value': result.value, 'resolution_type': result.resolution_type,
+                      'source_table': result.source_table}
+    return result.value
 
 
 def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
-                  join_paths=None, runner=None, only_case=None):
+                  join_paths=None, runner=None, only_case=None, collect_trace=False):
     """`records` is every compiled objective for this decision (Phase 1,
     via phase1_utility.records_by_decision), used only for their own
     `rule_id`/`condition`/`variable_resolution` -- never for row
@@ -158,11 +171,18 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
     objective needs an upstream decision's real output; `only_case`
     (a pk-value tuple) restricts enumeration to one subject, used by
     `DecisionRunner` itself, recursively -- a top-level call omits it and
-    enumerates every real case. Returns a dict: {
+    enumerates every real case. `collect_trace=True` additionally
+    populates `'trace'` in the return value: {pk_vals_tuple:
+    {'resolved_inputs': {var: {value, resolution_type, source_table}},
+    'matched_rule_ids', 'selected_rule_id'}} -- for `coverage.py`'s own
+    `decision_trace.json`; off by default since most callers (including
+    `DecisionRunner`'s own recursive upstream runs) don't need it.
+    Returns a dict: {
         'matched_by_case': {pk_vals_tuple: [rule_id, ...]},
         'selected_by_case': {pk_vals_tuple: rule_id_or_None},
         'verified_covered_rule_ids': set(),
         'unique_violations': [...],
+        'trace': {...} (only if collect_trace),
     }"""
     case_study = records[0]['case_study']
     all_resolutions = {}
@@ -179,21 +199,26 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
     selected_by_case = {}
     verified_covered = set()
     violations = []
+    trace_by_case = {} if collect_trace else None
 
     for pk_vals in subject_keys:
         values = {}
+        var_trace = {} if collect_trace else None
         ungrounded = False
         for var, node in all_resolutions.items():
             try:
                 values[var] = _resolve_one(conn, case_study, var, node, subject_table,
                                             subject_pk_cols, pk_vals, join_paths or {},
-                                            runner, decision_name)
+                                            runner, decision_name, var_trace)
             except UngroundedForCase:
                 ungrounded = True
                 break
         if ungrounded:
             matched_by_case[pk_vals] = []
             selected_by_case[pk_vals] = None
+            if collect_trace:
+                trace_by_case[pk_vals] = {'resolved_inputs': var_trace, 'matched_rule_ids': [],
+                                          'selected_rule_id': None, 'ungrounded': True}
             continue
         try:
             matched, selected = select_rule(hit_policy, rules_with_conditions, values)
@@ -204,13 +229,19 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
         selected_by_case[pk_vals] = selected
         if selected:
             verified_covered.add(selected)
+        if collect_trace:
+            trace_by_case[pk_vals] = {'resolved_inputs': var_trace, 'matched_rule_ids': matched,
+                                      'selected_rule_id': selected, 'ungrounded': False}
 
-    return {
+    result = {
         'matched_by_case': matched_by_case,
         'selected_by_case': selected_by_case,
         'verified_covered_rule_ids': verified_covered,
         'unique_violations': violations,
     }
+    if collect_trace:
+        result['trace'] = trace_by_case
+    return result
 
 
 if __name__ == '__main__':

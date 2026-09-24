@@ -17,6 +17,8 @@ import os
 
 COMPILED_CONSTRAINTS_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), '..', 'generator', 'compiled_constraints.json')
+COMPILE_REPORT_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), '..', 'generator', 'compile_report.json')
 
 
 def load_records(case_study, path=COMPILED_CONSTRAINTS_PATH):
@@ -40,3 +42,18 @@ def records_by_decision(case_study, path=COMPILED_CONSTRAINTS_PATH):
     for r in load_records(case_study, path):
         by_decision.setdefault(r['decision_name'], []).append(r)
     return by_decision
+
+
+def statically_infeasible_count(case_study, path=COMPILE_REPORT_PATH):
+    """How many of this case study's rules were removed BEFORE search as
+    provably infeasible (three-valued constant folding) -- specifically
+    `reason == 'infeasible'` among compile_report.json's own
+    `blocked_records`, NOT the broader 'blocked' total (which also
+    includes `unresolved_variable`/`chained_dependency_unexpandable` --
+    schema-gap-style blocks, a different category from proven-false;
+    conflating them would misreport the denominator per this project's
+    own DECISIONS_EXPERIMENT.md discipline on this exact distinction)."""
+    with open(path) as f:
+        report = json.load(f)
+    return sum(1 for r in report['blocked_records']
+               if r['case_study'] == case_study and r['reason'] == 'infeasible')
