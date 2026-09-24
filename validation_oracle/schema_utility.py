@@ -83,20 +83,52 @@ def fk_edges(case_study, table):
     return [{**e, 'ref_table': canonical_table_name(case_study, e['ref_table'])} for e in edges]
 
 
+def functional_backward_edges(case_study, table):
+    """Tables with a FUNCTIONAL (provably at-most-one-row) backward
+    reference INTO `table`: some other table `S` has an FK column
+    pointing at `table`, where `S`'s own PRIMARY KEY *is exactly* that FK
+    column (a shared-PK subtype pattern -- confirmed real and common,
+    not hypothetical: OpenMRS's own `concept_numeric` has PK `concept_id`
+    AND an FK `concept_id -> concept.concept_id`; 6 such tables exist in
+    OpenMRS's schema alone). This is SAFE to traverse backward: because
+    S's PK equals the FK column, at most one S row can exist per `table`
+    row -- there is no "which of the many child rows" ambiguity the way
+    there is for an ordinary one-to-many backward FK (a genuinely
+    one-to-many backward join is NOT attempted anywhere in this module;
+    only this provably-unique special case is). Returns
+    [{'column', 'ref_table', 'ref_column'}, ...] in the SAME shape
+    `fk_edges` uses, so `build_join_path` can treat them uniformly."""
+    schema = load_schema(case_study)
+    target = canonical_table_name(case_study, table)
+    found = []
+    for other_name, info in schema.items():
+        other_pk = info.get('pk')
+        other_pk_list = other_pk if isinstance(other_pk, list) else ([other_pk] if other_pk else [])
+        for fk in info.get('fk_columns', []):
+            if canonical_table_name(case_study, fk['ref_table']) == target and other_pk_list == [fk['column']]:
+                found.append({'column': fk['ref_column'], 'ref_table': other_name,
+                              'ref_column': fk['column']})
+    return found
+
+
 def build_join_path(case_study, root_table, target_table, allowed_tables):
     """BFS over the FK graph, restricted to `allowed_tables` (a
     decision's own fk_closure_tables -- never wander through the whole
-    schema), from `root_table` to `target_table`, following FK edges
-    FORWARD ONLY -- a table's own outgoing FK column to another table's
-    primary key. Deliberately one-directional: a BACKWARD join (some
-    other table's FK pointing AT root_table) is one-to-many from
-    root_table's own side -- "which of the many child rows" is a real
-    ambiguity a single subject-row lookup cannot resolve without more
-    context, so it is not attempted here (surfaces as an unresolved
-    subject table, not a silently arbitrary pick -- see
+    schema), from `root_table` to `target_table`. Follows FK edges
+    FORWARD (a table's own outgoing FK column to another table's primary
+    key) and, additionally, FUNCTIONAL BACKWARD edges
+    (`functional_backward_edges` -- a shared-PK subtype table, provably
+    at most one matching row, never a real one-to-many ambiguity).
+
+    An ORDINARY backward join (some other table's FK pointing AT the
+    current table, where that other table's PK is NOT the FK column --
+    genuinely one-to-many) is deliberately never attempted here: "which
+    of the many child rows" is a real ambiguity a single subject-row
+    lookup cannot resolve without more context, so it surfaces as an
+    unresolved subject table, not a silently arbitrary pick (see
     `subject_table.py`'s own `_pick_root`, which relies on this same
-    forward-only restriction to disambiguate which table is the root in
-    the first place). Returns a list of hops:
+    restriction to disambiguate which table is the root in the first
+    place). Returns a list of hops:
     [{'from_table','from_column','to_table','to_column'}, ...], root to
     target, or None if unreachable within `allowed_tables`. Root-to-root
     is an empty list, not None."""
@@ -108,17 +140,71 @@ def build_join_path(case_study, root_table, target_table, allowed_tables):
     allowed = {canonical_table_name(case_study, t) for t in allowed_tables} | {root_table, target_table}
     visited = {root_table}
     queue = [(root_table, [])]
+    skipped_ambiguous = []
 
     while queue:
         current, path = queue.pop(0)
-        for edge in fk_edges(case_study, current):
+        edges = fk_edges(case_study, current) + functional_backward_edges(case_study, current)
+
+        # A real bug found testing this against OpenMRS's own obs/concept
+        # tables: `obs` has TWO distinct FK columns to `concept`
+        # (`concept_id` -- which concept this observation measures --
+        # and `value_coded` -- an unrelated coded ANSWER value). Picking
+        # either one silently, by iteration order, can silently join
+        # through the WRONG column. Group by target table first; more
+        # than one distinct column reaching the same table is SKIPPED
+        # (never traversed), not arbitrarily resolved -- an ambiguous
+        # edge irrelevant to the actual target (e.g. every table's own
+        # audit-trail FKs to `users`) must never abort the whole search;
+        # it only matters if the target turns out unreachable without it.
+        by_target = {}
+        for edge in edges:
             nxt = edge['ref_table']
             if nxt in allowed and nxt not in visited:
-                hop = {'from_table': current, 'from_column': edge['column'],
-                       'to_table': nxt, 'to_column': edge['ref_column']}
-                new_path = path + [hop]
-                if nxt == target_table:
-                    return new_path
-                visited.add(nxt)
-                queue.append((nxt, new_path))
+                by_target.setdefault(nxt, []).append(edge)
+
+        for nxt, candidate_edges in by_target.items():
+            distinct_columns = {e['column'] for e in candidate_edges}
+            if len(distinct_columns) > 1:
+                skipped_ambiguous.append((current, nxt, sorted(distinct_columns)))
+                continue
+            edge = candidate_edges[0]
+            hop = {'from_table': current, 'from_column': edge['column'],
+                   'to_table': nxt, 'to_column': edge['ref_column']}
+            new_path = path + [hop]
+            if nxt == target_table:
+                # A second real bug, found testing the FIRST fix above:
+                # skipping the ambiguous obs->concept edge let BFS
+                # silently route around it via obs->location->concept
+                # instead -- an indirect path that happens to be
+                # technically valid but semantically nonsensical (a
+                # location's own "location type concept" has nothing to
+                # do with what an observation measures). Silently
+                # rerouting around a skipped ambiguity is WORSE than
+                # refusing outright. So: refuse this path too if any
+                # skipped ambiguous edge connects two tables BOTH
+                # already on it -- a more direct, but ambiguous,
+                # connection existed between path members, meaning this
+                # "successful" route is likely circumventing exactly the
+                # ambiguity this function exists to never silently
+                # resolve.
+                path_nodes = {root_table} | {h['to_table'] for h in new_path}
+                for amb_from, amb_to, amb_cols in skipped_ambiguous:
+                    if amb_from in path_nodes and amb_to in path_nodes:
+                        raise ValueError(
+                            f"Path from {root_table!r} to {target_table!r} found, but it "
+                            f"routes around an ambiguous DIRECT connection between "
+                            f"{amb_from!r} and {amb_to!r} ({len(amb_cols)} distinct FK "
+                            f"columns: {amb_cols}) -- refusing a route that circumvents an "
+                            f"unresolved ambiguity between two of its own members.")
+                return new_path
+            visited.add(nxt)
+            queue.append((nxt, new_path))
+
+    # Deliberately just `None` here, not a raise naming the skipped
+    # ambiguous edges: most of them (e.g. every table's own audit-trail
+    # FKs to `users`) are nowhere near the actual target and naming one
+    # as a probable cause would misattribute an unrelated failure.
+    # `subject_table.py`'s own "cannot pick a unique root" error is
+    # where a genuine ambiguity affecting the real answer gets surfaced.
     return None

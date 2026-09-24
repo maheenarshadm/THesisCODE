@@ -85,11 +85,22 @@ def _pick_root(case_study, all_tables, closure_tables):
     refused, not guessed."""
     from schema_utility import build_join_path
 
+    def _reaches(root, t):
+        # A ValueError here means build_join_path found ONLY an
+        # ambiguous/circumventing route -- treat exactly like "no path
+        # found" for root-CANDIDACY purposes (this candidate root
+        # doesn't cleanly reach `t`), not as a reason to crash the whole
+        # search; a genuinely picked root still surfaces the same error
+        # for real, later, when subject_table_for_decision actually
+        # builds that join path.
+        try:
+            return build_join_path(case_study, root, t, closure_tables) is not None
+        except ValueError:
+            return False
+
     candidate_pool = closure_tables | all_tables
-    candidates = []
-    for root in candidate_pool:
-        if all(build_join_path(case_study, root, t, closure_tables) is not None for t in all_tables - {root}):
-            candidates.append(root)
+    candidates = [root for root in candidate_pool
+                  if all(_reaches(root, t) for t in all_tables - {root})]
 
     if len(candidates) != 1:
         raise ValueError(
