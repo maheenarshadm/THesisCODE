@@ -166,8 +166,19 @@ def build_join_path(case_study, root_table, target_table, allowed_tables):
         for nxt, candidate_edges in by_target.items():
             distinct_columns = {e['column'] for e in candidate_edges}
             if len(distinct_columns) > 1:
-                skipped_ambiguous.append((current, nxt, sorted(distinct_columns)))
-                continue
+                from join_disambiguation import get_override
+                override = get_override(case_study, current, nxt)
+                if override is None:
+                    skipped_ambiguous.append((current, nxt, sorted(distinct_columns)))
+                    continue
+                matching = [e for e in candidate_edges if e['column'] == override['column']]
+                if not matching:
+                    raise ValueError(
+                        f"join_disambiguation override for ({case_study!r}, {current!r}, "
+                        f"{nxt!r}) names column {override['column']!r}, which is not among "
+                        f"the actual distinct columns found ({sorted(distinct_columns)}) -- "
+                        f"the override is stale, fix it rather than silently ignoring it.")
+                candidate_edges = matching
             edge = candidate_edges[0]
             hop = {'from_table': current, 'from_column': edge['column'],
                    'to_table': nxt, 'to_column': edge['ref_column']}

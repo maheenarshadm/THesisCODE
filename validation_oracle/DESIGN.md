@@ -70,21 +70,57 @@ without it. This is exactly the kind of discrepancy this validator was
 built to surface — a large one, on real data, found by the completed
 pipeline, not a synthetic example.
 
-**Remaining gap, left open BY DESIGN, not for lack of effort:** 3 of
-OpenMRS's 20 decisions (`Numeric Precision Validity`/`Numeric Absolute
-Range Validity`/`Numeric Interpretation Classification`) need `obs` and
-`concept_numeric`, which share a common parent (`concept`) rather than
-one having a forward FK to the other. Closing this would require
-following a BACKWARD FK (parent → child), which is genuinely
-one-to-many — "which of the many child rows" is a real ambiguity no
-single subject-row lookup can resolve without inventing an arbitrary
-tie-break. Forcing this closed would mean guessing, which this project's
-own research constraints (and every other decision documented in this
-file) explicitly rule out. The sound alternative, if this needs
-closing later, is enumerating and evaluating EVERY matching child row
-rather than picking one — a different, more expensive mechanism, not yet
-built, and a real design decision for whoever wants it (see "Open
-issues").
+**Correction, and now closed: OpenMRS's 3 `Numeric *` decisions.**
+Originally characterized as needing a genuinely one-to-many backward
+join — wrong. `concept_numeric`'s own primary key IS `concept_id` (a
+shared-PK subtype of `concept`), so its relationship to `concept` is 1:1,
+not one-to-many. Built `schema_utility.functional_backward_edges`:
+recognizes this pattern generally (any table whose own PK equals an FK
+column pointing elsewhere) as safely traversable backward — 6 such
+tables exist in OpenMRS's schema alone, so this is a real, reusable
+capability, not a one-off.
+
+That fix immediately surfaced the REAL blocker, which was never
+cardinality: `obs` has two distinct FK columns to `concept`
+(`concept_id` — the concept an observation measures — and `value_coded`
+— an unrelated coded answer value). Two real bugs were found and fixed
+before this could be trusted: (1) an early version silently picked
+whichever column iteration happened to visit first (the wrong one,
+`value_coded`) — fixed by refusing to traverse a connection with more
+than one distinct FK column unless a disambiguation is on record; (2)
+the fix for (1) let the search silently reroute around the refusal
+through an unrelated, nonsensical path (`obs → location → concept`, via
+a location's own "location type concept") — fixed by refusing any found
+path that circumvents a skipped ambiguity between two of its own member
+tables, not just the direct edge.
+
+Closing it for real needed one human, disclosed call — `join_disambiguation.py`
+now records, explicitly and inspectably (same status as this project's
+own `[ASSUMED...]`-marked ground-truth rows): `(OpenMRS, obs, concept) →
+concept_id`, with the reasoning written out, checked by
+`build_join_path` before it will ever treat multiple FK columns as an
+unresolvable ambiguity. Not silent, not automatic guessing — a named,
+reviewable override an ambiguity search consults, exactly the same
+discipline as everywhere else `variable_resolution` required one.
+
+A third real bug fell out of finally running these end to end:
+`evaluate_condition` didn't handle a bare `{'kind': 'literal', 'value':
+true}` condition with no comparison operator at all — a legitimate
+DMN pattern (a default/catch-all rule, every input entry `-`). Fixed;
+this affects any decision with a default rule, not just these three.
+
+**Real result, all 3 decisions, run against the actual OpenMRS merged
+database (21 real cases each):** `Numeric Precision Validity` — 1 of 3
+rules a **false positive** (`Rule_1`: search claims covered, no real
+case selects it). `Numeric Absolute Range Validity` — 2 of 3 rules false
+positives (`Rule_1`, `Rule_2`). `Numeric Interpretation Classification`
+— all 5 rules confirmed. Three more real, independently-found
+discrepancies, on top of the `Preferred Identifier Requirement` and
+`Course Load Limit` findings above.
+
+**No gap left open by refusal-to-build** in the original "backward join"
+scope. What's left is ordinary unfinished work (below), not a declined
+mechanism.
 
 Still not started: `coverage.py` + the three CSV/JSON output files, the
 remaining spec'd test cases (UNIQUE violation, join-based input against

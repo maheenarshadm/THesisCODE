@@ -94,6 +94,16 @@ def evaluate_condition(condition, values):
     Returns True/False. Raises on an operator this evaluator does not
     yet handle -- never silently treats an unsupported construct as
     covered, per this project's own research constraints."""
+    if 'op' not in condition:
+        # A default/catch-all rule (every input entry '-') compiles to a
+        # bare {'kind': 'literal', 'value': true} with no comparison at
+        # all -- confirmed real: OpenMRS's own Numeric Absolute Range
+        # Validity::Rule_3. Evaluate it as a plain operand, not an error.
+        value = _eval_operand(condition, values)
+        if not isinstance(value, bool):
+            raise NotImplementedError(
+                f"A condition with no 'op' must be a boolean literal, got {value!r}: {condition!r}")
+        return value
     op = condition.get('op')
     if op == 'and':
         return all(evaluate_condition(c, values) for c in condition['clauses'])
