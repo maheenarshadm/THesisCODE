@@ -19,14 +19,21 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-24 `dynamosa.py` junction-row wiring fix** — see
+"Run history" below for the full writeup. Tables above already reflect
+this: FLEX2 28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7% solvable)
+— `Course Replacement Eligibility::Rule_1` newly confirmed, and
+`creditsEarned` now correctly resolves for `Rule_3`/`Rule_4`/`Rule_5`,
+though `Rule_3`/`Rule_4` themselves remain open for a THIRD, distinct,
+now-precisely-diagnosed generator-side bug (see `KNOWN_ISSUES.md`); zero
+flips anywhere else in FLEX2 or in OpenMRS/Spree/jBilling.
+
 **As of the 2026-09-24 `Course Replacement Eligibility` placeholder fix**
-— see "Run history" below for the full writeup. Tables above already
-reflect this: FLEX2 25→28 verified rules (45.5%→50.9% raw, 47.2%→52.8%
-solvable), decision-table coverage 3/10→4/10 (`Rule_2`/`Rule_5`/`Rule_6`
-newly confirmed; that decision's own `Rule_1`/`Rule_3`/`Rule_4` remain
-open for a separate, disclosed, unrelated data-construction gap);
-OpenMRS/Spree/jBilling unchanged (confirmed by a full per-objective
-diff, not just totals).
+— see "Run history" below for the full writeup. FLEX2 25→28 verified
+rules (45.5%→50.9% raw, 47.2%→52.8% solvable), decision-table coverage
+3/10→4/10 (`Rule_2`/`Rule_5`/`Rule_6` newly confirmed); OpenMRS/Spree/
+jBilling unchanged (confirmed by a full per-objective diff, not just
+totals).
 
 **As of the 2026-09-24 `run_decision`/`rule_evaluator.py` three-bug fix
 (FLEX2's `Course Load Limit`, 0/11 → 11/11 confirmed)** — see "Run
@@ -94,9 +101,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 28 | 50.9% |
+| FLEX2 | 98 | 55 | 29 | 52.7% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **98** | **50.0%** |
+| **Total** | **240** | **196** | **99** | **50.5%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -106,9 +113,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 28 | 52.8% |
+| FLEX2 | 55 | 0 | 2 | 53 | 29 | 54.7% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **98** | **67.1%** |
+| **Total** | **196** | **27** | **23** | **146** | **99** | **67.8%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -232,8 +239,10 @@ produce the numbers above)
   Spree__dynamosa_nsga2__budget1x__seed0.pkl` (re-run to pick up the
   IN-subquery mechanism), `--not-persisted-json`
   `{"evaluationTime": 20000}`.
-- **FLEX2**: `tests/fixtures/flex2_merged.db`, `generator/experiment_runs/
-  FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`, no override.
+- **FLEX2**: `tests/fixtures/flex2_merged.db` (rebuilt 2026-09-24 after
+  the `dynamosa.py` junction-row wiring fix above), `generator/
+  experiment_runs/FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`, no
+  override.
 - **jBilling**: `tests/fixtures/jbilling_merged.db`,
   `generator/experiment_runs/jBilling__dynamosa_nsga2__budget1x__seed0.pkl`,
   no override.
@@ -248,6 +257,55 @@ history below), jBilling 6/16.
 ---
 
 ## Run history
+
+### 2026-09-24 — `dynamosa.py` decision_subject junction-row wiring fix (two bugs)
+Numbers: FLEX2 28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7%
+solvable), decision-table coverage unchanged at 4/10. Investigating why
+`Course Replacement Eligibility::Rule_1` still didn't verify after the
+placeholder fix below found two bugs in `dynamosa.py`'s own
+`decision_subject` junction-row builder (from the earlier 2026-09-24
+`Course Load Limit`/`Identifier Uniqueness Check` fix), both fixed the
+same day:
+
+1. The builder only ever ran when the subject table was completely
+   absent from a record's own focal rows -- it never synthesized a
+   missing SIBLING row a hop needed to link through. `Rule_1`'s own
+   solved candidate has a dedicated `COURSE` row (for `courseTypeId`)
+   but no `STUDENT_PROGRAM` row at all (nothing in `Rule_1`'s own
+   condition needs it), yet the subject (`COURSE_REGISTRATION`)
+   structurally needs both -- so the whole junction row was silently
+   abandoned. Fixed: synthesize a fresh, minimal row for a missing hop
+   target instead of aborting; `repair_candidate`, called right after,
+   fills in whatever else it still needs.
+2. Checking `Rule_3`/`Rule_4` (same decision/subject) after fixing (1)
+   found a second, related gap: the fix only fired when the subject row
+   was missing ENTIRELY, but it can already exist (built naturally by
+   ANOTHER leaf, e.g. `Rule_3`'s own `gradeInCourseToReplace` on
+   `COURSE_REGISTRATION`) while a DIFFERENT leaf of the SAME record
+   builds its own separate row on a table the subject needs to link
+   through (e.g. `creditsEarned` on `STUDENT_PROGRAM`) -- and nothing
+   ever wired the subject's own FK column to that sibling row's PK,
+   since the whole block was skipped once the subject was already
+   present. Fixed by always attempting to wire every `subject['joins']`
+   hop onto the subject row (new or pre-existing), skipping only a hop
+   whose own FK column already has a real value.
+
+Verified via a full per-objective before/after diff across all 4 case
+studies: `Rule_1` flips false_positive->confirmed; zero flips anywhere
+else. `creditsEarned` now correctly resolves the real per-subject value
+for `Rule_3`/`Rule_4`/`Rule_5` (confirmed in `decision_trace.json`:
+1/32/32/18 instead of `None`), but `Rule_3`/`Rule_4` themselves still
+don't verify -- root-caused to a THIRD, distinct, generator-side bug:
+`degreeTotalCredits`'s own filter_text placeholders (`<program>`/
+`<batch>`) only resolve via a join to `STUDENT_PROGRAM`, but
+`candidate.py`'s own `_row_from_filter_conjuncts` (which seeds
+`PROGRAM_COURSE`'s rows during search) has no equivalent mechanism --
+confirmed directly against the pre-merge archive: `Rule_3`'s own
+`PROGRAM_COURSE` rows get `PROG_ID=BATCH_NO=64000001` (a fresh-key
+fallback) while its own sibling `STUDENT_PROGRAM` row gets
+`PROG_ID=BATCH_NO=1` -- never unified, even before merge/offset. See
+`KNOWN_ISSUES.md`'s own entry for the fix this would need (not yet
+built). Full regression suite re-run and passing.
 
 ### 2026-09-24 — `Course Replacement Eligibility` filter_text placeholder fix (partial)
 Numbers: FLEX2 25→28 verified rules (45.5%→50.9% raw, 47.2%→52.8%

@@ -18,7 +18,7 @@ excluded from all coverage numbers per an explicit decision below):
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
 | OpenMRS | 42/56 (75.0%) | 14/14 (100%) |
-| FLEX2 | 28/55 (50.9%) | 4/10 |
+| FLEX2 | 29/55 (52.7%) | 4/10 |
 | Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
 
@@ -469,27 +469,49 @@ excluded from all coverage numbers per an explicit decision below):
   to be before that was corrected to a real column. Worth checking
   whether the SAME kind of mis-mapping exists here before accepting it
   as a genuine non-database fact.
-- **`Course Replacement Eligibility` — FIXED 2026-09-24, partially: 3 of
-  its 6 rules now verify (`Rule_2`, `Rule_5`, `Rule_6`); `Rule_1`,
-  `Rule_3`, `Rule_4` remain open for a separate, unrelated reason — see
-  below.** See "Fixed issues" below for the full writeup.
-- **`Course Replacement Eligibility::Rule_1`/`Rule_3`/`Rule_4` — a
-  genuine data-construction gap, found while fixing the placeholder gap
-  above (2026-09-24), separate and unrelated to it.** All 544 real
-  `COURSE_REGISTRATION` subjects resolve `courseTypeId` (`Rule_1`'s own
-  condition), `creditsEarned`/`degreeTotalCredits` (`Rule_3`'s), and
-  `courseOfferedInFollowingSemesters` (`Rule_4`'s) to the SAME value —
-  `None`, `None`/`None`, and `False` respectively, with zero variation
-  across any real subject. Not a resolution bug: `course.course_type_id`
-  and `student_program.credits_earned` DO have real non-null values
-  elsewhere in the merged database (11/87 and 13/149 rows respectively)
-  — they just never land on a `course`/`student_program` row any real
-  `COURSE_REGISTRATION` subject actually joins to. `program_course` has
-  only 9 real rows total, likely why `degreeTotalCredits`'s own
-  aggregate (needing an exact `prog_id`/`batch_no`/`course_id` match)
-  never finds one. Looks like the same category of gap as the search
-  never constructing a subject that satisfies a rule's own real
-  precondition — not yet investigated further (out of scope for the
+- **`Course Replacement Eligibility` — FIXED 2026-09-24, partially: 4 of
+  its 6 rules now verify (`Rule_1`, `Rule_2`, `Rule_5`, `Rule_6`);
+  `Rule_3`/`Rule_4` remain open for a separate, unrelated, now-precisely
+  -diagnosed generator-side bug — see below.** See "Fixed issues" below
+  for the full writeup.
+- **`Course Replacement Eligibility::Rule_3`/`Rule_4` — a real,
+  precisely-diagnosed generator-side construction bug (found and root
+  -caused 2026-09-24, investigating the "data-construction gap" above;
+  NOT YET FIXED).** `degreeTotalCredits`'s own `derived_aggregate` sums
+  `COURSE.CREDIT_HRS` over `PROGRAM_COURSE` rows matching
+  `PROG_ID=<program> AND BATCH_NO=<batch>` — placeholders that only
+  resolve via a JOIN to `STUDENT_PROGRAM` (the same cross-table
+  convention `filter_placeholder_sources.py` names on the validator
+  side). `candidate.py`'s own `_row_from_filter_conjuncts` (used to seed
+  `PROGRAM_COURSE`'s own rows during search) has NO equivalent
+  mechanism: it only fills a placeholder's column from `scenario[name]`,
+  a flat per-record dict — and nothing else in this record's own
+  compiled fields ever independently sets `scenario['program']`/
+  `scenario['batch']` to a concrete value, since `<program>`/`<batch>`
+  appear ONLY inside this one `filter_text`. Confirmed directly against
+  the real archive (pre-merge, pre-offset): `Rule_3`'s own solved
+  candidate has `PROGRAM_COURSE` rows with `PROG_ID=BATCH_NO=64000001`
+  (a `_fresh_key_value`-style placeholder, from `repair_candidate`'s own
+  later NOT-NULL fill, since the conjunct was silently skipped) while
+  its OWN sibling `STUDENT_PROGRAM` row (built by the SAME record, for
+  `creditsEarned`) has `PROG_ID=BATCH_NO=1` — two different, never
+  -unified values within the SAME record's own candidate, well before
+  merge/offset ever run. The two intermediate bugs found chasing this
+  (dynamosa.py's junction-row builder not firing when the subject row
+  already exists via another leaf, and not being reusable for
+  already-focal-but-unwired hops) are BOTH now fixed — confirmed via the
+  trace: `creditsEarned` now correctly resolves to the real, per-subject
+  value (1/32/32/18) it should. `degreeTotalCredits` alone stays `None`
+  for every real subject because of this third, distinct, generator-side
+  gap. Fixing it needs new generator-side logic: `candidate.py`'s
+  `derived_aggregate` seeding recognizing a filter_text placeholder as a
+  known cross-table reference (a generator-owned mirror of
+  `filter_placeholder_sources.py`, per `DESIGN.md`'s "no overlap in
+  function calls with the search approach" — the same precedent
+  `compile_constraints.py`'s own `decision_subject` port already
+  follows) and either reading the value off the record's own
+  already-built sibling row for that target table, or writing it onto
+  that sibling row once decided — not yet built.
   placeholder fix this was found alongside).
 
 ### OpenMRS
@@ -591,9 +613,56 @@ before being counted as fixed here.
   3/10→4/10); zero flips anywhere else in FLEX2 or in
   OpenMRS/Spree/jBilling (`Ageing Step Config Validation`'s own
   single-table aggregate specifically re-checked and unaffected). This
-  decision's own `Rule_1`/`Rule_3`/`Rule_4` remain unverified for a
-  separate, disclosed, unrelated reason — see that decision's own entry
-  under "Open issues" above. Full regression suite re-run and passing.
+  decision's own `Rule_1`/`Rule_3`/`Rule_4` remain unverified at this
+  point — see below and "Open issues" above for how each was eventually
+  resolved. Full regression suite re-run and passing.
+
+- **`dynamosa.py`'s own `decision_subject` junction-row builder had a
+  too-narrow scope, found investigating why `Course Replacement
+  Eligibility::Rule_1` still didn't verify after the placeholder fix
+  above (2026-09-24), two bugs, both fixed the same day:**
+  1. The builder only ever ran when the subject table was COMPLETELY
+     ABSENT from a record's own focal rows — it never synthesized a
+     missing SIBLING row a hop needed to link through. Confirmed real:
+     `Rule_1`'s own solved candidate has a dedicated `COURSE` row (for
+     `courseTypeId`) but no `STUDENT_PROGRAM` row at all (nothing in
+     `Rule_1`'s own condition needs it) — the subject
+     (`COURSE_REGISTRATION`) structurally needs both, so the WHOLE
+     junction row was silently abandoned. Fixed: when a hop's own target
+     table isn't yet among the record's own focal rows, synthesize a
+     fresh, minimal one (`merged.add_row`) instead of aborting —
+     `repair_candidate`, called right after, fills in whatever else it
+     still needs, the same discipline already applied to every other row
+     this pass builds.
+  2. Once (1) was fixed, `Course Replacement Eligibility::Rule_3`/
+     `Rule_4` were checked too (same decision, same subject) and
+     revealed a SECOND, related gap: the ORIGINAL fix only ever fired
+     when the subject row was missing ENTIRELY — but the subject row can
+     ALREADY exist (built naturally because some OTHER leaf reads
+     directly off it, e.g. `Rule_3`'s own `gradeInCourseToReplace` on
+     `COURSE_REGISTRATION`) while a DIFFERENT leaf of the SAME record
+     ALSO builds its own separate dedicated row on a table the subject
+     needs to link through (e.g. `creditsEarned` on `STUDENT_PROGRAM`) —
+     and nothing ever wired the subject's own FK column to that sibling
+     row's PK, since the whole junction-row block was skipped once the
+     subject table was already present. Fixed by ALWAYS attempting to
+     wire every `subject['joins']` hop onto the subject row (whether
+     newly created or pre-existing), skipping only a hop whose own FK
+     column the subject row already has a real value for — never
+     overwriting one.
+
+  **Verified result**: `Rule_1` flips `false_positive` → `confirmed`
+  (FLEX2 28→29 verified rules; decision-table coverage unchanged at
+  4/10, since `Course Replacement Eligibility` was already counted from
+  the earlier fix); `creditsEarned` now correctly resolves the real,
+  per-subject value for `Rule_3`/`Rule_4`/`Rule_5` (confirmed directly in
+  `decision_trace.json`: 1/32/32/18 instead of `None` for every
+  subject) — but `Rule_3`/`Rule_4` themselves STILL don't verify, for a
+  THIRD, distinct, generator-side bug found investigating this — see
+  that decision's own entry under "Open issues" above (NOT YET FIXED).
+  Confirmed via a full per-objective before/after diff across all 4 case
+  studies: zero flips anywhere except `Rule_1`. Full regression suite
+  re-run and passing.
 
 - **FLEX2 fixture: every row's own primary key was null.**
   `generator/mutation.py`'s `_repair_row` only assigned a NOT-NULL

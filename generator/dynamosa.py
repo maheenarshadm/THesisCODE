@@ -1459,10 +1459,36 @@ def merge_archive_candidate(archive, records, case_study):
         # nothing ever tied them together as "the same real case," so
         # independent verification could never find a corresponding
         # subject to enumerate.
+        #
+        # A SECOND, related gap (found 2026-09-24, same day, fixing
+        # FLEX2's `Course Replacement Eligibility`): the subject table
+        # can ALREADY be among this record's own focal rows -- built
+        # naturally because SOME leaf reads directly off it (e.g.
+        # `gradeInCourseToReplace` on `COURSE_REGISTRATION`) -- while a
+        # DIFFERENT leaf of the SAME record ALSO builds its own separate
+        # dedicated row on ANOTHER table the subject needs to link
+        # through (e.g. `creditsEarned` on `STUDENT_PROGRAM`). Nothing
+        # ever wired the subject row's own FK column to that sibling
+        # row's PK in this case -- the ORIGINAL version of this fix only
+        # ran when the subject row was missing ENTIRELY, so an
+        # already-present-but-unlinked subject row silently kept a NULL
+        # FK forever. Confirmed real: `Rule_3`'s own solved candidate has
+        # its own `COURSE_REGISTRATION` AND `STUDENT_PROGRAM` rows, each
+        # independently correct, but `ROLL_NO` was never copied from one
+        # to the other, so the validator's own live join always saw
+        # `creditsEarned=None`. Below now wires every `subject['joins']`
+        # hop onto the subject row REGARDLESS of whether that row already
+        # existed, skipping only a hop whose own FK column the subject
+        # row already has a real value for (never overwritten).
         subject = r.get('decision_subject')
-        if subject and not any(t.upper() == subject['table'].upper() for t in merged_rec_focal):
-            junction_row = {}
+        if subject:
+            subject_focal = merged_rec_focal.get(subject['table']) or next(
+                (v for k, v in merged_rec_focal.items() if k.upper() == subject['table'].upper()), None)
+            is_new = subject_focal is None
+            if is_new:
+                subject_focal = {}
             resolvable = bool(subject['joins'])
+            wired_any = False
             for target_table, hops in subject['joins'].items():
                 # Deliberately narrow scope, disclosed rather than
                 # silently guessed: only a SINGLE hop from the subject to
@@ -1475,15 +1501,26 @@ def merge_archive_candidate(archive, records, case_study):
                     resolvable = False
                     break
                 hop = hops[0]
+                if subject_focal.get(hop['from_column']) is not None:
+                    continue  # already has a real value -- never overwritten
                 target_focal = merged_rec_focal.get(hop['to_table']) or next(
                     (v for k, v in merged_rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
                 if target_focal is None:
                     # This record's own construction never built a
                     # dedicated row for a table the subject needs to
-                    # link through -- can't wire a real FK to a row that
-                    # doesn't exist; skip rather than fabricate one.
-                    resolvable = False
-                    break
+                    # link through -- e.g. a rule whose own leaves never
+                    # touch it at all (confirmed real: FLEX2's `Course
+                    # Replacement Eligibility::Rule_1` only reads
+                    # `COURSE`, never `STUDENT_PROGRAM`, yet the subject,
+                    # `COURSE_REGISTRATION`, structurally needs both).
+                    # Synthesize a fresh, minimal row instead of leaving
+                    # this hop unresolved: `repair_candidate`, called
+                    # right after this loop, fills in whatever else it
+                    # still needs (NOT NULL columns, its own FKs) -- the
+                    # same discipline already applied to every other row
+                    # this pass builds, not a new mechanism.
+                    target_focal = merged.add_row(hop['to_table'], {_OWNER_KEY: rid})
+                    merged_rec_focal[hop['to_table']] = target_focal
                 pk_value = target_focal.get(hop['to_column'])
                 if pk_value is None:
                     # The referenced row's own PK was never set by
@@ -1499,11 +1536,12 @@ def merge_archive_candidate(archive, records, case_study):
                     # far), not a fresh ad hoc scheme.
                     pk_value = _fresh_key_value(merged, hop['to_table'], hop['to_column'])
                     target_focal[hop['to_column']] = pk_value
-                junction_row[hop['from_column']] = pk_value
-            if resolvable and junction_row:
-                junction_row[_OWNER_KEY] = rid
-                merged.add_row(subject['table'], junction_row)
-                merged_rec_focal[subject['table']] = junction_row
+                subject_focal[hop['from_column']] = pk_value
+                wired_any = True
+            if resolvable and is_new and (subject_focal or wired_any):
+                subject_focal[_OWNER_KEY] = rid
+                merged.add_row(subject['table'], subject_focal)
+                merged_rec_focal[subject['table']] = subject_focal
                 merged_focal_maps[rid] = merged_rec_focal
 
     repair_candidate(merged, case_study)

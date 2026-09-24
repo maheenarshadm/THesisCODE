@@ -245,6 +245,42 @@ gap where every real subject resolves the same four variables to the
 exact same (never-satisfying) value with zero variation — see
 `KNOWN_ISSUES.md`'s FLEX2 section.
 
+**Investigating that same data-construction gap further (2026-09-24)
+found and fixed two more bugs, this time in `generator/dynamosa.py`'s
+own `decision_subject` junction-row builder.** (1) The builder only ran
+when the subject table was completely absent from a record's own focal
+rows — it never synthesized a missing SIBLING row a hop needed to link
+through, so `Rule_1` (a dedicated `COURSE` row but no `STUDENT_PROGRAM`
+row at all) had its whole junction row silently abandoned. Fixed:
+synthesize a fresh, minimal row for a missing hop target instead of
+aborting. (2) Checking `Rule_3`/`Rule_4` after fixing (1) found the fix
+still only fired when the subject row was missing ENTIRELY — but it can
+already exist (built by ANOTHER leaf, e.g. `Rule_3`'s own
+`gradeInCourseToReplace` on `COURSE_REGISTRATION`) while a DIFFERENT
+leaf of the SAME record builds its own separate row on a table the
+subject needs to link through (e.g. `creditsEarned` on
+`STUDENT_PROGRAM`), with nothing ever wiring the two together. Fixed by
+always attempting to wire every `subject['joins']` hop onto the subject
+row, new or pre-existing, skipping only a hop whose own FK column
+already has a real value. Verified: `Rule_1` flips false_positive →
+confirmed (FLEX2 28→29); `creditsEarned` now correctly resolves the
+real per-subject value for `Rule_3`/`Rule_4`/`Rule_5` — but `Rule_3`/
+`Rule_4` STILL don't verify, root-caused to a THIRD, distinct,
+generator-side bug: `degreeTotalCredits`'s own filter_text placeholders
+(`<program>`/`<batch>`) only resolve via a join to `STUDENT_PROGRAM`,
+but `candidate.py`'s own `_row_from_filter_conjuncts` (which seeds
+`PROGRAM_COURSE`'s rows during search) has no equivalent mechanism —
+confirmed directly against the pre-merge archive: `Rule_3`'s own
+`PROGRAM_COURSE` rows get `PROG_ID=BATCH_NO=64000001` (a fresh-key
+fallback) while its own sibling `STUDENT_PROGRAM` row gets
+`PROG_ID=BATCH_NO=1`, never unified even before merge/offset. Not yet
+fixed — see `KNOWN_ISSUES.md`'s own entry for what the fix would need
+(a generator-owned mirror of `filter_placeholder_sources.py`, per this
+file's own "Architectural separation requirement" section, the same
+precedent `compile_constraints.py`'s own `decision_subject` port
+follows). Zero flips anywhere else across all 4 case studies, full
+regression suite re-run and passing.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

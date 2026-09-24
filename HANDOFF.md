@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-50.9%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+52.7%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 52.8%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 54.7%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -334,6 +334,30 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     separate, unrelated data-construction gap (every real subject
     resolves the same 4 variables to the identical never-satisfying
     value, zero variation) — not yet investigated further.
+11. **Investigated that data-construction gap, on request — found and
+    fixed two real bugs, found and precisely diagnosed (not yet fixed) a
+    third.** `dynamosa.py`'s own `decision_subject` junction-row builder
+    (from item 8's fix) only ever ran when the subject table was
+    completely absent from a record's own focal rows, never when it
+    already existed but needed its FK links wired to sibling rows built
+    for OTHER leaves of the same record. Fixed both: (a) synthesize a
+    fresh row for a missing hop target instead of aborting the whole
+    junction; (b) always wire every hop onto the subject row, new or
+    pre-existing, skipping only an already-set FK column. Verified:
+    `Rule_1` flips false_positive→confirmed (FLEX2 28→29 verified),
+    `creditsEarned` now correctly resolves for `Rule_3`/`Rule_4`/
+    `Rule_5`, zero flips elsewhere. `Rule_3`/`Rule_4` themselves still
+    don't verify — root-caused to a THIRD, distinct, generator-side bug:
+    `degreeTotalCredits`'s own filter_text placeholders (`<program>`/
+    `<batch>`) only resolve via a join to `STUDENT_PROGRAM`, but
+    `candidate.py`'s own row-seeding for `derived_aggregate` has no
+    equivalent cross-table mechanism (confirmed directly against the
+    pre-merge archive: `Rule_3`'s own `PROGRAM_COURSE` and
+    `STUDENT_PROGRAM` rows get DIFFERENT, never-unified `PROG_ID`/
+    `BATCH_NO` values, even before merge/offset). Fixing it needs new
+    generator-side logic (a generator-owned mirror of
+    `filter_placeholder_sources.py`, per DESIGN.md's architectural
+    -separation rule) — not yet built; disclosed in `KNOWN_ISSUES.md`.
 
 ## 7. Planned / open work
 
@@ -354,11 +378,12 @@ Full, itemized list with root causes and what fixing each would require:
   for Spree/jBilling elsewhere); an audit question on `Attendance
   Eligibility For Final Exam`. `Course Load Limit` is now fully closed
   (§6 items 8/9 above: 11/11 confirmed). `Course Replacement
-  Eligibility` is now partially closed (§6 item 10: `Rule_2`/`Rule_5`/
-  `Rule_6` confirmed) — its own `Rule_1`/`Rule_3`/`Rule_4` remain open,
-  a separate, unrelated, not-yet-investigated data-construction gap
-  (every real subject resolves the same 4 variables to the identical
-  never-satisfying value).
+  Eligibility` is now 4/6 closed (§6 items 10/11: `Rule_1`/`Rule_2`/
+  `Rule_5`/`Rule_6` confirmed) — its own `Rule_3`/`Rule_4` remain open
+  for a precisely-diagnosed but not-yet-fixed generator-side bug (§6
+  item 11: `candidate.py`'s own `derived_aggregate` row-seeding has no
+  mechanism for a filter_text placeholder that only resolves via a
+  cross-table join).
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.
