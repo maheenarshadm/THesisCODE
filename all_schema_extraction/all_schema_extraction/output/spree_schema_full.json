@@ -6873,7 +6873,38 @@
     "checks": [
       "amount <= 0"
     ],
-    "fk_columns": []
+    "fk_columns": [
+      {
+        "column": "order_id",
+        "ref_table": "spree_orders",
+        "ref_column": "id"
+      },
+      {
+        "column": "promotion_action_id",
+        "ref_table": "spree_promotion_actions",
+        "ref_column": "id"
+      },
+      {
+        "column": "promotion_id",
+        "ref_table": "spree_promotions",
+        "ref_column": "id"
+      },
+      {
+        "column": "line_item_id",
+        "ref_table": "spree_line_items",
+        "ref_column": "id"
+      },
+      {
+        "column": "cart_id",
+        "ref_table": "spree_carts",
+        "ref_column": "id"
+      },
+      {
+        "column": "fulfillment_id",
+        "ref_table": "spree_fulfillments",
+        "ref_column": "id"
+      }
+    ]
   },
   "spree_fees": {
     "pk": "id",

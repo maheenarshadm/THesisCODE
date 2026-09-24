@@ -72,13 +72,14 @@ excluded from all coverage numbers per an explicit decision below):
     they read `spree_promotion_rules.type`, an ordinary real column, not
     blob content — and remain a solvable, in-scope gap (below).
 
-- **2 fixture/row-finding gaps (7 rules, 2 decisions) remain, after the
-  Spree search re-run closed a 3rd
+- **1 fixture/row-finding gap (3 rules, 1 decision) remains**, after the
+  Spree search re-run closed a 3rd decision
   (`Price List Volume Adjustment Tier Selection`, see "Fixed issues"
-  below) and the blob-dependent 4th
-  (`Promotion Item Total Eligibility`) was reclassified out of scope
-  above.** Neither of these two needs blob decoding — both are ordinary
-  schema/join gaps, confirmed solvable in principle:
+  below), the blob-dependent 4th (`Promotion Item Total Eligibility`)
+  was reclassified out of scope above, and the IN-subquery construction
+  mechanism (see "Fixed issues" below) closed `Promotion Usage Limit
+  Exceeded` (3 of 4 rules) and `One-Use-Per-User Promotion
+  Eligibility::rule_3`:
   - `Promotion Customer Group Eligibility` (rules 1, 2, 4 — not `rule_3`,
     out of scope above) needs to locate a specific
     `spree_promotion_rules`/`spree_order_promotions` row from the
@@ -93,22 +94,28 @@ excluded from all coverage numbers per an explicit decision below):
     one-to-many join question resolved (a disclosed override naming
     which single `spree_promotion_rules`/`spree_order_promotions` row
     is "the" one for a given promotion, since a real promotion can have
-    many rule/action rows).
-  - `Promotion Usage Limit Exceeded` (4 rules) needs `spree_discounts`
-    joined through `spree_promotion_actions` — confirmed this is NOT
-    simply a missing-table/search-budget problem the way `Price List
-    Volume Adjustment Tier Selection` was: `adjustedCreditsCount`'s own
-    `filter_text` (`promotion_action_id IN (SELECT id FROM
-    spree_promotion_actions WHERE promotion_id = self) AND 1=1`)
-    contains an IN-subquery join conjunct that
-    `_row_from_filter_conjuncts`/`_mechanical_filter_predicate`
-    honestly can't mechanically parse (only plain `COLUMN = VALUE`
-    conjuncts are recognized) — so the seeded/mutated `spree_discounts`
-    row is built with NO `promotion_action_id` at all, and
-    `spree_promotion_actions` never gets constructed to begin with,
-    regardless of how many generations the search runs. Needs the same
-    kind of disclosed join-construction override as the row-finding
-    gap above, not a bigger search budget.
+    many rule/action rows) — this is its own separate design decision,
+    not the same fix as `Promotion Usage Limit Exceeded` below, even
+    though both once looked like the same "missing table" shape.
+
+- **`Promotion Usage Limit Exceeded::rule_3` — new, narrower gap found
+  while verifying the IN-subquery fix (2026-09-24), distinct from the
+  filter-shape gap the fix itself closed.** Rules 1/2/4 of this decision
+  now verify correctly (`adjustedCreditsCount` is correctly constructed
+  against a real `spree_promotion_actions`/`spree_discounts` join). But
+  no constructed subject in the fixture ever has `usageLimitSet=true`
+  AND `adjustedCreditsCount >= usageLimit` — `matched_rule_ids` never
+  includes `rule_3` for any of the 7 real `Promotion Usage Limit
+  Exceeded` subjects in `decision_trace.json` (confirmed 2026-09-24). The
+  search claims this objective is covered (`search_covered=True,
+  best_search_fitness=0.0`), but the row-count driver evidently never
+  needed to push a specific focal promotion's own discount count past
+  its own `usageLimit` to reach that fitness — the same generator/
+  validator mismatch category as the other 8 rules originally, just not
+  yet root-caused to the same mechanical-conjunct-parsing depth. Not
+  fixed this round; needs its own investigation into why the row-count
+  mutation for this specific rule's objective doesn't need to reach a
+  real `count >= limit` state.
 
 ### FLEX2
 
@@ -536,3 +543,77 @@ before being counted as fixed here.
   acceptance test in `drd_executor.py`, `test_serialized_field_
   roundtrip.py`) re-run and passing after every incremental step of
   this fix, not just at the end.
+
+- **Built the `COLUMN IN (SELECT ... WHERE ...)` construction mechanism,
+  closing `Promotion Usage Limit Exceeded` (3 of 4 rules) and
+  `One-Use-Per-User Promotion Eligibility::rule_3` — plus two
+  supporting fixes found chasing it (2026-09-24).** Root cause: this
+  filter shape was entirely unrecognized by both
+  `_mechanical_filter_predicate` (read side) and
+  `_row_from_filter_conjuncts` (write side, in both `candidate.py` and
+  `mutation.py`) — every conjunct inside it got silently dropped, so the
+  search's own fitness degraded to "match anything," reached 0.0 from an
+  arbitrary row, and stopped, while the real validator, running the
+  actual `IN (SELECT...)` SQL, correctly found no match. Same species of
+  generator/validator mismatch as `First-Order Promotion Eligibility::
+  rule_3` above, different shape. Fixed with:
+  1. `_top_level_and_conjuncts` rewritten from a fragment-filtering pass
+     into a real, character-level, paren-depth-aware splitter that
+     reconstructs the full conjunct text (the old version safely
+     truncated a conjunct containing nested ANDs, since nothing had
+     ever needed to read inside one — the IN-subquery's own inner WHERE
+     needed exactly that).
+  2. New `_construct_subquery_parent` in `candidate.py` (reused, not
+     duplicated, by `mutation.py`): recognizes `COLUMN IN (SELECT PK
+     FROM TABLE WHERE ...)`, builds or reuses a real row in the
+     subquery's own table from whatever conjuncts inside it ARE
+     mechanically bindable, and returns that row's real id for the
+     outer column. Where the subquery's own WHERE references `self`
+     (the decision's own subject row's PK — same convention
+     `db_resolver.py`'s `_substitute_self_and_colon` already uses at
+     verification time), a new disclosed override,
+     `generator/aggregate_self_table.py`, names which table `self`
+     means for a given `(case_study, variable_name)` — the generator
+     side has no equivalent per-record "subject table" computation the
+     way the validator does, so it's named explicitly rather than
+     guessed. Currently one entry: `('Spree', 'adjustedCreditsCount'):
+     'spree_promotions'`.
+  3. A real schema-extraction gap surfaced fixing the above:
+     `spree_discounts.fk_columns` was `[]` in `spree_schema_full.json`
+     despite every column being typed `bigint(ref)` (same class of gap
+     as `spree_order_promotions`/`spree_promotion_rules`, fixed earlier)
+     — `dynamosa.py`'s own merge-time key-offsetting reads this field to
+     decide which columns to shift in step with the rows they reference,
+     so with it empty, `spree_discounts`'s own FK columns silently
+     stayed unshifted while the tables they pointed at got shifted,
+     breaking the correspondence after merge. Fixed by adding the real
+     FK entries directly to the schema JSON.
+  4. Fixing (3) surfaced a third, previously-masked bug in
+     `materialize.py`: a row missing its own table's surrogate key was
+     left for SQLite's own NULL-rowid auto-assignment to fill in at
+     INSERT time — a value with zero visibility into this pipeline's own
+     explicit, offset-derived ids elsewhere in the same table. Once (3)
+     made both id sources actually overlap, this produced a real
+     `sqlite3.IntegrityError: UNIQUE constraint failed: SPREE_ORDERS.id`
+     (traced directly: an unrelated, id-less `SPREE_ORDERS` row for
+     `Promotion Tiered Percent Discount Selection::rule_1` got
+     auto-assigned 16000004 by SQLite mid-insert-sequence, and a later,
+     equally unrelated row for `One-Use-Per-User Promotion
+     Eligibility::rule_3` legitimately carried that same explicit,
+     offset-derived id — two rows with no real relationship an FK could
+     ever express). Fixed with `_fill_missing_surrogate_keys` in
+     `materialize.py` (used by both `to_sql_inserts` and
+     `validate_with_sqlite`): every id-less row in a table now gets an
+     explicit id, computed past the max of every already-used value in
+     that same table, before any INSERT statement is even built — never
+     delegated to SQLite's own implicit per-statement behavior. Applies
+     pipeline-wide (all 4 case studies), since the gap was in shared
+     code, not Spree-specific.
+  **Verified, not just constructed in isolation**: re-ran the Spree
+  search, rebuilt `spree_merged.db`, re-ran `coverage.py` — 14→17
+  verified rules (see `COVERAGE_REPORT.md`'s 2026-09-24 entry for the
+  full accounting, including the one false alarm the cross-case-study
+  regression check caught and resolved: a stale `coverage_out/`
+  artifact, not a real regression). One rule from the original 8,
+  `Promotion Usage Limit Exceeded::rule_3`, remains open — a narrower,
+  distinct gap, tracked separately above under Open Issues.

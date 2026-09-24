@@ -125,15 +125,86 @@ def serialize_yaml_hash_blob(blob):
     return yaml.safe_dump({f':{k}': v for k, v in blob.items()}, default_flow_style=False)
 
 
+def _single_pk_column(table, schema):
+    """-> the table's own single-column surrogate-key name, or None (no
+    PK, or a composite PK -- this function only ever fills in a lone
+    auto-increment-style id, never touches a composite key, which is
+    always made of real FK/business values a row either already has or
+    was never meant to get one from here). Mirrors `create_table_ddl`'s
+    own `pk`/`pk_cols` lookup so both read the schema the same way."""
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+    pk = info.get('pk')
+    pk_cols = pk if isinstance(pk, list) else ([pk] if pk else [])
+    return pk_cols[0] if len(pk_cols) == 1 else None
+
+
+def _fill_missing_surrogate_keys(table, rows, schema):
+    """A row missing its table's own single-column surrogate key (never
+    given one during construction/repair -- see e.g. a shared/default
+    focal row no covered rule ever needed to anchor via FK) would
+    otherwise reach `to_sql_inserts` with that column simply absent, and
+    SQLite's own INTEGER PRIMARY KEY column then auto-assigns it the
+    next free *rowid at that point in this connection's own insert
+    sequence* -- a value with NO knowledge of this same materialization's
+    OTHER, unrelated rows that already carry an explicit, offset-derived
+    id for the SAME table (dynamosa.py's own per-objective merge-time key
+    offsetting, see `_key_columns_for`). Two independent id sources
+    (SQLite's lazy per-INSERT auto-rowid vs. this pipeline's own
+    explicit offsetting) can legitimately land on the identical number,
+    since neither one is aware the other exists -- confirmed directly
+    against Spree's own `spree_merged.db` rebuild (2026-09-24):
+    `SPREE_ORDERS`'s row for `Promotion Tiered Percent Discount
+    Selection::rule_1` (no real FK relationship at all to the row that
+    later collided with it) had no `id` set, got auto-assigned 16000004
+    by SQLite mid-sequence, and a wholly unrelated, later-emitted row for
+    `One-Use-Per-User Promotion Eligibility::rule_3` legitimately carried
+    that same explicit offset-derived id -- a real `UNIQUE constraint
+    failed` with no FK/schema-declaration gap behind it: the two rows
+    share no relationship an FK could express.
+
+    Fixed here, once, with full knowledge of every id this table's rows
+    already carry: any row missing this table's single-column surrogate
+    key gets assigned one explicitly, past the current max of every
+    *already-set* value for that column across this whole table -- so
+    it can never coincide with an explicit, already-offset id emitted
+    anywhere else in the same run, and SQLite's own auto-rowid is never
+    relied upon at all."""
+    pk_col = _single_pk_column(table, schema)
+    if pk_col is None:
+        return rows
+    used = [row[pk_col] for row in rows
+            if row.get(pk_col) is not None]
+    if not all(isinstance(v, (int, float)) for v in used):
+        return rows
+    next_id = int(max(used)) + 1 if used else 1
+    filled = []
+    for row in rows:
+        if row.get(pk_col) is None:
+            row = dict(row)
+            row[pk_col] = next_id
+            next_id += 1
+        filled.append(row)
+    return filled
+
+
 def to_sql_inserts(candidate, schema):
     """-> (statements, warnings). One INSERT per row, tables in FK
     dependency order; a row's own column order is preserved (insertion
-    order, not resorted) since SQL INSERT names its columns explicitly."""
+    order, not resorted) since SQL INSERT names its columns explicitly.
+
+    Any row still missing its own table's single-column surrogate key
+    at this point gets one assigned here, explicitly and with full
+    knowledge of every id already used in that same table -- see
+    `_fill_missing_surrogate_keys`'s own docstring for the real
+    collision this prevents (SQLite's own implicit NULL-rowid
+    auto-assignment has no visibility into this pipeline's own
+    explicit, offset-derived ids elsewhere in the same table)."""
     as_dict = candidate.as_dict()
     order, warnings = topological_table_order(schema, as_dict.keys())
     statements = []
     for table in order:
-        for row in candidate.rows(table):
+        rows = _fill_missing_surrogate_keys(table, candidate.rows(table), schema)
+        for row in rows:
             row = _real_columns(row)
             if not row:
                 continue
@@ -345,7 +416,8 @@ def validate_with_sqlite(candidate, schema):
     for table in order:
         if table not in created:
             continue
-        for i, row in enumerate(candidate.rows(table)):
+        rows = _fill_missing_surrogate_keys(table, candidate.rows(table), schema)
+        for i, row in enumerate(rows):
             row = _real_columns(row)
             if not row:
                 continue

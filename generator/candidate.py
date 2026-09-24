@@ -259,32 +259,185 @@ def _top_level_and_conjuncts(filter_text):
     wrong guess. Checked against every filter_text in the current
     compiled corpus that mixes '(' and 'AND' (3, across Spree/FLEX2) --
     none of the other two regress, since their own parenthesized spans
-    already net to zero parens by the time a later 'AND' is reached."""
-    parts = re.split(r'\bAND\b', filter_text or '', flags=re.I)
-    result = []
-    depth = 0
-    for part in parts:
-        if depth == 0:
-            result.append(part)
-        depth += part.count('(') - part.count(')')
-    return result
+    already net to zero parens by the time a later 'AND' is reached.
+
+    Upgraded 2026-09-24 from a filter-the-naive-split pass to a real,
+    character-level depth-aware split: the original version only kept
+    whichever depth-0 FRAGMENT the naive `re.split` happened to produce,
+    silently truncating a top-level conjunct that itself contains a
+    nested AND (e.g. `priorPromotionUsageCount`'s own subquery, `order_id
+    IN (SELECT id FROM spree_orders WHERE user_id = <user_id> AND
+    completed_at IS NOT NULL AND id != self)`, used to come back missing
+    everything after its own first internal AND). That truncation was
+    harmless as long as nothing ever tried to READ the inside of such a
+    conjunct -- true until IN-subquery construction (below) needed the
+    complete, balanced text to build a real matching row. Behaviorally
+    identical to the old version for every conjunct shape already in use
+    (none of them were ever successfully parsed past their own first
+    internal AND either way)."""
+    text = filter_text or ''
+    parts, current, depth, i, n = [], [], 0, 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch == '(':
+            depth += 1
+            current.append(ch)
+            i += 1
+        elif ch == ')':
+            depth -= 1
+            current.append(ch)
+            i += 1
+        elif depth == 0 and text[i:i + 3].upper() == 'AND' \
+                and (i == 0 or not (text[i - 1].isalnum() or text[i - 1] == '_')) \
+                and (i + 3 == n or not (text[i + 3].isalnum() or text[i + 3] == '_')):
+            parts.append(''.join(current))
+            current = []
+            i += 3
+        else:
+            current.append(ch)
+            i += 1
+    parts.append(''.join(current))
+    return parts
 
 
-def _mechanical_filter_predicate(filter_text, scenario):
+# Recognizes `COLUMN IN (SELECT SELCOL FROM TABLE WHERE inner_where)` --
+# an IN-subquery join, e.g. `adjustedCreditsCount`'s own
+# `promotion_action_id IN (SELECT id FROM spree_promotion_actions WHERE
+# promotion_id = self)` or `priorPromotionUsageCount`'s `order_id IN
+# (SELECT id FROM spree_orders WHERE user_id = <user_id> AND
+# completed_at IS NOT NULL AND id != self)`. Added 2026-09-24: until
+# this, the shape was entirely unrecognized (never matched `=`/`IS NOT
+# NULL`), so the outer column it names was never bound to anything --
+# the row-builder skipped it and the predicate treated the whole
+# conjunct as absent, meaning the search's own approximate fitness
+# counted every row as a match regardless of whether it was really
+# attributable to the right parent. See `_conjunct_value_bindings` and
+# `_construct_subquery_parent` for what actually closes the gap.
+_IN_SUBQUERY_RE = re.compile(
+    r'^\s*(?:[\w]+\.)?(\w+)\s+IN\s*\(\s*SELECT\s+(\w+)\s+FROM\s+(\w+)\s+WHERE\s+(.+)\)\s*$',
+    re.I | re.S)
+_SELF_TOKEN_RE = re.compile(r'self', re.I)
+
+
+def _conjunct_value_bindings(where_text, scenario, self_value=None):
+    """The construction-side counterpart to `_mechanical_filter_predicate`,
+    scoped to ONE inner WHERE clause (an IN-subquery's own text, or --
+    equally -- an ordinary top-level filter_text): returns
+    `{column: value}` for every conjunct this bridge can mechanically
+    bind (`COLUMN = VALUE`, `COLUMN = <placeholder>` when the placeholder
+    is in `scenario`, `COLUMN IS NOT NULL` as a generic non-null
+    placeholder, `COLUMN = self` when `self_value` is given). A conjunct
+    it can't bind (an exclusion like `id != self`, an unrecognized
+    shape) is silently omitted, never guessed at -- the same honesty
+    convention `_row_from_filter_conjuncts` already uses, just factored
+    out so IN-subquery construction can reuse it for the SUBQUERY's own
+    inner clause without a third reimplementation."""
+    bindings = {}
+    for c in _top_level_and_conjuncts(where_text):
+        c_stripped = c.strip()
+        m = _IS_NOT_NULL_RE.match(c_stripped)
+        if m:
+            bindings[m.group(1)] = 1
+            continue
+        if _IS_NULL_RE.match(c_stripped):
+            continue
+        m = _SIMPLE_EQ_CONJUNCT_RE.match(c_stripped)
+        if not m:
+            continue
+        col, raw_val = m.group(1), m.group(2).strip()
+        if col.isdigit():
+            continue
+        if _SELF_TOKEN_RE.fullmatch(raw_val):
+            if self_value is not None:
+                bindings[col] = self_value
+            continue
+        if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
+            continue
+        ph = _PLACEHOLDER_RE.fullmatch(raw_val)
+        if ph:
+            if ph.group(1) in scenario:
+                bindings[col] = scenario[ph.group(1)]
+            continue
+        v = raw_val.strip("'\"")
+        try:
+            v = int(v)
+        except ValueError:
+            try:
+                v = float(v)
+            except ValueError:
+                pass
+        bindings[col] = v
+    return bindings
+
+
+def _fresh_id_value(candidate, table):
+    """A numeric `id` value guaranteed not to collide with any existing
+    `id` already on a row of `table` in this candidate -- the same
+    guarantee `mutation.py`'s own `_fresh_key_value` provides for a
+    declared PK/UNIQUE column repair, duplicated here in miniature
+    (scoped to the literal column name `id`, which every table this
+    mechanism targets actually uses) rather than imported, since
+    candidate.py has no dependency on mutation.py."""
+    existing = {r.get('id', r.get('ID')) for r in candidate.rows(table)
+                if isinstance(r.get('id', r.get('ID')), (int, float))
+                and not isinstance(r.get('id', r.get('ID')), bool)}
+    return (max(existing) + 1) if existing else 1
+
+
+def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
+    """Given an `_IN_SUBQUERY_RE` match, builds (or reuses) a real row in
+    the subquery's own table satisfying whatever of its WHERE clause is
+    mechanically bindable, and returns the value the OUTER column should
+    be set to (that row's own real `id`) -- or None if `candidate` isn't
+    available (a caller with no candidate to build into, e.g. a bare
+    predicate check with no construction role). `self_table`, when the
+    inner WHERE references `self` and this fact declared one (see
+    `generator/aggregate_self_table.py`), is resolved to that table's
+    OWN focal row's real id -- assigning one now, via `_fresh_id_value`,
+    if it doesn't have one yet, so this row and any sibling leaf that
+    later reads the SAME focal row agree on one real identity."""
+    if candidate is None:
+        return None
+    outer_col, _select_col, inner_table, inner_where = match.groups()
+    self_value = None
+    if self_table and focal is not None:
+        self_row = focal.setdefault(self_table.upper(), {})
+        if self_row not in candidate.rows(self_table):
+            candidate.add_row(self_table, self_row)
+        self_value = self_row.get('id', self_row.get('ID'))
+        if self_value is None:
+            self_value = _fresh_id_value(candidate, self_table)
+            self_row['id'] = self_value
+    bindings = _conjunct_value_bindings(inner_where, scenario, self_value)
+    inner_row = dict(bindings)
+    inner_row['id'] = _fresh_id_value(candidate, inner_table)
+    candidate.add_row(inner_table, inner_row)
+    return inner_row['id']
+
+
+def _mechanical_filter_predicate(filter_text, scenario, candidate=None):
     """-> (predicate(row) -> bool, [skipped conjunct strings]). Splits on
     ' AND ' (the only combinator actually seen in these facts' filter
     text) and keeps only conjuncts of the plain `COLUMN = VALUE` or
     `COLUMN = <placeholder>` shape; anything else (a join description in
-    prose, an IN-subquery description, a genuine cross-table join
-    conjunct like `PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID` -- a real
-    bug found materializing degreeTotalCredits end to end, 2026-09-12:
-    this used to treat the bare `TABLE.COLUMN` on the right as a literal
-    STRING value to match against, which no real row's own COURSE_ID
-    integer could ever equal, silently zeroing the aggregate rather than
-    honestly reporting the join as unparseable) is reported as skipped
-    rather than guessed at, and the resulting predicate is a real
-    over-count on exactly the skipped conjuncts' account -- an honest
-    approximation, not a silent exact (or silently wrong) answer."""
+    prose, a genuine cross-table join conjunct like `PROGRAM_COURSE.
+    COURSE_ID = COURSE.COURSE_ID` -- a real bug found materializing
+    degreeTotalCredits end to end, 2026-09-12: this used to treat the
+    bare `TABLE.COLUMN` on the right as a literal STRING value to match
+    against, which no real row's own COURSE_ID integer could ever equal,
+    silently zeroing the aggregate rather than honestly reporting the
+    join as unparseable) is reported as skipped rather than guessed at,
+    and the resulting predicate is a real over-count on exactly the
+    skipped conjuncts' account -- an honest approximation, not a silent
+    exact (or silently wrong) answer.
+
+    `candidate`, when given, additionally lets a `COLUMN IN (SELECT ...
+    WHERE ...)` conjunct (2026-09-24) be checked for real -- does
+    `row`'s own `COLUMN` equal the real `id` of some row, already in
+    `candidate`, that itself satisfies the subquery's own mechanically
+    bindable conjuncts? Without a `candidate` (a bare predicate check
+    with no construction context), this shape is skipped like any other
+    the read side can't resolve -- consistent, not a wrong guess."""
     if not filter_text:
         return (lambda row: True), []
     conjuncts = _top_level_and_conjuncts(filter_text)
@@ -292,6 +445,32 @@ def _mechanical_filter_predicate(filter_text, scenario):
     skipped = []
     for c in conjuncts:
         c_stripped = c.strip()
+        m = _IN_SUBQUERY_RE.match(c_stripped)
+        if m:
+            if candidate is None:
+                skipped.append(c_stripped)
+                continue
+            outer_col, _select_col, inner_table, inner_where = m.groups()
+            inner_bindings = _conjunct_value_bindings(inner_where, scenario, self_value=None)
+
+            def subquery_check(row, outer_col=outer_col, inner_table=inner_table, inner_bindings=inner_bindings):
+                try:
+                    outer_val = _row_get(row, outer_col)
+                except FitnessEvaluationError:
+                    return False
+                if outer_val is None:
+                    return False
+                for inner_row in candidate.rows(inner_table):
+                    inner_id = inner_row.get('id', inner_row.get('ID'))
+                    if inner_id != outer_val:
+                        continue
+                    if all(inner_row.get(k, inner_row.get(k.upper())) == v
+                           for k, v in inner_bindings.items()):
+                        return True
+                return False
+
+            checks.append((None, 'custom', subquery_check))
+            continue
         m = _IS_NOT_NULL_RE.match(c_stripped)
         if m:
             checks.append((m.group(1), 'not_null', None))
@@ -341,6 +520,10 @@ def _mechanical_filter_predicate(filter_text, scenario):
 
     def predicate(row):
         for col, mode, expected in checks:
+            if mode == 'custom':
+                if not expected(row):  # `expected` holds the check callable for this mode
+                    return False
+                continue
             try:
                 value = _row_get(row, col)
             except FitnessEvaluationError:
@@ -358,7 +541,7 @@ def _mechanical_filter_predicate(filter_text, scenario):
     return predicate, skipped
 
 
-def _row_from_filter_conjuncts(filter_text, scenario):
+def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None, self_table=None):
     """The construction mirror of `_mechanical_filter_predicate`: builds
     a real row dict satisfying every mechanically-recognized `COLUMN =
     VALUE`/`COLUMN = <placeholder>` conjunct in `filter_text`, the exact
@@ -369,10 +552,24 @@ def _row_from_filter_conjuncts(filter_text, scenario):
     this can't parse is simply skipped (no key added for it), same
     honesty convention as `_mechanical_filter_predicate`'s own
     `skipped` list -- a row missing an unparseable conjunct's column is
-    an approximation, never a silent wrong guess at its value."""
+    an approximation, never a silent wrong guess at its value.
+
+    `candidate`/`focal`/`self_table`, when given, additionally let a
+    `COLUMN IN (SELECT ... WHERE ...)` conjunct (2026-09-24) actually
+    construct a real, matching parent row via `_construct_subquery_parent`
+    instead of being silently skipped -- without `candidate`, this shape
+    degrades to the old skip-it behavior (a caller with no construction
+    context, e.g. a bare seed for a leaf this project doesn't yet thread
+    candidate/focal through for)."""
     row = {}
     for c in _top_level_and_conjuncts(filter_text):
         c_stripped = c.strip()
+        m = _IN_SUBQUERY_RE.match(c_stripped)
+        if m:
+            outer_val = _construct_subquery_parent(m, candidate, focal, scenario, self_table)
+            if outer_val is not None:
+                row[m.group(1)] = outer_val
+            continue
         m = _IS_NOT_NULL_RE.match(c_stripped)
         if m:
             # A generic non-null placeholder -- same convention as every
@@ -551,7 +748,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         except re.error as e:
             raise FitnessEvaluationError(f"{var_name!r}'s pattern column holds an invalid regex: {e}")
     if kind == 'derived_aggregate':
-        predicate, skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+        predicate, skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
         if skipped:
             warnings.append(f"{var_name}: derived_aggregate filter has prose this bridge can't "
                              f"mechanically apply, counted without it: {skipped}")
@@ -605,7 +802,7 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         # `hasSystemDefaultExchange`, both over `currency_exchange`)
         # finally read as genuinely different booleans instead of
         # collapsing to the identical "any row at all" answer.
-        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
         return any(predicate(r) for r in _owned_rows(candidate, table, owner_id))
     if kind == 'raw_sql_boolean':
         return _raw_sql_boolean_value(node, candidate, scenario, warnings)
@@ -857,7 +1054,8 @@ def build_seed_candidate(record, today=20000):
             # -- this is belt-and-braces, not the only enforcement point).
             seed_count = known_constant(record['case_study'], var) or 3
             for i in range(1, seed_count + 1):
-                row = _row_from_filter_conjuncts(node.get('filter_text'), scenario)
+                row = _row_from_filter_conjuncts(node.get('filter_text'), scenario,
+                                                  candidate, focal, node.get('self_table'))
                 # no artificial distinguishing key needed -- these are
                 # still 3 separate row objects in the list even with
                 # identical content, and a fake 'X' column would only
@@ -916,7 +1114,7 @@ def build_seed_candidate(record, today=20000):
                 # either (see the derived_aggregate case above, same bug,
                 # same fix).
                 if node.get('filter_text'):
-                    candidate.add_row(table, _row_from_filter_conjuncts(node['filter_text'], scenario))
+                    candidate.add_row(table, _row_from_filter_conjuncts(node['filter_text'], scenario, candidate))
                 else:
                     candidate.add_row(table, {})
         elif kind == 'raw_sql_boolean':

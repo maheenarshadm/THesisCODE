@@ -88,7 +88,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, derive_value,  # noqa: E402
                         _mechanical_filter_predicate, _find_focal_with_columns, _row_get,
-                        _owned_rows, _OWNER_KEY, known_constant, _top_level_and_conjuncts)
+                        _owned_rows, _OWNER_KEY, known_constant, _top_level_and_conjuncts,
+                        _IN_SUBQUERY_RE, _construct_subquery_parent)
 from fitness import (branch_fitness, distance_to_true, FitnessEvaluationError,  # noqa: E402
                       candidate_constraint_fitness, _unique_key_sets)
 from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  # noqa: E402
@@ -841,7 +842,7 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
     return touched
 
 
-def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None):
+def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=None, focal=None, self_table=None):
     """mutation.py's own independent construction mirror of candidate.py's
     identically-named function -- kept separate, not imported, per that
     function's own docstring ("the parsing rules must stay identical, so
@@ -851,10 +852,24 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None):
     out of `_apply_row_count_mutation`'s own generic add-row path
     (2026-09-13) so the `exists`-kind's own new filter-aware add-path
     (see its own branch below) shares the EXACT same construction,
-    rather than a third, potentially-diverging reimplementation."""
+    rather than a third, potentially-diverging reimplementation.
+
+    `candidate`/`focal`/`self_table`, when given, let a `COLUMN IN
+    (SELECT ... WHERE ...)` conjunct (2026-09-24) construct a real
+    matching parent row via candidate.py's own `_construct_subquery_parent`
+    -- imported directly rather than re-duplicated a third time, since
+    unlike the rest of this function's own conjunct-recognition rules
+    (kept independent per the docstring above), THIS piece has no
+    case-study-specific text-shape variance to track two copies of."""
     row = {} if owner_id is None else {_OWNER_KEY: owner_id}
     for conjunct in _top_level_and_conjuncts(filter_text):
         c_stripped = conjunct.strip()
+        m_sub = _IN_SUBQUERY_RE.match(c_stripped)
+        if m_sub:
+            outer_val = _construct_subquery_parent(m_sub, candidate, focal, scenario, self_table)
+            if outer_val is not None:
+                row[m_sub.group(1)] = outer_val
+            continue
         nn = re.match(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NOT\s+NULL\s*$', c_stripped, re.I)
         if nn:
             row[nn.group(1)] = 1  # generic non-null placeholder -- see candidate.py's own mirror fix
@@ -927,10 +942,11 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         # rows actually matching it, letting two differently-filtered
         # `exists` facts on the same table finally diverge instead of
         # both reading the identical "any row at all" answer.
-        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
         owned = _owned_rows(candidate, table, owner_id)
         if value and not any(predicate(r) for r in owned):
-            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id)
+            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
+                                              candidate, focal, node.get('self_table'))
             row = candidate.add_row(table, row)
             return [(table, row)]
         elif not value:
@@ -1011,12 +1027,13 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         return []
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
-    predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario)
+    predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
     n = int(round(value)) - int(round(current or 0))
     if n > 0:
         touched = []
         for _ in range(n):
-            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id)
+            row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
+                                              candidate, focal, node.get('self_table'))
             if node.get('value_column'):
                 row[node['value_column'].split('.')[1]] = 1
             candidate.add_row(table, row)
