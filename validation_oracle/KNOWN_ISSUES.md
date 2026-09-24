@@ -19,7 +19,7 @@ excluded from all coverage numbers per an explicit decision below):
 |---|---|---|
 | OpenMRS | 41/56 (73.2%) | 14/14 (100%) |
 | FLEX2 | 21/55 (38.2%) | 2/10 |
-| Spree | 14/31 (45.2%) | 5/8 |
+| Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
 
 ---
@@ -146,9 +146,74 @@ excluded from all coverage numbers per an explicit decision below):
   — onto one mutually-consistent real subject), not a validator issue.
   Both validator-side bugs found chasing this (`upstream_subject_value`'s
   case-sensitivity gap, `derived_case` being unimplemented) are now
-  fully fixed; what's left is out of this investigation's scope, tracked
-  separately if pursued further. Full regression suite re-run and
-  passing again after this change too.
+  fully fixed; what's left is exactly the gap documented immediately
+  below — not a coincidence, the SAME root cause.
+
+- **Generator never constructs a decision's own real subject row when
+  no leaf reads it directly — confirmed in 3 decisions across 3
+  different case studies (2026-09-24), including a correction to an
+  existing wrong diagnosis for one of them.** `dynamosa.py`'s own
+  per-objective focal-row logic (`_focal_tables_for_leaf`/
+  `_focal_table_set_for`) decides which tables get a dedicated row
+  PURELY from which tables a record's own leaf variables read —
+  `dynamosa.py`/`candidate.py`/`mutation.py` contain zero references to
+  `subject_table.py` anywhere, confirmed by direct grep. When a
+  decision's real subject (per `subject_table_for_decision`'s own
+  broadened backward-search, built specifically to find a subject no
+  input directly references — see `DESIGN.md`) is a pure junction/link
+  table no leaf ever reads, the generator has no mechanism to ever
+  build one, even though every individual fact it DOES need may be
+  perfectly correct in isolation.
+
+  Confirmed with direct evidence in:
+  - **FLEX2::`Course Load Limit`** (see the entry above) — subject
+    `STUDENT_SEMESTER`, focal tables only `{SEMESTER, STUDENT_PROGRAM}`.
+    Zero real `STUDENT_SEMESTER` rows correspond to this decision's own
+    solved facts anywhere in the merged database (the 22 that exist all
+    belong to the unrelated `Graduation Eligibility`).
+  - **Spree::`Promotion Customer Group Eligibility`** (rules 1, 2, 4) —
+    subject `spree_order_promotions`, focal tables only
+    `{spree_customer_group_users, spree_orders}`. Zero real
+    `spree_order_promotions` rows exist in the merged database at all.
+    **This corrects an existing wrong diagnosis** — see that decision's
+    own entry below, retracted and replaced.
+  - **OpenMRS::`Identifier Uniqueness Check`** — subject
+    `patient_identifier`, focal tables only `{patient_identifier_type}`.
+    A messier, partial case: `patient_identifier` isn't empty (8 rows),
+    but every one belongs to other, unrelated decisions
+    (`Preferred Identifier Requirement`, `Identifier Location
+    Requirement`) — `rule_1`/`rule_4` are `false_positive` for exactly
+    this reason, while `rule_2` happens to verify anyway through
+    incidental overlap with one of those unrelated rows, not because
+    anything was built for it on purpose.
+
+  **Not the same as the "0 candidates qualify, refusing to guess"
+  failures** (FLEX2's `Admission Closure Eligibility`/`Course
+  Registration Eligibility`/`Credit Transfer Exemption`/`Graduation
+  Eligibility`/`Summer Semester Registration`, Spree's `Promotion Item
+  Total Eligibility`) — those fail one stage EARLIER, when
+  `subject_table_for_decision` itself can't find a unique root at all.
+  Whether any of them would also hit this junction gap once/if that
+  earlier problem is resolved is untested.
+
+  **Scope of a real fix, not yet built**: `dynamosa.py`'s
+  `_seed_shared_population`/`_focal_for_mutate` would need to call
+  `subject_table_for_decision` per decision (a new dependency the
+  generator does not currently have on this validator-side module) and,
+  whenever the resolved subject table differs from every table already
+  in `_focal_table_set_for(record)`, additionally construct a dedicated
+  row for it — with its own FK columns explicitly set to point at the
+  SAME focal rows already built for this objective's other tables (not
+  left to `repair_candidate`'s generic, timing-fragile NOT-NULL
+  filling, which is what currently happens: traced `Course Load
+  Limit`'s own `STUDENT_PROGRAM.ROLL_NO`, a table's own declared PK,
+  and found the search itself never sets it at all — it only gets a
+  value from `materialize.py`'s own late, offset-oblivious surrogate-key
+  fill, with zero relationship to any FK that should reference it).
+  This is a real architectural addition to the generator's per-objective
+  row-construction, affecting an unknown but non-trivial number of
+  decisions across every case study — not a one-line fix, and not yet
+  scoped in more detail than this.
 
 ### Spree
 
@@ -188,23 +253,27 @@ excluded from all coverage numbers per an explicit decision below):
   mechanism (see "Fixed issues" below) closed `Promotion Usage Limit
   Exceeded` (3 of 4 rules) and `One-Use-Per-User Promotion
   Eligibility::rule_3`:
-  - `Promotion Customer Group Eligibility` (rules 1, 2, 4 — not `rule_3`,
-    out of scope above) needs to locate a specific
-    `spree_promotion_rules`/`spree_order_promotions` row from the
-    decision's subject (`spree_orders`) — a one-to-many backward join
-    `subject_table_for_decision` correctly refuses to guess at.
-    Confirmed after the re-run: `spree_order_promotions` still isn't in
-    the fresh fixture at all (`rule_1`/`rule_2` are search-covered but
-    their own construction never needed to materialize that table,
-    since `promotionTargetGroupsConfigured` reads
-    `spree_promotion_rules.type` directly without an explicit, real
-    join). Re-running the search does NOT close this — it needs the
-    one-to-many join question resolved (a disclosed override naming
-    which single `spree_promotion_rules`/`spree_order_promotions` row
-    is "the" one for a given promotion, since a real promotion can have
-    many rule/action rows) — this is its own separate design decision,
-    not the same fix as `Promotion Usage Limit Exceeded` below, even
-    though both once looked like the same "missing table" shape.
+  - **`Promotion Customer Group Eligibility` (rules 1, 2, 4 — not
+    `rule_3`, out of scope above) — root cause CORRECTED 2026-09-24,
+    retracting the diagnosis below.** Originally attributed to a
+    one-to-many backward join `subject_table_for_decision` supposedly
+    "correctly refuses to guess" at, needing a disclosed override to
+    pick one `spree_promotion_rules`/`spree_order_promotions` row.
+    **This was wrong** — checked directly: `subject_table_for_decision`
+    resolves this decision's subject cleanly and uniquely right now,
+    as `spree_order_promotions` (one FK hop from `spree_orders`), no
+    ambiguity, no refusal. The real cause is the SAME structural gap as
+    FLEX2's `Course Load Limit` (see the new cross-case-study entry
+    above, "Generator never constructs a decision's own real subject
+    row when no leaf reads it directly"): none of this decision's own
+    leaves (`spree_customer_group_users`, `spree_orders`,
+    `spree_promotion_rules.type`) read `spree_order_promotions`
+    directly, so `dynamosa.py`'s own leaf-driven focal-table logic never
+    builds one — confirmed, the real merged database has zero
+    `spree_order_promotions` rows. Not closeable by a disclosed
+    join-selection override (there's no real ambiguity to disambiguate);
+    needs the generator-side fix scoped in the cross-case-study entry
+    instead.
 
 
 ### FLEX2
