@@ -271,7 +271,7 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
                                           'decision_output': None}
             continue
         try:
-            matched, selected = select_rule(hit_policy, rules_with_conditions, values)
+            matched, selected = select_rule(hit_policy, rules_with_conditions, values, decision_name)
         except UniqueViolation as e:
             violations.append((pk_vals, e))
             continue

@@ -131,9 +131,11 @@ class UniqueViolation(Exception):
                           f"{len(matched_rule_ids)} rules matched: {matched_rule_ids}")
 
 
-def select_rule(hit_policy, rules_with_conditions, values):
+def select_rule(hit_policy, rules_with_conditions, values, decision_name=None):
     """`rules_with_conditions` is [(rule_id, index, condition), ...] in
-    document order (dmn_walk.py's own Rule.index). Returns
+    document order (dmn_walk.py's own Rule.index). `decision_name` is
+    only used to label a `UniqueViolation`'s own message -- optional
+    since it plays no role in selection itself. Returns
     (matched_rule_ids, selected_rule_id) -- selected_rule_id is None if
     nothing matched. Raises UniqueViolation for a real UNIQUE conflict
     rather than silently choosing one."""
@@ -144,9 +146,7 @@ def select_rule(hit_policy, rules_with_conditions, values):
         return matched, selected
     if hit_policy == 'UNIQUE':
         if len(matched) > 1:
-            raise UniqueViolation(
-                rules_with_conditions[0][0].rsplit('_Rule_', 1)[0] if rules_with_conditions else '?',
-                matched)
+            raise UniqueViolation(decision_name or '?', matched)
         selected = matched[0] if matched else None
         return matched, selected
     raise NotImplementedError(f"Hit policy {hit_policy!r} not yet supported "
