@@ -1007,9 +1007,15 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     # in sync by hand; if the validator's own copy ever changes, this
     # one needs the same edit.
     ('Spree', 'promotion_id'): 'spree_order_promotions',
+    # FLEX2's `Course Replacement Eligibility::degreeTotalCredits` --
+    # see validation_oracle/filter_placeholder_sources.py's own matching
+    # entries for the full writeup (2026-09-24).
+    ('FLEX2', 'program'): 'STUDENT_PROGRAM',
+    ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
 }
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
+_PLACEHOLDER_CONJUNCT_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*<([A-Za-z_][A-Za-z0-9_ ]*)>')
 
 
 def _load_raw_schema(cs):
@@ -1075,6 +1081,52 @@ def _decision_subject_tables_referenced(cs, record):
             continue
         collect_tables_from_resolution(node, tables)
     return tables
+
+
+def compute_cross_table_placeholder_correlations(cs, node):
+    """For a `derived_aggregate`/`exists` node's own `filter_text`, which
+    of its `<placeholder>` conjuncts (`COLUMN = <placeholder>`) name a
+    placeholder `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` resolves to a
+    real OTHER table -- i.e. a value that must equal that SAME real
+    record's own column of the identical name on that table, not a free
+    scalar the search can tune independently.
+
+    Found real, not hypothetical (2026-09-24, FLEX2's `Course
+    Replacement Eligibility::degreeTotalCredits`): `PROGRAM_COURSE.
+    PROG_ID=<program>`/`.BATCH_NO=<batch>` need to equal the SAME
+    record's own `STUDENT_PROGRAM.PROG_ID`/`.BATCH_NO` (the student
+    whose degree the aggregate sums credits for) -- but nothing in
+    `candidate.py`'s own seeding/mutation, or `fitness.py`'s own
+    evaluation, ever makes that connection: both treat `<program>`/
+    `<batch>` as ordinary, independently-tunable `scenario` scalars,
+    compared only against `PROGRAM_COURSE`'s own matching column, never
+    against a live `STUDENT_PROGRAM` row. Confirmed real via the actual
+    solved archive: `PROGRAM_COURSE`'s own `PROG_ID` correctly tracks
+    `scenario['program']` throughout (both offset together, staying
+    consistent with EACH OTHER), while `STUDENT_PROGRAM.PROG_ID` is a
+    plain, generic NOT-NULL repair placeholder (`mutation.py`'s own
+    `_repair_row`, called once at the very end) completely unrelated to
+    either -- e.g. `PROG_ID=64000001` on one side, `PROG_ID=1` on the
+    other, for the exact same record.
+
+    Returns {placeholder_name: {'table': ..., 'column': ...}} -- empty
+    if this node has no such correlation. Consumed by `dynamosa.py`'s
+    own merge step (`merge_archive_candidate`): once a record's own
+    focal rows are known, it copies THIS record's own (already-offset)
+    `scenario[placeholder]` value onto the correlated table's own
+    column, before `repair_candidate`'s later generic fallback would
+    otherwise silently paper over the gap -- a post-search correction
+    fully in keeping with `decision_subject`'s own precedent just above,
+    not a search-loop, fitness, or mutation-operator change."""
+    correlations = {}
+    filter_text = node.get('filter_text')
+    if node.get('kind') not in ('exists', 'derived_aggregate') or not filter_text:
+        return correlations
+    for column, placeholder in _PLACEHOLDER_CONJUNCT_RE.findall(filter_text):
+        source_table = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, placeholder))
+        if source_table:
+            correlations[placeholder] = {'table': source_table, 'column': column}
+    return correlations
 
 
 def _build_subject_join_path(raw_schema, root, target, allowed_tables):
@@ -1826,6 +1878,18 @@ def compile_case_study(cs, mapping_source='ground_truth'):
         if subject is not None:
             for r in decision_records:
                 r['decision_subject'] = subject
+
+    # Cross-table filter_text placeholder correlations (§ above,
+    # 2026-09-24) -- attached directly to the node that needs it, not
+    # the record, since two nodes of the same record could in principle
+    # use the same placeholder name for different real facts.
+    for r in records:
+        for node in r.get('variable_resolution', {}).values():
+            if not isinstance(node, dict):
+                continue
+            correlations = compute_cross_table_placeholder_correlations(cs, node)
+            if correlations:
+                node['cross_table_placeholders'] = correlations
 
     return records, blocked
 

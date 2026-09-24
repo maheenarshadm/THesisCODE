@@ -1544,6 +1544,49 @@ def merge_archive_candidate(archive, records, case_study):
                 merged_rec_focal[subject['table']] = subject_focal
                 merged_focal_maps[rid] = merged_rec_focal
 
+        # (4) Cross-table filter_text placeholder correlations
+        # (2026-09-24) -- `compile_constraints.py`'s own
+        # `cross_table_placeholders` field (computed alongside
+        # `decision_subject`, same file, same generator-owned-mirror
+        # rationale). A `derived_aggregate`/`exists` node's own
+        # filter_text can bind a placeholder (e.g. `<program>`) to a
+        # column search treats as an ordinary, independently-tunable
+        # scenario scalar -- but the SAME real-world fact also needs to
+        # equal this SAME record's own value on a DIFFERENT table (e.g.
+        # `STUDENT_PROGRAM.PROG_ID`, the student whose degree the
+        # aggregate is scoped to). Nothing in candidate.py's own
+        # seeding/mutation or fitness.py's own evaluation ever makes
+        # that connection -- confirmed real: FLEX2's `Course Replacement
+        # Eligibility::degreeTotalCredits` correctly keeps its own
+        # `PROGRAM_COURSE.PROG_ID` equal to `scenario['program']`
+        # throughout search (both shift together under the SAME offset),
+        # while `STUDENT_PROGRAM.PROG_ID` -- never independently set by
+        # any leaf, since `creditsEarned`'s own `credits_earned` read
+        # needs no placeholder at all -- ends up as a plain, generic
+        # NOT-NULL repair placeholder instead, unrelated to either.
+        # Copying the record's own (already-offset) scenario value onto
+        # the correlated table's own column HERE, before
+        # `repair_candidate` runs below, means that later generic
+        # fallback never fires for it (its own guard already skips any
+        # column that already has a real value) -- a post-search
+        # correction in the same spirit as (3) above, not a search-loop,
+        # fitness, or mutation-operator change. Only applied when a
+        # focal row for the correlated table already exists (from
+        # another leaf, or from (3) above) -- if nothing else in this
+        # record ever needed that table, there is nothing real to
+        # correlate with, so nothing is synthesized just for this.
+        for node in r.get('variable_resolution', {}).values():
+            if not isinstance(node, dict):
+                continue
+            for placeholder, source in (node.get('cross_table_placeholders') or {}).items():
+                value = rec_scenario.get(placeholder)
+                if value is None:
+                    continue
+                target_focal = merged_rec_focal.get(source['table']) or next(
+                    (v for k, v in merged_rec_focal.items() if k.upper() == source['table'].upper()), None)
+                if target_focal is not None:
+                    target_focal[source['column']] = value
+
     repair_candidate(merged, case_study)
     return merged, merged_focal_maps, merged_scenario_maps, covered_record_ids
 

@@ -266,20 +266,48 @@ already has a real value. Verified: `Rule_1` flips false_positive →
 confirmed (FLEX2 28→29); `creditsEarned` now correctly resolves the
 real per-subject value for `Rule_3`/`Rule_4`/`Rule_5` — but `Rule_3`/
 `Rule_4` STILL don't verify, root-caused to a THIRD, distinct,
-generator-side bug: `degreeTotalCredits`'s own filter_text placeholders
-(`<program>`/`<batch>`) only resolve via a join to `STUDENT_PROGRAM`,
-but `candidate.py`'s own `_row_from_filter_conjuncts` (which seeds
-`PROGRAM_COURSE`'s rows during search) has no equivalent mechanism —
-confirmed directly against the pre-merge archive: `Rule_3`'s own
-`PROGRAM_COURSE` rows get `PROG_ID=BATCH_NO=64000001` (a fresh-key
-fallback) while its own sibling `STUDENT_PROGRAM` row gets
-`PROG_ID=BATCH_NO=1`, never unified even before merge/offset. Not yet
-fixed — see `KNOWN_ISSUES.md`'s own entry for what the fix would need
-(a generator-owned mirror of `filter_placeholder_sources.py`, per this
-file's own "Architectural separation requirement" section, the same
-precedent `compile_constraints.py`'s own `decision_subject` port
-follows). Zero flips anywhere else across all 4 case studies, full
-regression suite re-run and passing.
+generator-side bug (fixed separately, see immediately below). Zero
+flips anywhere else across all 4 case studies, full regression suite
+re-run and passing.
+
+**That third bug, closed 2026-09-24: `<program>`/`<batch>`
+(`degreeTotalCredits`'s own filter_text placeholders) were never
+correlated with the SAME record's own `STUDENT_PROGRAM.PROG_ID`/
+`.BATCH_NO` anywhere in the search pipeline.** CORRECTION to this
+investigation's own prior diagnosis, same day: the writeup above guessed
+`PROGRAM_COURSE.PROG_ID=64000001` came from `repair_candidate`'s generic
+NOT-NULL fallback. Checking the raw, pre-merge `scenario_map` directly
+showed this was wrong — `scenario['program']` is ALSO `64000001` for
+that record, so `candidate.py`'s own seeding and `PROGRAM_COURSE.
+PROG_ID` stay perfectly self-consistent throughout seeding, search, and
+merge-time offsetting (both shift together under the identical
+per-record offset); `candidate.py` was never actually broken. The REAL
+gap: `STUDENT_PROGRAM.PROG_ID`/`.BATCH_NO` are never independently set
+by any leaf (`creditsEarned` only reads `credits_earned`, no placeholder
+involved) — they only ever get a value from `mutation.py`'s own
+`_repair_row` generic NOT-NULL fallback, a plain constant `1`,
+unrelated to `scenario['program']`'s own value. Neither `candidate.py`'s
+seeding/mutation nor `fitness.py`'s own evaluation ever cross-references
+a live `STUDENT_PROGRAM` row for this placeholder — both only ever
+compare it against the flat `scenario['program']` scalar. Fixed at merge
+time (`dynamosa.py`, same layer as the `decision_subject` fix — a
+post-search correction, not a search-loop/fitness/mutation change): a
+new compile-time field, `compile_constraints.py`'s
+`cross_table_placeholders` (reusing its own
+`_DECISION_SUBJECT_PLACEHOLDER_SOURCES` mirror of
+`filter_placeholder_sources.py`, now also carrying FLEX2's `program`/
+`batch` entries), attached to each `derived_aggregate`/`exists` node
+with such a placeholder; `merge_archive_candidate` copies the record's
+own already-offset `scenario[placeholder]` value onto the correlated
+table's own focal row/column before `repair_candidate` runs. Verified:
+`Rule_3` flips false_positive → confirmed (FLEX2 29→30); `Rule_4` still
+doesn't verify, for a separate, unrelated, not-yet-investigated reason
+(`courseOfferedInFollowingSemesters` resolves `False` for every real
+subject, and `Rule_4`'s own condition never references
+`degreeTotalCredits` at all). Zero flips anywhere else across all 4 case
+studies; `compiled_constraints.json` re-diffed field-by-field (only the
+new field, on exactly 6 nodes). Full regression suite re-run and
+passing.
 
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead

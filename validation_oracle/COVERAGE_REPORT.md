@@ -19,14 +19,19 @@ the numbers back in chat.
 
 ## Latest snapshot
 
-**As of the 2026-09-24 `dynamosa.py` junction-row wiring fix** — see
+**As of the 2026-09-24 cross-table filter_text placeholder fix** — see
 "Run history" below for the full writeup. Tables above already reflect
-this: FLEX2 28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7% solvable)
-— `Course Replacement Eligibility::Rule_1` newly confirmed, and
-`creditsEarned` now correctly resolves for `Rule_3`/`Rule_4`/`Rule_5`,
-though `Rule_3`/`Rule_4` themselves remain open for a THIRD, distinct,
-now-precisely-diagnosed generator-side bug (see `KNOWN_ISSUES.md`); zero
-flips anywhere else in FLEX2 or in OpenMRS/Spree/jBilling.
+this: FLEX2 29→30 verified rules (52.7%→54.5% raw, 54.7%→56.6% solvable)
+— `Course Replacement Eligibility::Rule_3` newly confirmed. `Rule_4`
+alone remains open in that decision, for a separate, unrelated,
+not-yet-investigated reason; zero flips anywhere else in FLEX2 or in
+OpenMRS/Spree/jBilling.
+
+**As of the 2026-09-24 `dynamosa.py` junction-row wiring fix** — FLEX2
+28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7% solvable) —
+`Course Replacement Eligibility::Rule_1` newly confirmed, and
+`creditsEarned` now correctly resolves for `Rule_3`/`Rule_4`/`Rule_5`;
+zero flips anywhere else in FLEX2 or in OpenMRS/Spree/jBilling.
 
 **As of the 2026-09-24 `Course Replacement Eligibility` placeholder fix**
 — see "Run history" below for the full writeup. FLEX2 25→28 verified
@@ -101,9 +106,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 29 | 52.7% |
+| FLEX2 | 98 | 55 | 30 | 54.5% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **99** | **50.5%** |
+| **Total** | **240** | **196** | **100** | **51.0%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -113,9 +118,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 29 | 54.7% |
+| FLEX2 | 55 | 0 | 2 | 53 | 30 | 56.6% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **99** | **67.8%** |
+| **Total** | **196** | **27** | **23** | **146** | **100** | **68.5%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -240,7 +245,7 @@ produce the numbers above)
   IN-subquery mechanism), `--not-persisted-json`
   `{"evaluationTime": 20000}`.
 - **FLEX2**: `tests/fixtures/flex2_merged.db` (rebuilt 2026-09-24 after
-  the `dynamosa.py` junction-row wiring fix above), `generator/
+  the cross-table placeholder correlation fix above), `generator/
   experiment_runs/FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`, no
   override.
 - **jBilling**: `tests/fixtures/jbilling_merged.db`,
@@ -257,6 +262,55 @@ history below), jBilling 6/16.
 ---
 
 ## Run history
+
+### 2026-09-24 — cross-table filter_text placeholder correlation fix (closes `Course Replacement Eligibility::Rule_3`)
+Numbers: FLEX2 29→30 verified rules (52.7%→54.5% raw, 54.7%→56.6%
+solvable), decision-table coverage unchanged at 4/10. `Rule_3`'s own
+`degreeTotalCredits` needed `PROGRAM_COURSE.PROG_ID=<program> AND
+.BATCH_NO=<batch>` to correlate with the SAME record's own
+`STUDENT_PROGRAM.PROG_ID`/`.BATCH_NO` -- nothing in the search pipeline
+ever made that connection.
+
+**Correction to the prior investigation's own diagnosis, same day**: the
+earlier writeup guessed `PROGRAM_COURSE.PROG_ID=64000001` came from
+`repair_candidate`'s generic NOT-NULL fallback (implying the seeded
+conjunct was silently skipped). Checking the raw, pre-merge
+`scenario_map` directly showed this was wrong: `scenario['program']` is
+ALSO `64000001` for that record -- `candidate.py`'s own seeding and
+`PROGRAM_COURSE.PROG_ID` stay perfectly self-consistent throughout
+seeding, search, and merge-time offsetting (both shift together under
+the identical per-record offset). `candidate.py` was never actually
+broken. The REAL gap: `STUDENT_PROGRAM.PROG_ID`/`.BATCH_NO` are never
+independently set by any leaf (`creditsEarned` only reads
+`credits_earned`, no placeholder involved) -- they only ever get a value
+from `mutation.py`'s own `_repair_row` generic NOT-NULL fallback, a
+plain constant `1`, completely unrelated to `scenario['program']`'s own
+value. Neither `candidate.py`'s seeding/mutation nor `fitness.py`'s
+evaluation ever cross-references a live `STUDENT_PROGRAM` row for this
+placeholder -- both only ever compare it against the flat
+`scenario['program']` scalar.
+
+Fixed at merge time (`dynamosa.py`, same layer as the `decision_subject`
+junction-row fix -- a post-search correction, not a search-loop/
+fitness/mutation change): a new compile-time field,
+`compile_constraints.py`'s `cross_table_placeholders` (reusing its own
+`_DECISION_SUBJECT_PLACEHOLDER_SOURCES` mirror of
+`filter_placeholder_sources.py`, now also carrying FLEX2's `program`/
+`batch` entries), attached to each `derived_aggregate`/`exists` node
+with such a placeholder. `merge_archive_candidate` copies the record's
+own (already-offset) `scenario[placeholder]` value onto the correlated
+table's own focal row/column before `repair_candidate` runs, so its
+later generic fallback never fires for it. Only applied when a focal row
+for the correlated table already exists.
+
+Verified via a full per-objective before/after diff across all 4 case
+studies (code-only difference, `compiled_constraints.json` re-diffed
+field-by-field: only the new field, on exactly 6 nodes): `Rule_3` flips
+false_positive->confirmed; zero flips anywhere else. `Rule_4` still
+doesn't verify -- a separate, unrelated, not-yet-investigated reason
+(`courseOfferedInFollowingSemesters` resolves `False` for every real
+subject; `Rule_4`'s own condition never references `degreeTotalCredits`
+at all). Full regression suite re-run and passing.
 
 ### 2026-09-24 — `dynamosa.py` decision_subject junction-row wiring fix (two bugs)
 Numbers: FLEX2 28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7%

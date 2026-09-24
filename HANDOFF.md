@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-52.7%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+54.5%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 54.7%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 56.6%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -347,17 +347,29 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     `Rule_1` flips false_positive→confirmed (FLEX2 28→29 verified),
     `creditsEarned` now correctly resolves for `Rule_3`/`Rule_4`/
     `Rule_5`, zero flips elsewhere. `Rule_3`/`Rule_4` themselves still
-    don't verify — root-caused to a THIRD, distinct, generator-side bug:
-    `degreeTotalCredits`'s own filter_text placeholders (`<program>`/
-    `<batch>`) only resolve via a join to `STUDENT_PROGRAM`, but
-    `candidate.py`'s own row-seeding for `derived_aggregate` has no
-    equivalent cross-table mechanism (confirmed directly against the
-    pre-merge archive: `Rule_3`'s own `PROGRAM_COURSE` and
-    `STUDENT_PROGRAM` rows get DIFFERENT, never-unified `PROG_ID`/
-    `BATCH_NO` values, even before merge/offset). Fixing it needs new
-    generator-side logic (a generator-owned mirror of
-    `filter_placeholder_sources.py`, per DESIGN.md's architectural
-    -separation rule) — not yet built; disclosed in `KNOWN_ISSUES.md`.
+    don't verify — root-caused to a THIRD, distinct, generator-side bug,
+    fixed in item 12 below.
+12. **Fixed that third bug, on request.** CORRECTION to item 11's own
+    diagnosis, same day: checking the raw `scenario_map` directly showed
+    `candidate.py` was never actually broken — `scenario['program']`
+    (`64000001`) already matches `PROGRAM_COURSE.PROG_ID` throughout
+    seeding/search/offset. The real gap: `STUDENT_PROGRAM.PROG_ID`/
+    `.BATCH_NO` are never independently set by any leaf, so they only
+    ever get `mutation.py`'s own generic NOT-NULL fallback (a plain `1`)
+    — completely unrelated to `scenario['program']`'s own value; nothing
+    anywhere cross-references a live `STUDENT_PROGRAM` row for this
+    placeholder. Fixed at merge time (`dynamosa.py`, same layer as the
+    `decision_subject` fix): a new compile-time field,
+    `compile_constraints.py`'s `cross_table_placeholders` (reusing its
+    own generator-owned mirror of `filter_placeholder_sources.py`, now
+    also carrying FLEX2's `program`/`batch` entries), lets
+    `merge_archive_candidate` copy the record's own already-offset
+    scenario value onto the correlated table's own column before repair
+    runs. Verified: `Rule_3` flips false_positive→confirmed (FLEX2
+    29→30 verified), zero flips elsewhere. `Rule_4` still doesn't
+    verify — separate, unrelated, not yet investigated
+    (`courseOfferedInFollowingSemesters` resolves `False` for every real
+    subject; unconnected to `degreeTotalCredits`).
 
 ## 7. Planned / open work
 
@@ -378,12 +390,11 @@ Full, itemized list with root causes and what fixing each would require:
   for Spree/jBilling elsewhere); an audit question on `Attendance
   Eligibility For Final Exam`. `Course Load Limit` is now fully closed
   (§6 items 8/9 above: 11/11 confirmed). `Course Replacement
-  Eligibility` is now 4/6 closed (§6 items 10/11: `Rule_1`/`Rule_2`/
-  `Rule_5`/`Rule_6` confirmed) — its own `Rule_3`/`Rule_4` remain open
-  for a precisely-diagnosed but not-yet-fixed generator-side bug (§6
-  item 11: `candidate.py`'s own `derived_aggregate` row-seeding has no
-  mechanism for a filter_text placeholder that only resolves via a
-  cross-table join).
+  Eligibility` is now 5/6 closed (§6 items 10-12: `Rule_1`/`Rule_2`/
+  `Rule_3`/`Rule_5`/`Rule_6` confirmed) — only `Rule_4` remains open, a
+  separate, unrelated, not-yet-investigated issue
+  (`courseOfferedInFollowingSemesters` resolves `False` for every real
+  subject).
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

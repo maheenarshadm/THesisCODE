@@ -22561,7 +22561,17 @@
     "table": "PROGRAM_COURSE, COURSE",
     "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
-    "value_column": "COURSE.CREDIT_HRS"
+    "value_column": "COURSE.CREDIT_HRS",
+    "cross_table_placeholders": {
+     "program": {
+      "table": "STUDENT_PROGRAM",
+      "column": "PROG_ID"
+     },
+     "batch": {
+      "table": "STUDENT_PROGRAM",
+      "column": "BATCH_NO"
+     }
+    }
    },
    "courseTypeId": {
     "kind": "schema_column",
@@ -22751,7 +22761,17 @@
     "table": "PROGRAM_COURSE, COURSE",
     "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
-    "value_column": "COURSE.CREDIT_HRS"
+    "value_column": "COURSE.CREDIT_HRS",
+    "cross_table_placeholders": {
+     "program": {
+      "table": "STUDENT_PROGRAM",
+      "column": "PROG_ID"
+     },
+     "batch": {
+      "table": "STUDENT_PROGRAM",
+      "column": "BATCH_NO"
+     }
+    }
    }
   },
   "fk_closure_tables": [
@@ -22936,7 +22956,17 @@
     "table": "PROGRAM_COURSE, COURSE",
     "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
-    "value_column": "COURSE.CREDIT_HRS"
+    "value_column": "COURSE.CREDIT_HRS",
+    "cross_table_placeholders": {
+     "program": {
+      "table": "STUDENT_PROGRAM",
+      "column": "PROG_ID"
+     },
+     "batch": {
+      "table": "STUDENT_PROGRAM",
+      "column": "BATCH_NO"
+     }
+    }
    },
    "courseOfferedInFollowingSemesters": {
     "kind": "exists",
@@ -23139,7 +23169,17 @@
     "table": "PROGRAM_COURSE, COURSE",
     "filter_text": "PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
     "source_text": "SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE, COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND PROGRAM_COURSE.PROG_ID=<program> AND PROGRAM_COURSE.BATCH_NO=<batch>",
-    "value_column": "COURSE.CREDIT_HRS"
+    "value_column": "COURSE.CREDIT_HRS",
+    "cross_table_placeholders": {
+     "program": {
+      "table": "STUDENT_PROGRAM",
+      "column": "PROG_ID"
+     },
+     "batch": {
+      "table": "STUDENT_PROGRAM",
+      "column": "BATCH_NO"
+     }
+    }
    },
    "courseOfferedInFollowingSemesters": {
     "kind": "exists",
@@ -37715,7 +37755,13 @@
     ],
     "filter_text": "promotion_id = <promotion_id> AND type = 'Spree::Promotion::Rules::CustomerGroup'",
     "notes": "[ASSUMED -- confident on the correlation (Rails STI type discriminator, a real column, not blob content), disclosed only because \"the promotion\" itself isn't an explicit DMN input anywhere in this decision or its upstream chain -- see supplementary_fk_edges.py for how it's identified via spree_order_promotions, 2026-09-24] Re-expressed as existence of a spree_promotion_rules row of the CustomerGroup rule type for this promotion -- a real, typed, non-blob check, corrected from the earlier SCHEMA GAP call which wrongly treated this as requiring the same undecoded preferences blob promotionTargetGroupIds needs. Does NOT need promotionTargetGroupIds's own blob content at all, only whether a rule of this type exists.",
-    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')"
+    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')",
+    "cross_table_placeholders": {
+     "promotion_id": {
+      "table": "spree_order_promotions",
+      "column": "promotion_id"
+     }
+    }
    },
    "customerIdPresent": {
     "kind": "null_check",
@@ -37824,7 +37870,13 @@
     ],
     "filter_text": "promotion_id = <promotion_id> AND type = 'Spree::Promotion::Rules::CustomerGroup'",
     "notes": "[ASSUMED -- confident on the correlation (Rails STI type discriminator, a real column, not blob content), disclosed only because \"the promotion\" itself isn't an explicit DMN input anywhere in this decision or its upstream chain -- see supplementary_fk_edges.py for how it's identified via spree_order_promotions, 2026-09-24] Re-expressed as existence of a spree_promotion_rules row of the CustomerGroup rule type for this promotion -- a real, typed, non-blob check, corrected from the earlier SCHEMA GAP call which wrongly treated this as requiring the same undecoded preferences blob promotionTargetGroupIds needs. Does NOT need promotionTargetGroupIds's own blob content at all, only whether a rule of this type exists.",
-    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')"
+    "raw_schema_field": "spree_promotion_rules(promotion_id, type='Spree::Promotion::Rules::CustomerGroup')",
+    "cross_table_placeholders": {
+     "promotion_id": {
+      "table": "spree_order_promotions",
+      "column": "promotion_id"
+     }
+    }
    },
    "matchingCustomerGroupCount": {
     "kind": "substituted_decision",
