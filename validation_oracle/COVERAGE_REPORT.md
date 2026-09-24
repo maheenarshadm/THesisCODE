@@ -25,28 +25,49 @@ fixes (`One-Use-Per-User Promotion Eligibility::rule_2` re-expression,
 Promotion Eligibility::rule_3` shadowing-gap fix) + the `null_check`
 polarity/`negate` fix (affects OpenMRS and jBilling too).
 
-### Raw verified coverage (as `coverage.py` itself reports — denominator
-is that case study's own full compiled record count, whatever hit
-policy or scope each record has)
+**Objectives vs. distinct DMN rules — read this before the tables.**
+Most DMN rules compile to exactly one DynaMOSA search objective, but a
+rule whose condition depends on an upstream decision via
+`substituted_decision` chaining compiles to ONE OBJECTIVE PER POSSIBLE
+UPSTREAM RULE that could have produced the substituted value — so a
+single DMN rule can correspond to several compiled objectives. Confirmed
+by direct query of `compiled_constraints.json` (2026-09-24): FLEX2 has
+98 compiled objectives but only 55 distinct DMN rules (9 rules,
+concentrated in `Course Load Limit`, `Admission Closure Eligibility`,
+`Course Registration Eligibility`, expand to 2–11 objectives each);
+jBilling has 40 objectives but 39 distinct rules (`Payment Balance
+Assignment::Rule_2` alone expands to 2). OpenMRS (71) and Spree (31)
+have no such expansion — objectives and distinct rules coincide.
+`coverage.py`'s own `verified_rule_coverage_percent` already divides by
+the DEDUPLICATED distinct-rule count, not the raw objective count — an
+earlier version of this file's own "Raw coverage" column mistakenly
+recomputed FLEX2/jBilling's percentage using the inflated objective
+count instead of trusting the tool's own printed percentage; corrected
+below (2026-09-24 correction, prompted by a user double-check).
 
-| Case study | Compiled | Verified | Raw coverage |
-|---|---|---|---|
-| OpenMRS | 71 | 41 | 57.7% |
-| Spree | 31 | 14 | 45.2% |
-| FLEX2 | 98 | 21 | 21.4% |
-| jBilling | 40 | 10 | 25.0% |
-| **Total** | **240** | **86** | **35.8%** |
+### Raw verified coverage (`coverage.py`'s own
+`verified_rule_coverage_percent` — denominator is DISTINCT DMN rules,
+not raw compiled objectives; see the note above)
+
+| Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
+|---|---|---|---|---|
+| OpenMRS | 71 | 71 | 41 | 57.7% |
+| Spree | 31 | 31 | 14 | 45.2% |
+| FLEX2 | 98 | 55 | 21 | 38.2% |
+| jBilling | 40 | 39 | 10 | 25.6% |
+| **Total** | **240** | **196** | **86** | **43.9%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
-reachable by data generation at all — see category definitions below)
+reachable by data generation at all — see category definitions below;
+all counts are DISTINCT DMN rules)
 
-| Case study | Compiled | Not solvable | Undetermined | Solvable | Verified | Solvable coverage |
+| Case study | Distinct rules | Not solvable | Undetermined | Solvable | Verified | Solvable coverage |
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 41 | 73.2% |
 | Spree | 31 | 9 | 0 | 22 | 14 | 63.6% |
-| FLEX2 | 98 | 0 | 2 | 96 | 21 | 21.9% |
-| jBilling | 40 | 3 | 22 | 15 | 10 | 66.7% |
-| **Total** | **240** | **27** | **24** | **189** | **86** | **45.5%** |
+| FLEX2 | 55 | 0 | 2 | 53 | 21 | 39.6% |
+| jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
+| **Total** | **196** | **27** | **23** | **146** | **86** | **58.9%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -61,12 +82,17 @@ reachable by data generation at all — see category definitions below)
   mis-mapping (the same species of error `purchaseQuantity` turned out
   to be before it was corrected to a real column). FLEX2's `Attendance
   Eligibility For Final Exam` (2 rules); jBilling's 6 "no table-backed
-  input" decisions (14 rules) + 2 decisions needing a `not_persisted`
-  override (8 rules) = 22 rules.
-- **Solvable:** compiled minus the two categories above — either
+  input" decisions (13 distinct rules) + 2 decisions needing a
+  `not_persisted` override (8 rules) = 21 rules.
+- **Solvable:** distinct rules minus the two categories above — either
   already verified, or open with a known, in-principle-fixable cause
   (a disclosed join-construction override, more search budget/seeds, or
   a quick-win placeholder mapping already scoped in `KNOWN_ISSUES.md`).
+
+**New finding surfaced while computing the corrected table (not yet in
+`KNOWN_ISSUES.md`): FLEX2's `Course Load Limit` is 0/4 verified** and
+isn't currently listed anywhere in that file's Open Issues section —
+worth adding and investigating, not yet done.
 
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)
@@ -93,6 +119,20 @@ Spree (previously 4/8).
 ---
 
 ## Run history
+
+### 2026-09-24 — correction: objectives vs. distinct DMN rules
+No new run performed. In response to a user double-check ("for one rule
+there could be multiple objectives?"), re-examined the ALREADY-COMPILED
+`compiled_constraints.json` and the ALREADY-GENERATED
+`objective_results.csv` files from the `f8a64150` run below — confirmed
+9 DMN rules (FLEX2: 7, jBilling: 1, with one of jBilling's own objective
+pairs collapsing into 1 rule) each expand into multiple compiled
+objectives via `substituted_decision` chaining. This file's own prior
+"Latest snapshot" had manually recomputed FLEX2/jBilling's "raw
+coverage" percentage using the inflated objective count (98, 40)
+instead of the tool's own already-correct distinct-rule denominator (55,
+39) — corrected above. No case study's underlying verified/compiled
+truth changed; only this file's own arithmetic did.
 
 ### 2026-09-24, commit `f8a64150` — the 3 Spree fixes + null_check/negate fix
 Numbers: see "Latest snapshot" above. Full before/after diff (exact
