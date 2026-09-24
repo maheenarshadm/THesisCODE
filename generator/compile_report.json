@@ -25,8 +25,7 @@
   "chained_dependency_unexpandable": 2
  },
  "blocking_variable_kind_counts": {
-  "schema_gap": 5,
-  "unresolved": 6,
+  "schema_gap": 17,
   "code_external": 12
  },
  "blocked_records": [
@@ -370,9 +369,14 @@
      "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
-     "variable": "effectiveMinThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "amountMin",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_min (decimal, default 100.00) -- same source and same caveat as operatorMin."
+    },
+    {
+     "variable": "operatorMin",
+     "kind": "schema_gap",
+     "detail": "serialized text blob (t.text \"preferences\"), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11 against Spree's own source (spree/spree core/app/models/spree/promotion/rules/item_total.rb): the real serialized preference key is operator_min (string, 'gt'/'gte'). Column/location was already right; the key name is now known too, but the value still isn't SQL-extractable without a fragile, engine-specific string/regex pull against the serialized blob, and no real sample row was available to verify the exact serialization format -- not attempted rather than guessed."
     }
    ],
    "case_study": "Spree"
@@ -387,9 +391,14 @@
      "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
-     "variable": "effectiveMinThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "amountMin",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_min (decimal, default 100.00) -- same source and same caveat as operatorMin."
+    },
+    {
+     "variable": "operatorMin",
+     "kind": "schema_gap",
+     "detail": "serialized text blob (t.text \"preferences\"), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11 against Spree's own source (spree/spree core/app/models/spree/promotion/rules/item_total.rb): the real serialized preference key is operator_min (string, 'gt'/'gte'). Column/location was already right; the key name is now known too, but the value still isn't SQL-extractable without a fragile, engine-specific string/regex pull against the serialized blob, and no real sample row was available to verify the exact serialization format -- not attempted rather than guessed."
     }
    ],
    "case_study": "Spree"
@@ -404,14 +413,24 @@
      "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
-     "variable": "effectiveMaxThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "amountMax",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_max (decimal, default 1000.00) -- same source and same extraction caveat as amountMin."
     },
     {
-     "variable": "effectiveMinThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "operatorMax",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is operator_max (string, 'lt'/'lte') -- same source and same extraction caveat as operatorMin."
+    },
+    {
+     "variable": "amountMin",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_min (decimal, default 100.00) -- same source and same caveat as operatorMin."
+    },
+    {
+     "variable": "operatorMin",
+     "kind": "schema_gap",
+     "detail": "serialized text blob (t.text \"preferences\"), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11 against Spree's own source (spree/spree core/app/models/spree/promotion/rules/item_total.rb): the real serialized preference key is operator_min (string, 'gt'/'gte'). Column/location was already right; the key name is now known too, but the value still isn't SQL-extractable without a fragile, engine-specific string/regex pull against the serialized blob, and no real sample row was available to verify the exact serialization format -- not attempted rather than guessed."
     }
    ],
    "case_study": "Spree"
@@ -426,14 +445,24 @@
      "detail": "existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
     },
     {
-     "variable": "effectiveMaxThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "amountMax",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_max (decimal, default 1000.00) -- same source and same extraction caveat as amountMin."
     },
     {
-     "variable": "effectiveMinThreshold",
-     "kind": "unresolved",
-     "detail": "not a declared input of this decision, and not produced by any DRD-linked upstream decision"
+     "variable": "operatorMax",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is operator_max (string, 'lt'/'lte') -- same source and same extraction caveat as operatorMin."
+    },
+    {
+     "variable": "amountMin",
+     "kind": "schema_gap",
+     "detail": "same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_min (decimal, default 100.00) -- same source and same caveat as operatorMin."
+    },
+    {
+     "variable": "operatorMin",
+     "kind": "schema_gap",
+     "detail": "serialized text blob (t.text \"preferences\"), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11 against Spree's own source (spree/spree core/app/models/spree/promotion/rules/item_total.rb): the real serialized preference key is operator_min (string, 'gt'/'gte'). Column/location was already right; the key name is now known too, but the value still isn't SQL-extractable without a fragile, engine-specific string/regex pull against the serialized blob, and no real sample row was available to verify the exact serialization format -- not attempted rather than guessed."
     }
    ],
    "case_study": "Spree"

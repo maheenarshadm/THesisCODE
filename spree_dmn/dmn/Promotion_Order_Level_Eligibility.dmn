@@ -2,11 +2,13 @@
 <definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
              id="Promotion_Order_Level_Eligibility" name="Promotion_Order_Level_Eligibility" namespace="https://spree-dmn.research/case-study">
     <decision id="Decision_EffectiveMinimumAmountThreshold" name="Effective Minimum Amount Threshold">
+      <variable name="effectiveMinThreshold" typeRef="number"/>
       <literalExpression id="le_Decision_EffectiveMinimumAmountThreshold" typeRef="number">
         <text>if operatorMin = "gte" then amountMin else amountMin + 0.01</text>
       </literalExpression>
     </decision>
     <decision id="Decision_EffectiveMaximumAmountThreshold" name="Effective Maximum Amount Threshold">
+      <variable name="effectiveMaxThreshold" typeRef="number"/>
       <literalExpression id="le_Decision_EffectiveMaximumAmountThreshold" typeRef="number">
         <text>if operatorMax = "lte" then amountMax else amountMax - 0.01</text>
       </literalExpression>

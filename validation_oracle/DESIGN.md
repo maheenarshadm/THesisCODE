@@ -646,6 +646,62 @@ re-run clean; all 4 case studies' coverage numbers re-verified identical
 to the previous round except Spree's own diagnostic message for this one
 decision (now the precise fixture-gap reason, per above).
 
+**2026-09-24 (a fifth round): a full audit of Spree's own rule inventory
+(requested directly, not a bug hunt) turned up a real, fixable
+compile-time bug -- a missing DMN `<variable>` declaration -- distinct
+from every other gap found so far.** Auditing every one of Spree's 32
+decision-table rules (9 tables; 4 more literal-expression decisions
+contribute no rules of their own) confirmed `statically_infeasible_
+rules: 0` -- not one Spree rule is logically dead; every blocked rule is
+blocked by a missing INPUT, never a self-contradictory condition.
+
+Of the 5 rules blocked at compile time, 4 (`Promotion Item Total
+Eligibility`'s own rule_1-4) were blocked partly by `effectiveMinThreshold`/
+`effectiveMaxThreshold` reading `unresolved`: "not a declared input... and
+not produced by any DRD-linked upstream decision." But the DRD link DOES
+exist in the DMN XML (`informationRequirement` to `Effective Minimum/
+Maximum Amount Threshold`, confirmed by direct inspection) -- what's
+missing is a `<variable name="...">` element on those two literal-
+expression decisions themselves. `compile_constraints.py`'s own
+`Decision.own_variable` is populated ONLY from that element
+(`dec_el.find(q('variable'))`); without it, `resolve_and_substitute`
+never learns what name the upstream decision's own formula produces,
+so the (real, existing) DRD edge is silently invisible to substitution
+-- not a data problem, a DMN-authoring omission, and an unambiguous one:
+the expected name is stated verbatim in the very blocking-variable
+message. Fixed by adding `<variable name="effectiveMinThreshold"
+typeRef="number"/>` / `<variable name="effectiveMaxThreshold"
+typeRef="number"/>` to `Promotion_Order_Level_Eligibility.dmn`, matching
+the exact convention this same DMN corpus already uses for its OTHER
+literal-expression decisions (`Customer_Segment_Eligibility.dmn`'s own
+`Customer Group Match Count`/`Prior Completed Order Count`, both already
+declared this way).
+
+**Confirmed working as intended, not merely compiling differently:**
+after the fix, `effectiveMinThreshold`/`effectiveMaxThreshold` resolve
+via `substituted_decision` as designed -- but the underlying formulas
+still need `operatorMin`/`amountMin`/`operatorMax`/`amountMax`, which
+are the SAME undecoded-preferences-blob gap as `promotionTargetGroupIds`
+elsewhere in Spree. So these 4 rules remain blocked, correctly, now
+reading `schema_gap` instead of `unresolved` -- a deeper, truer
+diagnosis, not a new failure. Re-verified via full before/after diff:
+zero record adds/removes anywhere in any of the 4 case studies (Spree's
+own compiled count stays 27/32); full regression suite and all 4 case
+studies' coverage numbers unchanged (OpenMRS 37/71, FLEX2 21/98, Spree
+9/27, jBilling 11/40).
+
+**Also directly answered, on request, without any code change:** whether
+Spree's remaining gaps could be closed by treating them as free,
+assumable scenario values (the same technique already used for
+`evaluationTime`). Checked systematically -- Spree originally had
+exactly two genuinely `not_persisted` variables (`evaluationTime`,
+already overridden; `purchaseQuantity`, since corrected to a real
+column, not overridden) and today has ZERO remaining `not_persisted`
+blockers. Every current gap is real backend data the pipeline hasn't
+caught up to yet (the undecoded blob, 3 fixture-table gaps, one
+validator hit-policy limitation) -- not a case where inventing a
+scenario constant would be honest or applicable.
+
 - **`Price List Volume Adjustment Tier Selection` -- the INITIAL
   assessment here was wrong, corrected after being challenged, and then
   actually fixed.** First pass wrongly trusted the ground truth's own
