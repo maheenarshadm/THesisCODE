@@ -373,27 +373,81 @@ so that table was never included (`no such table: spree_discounts`) --
 a genuine fixture-completeness gap, not a validator bug, disclosed here
 rather than silently worked around.
 
-**FLEX2 now runs to completion but reports 0/98 verified — a separate,
-disclosed, NOT-yet-investigated fixture-completeness concern, out of
-today's scope.** Spot-checking `STUDENT_PROGRAM` directly: every single
-row in `flex2_merged.db` has `CGPA`/`WARNING` (and likely other
-columns) NULL, including rows with a real, non-null `ROLL_NO` --
-consistent with this merged-archive fixture having been built before
-`Academic Warning Status` (and likely other decisions) ever ran real
-search generations against it. This needs `tests/build_fixture_from_
-generator.py` re-run against a fresher/fuller FLEX2 archive before FLEX2
-verified-coverage numbers mean anything; not attempted today (out of
-this round's scope, which was closing the 3 Spree/jBilling decisions).
+**2026-09-24 (later same day): the FLEX2 fixture is fixed -- two real,
+previously-undiscovered bugs, both outside `validation_oracle/` itself,
+found tracing WHY `flex2_merged.db` had `CGPA`/`WARNING` null across
+every row despite real values existing in the source archive.**
 
-**Corrected, re-verified coverage numbers, all 4 case studies (this
-session's fixes applied, re-run end to end 2026-09-24):**
+1. **The actual root cause: `generator/mutation.py`'s own `_repair_row`
+   never assigns a table's PRIMARY KEY column unless the schema also
+   happens to flag it `null_false: true`.** FLEX2's own extracted schema
+   never sets that flag on ANY of its 121 PK columns across every table
+   (confirmed by direct survey; zero such gaps in OpenMRS/Spree/
+   jBilling's schemas, so this was invisible until FLEX2's coverage
+   report could run at all) -- a PK is NOT NULL by relational definition
+   regardless of what the schema extraction happened to record, but
+   nothing in the pipeline ever gave `STUDENT_PROGRAM.ROLL_NO` (or any
+   other FLEX2 table's own PK) a value unless some decision's own search
+   happened to write it directly, which none of the currently-compiled
+   FLEX2 objectives do. Fixed by also repairing a declared PK column
+   regardless of its own `null_false` flag. Confirmed zero blast radius
+   on the other 3 case studies (0 affected PK columns each) before
+   applying; full regression suite re-run clean after. Rebuilt
+   `flex2_merged.db` from the SAME archive pickle
+   (`FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`) with this fix: every
+   one of 149 `STUDENT_PROGRAM` rows now has a real, unique `ROLL_NO`
+   (was 0/102 before), and total materialized rows rose from 1163 to
+   1809 -- previously, rows sharing a NULL PK were apparently colliding/
+   merging silently in ways that are no longer possible once each row
+   has real identity.
+2. **A second real bug, found immediately after, in `subject_table.py`
+   itself: table names from `variable_resolution` and from
+   `fk_closure_tables` are not case-consistent, and nothing canonicalized
+   them before set operations.** FLEX2's own ground truth writes some
+   table references lowercase (`course_registration`) and others in the
+   schema's real upper-case (`COURSE_REGISTRATION`) for the IDENTICAL
+   real table -- confirmed present in 6 of FLEX2's 9 decisions. Untreated,
+   `_pick_root`'s reachability search either manufactured a fake "2
+   candidates qualify" ambiguity (both spellings of the same table
+   independently looked like valid roots) or a fake "0 candidates
+   qualify" failure. Fixed by canonicalizing every table name through
+   `schema_utility.canonical_table_name` before any set operation in
+   `subject_table_for_decision`, and made `db_resolver._row_for_table`'s
+   own table-identity comparisons case-insensitive to match (ground
+   truth's raw, uncanonicalized `node['table']` strings still flow into
+   it directly). Confirmed real, not cosmetic: `Course Replacement
+   Eligibility` went from a manufactured "2 candidates" ambiguity to a
+   clean, unique root. Zero change to OpenMRS/Spree/jBilling's own
+   numbers (re-verified after).
+
+**Result: FLEX2 now produces a real, non-trivial verified-coverage
+number for the first time -- 21/98 (38.2%), up from 0/98.** 7 decisions
+remain genuinely unresolved, each for a real, disclosed, different
+reason, not swept into one bucket: `Attendance Eligibility For Final
+Exam` has no table-backed input at all (unchanged, pre-existing scope
+boundary); 5 decisions (`Admission Closure Eligibility`, `Course
+Registration Eligibility`, `Credit Transfer Exemption`, `Graduation
+Eligibility`, `Summer Semester Registration`) genuinely have NO table in
+their own fk_closure that forward-reaches every table their inputs
+need -- a real multi-table backward-join gap in the same category as the
+ones already closed for Spree/jBilling, not yet attempted here (this
+round's scope was the fixture, not chasing every remaining join gap);
+`Course Replacement Eligibility` newly surfaces its OWN real, different,
+disclosed limitation once its root-picking bug above stopped masking it:
+a `filter_text` placeholder (`<program>`) that needs a JOINED table's
+column (`STUDENT_PROGRAM.PROG_ID`), not the subject row's own --
+`_resolve_placeholders` only ever looks at the subject row itself, a
+real, disclosed scope gap, not attempted here.
+
+**Corrected, re-verified coverage numbers, all 4 case studies (re-run
+end to end 2026-09-24 with the FLEX2 fixture fix applied):**
 
 | Case study | Objectives | Verified rule IDs | Verified coverage % | Unresolved decisions | Notes |
 |---|---|---|---|---|---|
-| OpenMRS | 71 | 37 | 52.1% | 5 | unchanged (ground truth untouched this round) |
-| Spree | 26 | 7 | 26.9% | 5 | unchanged in total, but `Promotion Usage Limit Exceeded` moved from silently-wrong-schema_column to honestly-unresolved (fixture gap); net zero-sum, same number, more honest reason |
-| jBilling | 40 | 11 | 28.2%* | 9 | up from 10/25.6% previously reported -- `Ageing Step Advancement`'s corrected entity/status filter now genuinely verifies both its rules |
-| FLEX2 | 98 | 0 | 0% | 7 | first successful end-to-end run ever (previously crashed); 0% traced to a fixture-completeness gap, not re-investigated further this round |
+| OpenMRS | 71 | 37 | 52.1% | 5 | unchanged |
+| Spree | 26 | 7 | 26.9% | 5 | unchanged; `Promotion Usage Limit Exceeded` still a disclosed fixture gap (see above entry) |
+| jBilling | 40 | 11 | 28.2%* | 9 | unchanged from the earlier entry above |
+| FLEX2 | 98 | 21 | 38.2%* | 7 | up from 0/0% -- first real FLEX2 result ever produced, via the 2 fixture/resolver fixes above |
 
 *`verified_rule_coverage_percent` exactly as printed by `coverage.py`'s
 own summary (not independently recomputed here; its own denominator is

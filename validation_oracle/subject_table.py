@@ -134,14 +134,32 @@ def subject_table_for_decision(records, case_study):
     (which may not be any of them -- see `_pick_root`). Raises, naming
     what was found, rather than guessing, when no unique root can be
     identified."""
-    from schema_utility import build_join_path, pk_columns
+    from schema_utility import build_join_path, canonical_table_name, pk_columns
 
+    case_study = records[0]['case_study']
+
+    # Canonicalize every table name through the SAME schema-casing lookup
+    # `build_join_path`/`fk_edges` already use internally, before any set
+    # operation -- a real bug found running this against FLEX2 for the
+    # first time: `variable_resolution`'s own `table` fields are written
+    # lowercase (`course_registration`) while `fk_closure_tables` (and
+    # the schema itself) use FLEX2's real upper-case names
+    # (`COURSE_REGISTRATION`). Without this, `_pick_root`'s set logic
+    # silently treats the SAME real table as two different ones --
+    # either manufacturing a fake "2 candidates qualify" ambiguity (both
+    # spellings independently look like valid roots) or a fake "0
+    # candidates qualify" failure (a table needed for reachability is
+    # never actually counted as reached because it's compared under the
+    # wrong spelling) -- confirmed real for 6 of FLEX2's own decisions,
+    # every one of which mixes both spellings for the same table.
     all_tables = set()
     closure_tables = set()
     for r in records:
-        closure_tables |= set(r.get('fk_closure_tables', []))
+        closure_tables |= {canonical_table_name(case_study, t)
+                            for t in r.get('fk_closure_tables', [])}
         for node in r.get('variable_resolution', {}).values():
-            all_tables |= tables_referenced(node)
+            all_tables |= {canonical_table_name(case_study, t)
+                           for t in tables_referenced(node)}
 
     if len(all_tables) == 0:
         raise ValueError(
@@ -149,7 +167,6 @@ def subject_table_for_decision(records, case_study):
             f"every input is non-table-backed (literal/upstream/not_persisted); "
             f"this decision cannot be independently entity-enumerated from the database alone.")
 
-    case_study = records[0]['case_study']
     if len(all_tables) == 1:
         subject = next(iter(all_tables))
         return subject, pk_columns(case_study, subject), {}

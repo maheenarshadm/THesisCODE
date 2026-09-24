@@ -562,9 +562,23 @@ def _repair_row(candidate, table, row, case_study, _seen=None):
         return
     real_table = table
     key_cols = {c.upper() for cols in _unique_key_sets(schema, real_table) for c in cols}
+    pk = info.get('pk')
+    pk_cols = {c.upper() for c in (pk if isinstance(pk, list) else ([pk] if pk else []))}
     lowered = {k.lower() for k in row}
     for col, meta in (info.get('columns') or {}).items():
-        if not meta.get('null_false') or col.lower() in lowered:
+        # A declared PRIMARY KEY column is NOT NULL by relational
+        # definition regardless of what this schema's own `null_false`
+        # flag says -- a real, disclosed gap in FLEX2's own extracted
+        # schema (121 PK columns across FLEX2 tables never got
+        # null_false: true, confirmed by direct survey; zero such gaps
+        # in OpenMRS/Spree/jBilling's own schemas, so this changes
+        # nothing for them). Without this, a table like STUDENT_PROGRAM
+        # never gets its own ROLL_NO repaired at all, since nothing else
+        # in this pipeline ever assigns it -- every row merged into a
+        # fixture database stays NULL on its own PK, making per-row
+        # identity (and this validator's whole subject-table enumeration)
+        # impossible for that table.
+        if not (meta.get('null_false') or col.upper() in pk_cols) or col.lower() in lowered:
             continue  # not required, or already has a real value -- never overwritten
         if col.upper() in key_cols:
             row[col] = _fresh_key_value(candidate, real_table, col)

@@ -81,11 +81,24 @@ def _row_for_table(conn, target_table, subject_table, subject_pk_cols, subject_p
     `join_paths[target_table]` (from `subject_table.py`) hop by hop with
     real queries. Raises if `target_table` needs a join path that was
     never derived (a decision this validator hasn't been told how to
-    join), never silently returns the wrong row."""
-    if target_table == subject_table:
+    join), never silently returns the wrong row.
+
+    `target_table`/`subject_table`/`join_paths`' own keys are compared
+    case-INSENSITIVELY: `subject_table.py` canonicalizes every table name
+    through the schema's own casing before this point, but `node['table']`
+    (the raw `variable_resolution` field feeding `target_table` here) is
+    not -- ground truth writes some table references lowercase regardless
+    of what the schema/subject_table.py settled on (confirmed real:
+    FLEX2's own ground truth mixes `course_registration` and
+    `COURSE_REGISTRATION` for the identical real table). A plain `==`
+    here would treat the subject's own table as a foreign one needing a
+    (nonexistent) join path purely because of spelling."""
+    if target_table.upper() == subject_table.upper():
         return _one_row(conn, subject_table, subject_pk_cols, subject_pk_vals)
 
     path = join_paths.get(target_table)
+    if path is None:
+        path = next((v for k, v in join_paths.items() if k.upper() == target_table.upper()), None)
     if path is None:
         raise NotImplementedError(
             f"No join path from subject table {subject_table!r} to {target_table!r} -- "
