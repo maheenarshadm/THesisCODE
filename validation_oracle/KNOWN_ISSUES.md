@@ -19,7 +19,7 @@ excluded from all coverage numbers per an explicit decision below):
 |---|---|---|
 | OpenMRS | 37/56 (66.1%) | 14/14 (100%) |
 | FLEX2 | 21/55 (38.2%) | 2/10 |
-| Spree | 9/26 (34.6%) | 4/8 |
+| Spree | 12/31 (38.7%) | 5/8 |
 | jBilling | 11/39 (28.2%) | 6/16 |
 
 ---
@@ -56,37 +56,41 @@ excluded from all coverage numbers per an explicit decision below):
   piece of work than the scalar preferences closed here, not yet
   attempted.
 
-- **4 fixture/row-finding gaps (14 rules, 4 decisions) — all the SAME
-  underlying category, "compiles correctly but the row can't be found
-  or doesn't exist in this materialized database yet."**
-  `Promotion Customer Group Eligibility` (3 rules) and `Promotion Item
-  Total Eligibility` (4 rules, newly joining this category once its own
-  blob-decoding closed) both need to locate a specific
-  `spree_promotion_rules`/`spree_order_promotions` row from the
-  decision's subject (`spree_orders`) — a one-to-many backward join
-  `subject_table_for_decision` correctly refuses to guess at.
-  `Promotion Usage Limit Exceeded` (4 rules) needs `spree_discounts`;
-  `Price List Volume Adjustment Tier Selection` (3 rules) needs
-  `spree_line_items` — both real tables simply missing from
-  `spree_merged.db`, since that fixture was built from an archive
-  (`Spree__dynamosa_nsga2__budget1x__seed0.pkl`) that predates every
-  ground-truth fix made this session. Confirmed directly: rebuilding
-  the fixture from the SAME archive reproduces the identical missing
-  tables (nothing to extract — the rows never existed, since these
-  facts used to be `not_persisted`/`schema_gap`, never materialized to
-  begin with). **Fix requires re-running the DynaMOSA search for Spree
-  against the current `compiled_constraints.json`**, then rebuilding
-  the fixture from the fresh archive — still pending an explicit
-  go-ahead (this is real search/experiment-data work, not a quick
-  fixture rebuild). Note these are genuinely TWO different remedies
-  bundled under one category: the missing-table half (`Promotion Usage
-  Limit Exceeded`/`Price List Volume Adjustment Tier Selection`) needs
-  the search re-run; the row-finding half (`Promotion Customer Group
-  Eligibility`/`Promotion Item Total Eligibility`) needs the
-  one-to-many join question resolved (a disclosed override naming
-  which single `spree_promotion_rules` row is "the" one for a given
-  promotion/type, since a real promotion can have many rule rows) —
-  re-running the search alone would NOT close this second half.
+- **3 fixture/row-finding gaps (11 rules, 3 decisions) remain, after
+  the Spree search re-run closed the 4th
+  (`Price List Volume Adjustment Tier Selection`, see "Fixed issues"
+  below).** Two genuinely different remedies, now confirmed (not just
+  predicted) by actually running the search re-run:
+  - `Promotion Customer Group Eligibility` (3 rules) and `Promotion
+    Item Total Eligibility` (4 rules) both still need to locate a
+    specific `spree_promotion_rules`/`spree_order_promotions` row from
+    the decision's subject (`spree_orders`) — a one-to-many backward
+    join `subject_table_for_decision` correctly refuses to guess at.
+    Confirmed after the re-run: `spree_order_promotions` still isn't in
+    the fresh fixture at all (`Promotion Customer Group Eligibility`
+    rule_1/rule_2 are search-covered but their own construction never
+    needed to materialize that table, since `promotionTargetGroupsConfigured`
+    reads `spree_promotion_rules.type` directly without an explicit,
+    real join). Re-running the search does NOT close this half — it
+    needs the one-to-many join question resolved (a disclosed override
+    naming which single `spree_promotion_rules`/`spree_order_promotions`
+    row is "the" one for a given promotion, since a real promotion can
+    have many rule/action rows).
+  - `Promotion Usage Limit Exceeded` (4 rules) needs `spree_discounts`
+    joined through `spree_promotion_actions` — confirmed this is NOT
+    simply a missing-table/search-budget problem the way `Price List
+    Volume Adjustment Tier Selection` was: `adjustedCreditsCount`'s own
+    `filter_text` (`promotion_action_id IN (SELECT id FROM
+    spree_promotion_actions WHERE promotion_id = self) AND 1=1`)
+    contains an IN-subquery join conjunct that
+    `_row_from_filter_conjuncts`/`_mechanical_filter_predicate`
+    honestly can't mechanically parse (only plain `COLUMN = VALUE`
+    conjuncts are recognized) — so the seeded/mutated `spree_discounts`
+    row is built with NO `promotion_action_id` at all, and
+    `spree_promotion_actions` never gets constructed to begin with,
+    regardless of how many generations the search runs. Needs the same
+    kind of disclosed join-construction override as the row-finding
+    gap above, not a bigger search budget.
 
 - **`One-Use-Per-User Promotion Eligibility::rule_2` — a real
   compile-time bug, not a data gap.** Ground truth says
@@ -122,16 +126,21 @@ excluded from all coverage numbers per an explicit decision below):
   declaration fix already made for the threshold decisions.
 
 - **`First-Order Promotion Eligibility::rule_3` — an ordinary,
-  fixable-by-data FIRST-hit-policy gap.** Its condition is the bare
-  catch-all (`true`), always shadowed by `rule_1`/`rule_2` across all 8
-  real cases in the current database — none represents an identified
-  customer who *also* has ≥1 other completed order. The objective
-  itself is already correct (`branch_fitness` already requires "own
-  condition true AND every earlier row false," confirmed this
-  session). **Likely resolves on its own** once the Spree search is
-  re-run against current ground truth with enough generations to
-  construct that specific combination — same underlying action as the
-  fixture-gap re-run above, no separate fix needed.
+  fixable-by-data FIRST-hit-policy gap, confirmed STILL open after the
+  search re-run.** Its condition is the bare catch-all (`true`), always
+  shadowed by `rule_1`/`rule_2` — across all 17 real `spree_orders` rows
+  in the freshly re-run/rebuilt fixture, still none represents an
+  identified customer who *also* has ≥1 other completed order
+  (confirmed directly via `decision_trace.json`: every traced order has
+  `priorCompletedOrderCount = 0`). The objective itself is already
+  correct (`branch_fitness` already requires "own condition true AND
+  every earlier row false," confirmed this session) — this was
+  predicted to "likely resolve on its own" once the search re-ran; it
+  did not, at the same population/generation budget (30/40, seed 0)
+  used everywhere else in this project. Not a new problem, just a
+  corrected prediction: closing it needs either a larger budget/more
+  seeds, or a dedicated construction, not merely "re-run the search,"
+  which has now actually been tried once.
 
 ### FLEX2
 
@@ -347,8 +356,76 @@ before being counted as fixed here.
   record count went 27/32 → 31/32, with `amountMaxSet`/`operatorMin`/
   `amountMin`/`operatorMax`/`amountMax` all resolving correctly against
   real YAML. **This closes the compile-time gap only** — the rules
-  still need real search-generated data to verify (see "4 fixture/
+  still need real search-generated data to verify (see "3 fixture/
   row-finding gaps" above for what's still blocking that). The 5th fact,
   `promotionTargetGroupIds`, is LIST-typed and deliberately deferred
   (needs FEEL `intersection`/`count` over two lists, a materially larger
   piece of work than a scalar preference read).
+
+- **Re-ran the Spree DynaMOSA search against the current ground truth
+  and rebuilt `spree_merged.db` from the fresh archive.** This was the
+  actual, real search/experiment-data work the blob-decoding and
+  fixture-gap entries above had been deferring pending an explicit
+  go-ahead. Running it for the first time against the post-
+  `serialized_field` `compiled_constraints.json` surfaced and fixed
+  three real bugs, none of them hit by anything compiled before this
+  session (each is a genuine gap in generic, case-study-agnostic code,
+  not a Spree-specific patch):
+  1. `candidate.py`'s `build_seed_candidate` seeded EVERY `null_check`
+     leaf with a bare scalar placeholder (`row[column] = 1`), including
+     the new key-scoped variant (`null_check` with a `key`, e.g.
+     `amountMaxSet`) — stamping a plain `1` directly over what must
+     stay a nested dict crashed the very next read of ANY key on that
+     same row with `'int' object has no attribute 'get'`. Fixed by
+     seeding a real one-key dict for the key-scoped case, and added the
+     missing `serialized_field`-kind seeding branch entirely (previously
+     absent — a bare `serialized_field` leaf was never seeded at all).
+  2. `fitness.py`'s arithmetic evaluator (`evaluate_expression`'s `+-*/`
+     dispatch) let a raw Python `TypeError` escape when an operand was
+     legitimately `None` (a `serialized_field` with no default, still
+     unset) instead of raising this module's own established
+     `FitnessEvaluationError` convention — the exact same class of gap
+     `_comparison_distance_true` already documents fixing once for
+     ordering comparisons, just one level earlier (raw arithmetic, not
+     yet a comparison). Fixed with the same numeric-operand guard;
+     `mutation.py`'s `best_value_for` also needed a catch around its own
+     "current genome" fitness call (mirroring `_hypothetical_fitness`'s
+     existing catch-and-treat-as-`inf` convention), since a sibling gene
+     on the same row can legitimately be in this not-yet-evaluable state
+     when `best_value_for` is asked about a DIFFERENT variable.
+  3. `_row_from_filter_conjuncts`/`_mechanical_filter_predicate`
+     (candidate.py, and its independent mirror in mutation.py) misread
+     the trailing SQL tautology guard `AND 1=1` — present verbatim in
+     `adjustedCreditsCount`'s own real `filter_text` — as a real
+     `COLUMN = VALUE` conjunct naming a column literally called `"1"`,
+     which reached real SQLite as `INSERT INTO spree_discounts (1,
+     ...)` and failed with a syntax error. Fixed in all 3 call sites: a
+     conjunct whose "column" side is a bare digit string is recognized
+     as the always-true no-op it actually is in real SQL, not guessed
+     at as a column.
+  Re-verified the full regression suite and every module's own
+  self-test (`candidate.py`, `fitness.py`, `mutation.py`,
+  `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+  `test_serialized_field_roundtrip.py`) after each fix, all passing,
+  before re-running the search again.
+
+  **Result, independently verified (not the search's own optimistic
+  claim) via `coverage.py` against the freshly rebuilt fixture, with
+  the same disclosed `evaluationTime=20000` override already used
+  elsewhere in this project:** verified rule coverage 9/26 (34.6%) →
+  12/31 (38.7%); verified decision-table coverage 4/8 → 5/8.
+  `Price List Volume Adjustment Tier Selection` (3 rules, previously
+  blocked purely by the missing-table half of the fixture gap) is now
+  fully verified — closed exactly as predicted, by the search re-run
+  alone, no further mechanism needed. `Promotion Temporal Availability`
+  rule_1/rule_3 are now verified too (previously blocked on the
+  `evaluationTime` override never having been supplied to this
+  project's own `coverage.py` invocation for Spree specifically).
+  `First-Order Promotion Eligibility::rule_3` did NOT resolve as
+  predicted (see its own entry above, corrected). The remaining open
+  gaps (`Promotion Customer Group Eligibility`, `Promotion Item Total
+  Eligibility`, `Promotion Usage Limit Exceeded`, and the COLLECT-only
+  `Price Adjustment Tier Validity Violations`) are unchanged by the
+  re-run, exactly as the "3 fixture/row-finding gaps" entry above now
+  precisely diagnoses for the two categories among them that are NOT
+  simply missing tables.

@@ -156,8 +156,25 @@ def evaluate_expression(node, resolution_map, genome):
             f"opaque (unparsed) FEEL formula can't be evaluated: {node.get('feel_text', '')[:80]!r}")
     op = node.get('op')
     if op in _ARITH:
-        return _ARITH[op](evaluate_expression(node['left'], resolution_map, genome),
-                           evaluate_expression(node['right'], resolution_map, genome))
+        a = evaluate_expression(node['left'], resolution_map, genome)
+        b = evaluate_expression(node['right'], resolution_map, genome)
+        if not (_numeric(a) and _numeric(b)):
+            # Same gap `_comparison_distance_true` already documents and
+            # guards for ordering operators, one level earlier: a
+            # legitimately nullable gene (e.g. a serialized_field with no
+            # default, `None` until its own null_check sibling sets it)
+            # can reach a raw FEEL arithmetic node before ever reaching a
+            # comparison -- found running Spree's `Effective Maximum
+            # Amount Threshold` for the first time (2026-09-24):
+            # `amountMax - 0.01` with `amountMax` currently `None`
+            # (amountMaxSet's own key not yet set on this row) crashed
+            # with a raw, uncaught TypeError instead of the
+            # `FitnessEvaluationError` every other "not evaluable yet"
+            # state in this module already produces.
+            raise FitnessEvaluationError(
+                f"arithmetic operator {op!r} needs two numeric operands, got {a!r} and {b!r} -- "
+                f"no principled arithmetic on a nullable value that's currently unset")
+        return _ARITH[op](a, b)
     if op == 'if':
         cond_true = distance_to_true(node['cond'], resolution_map, genome) == 0
         branch = node['then'] if cond_true else node['else']

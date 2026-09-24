@@ -459,7 +459,19 @@ def best_value_for(record, genome, var_name, node, case_study):
     unpinned variables (every leaf currently in the corpus except this
     one) see zero change in behavior."""
     current = genome.get(var_name)
-    current_fitness = branch_fitness(record, genome)
+    try:
+        current_fitness = branch_fitness(record, genome)
+    except FitnessEvaluationError:
+        # The CURRENT genome can legitimately be not-yet-evaluable --
+        # e.g. a serialized_field sibling (amountMax) still `None`
+        # because this same row's null_check gene (amountMaxSet) hasn't
+        # been mutated to True yet. Same catch-and-treat-as-a-large-but-
+        # finite-fitness convention `_hypothetical_fitness` already uses
+        # for a TRIAL genome; without it here too, the search crashes
+        # outright the first time it reaches var_name while some OTHER
+        # gene on the same row is in this state, rather than treating it
+        # as simply "worse than any real candidate value" and moving on.
+        current_fitness = float('inf')
     best_value, best_fitness = current, current_fitness
 
     pinned = known_constant(case_study, var_name)
@@ -818,6 +830,8 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None):
         if not cm:
             continue
         col, raw_val = cm.group(1), cm.group(2).strip()
+        if col.isdigit():
+            continue  # a SQL tautology guard (e.g. "1=1"), never a real column -- see candidate.py's own mirror fix
         ph = re.fullmatch(r'<([^>]+)>', raw_val)
         if ph:
             if ph.group(1) in scenario:

@@ -244,6 +244,19 @@ def _mechanical_filter_predicate(filter_text, scenario):
             skipped.append(c.strip())
             continue
         col, raw_val = m.group(1), m.group(2).strip()
+        if col.isdigit():
+            # A SQL tautology guard like the real Spree fact's own
+            # trailing `AND 1=1` -- found running the fresh Spree search
+            # against `adjustedCreditsCount` for the first time
+            # (2026-09-24): `_SIMPLE_EQ_CONJUNCT_RE` mechanically read
+            # "1" as a COLUMN NAME to compare against 1, not the
+            # always-true no-op it actually is in real SQL (no real
+            # schema column is ever a bare digit string). Genuinely,
+            # correctly a no-op -- not an approximation the way an
+            # unparseable conjunct is, so it's simply omitted, never
+            # added to `skipped` (which exists to flag prose this bridge
+            # couldn't handle, not conjuncts it handled exactly right).
+            continue
         if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
             skipped.append(c.strip())  # a real cross-table join, not a value comparison -- see docstring
             continue
@@ -295,6 +308,8 @@ def _row_from_filter_conjuncts(filter_text, scenario):
         if not m:
             continue
         col, raw_val = m.group(1), m.group(2).strip()
+        if col.isdigit():
+            continue  # a SQL tautology guard (e.g. "1=1"), never a real column -- see the predicate's own docstring
         if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
             continue  # a real cross-table join conjunct, not a value to assign -- see the predicate's own docstring
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
@@ -697,8 +712,27 @@ def build_seed_candidate(record, today=20000):
         return row
 
     for var, kind, node in leaves:
-        if kind in ('schema_column', 'null_check'):
+        if kind == 'schema_column':
             ensure_row(node['table'], node['column'], 1)
+        elif kind == 'null_check':
+            if node.get('key'):
+                # A null_check on a serialized_field's own key (e.g.
+                # Spree's amountMaxSet) shares its (table, column) with
+                # every OTHER key inside the same blob -- seeding
+                # row[column] = 1 here (this branch's old, kind-blind
+                # behaviour) stamps a bare scalar over what must stay a
+                # nested dict, so a LATER read of any key on this same
+                # row (plain or null_check) crashes with "'int' object
+                # has no attribute 'get'". Seed a real one-key dict
+                # instead, matching what a real serialized_field mutation
+                # would itself write.
+                row = ensure_row(node['table'])
+                row.setdefault(node['column'], {})[node['key']] = 1
+            else:
+                ensure_row(node['table'], node['column'], 1)
+        elif kind == 'serialized_field':
+            row = ensure_row(node['table'])
+            row.setdefault(node['column'], {})[node['key']] = node.get('default', 1)
         elif kind == 'any_not_null':
             for x in node['columns']:
                 ensure_row(x['table'], x['column'], 1)
