@@ -88,8 +88,27 @@ _TABLE_EXTRACTORS = {
 # Resolution kinds that do NOT read a table directly -- either a fixed
 # value, an upstream decision's own output (handled by drd_executor.py,
 # not a table lookup), or a genuinely non-database value.
+#
+# `substituted_decision` deliberately does NOT belong here (found and
+# fixed 2026-09-24, building generator/compile_constraints.py's own port
+# of this module's algorithm): it used to be listed here too, which --
+# since this set is checked BEFORE the dedicated `if kind ==
+# 'substituted_decision':` recursive branch further down in
+# `tables_referenced` -- made that branch permanently unreachable dead
+# code. Its own free variables can very much read real tables directly
+# (confirmed real: Spree's `Promotion Customer Group Eligibility::
+# rule_4`'s own `matchingCustomerGroupCount` is a `substituted_decision`
+# whose `customerGroupIds` free variable is a plain `schema_column` on
+# `spree_customer_group_users`), so silently reporting "no table" for
+# the whole node was wrong -- `resolve()`/`_resolve_one` at actual
+# verification time DOES correctly recurse into a `substituted_decision`
+# node's own free variables (see `db_resolver.py`/`drd_executor.py`),
+# so `subject_table_for_decision`'s own `join_paths` was silently
+# missing an entry `_row_for_table` would need the moment a real
+# verification run actually reached that variable -- a latent
+# `NotImplementedError` waiting to fire, not merely an inert gap.
 _NON_TABLE_KINDS = {
-    'literal', 'literal_via_upstream_branch', 'substituted_decision',
+    'literal', 'literal_via_upstream_branch',
     'not_persisted', 'code_external', 'schema_gap', 'unresolved', 'variable',
 }
 

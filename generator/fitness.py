@@ -457,7 +457,24 @@ def not_null_distance(row, table, schema):
 
 
 def _unique_key_sets(schema, table):
-    info = schema.get(table, {})
+    # Case-insensitive lookup, matching mutation.py's own `_repair_row`
+    # (which already handles this for its OWN `info` lookup one line
+    # before calling this function) -- found real, not hypothetical,
+    # 2026-09-24: OpenMRS's own schema JSON keys are lowercase, but
+    # `Candidate.add_row` always uppercases a table name internally, so
+    # a caller passing the candidate's own (uppercase) table name here
+    # got a silent `{}` miss, `pk` never found, `key_cols` empty --
+    # `_repair_row` then treated the table's own declared PK as an
+    # ordinary column, filling it with a single, non-unique PLACEHOLDER
+    # value instead of `_fresh_key_value`'s own collision-safe one.
+    # Invisible for a single row needing repair (still schema-legal, if
+    # coincidentally low-numbered); a real `UNIQUE constraint failed`
+    # the moment more than one row of the same table needs a fresh PK in
+    # the same `repair_candidate` pass -- confirmed directly, three new
+    # PATIENT_IDENTIFIER rows (dynamosa.py's own new decision-subject
+    # junction-row construction, merge_archive_candidate) all silently
+    # received the identical placeholder id.
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
     keys = []
     pk = info.get('pk')
     if pk:

@@ -75,11 +75,11 @@ not raw compiled objectives; see the note above)
 
 | Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
 |---|---|---|---|---|
-| OpenMRS | 71 | 71 | 41 | 57.7% |
+| OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
 | FLEX2 | 98 | 55 | 21 | 38.2% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **90** | **45.9%** |
+| **Total** | **240** | **196** | **91** | **46.4%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -87,11 +87,11 @@ all counts are DISTINCT DMN rules)
 
 | Case study | Distinct rules | Not solvable | Undetermined | Solvable | Verified | Solvable coverage |
 |---|---|---|---|---|---|---|
-| OpenMRS | 71 | 15 | 0 | 56 | 41 | 73.2% |
+| OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
 | FLEX2 | 55 | 0 | 2 | 53 | 21 | 39.6% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **90** | **61.6%** |
+| **Total** | **196** | **27** | **23** | **146** | **91** | **62.3%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -153,10 +153,57 @@ generator-side construction gap, not a validator bug; not pursued
 further as part of this investigation. Full regression suite re-run and
 passing after both fixes.
 
+**That "generator-side construction gap" was investigated further and
+partially fixed 2026-09-24 (see `KNOWN_ISSUES.md`'s cross-case-study
+entry for the full writeup).** Checked every decision in every case
+study for the same shape (a real, unique DMN subject the generator's
+own leaf-driven focal-row logic never builds) and found it in exactly
+2: FLEX2's `Course Load Limit` and OpenMRS's `Identifier Uniqueness
+Check` (a third suspect, Spree's `Promotion Customer Group
+Eligibility`, turned out on deeper investigation to be a genuine
+one-to-many backward-join gap instead, once a real bug in
+`subject_table.py` itself was found and fixed -- see below). Built the
+fix as `compile_constraints.py`'s own new `decision_subject` compile-
+time field (a generator-owned, narrower-scoped port of
+`subject_table_for_decision`'s algorithm, chosen over importing it
+directly to preserve `DESIGN.md`'s "no overlap in function calls with
+the search approach" in both directions) plus a new merge-time
+consumer in `dynamosa.py`'s `merge_archive_candidate` that constructs
+the missing subject row once, after search, with real FK links to the
+SAME already-solved focal rows -- no search-loop/fitness change at all.
+
+Verifying this surfaced two more real, independent bugs, both fixed the
+same day: `subject_table.py`'s own `substituted_decision` handling was
+dead code (listed in a set checked before its own dedicated recursion
+branch, so it never actually ran -- confirmed load-bearing, not
+cosmetic, for Spree's `Promotion Customer Group Eligibility::rule_4`);
+and `fitness.py`'s `_unique_key_sets` did a case-SENSITIVE schema
+lookup, unlike its own caller one line earlier -- invisible until this
+fix needed multiple same-table fresh-PK repairs in one pass for the
+first time, at which point it silently handed OpenMRS's own
+`PATIENT_IDENTIFIER` rows an identical, colliding placeholder id.
+
+**Verified result** (fresh per-objective before/after diff across all 4
+case studies, not just totals, after re-running the Spree search --
+needed since fixing the second bug also required a third instance of
+this session's own `fk_columns: []` schema gap, in
+`spree_order_promotions`/`spree_promotion_rules` -- and rebuilding every
+fixture): **OpenMRS 41->42 verified** (`Identifier Uniqueness
+Check::rule_1` flips false_positive -> confirmed), zero flips anywhere
+else in OpenMRS, and zero flips in FLEX2/Spree/jBilling.
+`Course Load Limit` remains 0/11 -- the junction row now genuinely
+exists and correctly cross-references the same objective's other rows
+(confirmed directly), but the search's own values still don't jointly
+satisfy the DMN condition for any one real subject, the disclosed
+"composite-leaf value alignment" gap this fix was never scoped to
+solve. Full self-test suite re-run and passing.
+
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)
 
-- **OpenMRS**: `tests/fixtures/openmrs_merged.db`,
+- **OpenMRS**: `tests/fixtures/openmrs_merged.db` (rebuilt 2026-09-24
+  after the `decision_subject` junction-row fix and the `fitness.py`
+  `_unique_key_sets` casing fix -- see "Latest snapshot" above),
   `generator/experiment_runs/OpenMRS__dynamosa_nsga2__budget1x__seed0.pkl`,
   no `--not-persisted-json`.
 - **Spree**: `tests/fixtures/spree_merged.db` (rebuilt 2026-09-24 after

@@ -160,6 +160,48 @@ mutually-consistent real subject) rather than either of the two
 validator bugs above — that residual gap is generator-side, out of this
 investigation's own scope, and not pursued further here.
 
+**That generator-side gap — never constructing a decision's own real
+subject row when no leaf reads it directly — was investigated further
+and fixed 2026-09-24**, in `generator/compile_constraints.py` (a new
+`decision_subject` compile-time field, a generator-owned port of THIS
+module's own `subject_table_for_decision` algorithm — chosen over
+importing it directly, to preserve the "Architectural separation
+requirement" section's own "no overlap in function calls" in both
+directions, not just the direction it's literally written for) plus a
+new merge-time consumer in `generator/dynamosa.py`'s
+`merge_archive_candidate`. Found in exactly 2 decisions (FLEX2's
+`Course Load Limit`, OpenMRS's `Identifier Uniqueness Check`) — a
+third suspect, Spree's `Promotion Customer Group Eligibility`, turned
+out to be a genuine one-to-many backward-join gap instead once a real
+bug in THIS module's own `tables_referenced` was found and fixed (see
+below). Result: OpenMRS 41→42 verified
+(`Identifier Uniqueness Check::rule_1`), zero regressions anywhere;
+`Course Load Limit` remains 0/11 for the separate, already-disclosed
+value-alignment reason above (the junction row now genuinely exists
+and cross-references correctly, confirmed directly — this fix solves
+the structural correspondence, not the search's own value coordination
+across it). Full details, including two more independently-found bugs
+fixed the same day, in `KNOWN_ISSUES.md`'s cross-case-study entry.
+
+**Fixed a real bug in this module's own `tables_referenced` while
+building the above (2026-09-24): `substituted_decision` was dead
+code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated
+per-kind dispatch further down, returning an empty table set
+unconditionally) AND had its own dedicated recursive-into-
+free-variables branch later in this same function — permanently
+unreachable, since the `_NON_TABLE_KINDS` check ran first. Confirmed load-bearing, not cosmetic: Spree's `Promotion
+Customer Group Eligibility::rule_4` has a `substituted_decision`
+(`matchingCustomerGroupCount`) whose own free variable
+(`customerGroupIds`) is a plain `schema_column` on
+`spree_customer_group_users` — a real table this decision's own
+`join_paths` was silently missing, a latent `NotImplementedError`
+`_row_for_table` would have raised the moment real verification ever
+reached that variable. Fixed by removing `substituted_decision` from
+`_NON_TABLE_KINDS`; this decision's own subject then correctly fails to
+resolve at all (a genuine one-to-many gap to `spree_customer_group_users`,
+no forward-FK or shared-PK-subtype path exists), matching
+`KNOWN_ISSUES.md`'s corrected diagnosis for it.
+
 **`coverage.py` built.** Aggregates every decision in a case study
 against one already-materialized database and writes the three spec'd
 output files: `objective_results.csv` (one row per compiled objective:

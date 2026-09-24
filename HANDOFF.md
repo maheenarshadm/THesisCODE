@@ -173,10 +173,10 @@ file's last recorded values, not a fresh `coverage.py` invocation,
 unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
-provenance): raw verified coverage OpenMRS 57.7%, Spree 58.1%, FLEX2
+provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
 38.2%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-73.2%, Spree 81.8%, FLEX2 39.6%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 39.6%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -246,6 +246,36 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
    reason (the search's own merge never aligns all 4 of this composite
    record's own independent leaves onto one consistent real subject) —
    out of this investigation's own scope, not pursued further.
+8. Investigated and fixed the "generator-side leaf-alignment gap" #7
+   flagged above — turned out to be a more structural problem than
+   "values don't align": `dynamosa.py`'s own per-objective row
+   construction has zero concept of a decision's real DMN subject
+   table, driven entirely by which tables a leaf reads. Checked every
+   decision in every case study for this shape; found it in exactly 2
+   (FLEX2's `Course Load Limit`, OpenMRS's `Identifier Uniqueness
+   Check` — a third suspect, Spree's `Promotion Customer Group
+   Eligibility`, turned out to be a genuine one-to-many backward-join
+   gap once a real bug in `subject_table.py` was found and fixed, see
+   below). Fixed by extending `compile_constraints.py` with a new
+   `decision_subject` compile-time field (a generator-owned port of
+   `validation_oracle/subject_table.py`'s own algorithm, chosen over
+   importing it directly to preserve architectural separation in both
+   directions) and a new merge-time consumer in `dynamosa.py` that
+   builds the missing subject row once, post-search, with real FK links
+   to the same already-solved rows. Found and fixed two more real,
+   independent bugs verifying this: `subject_table.py`'s own
+   `substituted_decision` handling was dead code (silently missing a
+   real table dependency for Spree's `Promotion Customer Group
+   Eligibility::rule_4`), and `fitness.py`'s `_unique_key_sets` did a
+   case-sensitive schema lookup that silently broke OpenMRS's own PK
+   repair the moment multiple same-table rows needed a fresh PK in one
+   pass. Result, verified via a fresh per-objective diff across all 4
+   case studies: OpenMRS 41→42 (`Identifier Uniqueness Check::rule_1`),
+   zero regressions anywhere. `Course Load Limit` remains 0/11 — the
+   junction row now genuinely exists and cross-references correctly,
+   but the search's own values still don't jointly satisfy the DMN
+   condition for one real subject — a separate, disclosed gap this fix
+   was never scoped to solve.
 
 ## 7. Planned / open work
 
@@ -253,8 +283,11 @@ Full, itemized list with root causes and what fixing each would require:
 **`validation_oracle/KNOWN_ISSUES.md` → "Open issues"**. Headlines:
 
 - Spree: 1 row-finding gap remains (`Promotion Customer Group
-  Eligibility`, needing a disclosed join-construction override —
-  `Promotion Usage Limit Exceeded` is now closed, see §6 above). One
+  Eligibility`, rules 1/2/4 — confirmed 2026-09-24 to be a genuine
+  one-to-many backward-join gap to `spree_customer_group_users`
+  (`rule_4`'s own need), needing a disclosed backward-join override,
+  same category as FLEX2's 5 below, not a "missing junction row" issue
+  — `Promotion Usage Limit Exceeded` is now closed, see §6 above). One
   further, narrower gap in the now-closed decision:
   `Promotion Usage Limit Exceeded::rule_3` itself still doesn't verify
   (no constructed subject reaches `adjustedCreditsCount >= usageLimit`)
@@ -262,8 +295,10 @@ Full, itemized list with root causes and what fixing each would require:
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
   for Spree/jBilling elsewhere); `Course Replacement Eligibility`
   (likely a one-line fix, reusing existing infrastructure); `Course Load
-  Limit` — both validator bugs blocking it are now fixed (§6 above); the
-  remaining 0/11 is a genuine generator-side leaf-alignment gap, not yet
+  Limit` — the junction-row gap is now fixed (§6 item 8 above; the row
+  genuinely exists and cross-references correctly), but it's still
+  0/11 verified — the search's own values across its 4 independent
+  leaves don't jointly align for any one real subject, not yet
   investigated further; an audit question on `Attendance Eligibility
   For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked

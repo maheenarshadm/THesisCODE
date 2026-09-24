@@ -938,6 +938,227 @@ def fk_closure(seed_tables, fk_graph, all_tables, max_tables=300):
 
 
 # ---------------------------------------------------------------------------
+# 4b. Decision subject table (2026-09-24) -- a generator-owned port of
+# validation_oracle/subject_table.py's own algorithm, computed here at
+# compile time and attached to every compiled record as a NEW
+# `decision_subject` field, rather than imported from validation_oracle/
+# directly.
+#
+# Why a port, not an import: DESIGN.md's own "Architectural separation
+# requirement" is explicit that the validator and the search approach
+# must have "no overlap in function calls" -- stated as a constraint on
+# what the VALIDATOR may import from the generator, but the underlying
+# intent (the generator must not be shaped by knowledge of how it is
+# independently checked) cuts the same way in the other direction.
+# Confirmed by grep, before this change: zero references from any
+# generator/*.py file into validation_oracle/subject_table.py or
+# schema_utility.py. This keeps that true, by giving the generator its
+# OWN, independently-computed answer to the same real, schema-level
+# question -- exactly the same precedent DESIGN.md already carves out
+# for Phase 1's OWN compile-time metadata ("declarative... not a
+# search-time computed value or verdict").
+#
+# Why this needs to exist at all: found investigating why FLEX2's
+# `Course Load Limit` (and, it turned out, Spree's `Promotion Customer
+# Group Eligibility` and OpenMRS's `Identifier Uniqueness Check`) never
+# verify despite the search claiming coverage -- `dynamosa.py`'s own
+# per-objective focal-row construction is driven ENTIRELY by which
+# tables a record's own leaf variables read (`_focal_tables_for_leaf`),
+# with zero awareness of a decision's real DMN "subject" grain. When
+# that subject is a pure junction/link table no leaf ever reads directly
+# (confirmed real, not hypothetical, for all 3 decisions above), the
+# generator never constructs it at all -- every individual fact it DOES
+# build may be correct in isolation, but nothing ever ties them together
+# as "the same real case," so independent verification can never find a
+# corresponding subject row.
+#
+# Deliberately NARROWER scope than validation_oracle/subject_table.py's
+# own algorithm, disclosed rather than silently assumed equivalent:
+# - Forward FK edges only (schema's own `fk_columns`) -- no port of
+#   `schema_utility.functional_backward_edges`'s shared-PK-subtype
+#   backward traversal. A decision needing that to find a unique root
+#   simply gets no `decision_subject` here (same as today, no worse).
+# - A genuinely ambiguous edge (more than one distinct FK column between
+#   the same two tables) is skipped, never resolved via a
+#   `join_disambiguation.py`-style override -- no override data is
+#   duplicated here. Skipping can only ever produce "no unique root
+#   found" (this pass attaches nothing), never a wrong answer.
+# - `filter_placeholder_sources.py`'s own disclosed overrides ARE
+#   ported (just the one real, non-test entry that matters for actual
+#   compiled data, `('Spree', 'promotion_id') -> 'spree_order_promotions'`)
+#   -- confirmed load-bearing: without it, `Promotion Customer Group
+#   Eligibility`'s own `spree_order_promotions` subject is unreachable
+#   from `all_tables` at all (its own `fk_closure_tables` don't include
+#   it either), so the validator's OWN successful resolution of this
+#   decision's subject depends on this exact override too.
+#
+# A failure to resolve a subject here is never a hard compile error --
+# `compute_decision_subject` returns None (not attaching the field to
+# any of that decision's own records), exactly the same "don't block
+# the whole compile" discipline every other soft gap in this file
+# already follows. A decision with no `decision_subject` field simply
+# gets none of this fix's benefit -- not worse than before this existed.
+# ---------------------------------------------------------------------------
+
+_DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
+    # Mirrors validation_oracle/filter_placeholder_sources.py's own
+    # FILTER_PLACEHOLDER_SOURCES entry for the SAME real-world fact --
+    # duplicated, not imported, per this section's own docstring. Kept
+    # in sync by hand; if the validator's own copy ever changes, this
+    # one needs the same edit.
+    ('Spree', 'promotion_id'): 'spree_order_promotions',
+}
+
+_PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
+
+
+def _load_raw_schema(cs):
+    with open(CASE_STUDY_SCHEMA_JSON[cs], encoding='utf-8') as f:
+        return json.load(f)
+
+
+def _schema_table_entry(raw_schema, table):
+    return raw_schema.get(table) or raw_schema.get(table.upper()) or raw_schema.get(table.lower())
+
+
+def _canonical_table_name(raw_schema, table):
+    for candidate in (table, table.upper(), table.lower()):
+        if candidate in raw_schema:
+            return candidate
+    return table
+
+
+def _pk_columns_for(raw_schema, table):
+    pk = (_schema_table_entry(raw_schema, table) or {}).get('pk')
+    if pk is None:
+        return []
+    return pk if isinstance(pk, list) else [pk]
+
+
+def _fk_edges_for(raw_schema, table):
+    entry = _schema_table_entry(raw_schema, table) or {}
+    return [{**e, 'ref_table': _canonical_table_name(raw_schema, e['ref_table'])}
+            for e in entry.get('fk_columns') or []]
+
+
+def _decision_subject_tables_referenced(cs, record):
+    """Every table this record's own `variable_resolution` reads
+    DIRECTLY (needing a real join path from the subject row to reach),
+    for root-picking purposes -- reuses this module's own
+    `collect_tables_from_resolution` (already built for
+    `fk_closure_tables`) for most kinds, EXCEPT `exists`/
+    `derived_aggregate` with a `filter_text`: that shape is a
+    self-contained correlated query against its own candidate/aggregate
+    table, built from a raw WHERE substituting the SUBJECT row's own
+    columns/placeholders -- `db_resolver.resolve` queries that table
+    directly, never joining to it from the subject, so it needs no join
+    path at all (reusing `collect_tables_from_resolution`'s own
+    unconditional `candidate_tables`/`table` addition here would wrongly
+    demand one). Only a placeholder that ISN'T on the subject row needs
+    a real join, via `_DECISION_SUBJECT_PLACEHOLDER_SOURCES`'s disclosed
+    source table -- mirrors `validation_oracle/subject_table.py`'s own
+    `_TABLE_EXTRACTORS['exists'/'derived_aggregate']` exactly (confirmed
+    necessary, not a hypothetical edge case: Spree's own
+    `promotionTargetGroupsConfigured` has both a `filter_text` AND a
+    `candidate_tables`, and only the placeholder-sourced table is
+    actually reachable from this decision's real subject)."""
+    tables = set()
+    for node in record.get('variable_resolution', {}).values():
+        if not isinstance(node, dict):
+            continue
+        filter_text = node.get('filter_text')
+        if node.get('kind') in ('exists', 'derived_aggregate') and filter_text:
+            for placeholder in _PLACEHOLDER_NAME_RE.findall(filter_text):
+                extra = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, placeholder))
+                if extra:
+                    tables.add(extra)
+            continue
+        collect_tables_from_resolution(node, tables)
+    return tables
+
+
+def _build_subject_join_path(raw_schema, root, target, allowed_tables):
+    """Forward-FK-only BFS from `root` to `target`, restricted to
+    `allowed_tables` -- see this section's own docstring for the
+    disclosed narrower scope (no functional-backward-edge traversal, no
+    disambiguation-override support) relative to
+    `schema_utility.build_join_path`. Returns a hop list, or None if
+    unreachable/ambiguous within scope."""
+    root = _canonical_table_name(raw_schema, root)
+    target = _canonical_table_name(raw_schema, target)
+    if root == target:
+        return []
+
+    allowed = {_canonical_table_name(raw_schema, t) for t in allowed_tables} | {root, target}
+    visited = {root}
+    queue = [(root, [])]
+    while queue:
+        current, path = queue.pop(0)
+        by_target = {}
+        for edge in _fk_edges_for(raw_schema, current):
+            nxt = edge['ref_table']
+            if nxt in allowed and nxt not in visited:
+                by_target.setdefault(nxt, []).append(edge)
+        for nxt, candidate_edges in by_target.items():
+            distinct_columns = {e['column'] for e in candidate_edges}
+            if len(distinct_columns) > 1:
+                continue  # genuine ambiguity, no override data here -- skip, never guess
+            edge = candidate_edges[0]
+            hop = {'from_table': current, 'from_column': edge['column'],
+                   'to_table': nxt, 'to_column': edge['ref_column']}
+            new_path = path + [hop]
+            if nxt == target:
+                return new_path
+            visited.add(nxt)
+            queue.append((nxt, new_path))
+    return None
+
+
+def _pick_subject_root(raw_schema, all_tables, closure_tables):
+    candidate_pool = closure_tables | all_tables
+    candidates = [
+        root for root in candidate_pool
+        if all(_build_subject_join_path(raw_schema, root, t, closure_tables) is not None
+               for t in all_tables - {root})
+    ]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def compute_decision_subject(cs, decision_records, raw_schema):
+    """(table, pk_columns, joins) for ONE decision's real DMN subject
+    grain, or None if it can't be determined within this pass's own
+    disclosed scope (never a guess -- see this section's own docstring).
+    `decision_records` is every compiled record for ONE decision (any
+    variant/provenance suffix included; the subject is a property of the
+    decision, not of one grounding option)."""
+    all_tables = set()
+    closure_tables = set()
+    for r in decision_records:
+        closure_tables |= {_canonical_table_name(raw_schema, t) for t in r.get('fk_closure_tables', [])}
+        all_tables |= {_canonical_table_name(raw_schema, t)
+                       for t in _decision_subject_tables_referenced(cs, r)}
+
+    if not all_tables:
+        return None
+    if len(all_tables) == 1:
+        table = next(iter(all_tables))
+        return {'table': table, 'pk_columns': _pk_columns_for(raw_schema, table), 'joins': {}}
+
+    root = _pick_subject_root(raw_schema, all_tables, closure_tables)
+    if root is None:
+        return None
+    joins = {}
+    for t in all_tables:
+        if t == root:
+            continue
+        path = _build_subject_join_path(raw_schema, root, t, closure_tables)
+        if path is None:
+            return None
+        joins[t] = path
+    return {'table': root, 'pk_columns': _pk_columns_for(raw_schema, root), 'joins': joins}
+
+
+# ---------------------------------------------------------------------------
 # 5. Record assembly
 # ---------------------------------------------------------------------------
 
@@ -1589,6 +1810,22 @@ def compile_case_study(cs, mapping_source='ground_truth'):
                 if provenance_suffix:
                     record['grounded_upstream_branches'] = provenance_suffix
                 records.append(record)
+
+    # Decision subject table (§4b above) -- computed once per decision
+    # name (never per variant/provenance-suffixed record: the subject is
+    # a property of the DECISION, not of one grounding option), and
+    # attached to every one of that decision's own compiled records. A
+    # decision this pass can't resolve simply gets no `decision_subject`
+    # field at all -- never a hard compile error, never a guess.
+    raw_schema = _load_raw_schema(cs)
+    records_by_decision_name = {}
+    for r in records:
+        records_by_decision_name.setdefault(r['decision_name'], []).append(r)
+    for decision_records in records_by_decision_name.values():
+        subject = compute_decision_subject(cs, decision_records, raw_schema)
+        if subject is not None:
+            for r in decision_records:
+                r['decision_subject'] = subject
 
     return records, blocked
 

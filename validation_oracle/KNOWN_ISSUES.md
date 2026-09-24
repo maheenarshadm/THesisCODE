@@ -17,7 +17,7 @@ excluded from all coverage numbers per an explicit decision below):
 
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
-| OpenMRS | 41/56 (73.2%) | 14/14 (100%) |
+| OpenMRS | 42/56 (75.0%) | 14/14 (100%) |
 | FLEX2 | 21/55 (38.2%) | 2/10 |
 | Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
@@ -149,71 +149,129 @@ excluded from all coverage numbers per an explicit decision below):
   fully fixed; what's left is exactly the gap documented immediately
   below — not a coincidence, the SAME root cause.
 
-- **Generator never constructs a decision's own real subject row when
-  no leaf reads it directly — confirmed in 3 decisions across 3
-  different case studies (2026-09-24), including a correction to an
-  existing wrong diagnosis for one of them.** `dynamosa.py`'s own
+- **FIXED 2026-09-24: generator never constructed a decision's own real
+  subject row when no leaf reads it directly.** `dynamosa.py`'s own
   per-objective focal-row logic (`_focal_tables_for_leaf`/
   `_focal_table_set_for`) decides which tables get a dedicated row
-  PURELY from which tables a record's own leaf variables read —
-  `dynamosa.py`/`candidate.py`/`mutation.py` contain zero references to
-  `subject_table.py` anywhere, confirmed by direct grep. When a
-  decision's real subject (per `subject_table_for_decision`'s own
-  broadened backward-search, built specifically to find a subject no
-  input directly references — see `DESIGN.md`) is a pure junction/link
-  table no leaf ever reads, the generator has no mechanism to ever
-  build one, even though every individual fact it DOES need may be
-  perfectly correct in isolation.
+  PURELY from which tables a record's own leaf variables read, with no
+  concept of a decision's real DMN subject grain at all (confirmed by
+  direct grep, before this fix: zero references from any generator
+  file into `validation_oracle/subject_table.py`). When that subject is
+  a pure junction/link table no leaf ever reads (confirmed real in
+  FLEX2's `Course Load Limit` — reads only `SEMESTER`/`STUDENT_PROGRAM`,
+  no FK between them at all, real subject `STUDENT_SEMESTER` — and
+  OpenMRS's `Identifier Uniqueness Check` — subject `patient_identifier`,
+  which `exists`-kind leaves scan directly but never anchor a dedicated
+  focal row to), the generator never built one at all, so independent
+  verification could never find a corresponding real case, even when
+  every individual fact was correct in isolation.
 
-  Confirmed with direct evidence in:
-  - **FLEX2::`Course Load Limit`** (see the entry above) — subject
-    `STUDENT_SEMESTER`, focal tables only `{SEMESTER, STUDENT_PROGRAM}`.
-    Zero real `STUDENT_SEMESTER` rows correspond to this decision's own
-    solved facts anywhere in the merged database (the 22 that exist all
-    belong to the unrelated `Graduation Eligibility`).
-  - **Spree::`Promotion Customer Group Eligibility`** (rules 1, 2, 4) —
-    subject `spree_order_promotions`, focal tables only
-    `{spree_customer_group_users, spree_orders}`. Zero real
-    `spree_order_promotions` rows exist in the merged database at all.
-    **This corrects an existing wrong diagnosis** — see that decision's
-    own entry below, retracted and replaced.
-  - **OpenMRS::`Identifier Uniqueness Check`** — subject
-    `patient_identifier`, focal tables only `{patient_identifier_type}`.
-    A messier, partial case: `patient_identifier` isn't empty (8 rows),
-    but every one belongs to other, unrelated decisions
-    (`Preferred Identifier Requirement`, `Identifier Location
-    Requirement`) — `rule_1`/`rule_4` are `false_positive` for exactly
-    this reason, while `rule_2` happens to verify anyway through
-    incidental overlap with one of those unrelated rows, not because
-    anything was built for it on purpose.
+  **Option chosen: extend `compile_constraints.py`, not import from
+  `validation_oracle/`.** `DESIGN.md`'s own "Architectural separation
+  requirement" states, as a hard constraint, "no overlap in function
+  calls with the search approach" — written as a rule on what the
+  validator may import from the generator, but the same intent (the
+  generator must not be shaped by knowledge of how it's independently
+  checked) applies in the other direction too. So rather than import
+  `subject_table_for_decision`, `compile_constraints.py` now computes
+  the SAME fact independently (`compute_decision_subject`, a generator-
+  owned port of that module's own forward-FK-BFS algorithm, deliberately
+  NARROWER in scope — forward edges only, no disambiguation-override
+  support — disclosed in that function's own docstring) and stores it as
+  a new `decision_subject: {table, pk_columns, joins}` field on every
+  compiled record of a decision, exactly the same precedent already
+  established for Phase 1's other compile-time metadata.
+  `dynamosa.py`'s `merge_archive_candidate` reads this field ONCE, at
+  the very end of merging each covered record's own rows in: if the
+  subject table isn't already among that record's own focal tables, it
+  builds a real junction row there, with FK columns explicitly set to
+  the SAME already-merged, already-offset focal rows for the record's
+  other tables (assigning a fresh PK to a referenced row on the spot,
+  via `mutation.py`'s existing `_fresh_key_value`, when that row's own
+  PK was never otherwise set — never left to `materialize.py`'s later,
+  offset-oblivious surrogate-key fill, which has no way to also update
+  a cross-reference elsewhere). No leaf ever reads this row during
+  search, so nothing about the population loop, mutation, or fitness
+  changed at all — this is purely a one-time, post-search synthesis
+  step.
+
+  **Two more real, independently-confirmed bugs found verifying this,
+  both fixed the same day:**
+  1. `validation_oracle/subject_table.py`'s own `tables_referenced` had
+     `substituted_decision` listed in BOTH `_TABLE_EXTRACTORS`'-checked
+     `_NON_TABLE_KINDS` (returning an empty table set unconditionally)
+     AND had its own dedicated recursive-into-free-variables branch
+     further down — permanently unreachable dead code, since the
+     `_NON_TABLE_KINDS` check ran first. Confirmed real, not cosmetic:
+     Spree's `Promotion Customer Group Eligibility::rule_4` has a
+     `substituted_decision` (`matchingCustomerGroupCount`) whose own
+     free variable reads `spree_customer_group_users` directly, so the
+     validator's own `join_paths` was silently missing that table — a
+     latent `NotImplementedError` waiting to fire the moment real
+     verification ever reached that variable. Fixed by removing
+     `substituted_decision` from `_NON_TABLE_KINDS`.
+  2. `fitness.py`'s `_unique_key_sets` did a plain, case-SENSITIVE
+     `schema.get(table, {})` lookup, unlike its own caller
+     (`mutation.py`'s `_repair_row`, one line earlier) which already
+     handles case-insensitivity. Invisible until this fix, since it only
+     matters when MULTIPLE rows of the SAME table need a fresh PK
+     within one `repair_candidate` pass — exactly what this fix's own
+     junction-row construction does for the first time. For any
+     lowercase-schema case study (OpenMRS), the table name
+     `Candidate.add_row` always uppercases internally never matched the
+     schema's own lowercase key, so `_repair_row` silently treated the
+     table's own declared PK as an ordinary column and filled it with a
+     single, shared, non-unique PLACEHOLDER value instead of a real
+     fresh one — confirmed directly: 3 new `PATIENT_IDENTIFIER` rows all
+     silently received `patient_identifier_id=1`, a real
+     `sqlite3.IntegrityError: UNIQUE constraint failed` the moment this
+     was actually exercised. Fixed with the same case-insensitive
+     fallback `_repair_row`'s own `info` lookup already uses.
+
+  **Verified result, confirmed via a fresh, per-objective before/after
+  diff across all 4 case studies (not just totals) after re-running the
+  Spree search — needed since fixing bug 2 above touched
+  `spree_schema_full.json`'s own `fk_columns` too, see below — and
+  rebuilding every fixture:** OpenMRS 41→42 verified
+  (`Identifier Uniqueness Check::rule_1` flips `false_positive` →
+  `confirmed` — the fix's real, structural win), zero flips anywhere
+  else in OpenMRS, and zero flips at all in FLEX2/Spree/jBilling.
+  `Course Load Limit` itself is STILL 0/11 — the junction row now
+  exists (confirmed directly: a real `STUDENT_SEMESTER` row correctly
+  cross-references the SAME objective's own `SEMESTER`/`STUDENT_PROGRAM`
+  rows), but the search's own values on each side still don't jointly
+  satisfy the DMN condition for any one real subject — a separate,
+  disclosed "composite-leaf value alignment" gap (see that decision's
+  own earlier entry above) this fix was never scoped to solve; it
+  solves the STRUCTURAL correspondence, not the search's own value
+  coordination. Full self-test suite (`candidate.py`, `mutation.py`,
+  `materialize.py`, `dynamosa.py`, `subject_table.py`,
+  `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+  `test_serialized_field_roundtrip.py`) re-run and passing.
+
+  **While porting this, also needed a THIRD instance of this session's
+  own recurring `fk_columns: []` schema-extraction gap** —
+  `spree_order_promotions`/`spree_promotion_rules` both had it despite
+  real, unambiguous FKs (confirmed against `schemas/spree_schema.rb`),
+  previously papered over only via `validation_oracle/
+  supplementary_fk_edges.py`'s own additive override (which the
+  generator-owned port, by design, does not import) — fixed the same
+  way as the other two Spree instances this session, directly in
+  `spree_schema_full.json`. This is what let
+  `compute_decision_subject` resolve `Promotion Customer Group
+  Eligibility`'s own subject at all before bug 1 above was found and
+  fixed — see that decision's own corrected entry below for the final
+  word on where it landed.
 
   **Not the same as the "0 candidates qualify, refusing to guess"
   failures** (FLEX2's `Admission Closure Eligibility`/`Course
   Registration Eligibility`/`Credit Transfer Exemption`/`Graduation
   Eligibility`/`Summer Semester Registration`, Spree's `Promotion Item
-  Total Eligibility`) — those fail one stage EARLIER, when
+  Total Eligibility` AND, as of this fix, `Promotion Customer Group
+  Eligibility` too — see below) — those fail one stage EARLIER, when
   `subject_table_for_decision` itself can't find a unique root at all.
   Whether any of them would also hit this junction gap once/if that
   earlier problem is resolved is untested.
-
-  **Scope of a real fix, not yet built**: `dynamosa.py`'s
-  `_seed_shared_population`/`_focal_for_mutate` would need to call
-  `subject_table_for_decision` per decision (a new dependency the
-  generator does not currently have on this validator-side module) and,
-  whenever the resolved subject table differs from every table already
-  in `_focal_table_set_for(record)`, additionally construct a dedicated
-  row for it — with its own FK columns explicitly set to point at the
-  SAME focal rows already built for this objective's other tables (not
-  left to `repair_candidate`'s generic, timing-fragile NOT-NULL
-  filling, which is what currently happens: traced `Course Load
-  Limit`'s own `STUDENT_PROGRAM.ROLL_NO`, a table's own declared PK,
-  and found the search itself never sets it at all — it only gets a
-  value from `materialize.py`'s own late, offset-oblivious surrogate-key
-  fill, with zero relationship to any FK that should reference it).
-  This is a real architectural addition to the generator's per-objective
-  row-construction, affecting an unknown but non-trivial number of
-  decisions across every case study — not a one-line fix, and not yet
-  scoped in more detail than this.
 
 ### Spree
 
@@ -254,26 +312,32 @@ excluded from all coverage numbers per an explicit decision below):
   Exceeded` (3 of 4 rules) and `One-Use-Per-User Promotion
   Eligibility::rule_3`:
   - **`Promotion Customer Group Eligibility` (rules 1, 2, 4 — not
-    `rule_3`, out of scope above) — root cause CORRECTED 2026-09-24,
-    retracting the diagnosis below.** Originally attributed to a
+    `rule_3`, out of scope above) — root cause corrected TWICE the same
+    day (2026-09-24); final word below.** Originally attributed to a
     one-to-many backward join `subject_table_for_decision` supposedly
-    "correctly refuses to guess" at, needing a disclosed override to
-    pick one `spree_promotion_rules`/`spree_order_promotions` row.
-    **This was wrong** — checked directly: `subject_table_for_decision`
-    resolves this decision's subject cleanly and uniquely right now,
-    as `spree_order_promotions` (one FK hop from `spree_orders`), no
-    ambiguity, no refusal. The real cause is the SAME structural gap as
-    FLEX2's `Course Load Limit` (see the new cross-case-study entry
-    above, "Generator never constructs a decision's own real subject
-    row when no leaf reads it directly"): none of this decision's own
-    leaves (`spree_customer_group_users`, `spree_orders`,
-    `spree_promotion_rules.type`) read `spree_order_promotions`
-    directly, so `dynamosa.py`'s own leaf-driven focal-table logic never
-    builds one — confirmed, the real merged database has zero
-    `spree_order_promotions` rows. Not closeable by a disclosed
-    join-selection override (there's no real ambiguity to disambiguate);
-    needs the generator-side fix scoped in the cross-case-study entry
-    instead.
+    "correctly refuses to guess" at. **Wrong** — it actually resolved
+    this decision's subject cleanly, as `spree_order_promotions`, no
+    ambiguity. That, in turn, looked like the SAME "generator never
+    builds the junction row" gap as FLEX2's `Course Load Limit` (see the
+    cross-case-study entry above) — **also not the final answer**:
+    building that fix's own generator-side port surfaced a real bug in
+    `subject_table.py` itself (`substituted_decision` dead code, see the
+    cross-case-study entry's own bug #1) that was silently letting this
+    decision's subject resolve AT ALL. Once fixed, `rule_4`'s own
+    `matchingCustomerGroupCount` correctly requires reaching
+    `spree_customer_group_users` too — a table with NO real forward-FK
+    or shared-PK-subtype path from `spree_order_promotions` at all (a
+    genuine one-to-many: one user can belong to many customer groups).
+    **Final, confirmed answer**: this decision genuinely belongs in the
+    SAME "0 candidates qualify, refusing to guess" category as the other
+    6 decisions below/above, not the junction-gap category — `rule_4`'s
+    own real one-to-many backward-join need blocks a subject from being
+    determined for the WHOLE decision (subject is a per-decision fact,
+    shared by all its rules), so `rule_1`/`rule_2` don't benefit from
+    the junction-row fix either, even though neither of them touches
+    `spree_customer_group_users` at all. Needs the same kind of
+    disclosed backward-join override as the other "0 candidates"
+    decisions, not the generator-side fix built above.
 
 
 ### FLEX2

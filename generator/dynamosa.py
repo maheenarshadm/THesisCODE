@@ -176,7 +176,7 @@ from candidate import (Candidate, derive_genome, build_seed_candidate,  # noqa: 
                         _SIMPLE_EQ_CONJUNCT_RE, _BARE_TABLE_DOT_COLUMN_RE)
 from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
-                       _leaf_variables, _schema_for, candidate_values)
+                       _leaf_variables, _schema_for, candidate_values, _fresh_key_value)
 from crossover import crossover  # noqa: E402
 
 
@@ -1439,6 +1439,72 @@ def merge_archive_candidate(archive, records, case_study):
 
         if merged_rec_focal:
             merged_focal_maps[rid] = merged_rec_focal
+
+        # (3) The decision's own real DMN subject row (2026-09-24) --
+        # `compile_constraints.py`'s own `decision_subject` field (a
+        # generator-owned port of `validation_oracle/subject_table.py`'s
+        # algorithm, computed once at compile time -- see that module's
+        # own docstring for why a port, not an import). No leaf variable
+        # ever needs this row DURING search (fitness never reads it), so
+        # this is deliberately the ONLY place it gets built -- a
+        # one-time, post-search synthesis step, not a change to the
+        # population loop, mutation, or fitness at all.
+        #
+        # Found real, not hypothetical: a decision whose real subject is
+        # a pure junction/link table no leaf ever reads directly (e.g.
+        # FLEX2's `Course Load Limit` -- reads only `SEMESTER`/
+        # `STUDENT_PROGRAM`, no FK between them at all, real subject
+        # `STUDENT_SEMESTER`) never got this row built at all before this
+        # fix: every individual fact could be independently correct, but
+        # nothing ever tied them together as "the same real case," so
+        # independent verification could never find a corresponding
+        # subject to enumerate.
+        subject = r.get('decision_subject')
+        if subject and not any(t.upper() == subject['table'].upper() for t in merged_rec_focal):
+            junction_row = {}
+            resolvable = bool(subject['joins'])
+            for target_table, hops in subject['joins'].items():
+                # Deliberately narrow scope, disclosed rather than
+                # silently guessed: only a SINGLE hop from the subject to
+                # each other table this record needs (the confirmed real
+                # shape for every decision this applies to so far) is
+                # attempted -- a genuine multi-hop chain would need a
+                # fresh intermediate row this pass does not attempt to
+                # synthesize, so it's skipped instead of half-built.
+                if len(hops) != 1:
+                    resolvable = False
+                    break
+                hop = hops[0]
+                target_focal = merged_rec_focal.get(hop['to_table']) or next(
+                    (v for k, v in merged_rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
+                if target_focal is None:
+                    # This record's own construction never built a
+                    # dedicated row for a table the subject needs to
+                    # link through -- can't wire a real FK to a row that
+                    # doesn't exist; skip rather than fabricate one.
+                    resolvable = False
+                    break
+                pk_value = target_focal.get(hop['to_column'])
+                if pk_value is None:
+                    # The referenced row's own PK was never set by
+                    # search/seeding (a real, confirmed gap for e.g.
+                    # STUDENT_PROGRAM.ROLL_NO -- left for materialize.py's
+                    # own LATER, offset-oblivious surrogate-key fill,
+                    # which has no way to also update an FK elsewhere
+                    # that should match it). Assigned HERE instead,
+                    # synchronously, so the new junction row's own FK can
+                    # actually reference the real, final value -- reuses
+                    # `mutation.py`'s own `_fresh_key_value` (already
+                    # collision-safe against everything in `merged` so
+                    # far), not a fresh ad hoc scheme.
+                    pk_value = _fresh_key_value(merged, hop['to_table'], hop['to_column'])
+                    target_focal[hop['to_column']] = pk_value
+                junction_row[hop['from_column']] = pk_value
+            if resolvable and junction_row:
+                junction_row[_OWNER_KEY] = rid
+                merged.add_row(subject['table'], junction_row)
+                merged_rec_focal[subject['table']] = junction_row
+                merged_focal_maps[rid] = merged_rec_focal
 
     repair_candidate(merged, case_study)
     return merged, merged_focal_maps, merged_scenario_maps, covered_record_ids

@@ -98,7 +98,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -232,7 +249,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -398,7 +432,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -596,7 +647,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -826,7 +894,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
@@ -1088,7 +1173,24 @@
    "STUDENT_SEMESTER"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -1251,7 +1353,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -1451,7 +1578,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -1683,7 +1835,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -1980,7 +2157,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -2341,7 +2543,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -2584,7 +2811,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -2864,7 +3116,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -3176,7 +3453,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -3520,7 +3822,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -3896,7 +4223,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
@@ -4304,7 +4656,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6"
-  ]
+  ],
+  "decision_subject": {
+   "table": "STUDENT_SEMESTER",
+   "pk_columns": [
+    "SEM_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
@@ -21955,7 +22332,32 @@
    "D_DEPT_TYPE"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_2",
@@ -22052,7 +22454,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3",
@@ -22177,7 +22604,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4",
@@ -22332,7 +22784,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_5",
@@ -22507,7 +22984,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_6",
@@ -22690,7 +23192,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_1",
@@ -23114,7 +23641,24 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_ATTENDANCE",
+   "pk_columns": [
+    "LECTURE_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "LECTURE": [
+     {
+      "from_table": "STUDENT_ATTENDANCE",
+      "from_column": "LECTURE_ID",
+      "to_table": "LECTURE",
+      "to_column": "LECTURE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Attendance Eligibility For Final Exam::Decision_AttendanceEligibility_Rule_2",
@@ -23238,7 +23782,24 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "STUDENT_ATTENDANCE",
+   "pk_columns": [
+    "LECTURE_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "LECTURE": [
+     {
+      "from_table": "STUDENT_ATTENDANCE",
+      "from_column": "LECTURE_ID",
+      "to_table": "LECTURE",
+      "to_column": "LECTURE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_1",
@@ -27572,7 +28133,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_2",
@@ -27682,7 +28285,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_3",
@@ -27824,7 +28469,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_4",
@@ -28010,7 +28697,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_5",
@@ -28228,7 +28957,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_6",
@@ -28478,7 +29249,49 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {
+    "concept_datatype": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     },
+     {
+      "from_table": "concept",
+      "from_column": "datatype_id",
+      "to_table": "concept_datatype",
+      "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_1",
@@ -28600,7 +29413,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_2",
@@ -28755,7 +29575,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_3",
@@ -28942,7 +29769,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_4",
@@ -29161,7 +29995,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_1",
@@ -30503,7 +31344,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_name",
+   "pk_columns": [
+    "concept_name_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_2",
@@ -30595,7 +31443,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_name",
+   "pk_columns": [
+    "concept_name_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_3",
@@ -30737,7 +31592,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_name",
+   "pk_columns": [
+    "concept_name_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_4",
@@ -30940,7 +31802,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_name",
+   "pk_columns": [
+    "concept_name_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_5",
@@ -31199,7 +32068,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_name",
+   "pk_columns": [
+    "concept_name_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_1",
@@ -31286,7 +32162,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_2",
@@ -31393,7 +32285,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_3",
@@ -31500,7 +32408,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_4",
@@ -31616,7 +32540,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_1",
@@ -31706,7 +32646,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_2",
@@ -31829,7 +32776,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_3",
@@ -31984,7 +32938,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_4",
@@ -32171,7 +33132,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_1",
@@ -32230,7 +33198,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_2",
@@ -32327,7 +33302,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_3",
@@ -32456,7 +33438,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_1",
@@ -32515,7 +33504,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_2",
@@ -32612,7 +33617,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_3",
@@ -32741,7 +33762,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_1",
@@ -32794,7 +33831,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_2",
@@ -32889,7 +33942,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_3",
@@ -33037,7 +34106,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_4",
@@ -33217,7 +34302,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_1",
@@ -33277,7 +34378,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_2",
@@ -33400,7 +34517,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_3",
@@ -33567,7 +34700,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_4",
@@ -33766,7 +34915,23 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_1",
@@ -33820,7 +34985,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_2",
@@ -33912,7 +35084,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_3",
@@ -34035,7 +35214,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_1",
@@ -34087,7 +35273,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_2",
@@ -34196,7 +35389,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_3",
@@ -34349,7 +35549,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_4",
@@ -34546,7 +35753,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_5",
@@ -34787,7 +36001,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_1",
@@ -34859,7 +36080,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_2",
@@ -34933,7 +36161,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_1",
@@ -34986,7 +36221,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_2",
@@ -35062,7 +36304,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_3",
@@ -35140,7 +36389,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_1",
@@ -35250,7 +36506,14 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_state",
+   "pk_columns": [
+    "patient_state_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_2",
@@ -35393,7 +36656,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_state",
+   "pk_columns": [
+    "patient_state_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_3",
@@ -35579,7 +36849,14 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_state",
+   "pk_columns": [
+    "patient_state_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_4",
@@ -35780,7 +37057,14 @@
    "visit_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_state",
+   "pk_columns": [
+    "patient_state_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_1",
@@ -35874,7 +37158,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "relationship",
+   "pk_columns": [
+    "relationship_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_2",
@@ -35948,7 +37239,14 @@
    "users"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "relationship",
+   "pk_columns": [
+    "relationship_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_1",
@@ -36012,7 +37310,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_2",
@@ -36069,7 +37383,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_3",
@@ -36156,7 +37486,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_4",
@@ -36243,7 +37589,23 @@
    "visit_type"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1",
@@ -36565,7 +37927,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2",
@@ -36650,7 +38019,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3",
@@ -36743,7 +38119,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1",
@@ -36787,7 +38170,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2",
@@ -36855,7 +38245,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3",
@@ -36931,7 +38328,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_1",
@@ -37764,7 +39168,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2",
@@ -37852,7 +39263,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3",
@@ -37948,7 +39366,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1",
@@ -37992,7 +39417,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2",
@@ -38074,7 +39506,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3",
@@ -38208,7 +39647,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4",
@@ -38350,7 +39796,14 @@
    "spree_promotions"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_promotions",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1",
@@ -38394,7 +39847,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2",
@@ -38454,7 +39914,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3",
@@ -38522,7 +39989,14 @@
    "spree_orders"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_orders",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1",
@@ -38565,7 +40039,14 @@
    "spree_line_items"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_line_items",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2",
@@ -38624,7 +40105,14 @@
    "spree_line_items"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_line_items",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3",
@@ -38691,7 +40179,14 @@
    "spree_line_items"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_line_items",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_1",
@@ -38734,7 +40229,14 @@
    "spree_price_adjustment_tiers"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_2",
@@ -38777,7 +40279,14 @@
    "spree_price_adjustment_tiers"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_3",
@@ -38820,7 +40329,14 @@
    "spree_price_adjustment_tiers"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_4",
@@ -38863,7 +40379,14 @@
    "spree_price_adjustment_tiers"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_5",
@@ -38908,7 +40431,14 @@
    "spree_price_adjustment_tiers"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Is Ageing Required::Decision_IsAgeingRequired_Rule_2",
@@ -39008,7 +40538,14 @@
    "period_unit"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "invoice",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Invoice Overdue Check::Decision_InvoiceOverdue_Rule_2",
@@ -39067,7 +40604,14 @@
    "period_unit"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "invoice",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_1",
@@ -39119,7 +40663,14 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "base_user",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_2",
@@ -39224,7 +40775,14 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "base_user",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_1",
@@ -39269,7 +40827,14 @@
    "generic_status_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_2",
@@ -39369,7 +40934,14 @@
    "generic_status_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_3",
@@ -39513,7 +41085,14 @@
    "generic_status_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_4",
@@ -39672,7 +41251,14 @@
    "generic_status_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_1",
@@ -40498,7 +42084,14 @@
   },
   "fk_closure_tables": [],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_2",
@@ -40585,7 +42178,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_3",
@@ -40720,7 +42320,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_4",
@@ -40898,7 +42505,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": true,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_1",
@@ -41889,7 +43503,14 @@
    "preference_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "preference",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_2",
@@ -41955,7 +43576,14 @@
    "preference_type"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "preference",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_1",
@@ -42006,7 +43634,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_2",
@@ -42096,7 +43731,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_3",
@@ -42218,7 +43860,14 @@
    "purchase_order"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_3",
@@ -42326,7 +43975,23 @@
   },
   "fk_closure_tables": [],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_2",
@@ -42409,7 +44074,23 @@
    "contact"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_3",
@@ -42546,7 +44227,23 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_4",
@@ -42727,7 +44424,23 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_1",
@@ -42774,7 +44487,14 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "item",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_2",
@@ -42837,6 +44557,13 @@
    "language"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "item",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
  }
 ]

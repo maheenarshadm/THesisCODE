@@ -729,7 +729,10 @@
       }
     ],
     "checks": [],
-    "fk_columns": []
+    "fk_columns": [
+      {"column": "order_id", "ref_table": "spree_orders", "ref_column": "id"},
+      {"column": "promotion_id", "ref_table": "spree_promotions", "ref_column": "id"}
+    ]
   },
   "spree_orders": {
     "pk": "id",
@@ -1658,7 +1661,9 @@
       }
     ],
     "checks": [],
-    "fk_columns": []
+    "fk_columns": [
+      {"column": "promotion_id", "ref_table": "spree_promotions", "ref_column": "id"}
+    ]
   },
   "spree_promotions": {
     "pk": "id",
