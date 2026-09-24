@@ -31,6 +31,7 @@ returns a `ResolvedValue` flagged `resolution_type='not_persisted_declared'`
 -- visibly NOT database-derived in every trace this produces.
 """
 import re
+import yaml
 
 _PLACEHOLDER_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
 _CONJUNCT_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*<([A-Za-z_][A-Za-z0-9_ ]*)>')
@@ -242,9 +243,47 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         value = row[node['column'].lower()] if row is not None else None
         return ResolvedValue(value, 'schema_column', table, f'{table}.{node["column"]}', row)
 
+    if kind == 'serialized_field':
+        # The independent read side of generator/materialize.py's own
+        # serialize_yaml_hash_blob (see that function's docstring for the
+        # full disclosure -- confirmed against Spree's real source,
+        # `serialize :preferences, type: Hash, coder: YAML`). Never
+        # imports that function (this project's own architectural
+        # separation rule) -- an independent re-implementation of the
+        # SAME agreed convention: YAML text, symbol-style keys rendered
+        # with a leading `:`. A row that exists but has no value at all
+        # for this column (NULL, or a key this row's own blob never set)
+        # falls back to `node.get('default')` -- the ONE ground-truth-
+        # declared default, matching what a real, unconfigured promotion
+        # rule would actually mean, never a silent None.
+        table, column, key = node['table'], node['column'], node['key']
+        row = row_for(table)
+        raw = row.get(column) if row is not None else None
+        blob = yaml.safe_load(raw) if raw else None
+        value = (blob or {}).get(f':{key}', (blob or {}).get(key, node.get('default')))
+        return ResolvedValue(value, 'serialized_field', table,
+                              f'{table}.{column}[{key}] (YAML)', row)
+
     if kind == 'null_check':
         table = node['table']
         row = row_for(table)
+        if node.get('key'):
+            # A null_check on a serialized_field's own key (e.g. Spree's
+            # amountMaxSet -- "was amount_max ever configured at all,"
+            # confirmed a real, checkable fact once amount_max's real
+            # default (nil) was confirmed against Spree's own source; the
+            # ground truth's earlier "genuinely uncertain" call predated
+            # that confirmation). Deliberately NO default substitution
+            # here (unlike the plain serialized_field read above) --
+            # existence must reflect whether the row's OWN blob actually
+            # set this key, not whether some other declared default
+            # happens to be non-null.
+            raw = row.get(node['column']) if row is not None else None
+            blob = yaml.safe_load(raw) if raw else None
+            stored = (blob or {}).get(f":{node['key']}", (blob or {}).get(node['key'])) if blob else None
+            value = stored is None
+            return ResolvedValue(value, 'null_check', table,
+                                  f"{table}.{node['column']}[{node['key']}] IS NULL (YAML)", row)
         value = (row[node['column'].lower()] is None) if row is not None else True
         return ResolvedValue(value, 'null_check', table, f'{table}.{node["column"]} IS NULL', row)
 

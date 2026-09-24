@@ -1608,6 +1608,12 @@
   },
   "spree_promotion_rules": {
     "pk": "id",
+    "serialized_columns": {
+      "preferences": {
+        "format": "yaml_hash",
+        "note": "[CONFIRMED against Spree's real source, lib/spree/core/preferences/preferable.rb: `serialize :preferences, type: Hash, coder: YAML`, mixed into every PromotionRule subclass via the generic Preferable concern -- not a guess. generator/materialize.py's own serialize_yaml_hash_blob / validation_oracle/db_resolver.py's own independent read-side implementation both consult this same declared format, 2026-09-24]"
+      }
+    },
     "columns": {
       "promotion_id": {
         "type": "bigint",

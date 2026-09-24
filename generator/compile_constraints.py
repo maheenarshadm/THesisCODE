@@ -208,11 +208,32 @@ NORMALIZE_MAPPING_TYPE = [
     ('schema gap', 'schema_gap'),
     ('not-persisted', 'not_persisted'),
     ('not persisted', 'not_persisted'),
+    ('serialized-field', 'serialized_field'),
+    ('serialized field', 'serialized_field'),
     ('derived-aggregate', 'derived'),
     ('derived - aggregate', 'derived'),
     ('derived', 'derived'),
     ('direct', 'direct'),
 ]
+
+# A ground-truth schema field naming a `serialized-field` bucket row:
+# `table.column[key]` or `table.column[key=default]` -- e.g.
+# `spree_promotion_rules.preferences[amount_min=100.0]`. Never confused
+# with the EXISTS-kind `table(col1, col2=value, ...)` bracket syntax
+# (different delimiter, different bucket, checked in an entirely
+# separate code path) -- this one names ONE key inside an already-
+# schema-declared serialized column (see schema_utility.py's own
+# `serialized_columns` schema annotation, consulted independently by
+# db_resolver.py at validation time), not a filter over real columns.
+# `default`, when given, is parsed the same permissive way
+# `_EXISTS_FILTER_TOKEN_RE` already parses a literal (int or quoted
+# string) -- anything else (a list literal, a decimal needing more than
+# that) is left unparsed rather than guessed, and the resolution simply
+# has no `default` key, matching `derive_value`'s own `node.get('default')`
+# fallback to `None`.
+_SERIALIZED_FIELD_RE = re.compile(
+    r'^\s*([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)'
+    r'\[\s*([A-Za-z_][A-Za-z0-9_]*)\s*(?:=\s*(-?\d+(?:\.\d+)?|\'[^\']*\'))?\s*\]\s*$')
 
 
 def normalize_mapping_type(raw):
@@ -671,6 +692,32 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
         return {'kind': 'not_persisted'}
     if bucket == 'schema_gap':
         return {'kind': 'schema_gap', 'notes': row['notes'], 'hinted_pairs': row['schema_pairs']}
+    if bucket == 'serialized_field':
+        m = _SERIALIZED_FIELD_RE.match(row['raw_schema_field'] or '')
+        if not m:
+            return {'kind': 'unresolved',
+                    'reason': "labeled 'serialized-field' but schema field isn't "
+                              "'table.column[key]' or 'table.column[key=default]'",
+                    'raw_schema_field': row['raw_schema_field']}
+        table, column, key, default_text = m.groups()
+        if _EXISTENCE_WORDS.search(row['notes'] or ''):
+            # An existence check ON a serialized field (e.g. Spree's
+            # amountMaxSet -- "was amount_max ever configured at all")
+            # is null_check's own job, just one level of dict access
+            # deeper -- reuses that kind directly (with `key` set) rather
+            # than inventing a parallel "is this set" kind, the same way
+            # `direct`'s own existence-check rows already reuse
+            # null_check instead of a schema_column-specific variant.
+            return {'kind': 'null_check', 'table': table, 'column': column, 'key': key, 'notes': row['notes']}
+        node = {'kind': 'serialized_field', 'table': table, 'column': column, 'key': key, 'notes': row['notes']}
+        if default_text is not None:
+            if default_text.startswith("'"):
+                node['default'] = default_text[1:-1]
+            elif '.' in default_text:
+                node['default'] = float(default_text)
+            else:
+                node['default'] = int(default_text)
+        return node
     if bucket == 'direct':
         if row['schema_pairs']:
             table, column = row['schema_pairs'][0]
@@ -901,6 +948,8 @@ def collect_tables_from_resolution(node, tables):
         tables.add(node['table'])
         for t, _c in node.get('also_valid_in', []):
             tables.add(t)
+    elif node.get('kind') == 'serialized_field':
+        tables.add(node['table'])
     elif node.get('kind') == 'derived':
         for t, _c in node.get('table_hints', []):
             tables.add(t)

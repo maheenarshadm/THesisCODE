@@ -50,6 +50,11 @@ def _placeholder_source_tables(case_study, filter_text):
 # `tables_referenced` can call them uniformly.
 _TABLE_EXTRACTORS = {
     'schema_column': lambda n, cs: {n['table']},
+    # Same reachability requirement as schema_column -- a real join path
+    # to the row is still needed (db_resolver.resolve calls row_for, same
+    # as schema_column does); only WHAT's read off that row differs (one
+    # key out of a parsed YAML blob instead of a plain column).
+    'serialized_field': lambda n, cs: {n['table']},
     'null_check': lambda n, cs: {n['table']},
     'derived_case': lambda n, cs: {n['table']},
     # derived_aggregate is ALWAYS self-contained for its OWN target table:

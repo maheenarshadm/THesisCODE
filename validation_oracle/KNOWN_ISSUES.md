@@ -19,7 +19,7 @@ excluded from all coverage numbers per an explicit decision below):
 |---|---|---|
 | OpenMRS | 37/56 (66.1%) | 14/14 (100%) |
 | FLEX2 | 21/55 (38.2%) | 2/10 |
-| Spree | 9/22 (40.9%) | 4/8 |
+| Spree | 9/26 (34.6%) | 4/8 |
 | jBilling | 11/39 (28.2%) | 6/16 |
 
 ---
@@ -44,27 +44,31 @@ excluded from all coverage numbers per an explicit decision below):
 
 ### Spree
 
-- **Blob-decoding gap (5 rules, 2 decisions).**
-  `Promotion Customer Group Eligibility::rule_3` and all 4 rules of
-  `Promotion Item Total Eligibility` are blocked by
-  `promotionTargetGroupIds`/`amountMaxSet`/`operatorMin`/`amountMin`/
-  `operatorMax`/`amountMax` — all live only in
-  `spree_promotion_rules.preferences`, a serialized blob with no
-  confirmed real sample row to decode its format. One shared root
-  cause, not 5 independent ones. **No objective-level fix available** —
-  would need either a real sample row from an actual Spree instance, or
-  accepting these as permanently out of reach for a schema-only
-  validator. Guessing the blob's *text serialization format* is a
-  materially riskier kind of assumption than the disclosed
-  business-rule correlations already made elsewhere in this project.
+- **Blob-decoding — CLOSED for 4 of 5 facts via a new `serialized_field`
+  mechanism; `promotionTargetGroupIds` deliberately left for later.**
+  See "Fixed issues" below for the full mechanism. `amountMaxSet`/
+  `operatorMin`/`amountMin`/`operatorMax`/`amountMax` now compile via a
+  confirmed-real (not guessed) YAML read/write convention, closing all 4
+  `Promotion Item Total Eligibility` rules at the compile level.
+  `Promotion Customer Group Eligibility::rule_3`'s own
+  `promotionTargetGroupIds` is a LIST-typed fact needing FEEL
+  `intersection`/`count` over two lists — a materially different, larger
+  piece of work than the scalar preferences closed here, not yet
+  attempted.
 
-- **3 fixture-table gaps (10 rules, 3 decisions).**
-  `Promotion Customer Group Eligibility` (3 rules) needs
-  `spree_order_promotions`; `Promotion Usage Limit Exceeded` (4 rules)
-  needs `spree_discounts`; `Price List Volume Adjustment Tier
-  Selection` (3 rules) needs `spree_line_items`. All three ground-truth
-  mappings are now correct — the tables are just missing from
-  `spree_merged.db` because that fixture was built from an archive
+- **4 fixture/row-finding gaps (14 rules, 4 decisions) — all the SAME
+  underlying category, "compiles correctly but the row can't be found
+  or doesn't exist in this materialized database yet."**
+  `Promotion Customer Group Eligibility` (3 rules) and `Promotion Item
+  Total Eligibility` (4 rules, newly joining this category once its own
+  blob-decoding closed) both need to locate a specific
+  `spree_promotion_rules`/`spree_order_promotions` row from the
+  decision's subject (`spree_orders`) — a one-to-many backward join
+  `subject_table_for_decision` correctly refuses to guess at.
+  `Promotion Usage Limit Exceeded` (4 rules) needs `spree_discounts`;
+  `Price List Volume Adjustment Tier Selection` (3 rules) needs
+  `spree_line_items` — both real tables simply missing from
+  `spree_merged.db`, since that fixture was built from an archive
   (`Spree__dynamosa_nsga2__budget1x__seed0.pkl`) that predates every
   ground-truth fix made this session. Confirmed directly: rebuilding
   the fixture from the SAME archive reproduces the identical missing
@@ -74,7 +78,15 @@ excluded from all coverage numbers per an explicit decision below):
   against the current `compiled_constraints.json`**, then rebuilding
   the fixture from the fresh archive — still pending an explicit
   go-ahead (this is real search/experiment-data work, not a quick
-  fixture rebuild).
+  fixture rebuild). Note these are genuinely TWO different remedies
+  bundled under one category: the missing-table half (`Promotion Usage
+  Limit Exceeded`/`Price List Volume Adjustment Tier Selection`) needs
+  the search re-run; the row-finding half (`Promotion Customer Group
+  Eligibility`/`Promotion Item Total Eligibility`) needs the
+  one-to-many join question resolved (a disclosed override naming
+  which single `spree_promotion_rules` row is "the" one for a given
+  promotion/type, since a real promotion can have many rule rows) —
+  re-running the search alone would NOT close this second half.
 
 - **`One-Use-Per-User Promotion Eligibility::rule_2` — a real
   compile-time bug, not a data gap.** Ground truth says
@@ -304,3 +316,39 @@ before being counted as fixed here.
   targeted: the two variables now resolve correctly, but the rules stay
   blocked for the deeper, real reason (the same undecoded-blob gap) —
   a truer diagnosis, not a new failure.
+
+- **Built the `serialized_field` mechanism, closing Spree's
+  blob-decoding gap for 4 of 5 facts.** Previously, every fact stored
+  inside `spree_promotion_rules.preferences` (a Rails
+  `serialize :preferences, type: Hash, coder: YAML` column, confirmed
+  against Spree's real source, not guessed) was `schema_gap`/
+  `not_persisted` — the generator had no way to write a specific key
+  into that blob, and the validator had no way to read one back out.
+  Fixed end to end, in the same disclosed-declaration style as every
+  other override file this project uses: a new `serialized_columns`
+  annotation on the schema (`spree_promotion_rules.preferences`, format
+  `yaml_hash`), a new CSV ground-truth syntax
+  (`table.column[key]`/`table.column[key=default]`, parsed by a new
+  `_SERIALIZED_FIELD_RE`), and a new `serialized_field` resolution kind
+  threaded through the full round trip: `compile_constraints.py`
+  (parses the syntax, emits the node), `candidate.py` (`derive_value`
+  reads/writes an in-memory nested dict), `mutation.py` (mutates a
+  specific key, including a `null_check`-with-`key` existence variant),
+  `materialize.py` (`serialize_yaml_hash_blob` converts the dict to real
+  YAML text only at INSERT time — the one point a candidate becomes
+  SQL), and `validation_oracle/db_resolver.py`/`subject_table.py` (reads
+  the same YAML back using the same declared format, independently of
+  the generator). `fitness.py` needed zero changes — confirmed by
+  reading it first — since its fitness read path is already fully
+  kind-agnostic. Locked in with a new permanent test,
+  `test_serialized_field_roundtrip.py` (write via mutation → materialize
+  to real SQLite → read back via `resolve()`; plus both default-fallback
+  paths), all 3 passing. Result, confirmed not assumed: Spree's compiled
+  record count went 27/32 → 31/32, with `amountMaxSet`/`operatorMin`/
+  `amountMin`/`operatorMax`/`amountMax` all resolving correctly against
+  real YAML. **This closes the compile-time gap only** — the rules
+  still need real search-generated data to verify (see "4 fixture/
+  row-finding gaps" above for what's still blocking that). The 5th fact,
+  `promotionTargetGroupIds`, is LIST-typed and deliberately deferred
+  (needs FEEL `intersection`/`count` over two lists, a materially larger
+  piece of work than a scalar preference read).

@@ -36940,6 +36940,794 @@
   "feasibility": "unknown"
  },
  {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_1",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_1",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">=",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_2",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_2",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "<",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_3",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_3",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "between",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "low": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     },
+     "high": {
+      "kind": "variable",
+      "ref": "effectiveMaxThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "<",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMaxThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Maximum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "lte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMax"
+     },
+     "else": {
+      "op": "-",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_max",
+      "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's wrong default -- the real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT 1000.00 as previously guessed. No default given here (deliberately -- matches the real nil default exactly: an unconfigured amount_max resolves to None, same as Spree's own preferred_amount_max would)."
+     },
+     "operatorMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_max",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :operator_max, :string, default: '<', item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": "<"
+     }
+    }
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_4",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_4",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "not",
+     "clause": {
+      "op": "between",
+      "left": {
+       "kind": "variable",
+       "ref": "itemTotal"
+      },
+      "low": {
+       "kind": "variable",
+       "ref": "effectiveMinThreshold"
+      },
+      "high": {
+       "kind": "variable",
+       "ref": "effectiveMaxThreshold"
+      }
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "<",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "between",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "low": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        },
+        "high": {
+         "kind": "variable",
+         "ref": "effectiveMaxThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMaxThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Maximum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "lte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMax"
+     },
+     "else": {
+      "op": "-",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_max",
+      "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's wrong default -- the real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT 1000.00 as previously guessed. No default given here (deliberately -- matches the real nil default exactly: an unconfigured amount_max resolves to None, same as Spree's own preferred_amount_max would)."
+     },
+     "operatorMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_max",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :operator_max, :string, default: '<', item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": "<"
+     }
+    }
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
   "record_id": "Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1",
   "case_study": "Spree",
   "dmn_file": "Promotion_Order_Level_Eligibility.dmn",

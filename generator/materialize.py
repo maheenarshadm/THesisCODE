@@ -103,6 +103,28 @@ def _sql_literal(value):
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def serialize_yaml_hash_blob(blob):
+    """The ONE place a `serialized_field` mutation's in-memory nested dict
+    (see mutation.py's own `_apply_field_mutation`/candidate.py's
+    `derive_value`) becomes real column text -- everywhere else in the
+    search, it's an ordinary-looking Python dict, never touched as a
+    string. Mirrors Rails' own default `serialize :col, type: Hash, coder:
+    YAML` convention (confirmed directly against Spree's real source,
+    `lib/spree/core/preferences/preferable.rb`): keys rendered with a
+    leading `:`, the same way Psych renders a Ruby Hash keyed by symbols
+    -- not required for this mechanism's own internal correctness (writer
+    and reader here always agree with each other regardless), but it
+    keeps the materialized database looking like something a real Spree
+    instance could have produced, which is the whole point of testing
+    against a schema-shaped database in the first place.
+    `validation_oracle/db_resolver.py` has its own, independent
+    implementation of the read side of this SAME convention (this
+    project's own architectural separation rule: validation_oracle never
+    imports generator code)."""
+    import yaml
+    return yaml.safe_dump({f':{k}': v for k, v in blob.items()}, default_flow_style=False)
+
+
 def to_sql_inserts(candidate, schema):
     """-> (statements, warnings). One INSERT per row, tables in FK
     dependency order; a row's own column order is preserved (insertion
@@ -115,6 +137,13 @@ def to_sql_inserts(candidate, schema):
             row = _real_columns(row)
             if not row:
                 continue
+            # A `serialized_field` mutation leaves its column holding a
+            # plain in-memory dict (see this module's own
+            # serialize_yaml_hash_blob docstring) -- turned into real
+            # column text HERE, the one point a candidate becomes actual
+            # SQL, never earlier.
+            row = {c: (serialize_yaml_hash_blob(v) if isinstance(v, dict) else v)
+                   for c, v in row.items()}
             cols = list(row.keys())
             statements.append(
                 f"INSERT INTO {table} ({', '.join(cols)}) VALUES "

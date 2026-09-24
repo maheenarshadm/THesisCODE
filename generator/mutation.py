@@ -96,7 +96,7 @@ from compile_constraints import CASE_STUDY_SCHEMA_JSON, find_all_variable_refs  
 BOOLEAN_LEAF_KINDS = {'null_check', 'any_not_null', 'join_null_check', 'exists',
                       'regex_match', 'raw_sql_boolean'}
 FIELD_LEAF_KINDS = {'schema_column', 'null_check', 'any_not_null', 'join_lookup',
-                    'join_null_check', 'regex_match', 'derived_case'}
+                    'join_null_check', 'regex_match', 'derived_case', 'serialized_field'}
 AGGREGATE_LEAF_KINDS = {'derived_aggregate', 'exists', 'derived_join_count'}
 
 _SCHEMA_CACHE = {}
@@ -655,6 +655,22 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
             candidate.add_row(table, row)
         row[column] = value
         touched.append((table, row))
+    elif kind == 'serialized_field':
+        # Writes into a NESTED dict on the row, one level deeper than a
+        # plain schema_column -- still a completely ordinary in-memory
+        # Python value at this point, never real serialized text (that
+        # conversion happens exactly once, in materialize.py's own
+        # to_sql_inserts, the one place a candidate becomes real INSERT
+        # statements). `setdefault` rather than overwriting the whole
+        # blob: a LATER mutation targeting a DIFFERENT key on the SAME
+        # row (e.g. operator_min after amount_min already got set) must
+        # accumulate into the same dict, not clobber it.
+        table, column, key = node['table'], node['column'], node['key']
+        row = focal.setdefault(table.upper(), {})
+        if row not in candidate.rows(table):
+            candidate.add_row(table, row)
+        row.setdefault(column, {})[key] = value
+        touched.append((table, row))
     elif kind == 'derived_case':
         # `value` is a *derived* category (e.g. 'Regular') the branch
         # condition compares against -- never write that string itself
@@ -671,6 +687,27 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
         if row not in candidate.rows(table):
             candidate.add_row(table, row)
         row[column] = real_value
+        touched.append((table, row))
+    elif kind == 'null_check' and node.get('key'):
+        # null_check on a serialized_field's own key (e.g. Spree's
+        # amountMaxSet) -- same True/False shape as the plain-column
+        # branch below, one level of dict access deeper. No column-type
+        # info exists for a key inside a blob (unlike a real column,
+        # `_column_type`/`_placeholder_for_column_type` don't apply), so
+        # "set" always writes a plain placeholder value (1) -- the
+        # DOWNSTREAM serialized_field read of this SAME key, if any,
+        # would separately mutate it to whatever real value ITS OWN
+        # branch actually needs; this leaf's own job is only "present or
+        # absent," never the specific value.
+        table, column, key = node['table'], node['column'], node['key']
+        row = focal.setdefault(table.upper(), {})
+        if row not in candidate.rows(table):
+            candidate.add_row(table, row)
+        blob = row.setdefault(column, {})
+        if not value:
+            blob.pop(key, None)
+        else:
+            blob[key] = 1
         touched.append((table, row))
     elif kind == 'null_check':
         table, column = node['table'], node['column']

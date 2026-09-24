@@ -737,6 +737,101 @@ scenario constant would be honest or applicable.
   it will only pay off in a higher verified count once the fixture is
   rebuilt to include `spree_line_items` (out of this round's scope).
 
+**2026-09-24 (a sixth round): built a general `serialized_field`
+resolution kind, closing 4 of the 5 blocked `Promotion Item Total
+Eligibility` rules -- on a user's design push-back that correctly
+reframed the whole blob problem.** Earlier framing treated the
+`spree_promotion_rules.preferences` blob as something to *decode after
+the fact*; the user's proposal flipped it: teach the schema that the
+column is structured, so the GENERATOR writes a well-formed blob on
+purpose and the validator reads it back using the same declared format
+-- no guessing on either end, since both sides agree by construction.
+
+Confirmed the exact mechanism by cloning Spree's real source
+(`spree/spree` on GitHub, a public repo, read via this session's own
+git proxy) rather than continuing to speculate: `lib/spree/core/
+preferences/preferable.rb` line 41, `serialize :preferences, type:
+Hash, coder: YAML` -- mixed into every `PromotionRule` subclass via the
+generic `Preferable` concern. Also read `item_total.rb` and
+`customer_group.rb` directly for the real preference keys and defaults
+-- catching two things the ground truth had wrong: `amount_max`'s real
+default is `nil` (nullable), not the `1000.00` previously guessed, and
+`amountMaxSet`'s earlier "genuinely uncertain, no way to check" verdict
+was built on that same wrong premise -- it's a real, checkable existence
+test after all. (One honest caveat surfaced too: the current cloned
+source uses `order.customer_id`, but this case study's own schema has
+no such column, only `user_id` -- version skew between the real
+upstream repo and this snapshot, consistent with an already-disclosed
+note; trusted the schema's own column name as before, not the fetched
+source, for anything version-sensitive.)
+
+Built as designed, across the full round trip:
+- **Schema annotation**: `spree_promotion_rules.serialized_columns.
+  preferences = {"format": "yaml_hash"}` in the real schema JSON.
+- **`compile_constraints.py`**: a new `serialized-field` ground-truth
+  bucket, parsed from `table.column[key]` / `table.column[key=default]`
+  (e.g. `spree_promotion_rules.preferences[amount_min=100.0]`) into a
+  `serialized_field` resolution node; an existence-check note (the same
+  `_EXISTENCE_WORDS` trigger `direct`'s own null_check path already
+  uses) instead reuses `null_check` directly with an added `key` field,
+  rather than inventing a parallel "is this set" kind.
+- **Search-time fitness evaluation (`fitness.py`) needed ZERO changes**
+  -- confirmed by reading `evaluate_resolution` directly: every leaf
+  kind is already a flat `genome[var_name]` lookup, completely decoupled
+  from table/column structure, so a new kind rides for free there.
+- **`candidate.py`'s `derive_value`** (genome ← real candidate, in
+  memory): reads the nested dict already sitting on the row; a
+  `null_check`-with-`key` variant checks presence with NO default
+  substituted (existence must reflect what THIS row's blob actually
+  set).
+- **`mutation.py`'s `_apply_field_mutation`** (mutation → candidate):
+  writes into a nested dict one level under a plain column
+  (`row.setdefault(column, {})[key] = value`), added to
+  `FIELD_LEAF_KINDS`; the `null_check`-with-`key` variant pops/sets a
+  placeholder to represent absent/present.
+- **`materialize.py`**: the ONE place serialization actually happens --
+  `serialize_yaml_hash_blob` turns a dict-valued column into real YAML
+  text (colon-prefixed keys, matching Psych's own rendering of a
+  symbol-keyed Ruby Hash) only at `to_sql_inserts` time; everywhere else
+  in the search it's an ordinary-looking Python dict.
+- **`db_resolver.py`**: an independent read-side implementation of the
+  SAME convention (never imports `materialize.py`, this project's own
+  separation rule) -- parses the real column's raw YAML text and pulls
+  out the named key, falling back to the ground-truth-declared default.
+
+**Locked in with a new, permanent round-trip test**
+(`tests/test_serialized_field_roundtrip.py` -- the second file, after
+`build_fixture_from_generator.py`, explicitly allowed to import
+generator/ code): a real mutation writes a value, `materialize.py`
+turns it into real SQL, and `db_resolver.resolve` reads it back
+independently, plus both default-fallback edge cases (an unset key, a
+NULL blob). All three pass.
+
+**Real, verified result:** Spree's compiled count rose from 27/32 to
+31/32 (all 4 `Promotion Item Total Eligibility` rules now compile;
+confirmed via full before/after diff: zero adds/removes anywhere else
+in any of the 4 case studies). Deliberately left `Promotion Customer
+Group Eligibility::rule_3`'s own `promotionTargetGroupIds` OUT of this
+round's scope on purpose -- it's a LIST-typed fact needing FEEL
+`intersection`/`count` over two lists, a materially different, larger
+piece of work than the scalar preferences closed here.
+
+**Confirmed, not just hoped for: this closes the COMPILE gap but not
+the RUN gap, exactly as flagged before building it.** `subject_table_
+for_decision` still can't find a root reaching both `spree_orders` and
+`spree_promotion_rules` -- the same one-to-many "which promotion_rules
+row" problem already known from `Promotion Customer Group Eligibility`.
+`Promotion Item Total Eligibility` now shows up as a NEW unresolved
+decision (5 total, was 4) for exactly this reason, not a crash.
+`searchable_objectives` rose to 31; `verified_covered_rules` stays at 9
+-- the mechanism is real and proven (via the standalone round-trip
+test), but this specific decision's own payoff still needs the
+row-finding half solved too, same as `Promotion Customer Group
+Eligibility` and the earlier fixture-table gaps. Re-verified: zero
+regressions across all 4 case studies (identical OpenMRS/FLEX2/jBilling
+numbers; full regression suite, including the new round-trip test,
+unchanged/passing).
+
 ## Why this exists
 
 Everything the search produces and reports as "coverage" — archive

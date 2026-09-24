@@ -386,7 +386,42 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
     kind = node.get('kind')
     if kind == 'schema_column':
         return _lookup(focal, node['table'], node['column'])
+    if kind == 'serialized_field':
+        # The blob column's own value is still just an in-memory nested
+        # dict at this point -- real YAML serialization only happens in
+        # materialize.py, the one place that turns a candidate into real
+        # INSERT text (see that module's own comment there). A missing
+        # ROW is a genuine error (same as `_lookup`'s own, for the same
+        # reason: nothing yet gave this record a focal row to read at
+        # all); a missing COLUMN/KEY on an otherwise-real row is NOT an
+        # error the way it is for a plain schema_column -- it just means
+        # no mutation has touched this particular key yet, i.e. it's
+        # still at its declared default (or None, absent one).
+        row = focal.get(node['table'].upper())
+        if row is None:
+            raise FitnessEvaluationError(
+                f"no focal row given for table {node['table']!r} -- can't read "
+                f"{node['table']}.{node['column']}[{node['key']}]")
+        try:
+            blob = _row_get(row, node['column'], node['table']) or {}
+        except FitnessEvaluationError:
+            blob = {}
+        return blob.get(node['key'], node.get('default'))
     if kind == 'null_check':
+        if node.get('key'):
+            # null_check on a serialized_field's own key (e.g. Spree's
+            # amountMaxSet) -- mirrors the plain-column branch below
+            # exactly (`is not None`), just one level of dict access
+            # deeper, and deliberately WITHOUT the plain serialized_field
+            # read's own default substitution (existence must reflect
+            # whether THIS row's own blob actually set the key).
+            row = focal.get(node['table'].upper())
+            if row is None:
+                raise FitnessEvaluationError(
+                    f"no focal row given for table {node['table']!r} -- can't read "
+                    f"{node['table']}.{node['column']}[{node['key']}]")
+            blob = row.get(node['column']) or {}
+            return blob.get(node['key']) is not None
         return _lookup(focal, node['table'], node['column']) is not None
     if kind == 'any_not_null':
         return any(_lookup(focal, c['table'], c['column']) is not None for c in node['columns'])
