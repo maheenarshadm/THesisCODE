@@ -197,14 +197,31 @@ for a documented reason, not silently mishandled. Supporting COLLECT
 rule -- a materially different coverage question) is real, unscoped
 future work.
 
-Still not started: the remaining spec'd test cases (UNIQUE violation,
-join-based input against real data as an explicit test rather than an
-ad hoc script, merge-induced regression as an explicit test, duplicate-
-output disambiguation), `first_generation_covered` (needs
-re-instrumenting `generator/dynamosa.py`'s own archive-update loop, a
-`generator/`-side change, not a `coverage.py`-side one), COLLECT hit
-policy support, and extending beyond the decisions exercised so far to
-the rest of FLEX2 and to Spree/jBilling.
+**All 10 spec'd test cases now covered.** `tests/test_spec_cases.py`
+covers FIRST precedence (both directions), UNIQUE (single match and
+violation), `derived_aggregate`-driven selection, `join_lookup`-driven
+selection, and duplicate-output disambiguation (two rules with an
+identical output value still tracked as independently covered by rule
+ID — `decision_output` in the trace confirmed correct for both). The
+upstream-dependency pair and the merge-induced-regression case were
+already covered by `test_drd_chaining_synthetic.py` and the OpenMRS
+acceptance test respectively — referenced there, not duplicated. One
+cosmetic bug found and fixed while writing the UNIQUE-violation case:
+`UniqueViolation`'s own decision-name label was derived by string-
+splitting a rule_id (nonsensical for a plain `Rule_1`) instead of just
+receiving the real `decision_name` the caller already has; `select_rule`
+now takes it directly.
+
+`decision_output` is also now tracked in `decision_trace.json` (every
+output seen so far is a plain literal per rule; a non-literal output
+raises rather than guessing) — purely for inspection, since rule
+selection only ever compares conditions, never output values.
+
+Still not started: `first_generation_covered` (needs re-instrumenting
+`generator/dynamosa.py`'s own archive-update loop, a `generator/`-side
+change, not a `coverage.py`-side one), COLLECT hit policy support, and
+extending beyond the decisions exercised so far to the rest of FLEX2 and
+to Spree/jBilling.
 
 ## Why this exists
 
