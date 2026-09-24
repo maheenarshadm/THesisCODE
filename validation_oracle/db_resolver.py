@@ -110,6 +110,43 @@ def _resolve_placeholders(conn, filter_text, subject_row):
     return bindings
 
 
+_COLON_RE = re.compile(r':([A-Za-z_][A-Za-z0-9_]*)')
+_SELF_RE = re.compile(r'\bself\b')
+
+
+def _substitute_self_and_colon(text, subject_row, subject_pk_cols):
+    """A second, distinct filter_text convention found in Spree's own
+    compiled records (`price_list_id = :price_list_id AND id != self`) --
+    NOT a cross-entity placeholder needing external binding at all, both
+    tokens are SELF-references to the subject row already being resolved:
+    `:column_name` means "this row's own value for `column_name`" (here,
+    `price_list_id` names both the SQL parameter AND a real column on the
+    SAME table); bare `self` means "this row's own primary key value"
+    (used for an exclude-self aggregate: count OTHER rows, not this one).
+    Raises rather than guessing when a `:column` isn't on the subject row,
+    or when `self` is used against a composite-PK subject (a single
+    value doesn't mean anything for a multi-column key)."""
+    def _colon_sub(m):
+        column = m.group(1)
+        if column not in subject_row:
+            raise NotImplementedError(
+                f"filter_text ':{column}' has no matching column on the subject row "
+                f"({sorted(subject_row)}) -- cannot resolve independently")
+        return _sql_literal(subject_row[column])
+
+    text = _COLON_RE.sub(_colon_sub, text or '')
+
+    if _SELF_RE.search(text):
+        if len(subject_pk_cols) != 1:
+            raise NotImplementedError(
+                f"filter_text uses 'self' but the subject table has a composite PK "
+                f"{subject_pk_cols} -- a single self-value is ambiguous, not resolved")
+        self_value = subject_row[subject_pk_cols[0]]
+        text = _SELF_RE.sub(_sql_literal(self_value), text)
+
+    return text
+
+
 def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
             join_paths=None, declared_not_persisted_value=None):
     """`node` is one Phase 1 `variable_resolution` entry. `subject_table`/
@@ -194,10 +231,9 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
                               f"EXISTS among {checked} (filter={node.get('filter_text')!r})", None)
 
     if kind == 'raw_sql_boolean':
-        placeholders = _PLACEHOLDER_RE.findall(node['sql_template'])
-        sql = node['sql_template']
-        if placeholders:
-            bindings = _resolve_placeholders(conn, node['sql_template'], subject_row or {})
+        sql = _substitute_self_and_colon(node['sql_template'], subject_row or {}, subject_pk_cols)
+        if _PLACEHOLDER_RE.search(sql):
+            bindings = _resolve_placeholders(conn, sql, subject_row or {})
             for ph, val in bindings.items():
                 sql = sql.replace(f'<{ph}>', _sql_literal(val))
         cur = conn.execute(sql)
@@ -206,8 +242,8 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         return ResolvedValue(value, 'raw_sql_boolean', ','.join(node['tables']), sql, None)
 
     if kind == 'derived_aggregate':
-        bindings = _resolve_placeholders(conn, node['filter_text'], subject_row or {})
-        where = node['filter_text']
+        where = _substitute_self_and_colon(node['filter_text'], subject_row or {}, subject_pk_cols)
+        bindings = _resolve_placeholders(conn, where, subject_row or {})
         for ph, val in bindings.items():
             where = where.replace(f'<{ph}>', _sql_literal(val))
         sql = f'SELECT {node["aggregate"]}(*) FROM "{node["table"]}" WHERE {where}'

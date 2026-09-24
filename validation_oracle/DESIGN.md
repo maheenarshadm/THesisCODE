@@ -217,11 +217,76 @@ output seen so far is a plain literal per rule; a non-literal output
 raises rather than guessing) — purely for inspection, since rule
 selection only ever compares conditions, never output values.
 
+**Extended to Spree and jBilling.** Fixtures built the same way as
+OpenMRS/FLEX2 (`tests/build_fixture_from_generator.py`, generalized --
+`spree_merged.db`, `jbilling_merged.db`). `coverage.py` run end to end
+against both real merged-archive databases:
+
+| Case study | Objectives | Search-covered | Verified rule IDs | Coverage retention |
+|---|---|---|---|---|
+| Spree | 26 | 22 (84.6%) | 7 (26.9%) | 31.8% |
+| jBilling | 40 | 35 (87.5%) | 10 (25.6%) | 29.4% |
+
+Both show a much larger search-vs-verified gap than OpenMRS's 53-56%
+retention -- expected and explained, not mysterious: over half of each
+case study's decisions are currently unresolved, and every single one of
+them maps to an ALREADY-DOCUMENTED limitation from earlier in this
+project's own history, not a new mystery:
+- `schema_gap`-kind variables (Spree's `Promotion Customer Group
+  Eligibility`) -- the ground truth itself already marks these
+  unresolvable without a real sample row; not a validator gap.
+- The one genuinely unparsed FEEL construct (Spree's `First-Order
+  Promotion Eligibility`, an `opaque_formula` list-comprehension) --
+  `feel_parser.py`'s own documented, pre-existing limit.
+- Multi-table decisions needing a backward/shared-parent join with no
+  disclosed override on record (Spree's `Promotion Usage Limit
+  Exceeded`; jBilling's `Ageing Step Advancement`/`Ageing Step Config
+  Validation`) -- same category as OpenMRS's 3 `Numeric *` decisions
+  before their override was added; closeable the same way if someone
+  supplies the domain-knowledge call.
+- Decisions with zero table-backed inputs at all (jBilling's `Is Ageing
+  Required`, `Order Date Range Valid`, `Payment Outcome Resolution`,
+  `Payment Balance Assignment`, `Daily Pro-Rate Amount`; Spree's `Price
+  List Volume Adjustment Tier Selection`) -- entirely `not_persisted`/
+  upstream-only, no natural database grain.
+- `not_persisted` variables with no principled universal value
+  (jBilling's `candidateDateProvided`, `customContactFieldConfigured`,
+  and others) -- unlike OpenMRS's `evaluationTime` or the `today()` fix
+  below, these represent arbitrary external-system-state flags (e.g. "is
+  the payment processor unavailable") with no single real answer;
+  declaring one would be a scenario CHOICE, not a fact, so none was
+  invented.
+- `COLLECT` hit policy (Spree's `Price Adjustment Tier Validity
+  Violations`; jBilling has more) -- same disclosed scope boundary as
+  OpenMRS.
+
+**Two real, closeable gaps found and fixed while extending to Spree:**
+- A second, distinct filter_text convention: `:column_name` (colon-
+  prefixed) and bare `self`, found in `Price Adjustment Tier Validity
+  Violations`'s own `derived_aggregate` (`price_list_id = :price_list_id
+  AND id != self` -- an exclude-self aggregate). Neither is a
+  cross-entity placeholder needing external binding; both are
+  self-references to the subject row already being resolved
+  (`:column_name` = that column's own value; `self` = the row's own PK,
+  raising rather than guessing for a composite-PK subject, where a
+  single self-value would be ambiguous). Fixed in
+  `db_resolver._substitute_self_and_colon`, applied before the existing
+  `<placeholder>` substitution.
+- FEEL's `today()` appearing directly as a condition operand (jBilling's
+  `Invoice Overdue Check`) -- distinct from `not_persisted`'s
+  `evaluationTime`, this is a bare function call inside the condition
+  tree itself. Fixed by reusing `generator/candidate.py`'s own
+  `'__today__'` key name: `not_persisted_overrides={'__today__': 20000}`
+  (same disclosed value as everywhere else) is now injected into
+  `values` before rule selection, so `today()` resolves the same way
+  `__today__` already does throughout the search side, never guessed
+  and never a database read.
+
 Still not started: `first_generation_covered` (needs re-instrumenting
 `generator/dynamosa.py`'s own archive-update loop, a `generator/`-side
 change, not a `coverage.py`-side one), COLLECT hit policy support, and
-extending beyond the decisions exercised so far to the rest of FLEX2 and
-to Spree/jBilling.
+closing the remaining disclosed gaps above (multi-table backward joins
+needing a human override, decisions with no database grain at all).
 
 ## Why this exists
 

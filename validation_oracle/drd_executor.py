@@ -251,7 +251,15 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
     trace_by_case = {} if collect_trace else None
 
     for pk_vals in subject_keys:
+        # A FEEL today() call can appear directly as a condition operand
+        # (rule_evaluator._eval_operand), not routed through
+        # variable_resolution's own not_persisted at all -- reuses the
+        # SAME disclosed not_persisted_overrides dict, under the SAME
+        # '__today__' key generator/candidate.py's own convention uses,
+        # rather than a separate parameter.
         values = {}
+        if not_persisted_overrides and '__today__' in not_persisted_overrides:
+            values['__today__'] = not_persisted_overrides['__today__']
         var_trace = {} if collect_trace else None
         ungrounded = False
         for var, node in all_resolutions.items():

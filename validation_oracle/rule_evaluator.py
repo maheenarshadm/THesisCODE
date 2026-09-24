@@ -27,6 +27,20 @@ def _eval_operand(node, values):
         return values[node['ref']]
     if kind == 'literal':
         return node['value']
+    if kind == 'call' and node.get('name') == 'today' and not node.get('args'):
+        # FEEL's today() appearing directly as a condition operand (not
+        # routed through variable_resolution's own not_persisted at all
+        # -- a real, distinct construct found in jBilling's real
+        # records). Reuses generator/candidate.py's own '__today__' key
+        # name for the declared value, injected into `values` by the
+        # caller (drd_executor.run_decision) from the SAME disclosed
+        # override this project already uses for "today" -- never a
+        # database read, never guessed.
+        if '__today__' not in values:
+            raise NotImplementedError(
+                "condition calls today(), but '__today__' was not supplied in resolved "
+                "values -- pass it via not_persisted_overrides={'__today__': <value>}")
+        return values['__today__']
     if 'op' in node:
         return evaluate_expression(node, values)
     raise NotImplementedError(f"Unhandled operand kind {kind!r}: {node!r}")
