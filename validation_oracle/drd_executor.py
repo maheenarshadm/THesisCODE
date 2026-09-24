@@ -61,7 +61,8 @@ class DecisionRunner:
     case. Owns the live connection and the whole case study's compiled
     records/DMN structure/schema join-path cache."""
 
-    def __init__(self, conn, case_study, records_by_decision, subject_tables):
+    def __init__(self, conn, case_study, records_by_decision, subject_tables,
+                 not_persisted_overrides=None):
         self.conn = conn
         self.case_study = case_study
         self.records_by_decision = records_by_decision
@@ -69,6 +70,7 @@ class DecisionRunner:
         # by the caller via subject_table.subject_table_for_decision for
         # every decision this run might need to chain into.
         self.subject_tables = subject_tables
+        self.not_persisted_overrides = not_persisted_overrides
         self._cache = {}  # {(decision_name, subject_pk_vals): run_decision() result}
 
     def run(self, decision_name, subject_pk_vals):
@@ -78,7 +80,8 @@ class DecisionRunner:
             subject_table, pk_cols, join_paths = self.subject_tables[decision_name]
             self._cache[key] = run_decision(
                 self.conn, decision_name, records, subject_table, pk_cols,
-                join_paths=join_paths, runner=self, only_case=subject_pk_vals)
+                join_paths=join_paths, runner=self, only_case=subject_pk_vals,
+                not_persisted_overrides=self.not_persisted_overrides)
         return self._cache[key]
 
     def upstream_subject_value(self, upstream_decision_name, downstream_subject_table,
@@ -122,7 +125,21 @@ class DecisionRunner:
 
 
 def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, subject_pk_vals,
-                  join_paths, runner, decision_name, trace=None):
+                  join_paths, runner, decision_name, trace=None, not_persisted_overrides=None):
+    if node.get('kind') == 'not_persisted':
+        overrides = not_persisted_overrides or {}
+        if var not in overrides:
+            raise NotImplementedError(
+                f"not_persisted variable {var!r} has no declared override -- pass "
+                f"not_persisted_overrides={{{var!r}: <value>}} explicitly, disclosed, "
+                f"never read from search state (see DESIGN.md known gaps)")
+        result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
+                          join_paths, declared_not_persisted_value=overrides[var])
+        if trace is not None:
+            trace[var] = {'value': result.value, 'resolution_type': result.resolution_type,
+                          'source_table': None}
+        return result.value
+
     if node.get('kind') == 'literal_via_upstream_branch':
         upstream_decision = node['from_decision']
         upstream_pk_vals = runner.upstream_subject_value(
@@ -147,7 +164,7 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
         for free_var, free_node in node['free_variable_resolutions'].items():
             free_values[free_var] = _resolve_one(
                 conn, case_study, free_var, free_node, subject_table, subject_pk_cols,
-                subject_pk_vals, join_paths, runner, decision_name, trace)
+                subject_pk_vals, join_paths, runner, decision_name, trace, not_persisted_overrides)
         value = evaluate_expression(node['expression'], free_values)
         if trace is not None:
             trace[var] = {'value': value, 'resolution_type': 'substituted_decision',
@@ -162,7 +179,8 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
 
 
 def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
-                  join_paths=None, runner=None, only_case=None, collect_trace=False):
+                  join_paths=None, runner=None, only_case=None, collect_trace=False,
+                  not_persisted_overrides=None):
     """`records` is every compiled objective for this decision (Phase 1,
     via phase1_utility.records_by_decision), used only for their own
     `rule_id`/`condition`/`variable_resolution` -- never for row
@@ -177,6 +195,11 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
     'matched_rule_ids', 'selected_rule_id'}} -- for `coverage.py`'s own
     `decision_trace.json`; off by default since most callers (including
     `DecisionRunner`'s own recursive upstream runs) don't need it.
+    `not_persisted_overrides` is an explicit, disclosed {var_name: value}
+    a caller supplies for any `not_persisted` variable this decision
+    needs -- never derived from search state; a `not_persisted` variable
+    with no matching entry here raises (see `_resolve_one`), it is never
+    silently treated as covered.
     Returns a dict: {
         'matched_by_case': {pk_vals_tuple: [rule_id, ...]},
         'selected_by_case': {pk_vals_tuple: rule_id_or_None},
@@ -209,7 +232,7 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
             try:
                 values[var] = _resolve_one(conn, case_study, var, node, subject_table,
                                             subject_pk_cols, pk_vals, join_paths or {},
-                                            runner, decision_name, var_trace)
+                                            runner, decision_name, var_trace, not_persisted_overrides)
             except UngroundedForCase:
                 ungrounded = True
                 break

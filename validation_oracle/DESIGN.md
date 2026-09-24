@@ -158,19 +158,53 @@ now catches a `NotImplementedError` per decision, records it in
 `unresolved_decisions.json`, and keeps verifying every other decision in
 the case study.
 
-**Known, disclosed gap in the output itself:** `first_generation_covered`
-is always blank in `objective_results.csv` — the raw archive pickle
-saves each objective's best-ever `(fitness, individual)`, not a history
-of when it was first reached. Populating this would need re-instrumenting
-`generator/dynamosa.py`'s own archive-update loop to record a
-per-objective first-covered generation, not a `coverage.py`-side fix;
-not done.
+**`not_persisted` closed for the decisions this scope covers.** A caller
+now supplies an explicit, disclosed `not_persisted_overrides`
+(`{var_name: value}`) to `coverage.py` (`--not-persisted-json`),
+threaded through `DecisionRunner`/`run_decision`/`_resolve_one`. A
+`not_persisted` variable with no matching entry is recorded as an
+unresolved decision, never silently treated as covered.
+
+**A real, important finding drove the actual override value chosen for
+OpenMRS's `evaluationTime`.** Checked the archived individuals' own
+`scenario_maps` directly: `evaluationTime` is NOT one fixed "current
+time" the search converges on -- it's tuned to a DIFFERENT value per
+rule (`-19108862`, `49000006`, `50000001` across `Birthdate Validity`'s
+own three rules), while `__today__` (this project's own real "today"
+constant, hardcoded at `20000` everywhere else in `generator/candidate.py`)
+stays fixed across every individual. A real deployment has exactly one
+evaluation time per run, not one invented per rule. Using any of the
+search's own per-rule values would smuggle exactly the kind of
+search-side contrivance this validator exists to catch back in through
+the override mechanism. The override used is `{"evaluationTime": 20000}`
+-- the same value as `__today__`, disclosed and documented here, not
+one of the search's own values.
+
+**Result:** re-ran `coverage.py` against OpenMRS with this override.
+`Birthdate Validity` and 4 others now resolve (down from 6 unresolved to
+5); `verified_covered_rules` rose from 35 to 37. New, real finding:
+`Birthdate Validity::Rule_1` is a **false positive** under the one real,
+fixed evaluation time -- confirming the per-rule-tuning concern is not
+hypothetical.
+
+**A new, disclosed scope boundary found, not a bug:** the remaining 5
+unresolved decisions (`Order Date Activated Consistency Violations` and
+4 others) use DMN's **COLLECT** hit policy, never previously exercised.
+`rule_evaluator.select_rule` only implements FIRST/UNIQUE -- exactly the
+two hit policies the original specification named -- so this is refused
+for a documented reason, not silently mishandled. Supporting COLLECT
+(which returns every matching rule's output combined, not one "selected"
+rule -- a materially different coverage question) is real, unscoped
+future work.
 
 Still not started: the remaining spec'd test cases (UNIQUE violation,
 join-based input against real data as an explicit test rather than an
 ad hoc script, merge-induced regression as an explicit test, duplicate-
-output disambiguation), and extending beyond the decisions exercised so
-far to the rest of FLEX2 and to Spree/jBilling.
+output disambiguation), `first_generation_covered` (needs
+re-instrumenting `generator/dynamosa.py`'s own archive-update loop, a
+`generator/`-side change, not a `coverage.py`-side one), COLLECT hit
+policy support, and extending beyond the decisions exercised so far to
+the rest of FLEX2 and to Spree/jBilling.
 
 ## Why this exists
 

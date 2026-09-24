@@ -93,12 +93,20 @@ def build_subject_tables(case_study, decisions_by_name):
 
 
 def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
-                  archive=None, out_dir='.'):
+                  archive=None, out_dir='.', not_persisted_overrides=None):
     """`archive` is the already-loaded {record_id: (fitness, individual)}
     dict from a saved run's own pickle (never re-derived from fitness.py
     here) -- omit it to report verified-only results with
     search_covered/best_search_fitness left blank (e.g. when validating
     a database that didn't come from this project's own search at all).
+    `not_persisted_overrides` is an explicit, disclosed {var_name: value}
+    for any `not_persisted` variable a decision needs -- never read from
+    search state (see DESIGN.md's own discussion of why `evaluationTime`
+    specifically should NOT be taken from any archived individual's own
+    scenario: the search tunes it independently per rule, not as one
+    fixed "current time" a real evaluation run would use). A
+    `not_persisted` variable with no entry here is recorded as an
+    unresolved decision, never silently treated as covered.
     Writes the three output files into `out_dir` (created if needed) and
     returns the summary dict that also becomes `validation_summary.csv`'s
     one row."""
@@ -107,7 +115,8 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
     decisions_by_name = records_by_decision(case_study)
     resolved, unresolved = build_subject_tables(case_study, decisions_by_name)
 
-    runner = DecisionRunner(conn, case_study, decisions_by_name, resolved)
+    runner = DecisionRunner(conn, case_study, decisions_by_name, resolved,
+                             not_persisted_overrides=not_persisted_overrides)
 
     objective_rows = []
     decision_traces = []
@@ -124,7 +133,8 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
             subject_table, pk_cols, join_paths = resolved[decision_name]
             try:
                 result = run_decision(conn, decision_name, records, subject_table, pk_cols,
-                                       join_paths=join_paths, runner=runner, collect_trace=True)
+                                       join_paths=join_paths, runner=runner, collect_trace=True,
+                                       not_persisted_overrides=not_persisted_overrides)
             except NotImplementedError as e:
                 # A resolution kind this validator doesn't yet handle
                 # independently (not_persisted with no declared value,
@@ -238,8 +248,16 @@ if __name__ == '__main__':
     ap.add_argument('--construction-strategy', required=True)
     ap.add_argument('--archive-pickle', default=None,
                      help='Optional path to a raw experiment_runs/*.pkl for search-coverage comparison')
+    ap.add_argument('--not-persisted-json', default=None,
+                     help='Optional path to a JSON {var_name: value} of explicit, disclosed '
+                          'not_persisted overrides -- never derived from search state')
     ap.add_argument('--out-dir', default='.')
     args = ap.parse_args()
+
+    not_persisted_overrides = None
+    if args.not_persisted_json:
+        with open(args.not_persisted_json) as f:
+            not_persisted_overrides = json.load(f)
 
     archive = None
     if args.archive_pickle:
@@ -247,5 +265,6 @@ if __name__ == '__main__':
             archive = pickle.load(f)['archive']
 
     summary = run_coverage(args.db, args.case_study, args.algorithm, args.run_id,
-                            args.construction_strategy, archive=archive, out_dir=args.out_dir)
+                            args.construction_strategy, archive=archive, out_dir=args.out_dir,
+                            not_persisted_overrides=not_persisted_overrides)
     print(json.dumps(summary, indent=2, default=str))
