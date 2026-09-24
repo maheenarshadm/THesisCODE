@@ -37682,10 +37682,14 @@
   },
   "variable_resolution": {
    "purchaseQuantity": {
-    "kind": "not_persisted"
+    "kind": "schema_column",
+    "table": "spree_line_items",
+    "column": "quantity"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_line_items"
+  ],
   "cross_variable_reference": false,
   "feasibility": "unknown"
  },
@@ -37737,10 +37741,14 @@
   },
   "variable_resolution": {
    "purchaseQuantity": {
-    "kind": "not_persisted"
+    "kind": "schema_column",
+    "table": "spree_line_items",
+    "column": "quantity"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_line_items"
+  ],
   "cross_variable_reference": false,
   "feasibility": "unknown"
  },
@@ -37800,10 +37808,14 @@
   },
   "variable_resolution": {
    "purchaseQuantity": {
-    "kind": "not_persisted"
+    "kind": "schema_column",
+    "table": "spree_line_items",
+    "column": "quantity"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "spree_line_items"
+  ],
   "cross_variable_reference": false,
   "feasibility": "unknown"
  },

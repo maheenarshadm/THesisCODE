@@ -538,18 +538,40 @@ out to be legitimately closeable that way:
   disclosing an assumed filter on real ones -- a materially different,
   larger claim than this project's own `[ASSUMED]` discipline has made
   anywhere else. Left disclosed and unresolved rather than fabricated.
-- **`Price List Volume Adjustment Tier Selection` -- assessed, technically
-  possible, deliberately not yet forced.** All 3 of its rules' conditions
-  are pure literal-threshold comparisons against `purchaseQuantity`
-  alone (`>= 100`, `>= 50`, catch-all) -- no real table column appears in
-  any of them, so there is no natural row to anchor enumeration on.
-  Closing it would need both an arbitrarily-chosen anchor table AND one
-  fixed, disclosed `purchaseQuantity` scenario constant (same precedent
-  as `evaluationTime`/`__today__`) -- but because it is one scalar
-  compared against literal thresholds, AT MOST 1 of its 3 rules could
-  ever show verified no matter which constant is picked, by construction,
-  not as a validator shortfall. Awaiting an explicit decision on whether
-  that capped result is worth forcing open before doing it.
+- **`Price List Volume Adjustment Tier Selection` -- the INITIAL
+  assessment here was wrong, corrected after being challenged, and then
+  actually fixed.** First pass wrongly trusted the ground truth's own
+  existing `purchaseQuantity: not-persisted` classification at face
+  value, reasoning from that (mistaken) premise that no real table
+  column exists for "the quantity being priced," so closing it would
+  need an arbitrary anchor table plus one fixed scenario constant,
+  capping at most 1 of 3 rules verified by construction. Challenged (correctly):
+  a real, persisted quantity for "the quantity being purchased" almost
+  certainly exists on a real order line item, and the ORIGINAL ground
+  truth's own "not-persisted" call was the actual error here -- the same
+  species of mistake this exact CSV already had several corrected
+  instances of (e.g. "real column is `user_id`, not `customer_id`").
+  Checked the schema directly: `spree_line_items.quantity` is a real,
+  persisted column. Corrected the ground truth from `not-persisted` to
+  `direct` -> `spree_line_items.quantity` -- a confident, non-`[ASSUMED]`
+  correction (an ordinary, well-established Spree domain column), not a
+  disclosed guess. `subject_table_for_decision` now resolves this
+  decision cleanly, anchored on `spree_line_items`, no scenario constant
+  or arbitrary anchor needed -- since every real line item carries its
+  own real, varying quantity, all 3 rules are genuinely independently
+  verifiable in principle now, not capped at 1.
+  **Real, disclosed result today: `spree_line_items` is not among the
+  tables in the current `spree_merged.db` fixture** (same category as
+  `Promotion Usage Limit Exceeded`'s missing `spree_discounts` --
+  confirmed via the same `sqlite3.OperationalError`/`KeyError`
+  per-decision handling added earlier this session, which correctly
+  keeps this from crashing the report). So `verified_covered_rules`
+  stays at 9/26 and `unresolved_decisions` stays at 4 -- unchanged in
+  count, but this decision's own listed reason is now honestly
+  "database/fixture gap" instead of the earlier, incorrect "no
+  table-backed input at all." The ground-truth fix is real and correct;
+  it will only pay off in a higher verified count once the fixture is
+  rebuilt to include `spree_line_items` (out of this round's scope).
 
 ## Why this exists
 
