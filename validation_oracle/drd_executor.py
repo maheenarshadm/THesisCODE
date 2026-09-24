@@ -43,6 +43,31 @@ def _rules_with_conditions(records):
     return [(rid, i, cond) for i, (rid, cond) in enumerate(seen_rules.items())]
 
 
+def _rule_outputs(records):
+    """{rule_id: {output_name: value}} -- every rule's own declared
+    output, for `decision_trace.json`'s own `decision_output` field
+    (spec item C/F: coverage must be identified by rule ID, never by
+    output value, since two different rules CAN share an output --
+    tracking the output value here is for inspection only, never used
+    anywhere in rule SELECTION, which only ever compares conditions).
+    Every output seen across every real record so far is a plain
+    literal; a non-literal output raises rather than guessing its
+    value."""
+    outputs_by_rule = {}
+    for r in records:
+        if r['rule_id'] in outputs_by_rule:
+            continue
+        values = {}
+        for name, node in r.get('outputs', {}).items():
+            if node.get('kind') != 'literal':
+                raise NotImplementedError(
+                    f"Rule {r['rule_id']!r} output {name!r} is not a literal "
+                    f"(kind={node.get('kind')!r}) -- not yet supported")
+            values[name] = node['value']
+        outputs_by_rule[r['rule_id']] = values
+    return outputs_by_rule
+
+
 class UngroundedForCase(Exception):
     """Raised internally when a `literal_via_upstream_branch` variable's
     own precondition (the upstream decision must have selected a SPECIFIC
@@ -213,6 +238,7 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
         all_resolutions.update(r['variable_resolution'])
 
     rules_with_conditions = _rules_with_conditions(records)
+    rule_outputs = _rule_outputs(records) if collect_trace else None
     hit_policy = records[0]['hit_policy']
 
     subject_keys = [tuple(only_case)] if only_case is not None else \
@@ -241,7 +267,8 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
             selected_by_case[pk_vals] = None
             if collect_trace:
                 trace_by_case[pk_vals] = {'resolved_inputs': var_trace, 'matched_rule_ids': [],
-                                          'selected_rule_id': None, 'ungrounded': True}
+                                          'selected_rule_id': None, 'ungrounded': True,
+                                          'decision_output': None}
             continue
         try:
             matched, selected = select_rule(hit_policy, rules_with_conditions, values)
@@ -253,8 +280,11 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
         if selected:
             verified_covered.add(selected)
         if collect_trace:
-            trace_by_case[pk_vals] = {'resolved_inputs': var_trace, 'matched_rule_ids': matched,
-                                      'selected_rule_id': selected, 'ungrounded': False}
+            trace_by_case[pk_vals] = {
+                'resolved_inputs': var_trace, 'matched_rule_ids': matched,
+                'selected_rule_id': selected, 'ungrounded': False,
+                'decision_output': rule_outputs.get(selected) if selected else None,
+            }
 
     result = {
         'matched_by_case': matched_by_case,

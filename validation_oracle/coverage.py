@@ -155,6 +155,7 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
                         'resolved_inputs': entry['resolved_inputs'],
                         'matched_rule_ids': entry['matched_rule_ids'],
                         'selected_rule_id': entry['selected_rule_id'],
+                        'decision_output': entry['decision_output'],
                         'ungrounded': entry['ungrounded'],
                         'hit_policy': records[0]['hit_policy'],
                     })
