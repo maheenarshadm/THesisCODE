@@ -42,47 +42,77 @@ excluded from all coverage numbers per an explicit decision below):
   combined, a materially different coverage question than "which one
   rule wins."
 
-- **`literal_via_upstream_branch` chaining is a systemic generator/
-  validator mismatch — 0/57 verified corpus-wide (55 FLEX2, 2
-  jBilling), found investigating FLEX2's `Course Load Limit` (2026-09-24).**
-  A record of this kind exists once per (downstream rule, specific
-  upstream rule) pair a `substituted_decision`-style DRD chain could take
-  — see `RULE_TO_OBJECTIVE_MAPPING.md` for how this expansion works. Its
-  own condition ASSUMES the upstream decision already selected one
-  specific rule, and reads a literal value that rule's own output would
-  imply (e.g. `Course Load Limit::Rule_1::via::Academic Warning
-  Status::Rule_1` assumes `newWarningCount=0`, the value `Academic
-  Warning Status::Rule_1`'s own output implies). Root cause, confirmed
-  directly in `generator/fitness.py`'s `evaluate_resolution`: for this
-  node kind it returns `evaluate_expression(node['value'], {}, genome)`
-  UNCONDITIONALLY — nothing in the search's own fitness computation ever
-  checks that the SAME candidate's real, constructed data would actually
-  make the presumed upstream rule fire. So the search reaches fitness
-  0.0 the moment the DOWNSTREAM condition alone is satisfied (using the
-  assumed literal as a free fact), with zero pressure to also construct
-  data satisfying the UPSTREAM rule's own condition. The real validator
-  (`drd_executor.py`'s `_resolve_one`, `kind == 'literal_via_upstream_
-  branch'` branch) does the opposite, correctly: it independently
-  re-runs the real upstream decision against the same subject and raises
-  `UngroundedForCase` unless it ACTUALLY selects the presumed rule —
-  which an arbitrary, only-downstream-optimized candidate essentially
-  never satisfies. Confirmed via a fresh `coverage.py` run (not the
-  stale `coverage_out/` snapshot the original "Course Load Limit 0/4"
-  finding came from): every one of the 57 compiled records using this
-  kind anywhere in the corpus is `search_covered=True,
-  verified_rule_selected=False` — 0/57, not a narrow one-decision issue.
-  **Not fixed — this needs a real design decision, not a quick patch**:
-  a correct fix means the search's own fitness for a "via" record must
-  also be pushed toward making the SAME candidate's real data satisfy
-  the presumed upstream rule's OWN full condition tree (recursively, for
-  a multi-hop chain) — effectively ANDing the upstream rule's condition
-  into the downstream branch's own `branch_fitness`, not just assuming
-  it. That's a structural change to how a `substituted_decision`
-  /`literal_via_upstream_branch` branch's fitness is computed
-  (`fitness.py`/`candidate.py`), not a one-line fix, and affects every
-  case study with DRD chaining (FLEX2, jBilling; OpenMRS/Spree currently
-  have none of this specific chaining kind per
-  `RULE_TO_OBJECTIVE_MAPPING.md`'s own audit).
+- **`literal_via_upstream_branch` chaining — 0/57 verified corpus-wide
+  (55 FLEX2, 2 jBilling) at time of writing, found investigating FLEX2's
+  `Course Load Limit` (2026-09-24). Root cause CORRECTED same day after
+  an initial wrong diagnosis — see below for both, since the correction
+  itself is the useful part.**
+
+  **Initial (wrong) diagnosis, retracted**: first suspected
+  `generator/fitness.py`'s `evaluate_resolution` treats this node kind as
+  an unconditional literal with no check that the search's own candidate
+  data would make the upstream rule actually fire. **This was wrong** —
+  checking `compile_constraints.py`'s own `_grounding_options`/
+  `_enumerate_needs` (the code that BUILDS a "via" record) showed it
+  already ANDs the upstream rule's own full condition into the
+  downstream record's own compiled `condition` at compile time
+  (`extra_clauses.append(opt['condition'])`) — confirmed directly:
+  `Course Load Limit::Rule_1::via::Academic Warning Status::Rule_1`'s
+  own compiled `condition` field genuinely contains `cumulativeGPA >=
+  2.0 AND priorWarningCount = 0`, Academic Warning Status::Rule_1's own
+  condition verbatim. The search's own fitness function was never the
+  problem; it already has to satisfy both halves at once.
+
+  **Actual root cause, confirmed by direct trace against the real FLEX2
+  fixture**: `validation_oracle/drd_executor.py`'s `DecisionRunner.
+  upstream_subject_value` — the function that finds which upstream
+  decision's real row corresponds to the current downstream subject —
+  did `row.get(hop['from_column'])` and `row[c] for c in
+  upstream_pk_cols` with no case normalization. `hop['from_column']`/
+  `upstream_pk_cols` carry the schema's own declared casing (e.g.
+  `ROLL_NO`), but the row dict's own keys are the real lowercase SQLite
+  column names (`roll_no`) — the identical pattern `db_resolver.py`'s
+  own single-decision join-hop walk already normalizes via
+  `hop['from_column'].lower()`, just never applied to this newer,
+  cross-decision copy of the same logic. Every lookup silently missed,
+  returned `None`, and got misreported as `UngroundedForCase("no
+  corresponding upstream row")` — a validator-side false negative fired
+  before the (already-correct) upstream condition was ever even
+  checked. Confirmed directly: calling `upstream_subject_value` against
+  a real FLEX2 subject returned `None`; tracing by hand showed the row
+  really did have `roll_no` set, just under a key `.get('ROLL_NO')`
+  could never match.
+
+  **Fixed**: both call sites in `upstream_subject_value` now `.lower()`
+  the schema-cased column name before the dict lookup, matching
+  `db_resolver.py`'s own existing convention exactly. Verified directly:
+  every FLEX2 subject that previously returned `None` now correctly
+  resolves a real upstream selected rule.
+
+  **Net effect on verified counts, so far: none** — fixing this
+  unmasked a SEPARATE, previously-unreached validator gap:
+  `db_resolver.py`/`drd_executor.py` never implemented the `derived_case`
+  resolution kind at all (a categorical column mapping, e.g.
+  `SEMESTER.TITLE`: `'Fall'/'Spring' -> 'Regular'`, `'Summer' ->
+  'Summer'` — the generator's own `candidate.py` already handles this
+  kind, the validator never needed to until this fix let evaluation
+  reach that far). `Course Load Limit`'s own `semesterType` uses it,
+  so the WHOLE decision still fails, now with `Unhandled
+  variable_resolution kind 'derived_case'` instead of a false
+  "ungrounded" — the correct failure this time, not a bug, but still a
+  gap. 33 FLEX2 records use this kind corpus-wide. jBilling's own 2
+  `literal_via_upstream_branch` records are unaffected either way — the
+  decision they belong to (`Payment Balance Assignment`, chained from
+  `Payment Outcome Resolution`) was already blocked before reaching this
+  code at all, for the pre-existing, unrelated "no table-backed inputs"
+  reason above.
+
+  Full regression suite (`test_spec_cases.py`,
+  `test_drd_chaining_synthetic.py` — including its own
+  `test_literal_via_upstream_branch` case — `test_serialized_field_
+  roundtrip.py`, `drd_executor.py`'s own OpenMRS acceptance test)
+  re-run and passing unchanged. Next step, not yet done: implement
+  `derived_case` in `db_resolver.py`'s own `resolve()`, then re-verify.
 
 ### Spree
 

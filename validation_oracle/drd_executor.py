@@ -141,12 +141,25 @@ class DecisionRunner:
         for hop in path:
             if row is None:
                 return None
-            fk_value = row.get(hop['from_column'])
+            # `hop['from_column']` carries the schema's own declared casing
+            # (uppercase), but `_row_for_table`'s own returned dict keys
+            # are lowercase (real SQLite column names, same convention
+            # `db_resolver.py`'s own single-decision join-hop walk already
+            # normalizes for via this exact `.lower()` -- this cross
+            # -decision copy of the same pattern omitted it, so every
+            # lookup silently missed and returned None, misreported as "no
+            # corresponding upstream row" rather than a real case never
+            # reached (confirmed directly against FLEX2's own real fixture
+            # data, 2026-09-24).
+            fk_value = row.get(hop['from_column'].lower())
             row = _row_for_table(self.conn, hop['to_table'], hop['to_table'],
                                   [hop['to_column']], [fk_value], {}) if fk_value is not None else None
         if row is None:
             return None
-        return tuple(row[c] for c in upstream_pk_cols)
+        # Same casing gap as `hop['from_column']` above -- `upstream_pk_cols`
+        # carries the schema's own declared casing, `row`'s keys are the
+        # real lowercase SQLite column names.
+        return tuple(row[c.lower()] for c in upstream_pk_cols)
 
 
 def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, subject_pk_vals,

@@ -113,27 +113,31 @@ all counts are DISTINCT DMN rules)
   (a disclosed join-construction override, more search budget/seeds, or
   a quick-win placeholder mapping already scoped in `KNOWN_ISSUES.md`).
 
-**Investigated 2026-09-24 (see `KNOWN_ISSUES.md`'s new cross-case-study
-entry for the full root-cause writeup): the "Course Load Limit 0/4"
-finding above turned out to be a much bigger, systemic gap, not a
-narrow FLEX2 quirk.** All 57 compiled records anywhere in the corpus
-that use the `literal_via_upstream_branch` resolution kind (55 in
-FLEX2, 2 in jBilling) are `search_covered=True` but `verified=False` --
-0/57, confirmed via a fresh coverage.py run (the `coverage_out/`
-snapshot this "0/4" finding was originally read from was itself stale,
-per the same lesson as the OpenMRS/jBilling false alarm above; the real,
-current picture is worse than "0/4" for one decision, it's 0/57 for the
-whole chaining mechanism). Root cause: `fitness.py`'s own
-`evaluate_resolution` treats a `literal_via_upstream_branch` node as an
-unconditional literal (`return evaluate_expression(node['value'], {},
-genome)`) with no check that the SAME candidate's real data would
-actually make the presumed upstream rule fire -- so the search reaches
-fitness 0.0 by satisfying only the downstream half, while
-`drd_executor.py`'s real validator independently re-evaluates the
-upstream decision against the same row and (correctly) almost never
-finds it selecting the presumed rule for an otherwise-arbitrary
-candidate. Diagnosis only, not fixed -- see `KNOWN_ISSUES.md` for scope
-and what a fix would need to do.
+**Investigated 2026-09-24, root cause CORRECTED then fixed the same
+day (see `KNOWN_ISSUES.md`'s cross-case-study entry for the full
+writeup, including the retracted first diagnosis).** The "Course Load
+Limit 0/4" finding above turned out to affect all 57 compiled records
+corpus-wide using the `literal_via_upstream_branch` kind (55 FLEX2, 2
+jBilling) -- all `search_covered=True`, `verified=False`. First
+suspected the search's own fitness function never enforced the upstream
+rule's condition; that was WRONG -- `compile_constraints.py` already
+splices it in correctly at compile time, confirmed by inspecting the
+actual compiled condition. The REAL bug: `drd_executor.py`'s
+`upstream_subject_value` compared schema-cased column names
+(`ROLL_NO`) against a row dict whose real keys are lowercase
+(`roll_no`) with no `.lower()` -- the same normalization
+`db_resolver.py`'s own single-decision join code already does, just
+missing from this newer cross-decision copy of the same pattern. Every
+lookup silently returned `None`, misreported as "no corresponding
+upstream row." Fixed (2 lines, `drd_executor.py`); verified directly
+against real FLEX2 data that every previously-`None` lookup now
+resolves a real upstream rule. **Net effect on verified counts so far:
+none** -- the fix is correct and necessary, but unmasked a second,
+separate, previously-unreached gap: the validator never implemented the
+`derived_case` resolution kind at all (33 FLEX2 records use it,
+including `Course Load Limit`'s own `semesterType`). Full regression
+suite re-run and passing. Next step, not yet done: implement
+`derived_case` in `db_resolver.py`, then re-verify.
 
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)
