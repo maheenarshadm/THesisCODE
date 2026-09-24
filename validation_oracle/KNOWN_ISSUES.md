@@ -42,6 +42,48 @@ excluded from all coverage numbers per an explicit decision below):
   combined, a materially different coverage question than "which one
   rule wins."
 
+- **`literal_via_upstream_branch` chaining is a systemic generator/
+  validator mismatch — 0/57 verified corpus-wide (55 FLEX2, 2
+  jBilling), found investigating FLEX2's `Course Load Limit` (2026-09-24).**
+  A record of this kind exists once per (downstream rule, specific
+  upstream rule) pair a `substituted_decision`-style DRD chain could take
+  — see `RULE_TO_OBJECTIVE_MAPPING.md` for how this expansion works. Its
+  own condition ASSUMES the upstream decision already selected one
+  specific rule, and reads a literal value that rule's own output would
+  imply (e.g. `Course Load Limit::Rule_1::via::Academic Warning
+  Status::Rule_1` assumes `newWarningCount=0`, the value `Academic
+  Warning Status::Rule_1`'s own output implies). Root cause, confirmed
+  directly in `generator/fitness.py`'s `evaluate_resolution`: for this
+  node kind it returns `evaluate_expression(node['value'], {}, genome)`
+  UNCONDITIONALLY — nothing in the search's own fitness computation ever
+  checks that the SAME candidate's real, constructed data would actually
+  make the presumed upstream rule fire. So the search reaches fitness
+  0.0 the moment the DOWNSTREAM condition alone is satisfied (using the
+  assumed literal as a free fact), with zero pressure to also construct
+  data satisfying the UPSTREAM rule's own condition. The real validator
+  (`drd_executor.py`'s `_resolve_one`, `kind == 'literal_via_upstream_
+  branch'` branch) does the opposite, correctly: it independently
+  re-runs the real upstream decision against the same subject and raises
+  `UngroundedForCase` unless it ACTUALLY selects the presumed rule —
+  which an arbitrary, only-downstream-optimized candidate essentially
+  never satisfies. Confirmed via a fresh `coverage.py` run (not the
+  stale `coverage_out/` snapshot the original "Course Load Limit 0/4"
+  finding came from): every one of the 57 compiled records using this
+  kind anywhere in the corpus is `search_covered=True,
+  verified_rule_selected=False` — 0/57, not a narrow one-decision issue.
+  **Not fixed — this needs a real design decision, not a quick patch**:
+  a correct fix means the search's own fitness for a "via" record must
+  also be pushed toward making the SAME candidate's real data satisfy
+  the presumed upstream rule's OWN full condition tree (recursively, for
+  a multi-hop chain) — effectively ANDing the upstream rule's condition
+  into the downstream branch's own `branch_fitness`, not just assuming
+  it. That's a structural change to how a `substituted_decision`
+  /`literal_via_upstream_branch` branch's fitness is computed
+  (`fitness.py`/`candidate.py`), not a one-line fix, and affects every
+  case study with DRD chaining (FLEX2, jBilling; OpenMRS/Spree currently
+  have none of this specific chaining kind per
+  `RULE_TO_OBJECTIVE_MAPPING.md`'s own audit).
+
 ### Spree
 
 - **OUT OF SCOPE, by explicit decision (2026-09-24): generating/

@@ -113,10 +113,27 @@ all counts are DISTINCT DMN rules)
   (a disclosed join-construction override, more search budget/seeds, or
   a quick-win placeholder mapping already scoped in `KNOWN_ISSUES.md`).
 
-**New finding surfaced while computing the corrected table (not yet in
-`KNOWN_ISSUES.md`): FLEX2's `Course Load Limit` is 0/4 verified** and
-isn't currently listed anywhere in that file's Open Issues section —
-worth adding and investigating, not yet done.
+**Investigated 2026-09-24 (see `KNOWN_ISSUES.md`'s new cross-case-study
+entry for the full root-cause writeup): the "Course Load Limit 0/4"
+finding above turned out to be a much bigger, systemic gap, not a
+narrow FLEX2 quirk.** All 57 compiled records anywhere in the corpus
+that use the `literal_via_upstream_branch` resolution kind (55 in
+FLEX2, 2 in jBilling) are `search_covered=True` but `verified=False` --
+0/57, confirmed via a fresh coverage.py run (the `coverage_out/`
+snapshot this "0/4" finding was originally read from was itself stale,
+per the same lesson as the OpenMRS/jBilling false alarm above; the real,
+current picture is worse than "0/4" for one decision, it's 0/57 for the
+whole chaining mechanism). Root cause: `fitness.py`'s own
+`evaluate_resolution` treats a `literal_via_upstream_branch` node as an
+unconditional literal (`return evaluate_expression(node['value'], {},
+genome)`) with no check that the SAME candidate's real data would
+actually make the presumed upstream rule fire -- so the search reaches
+fitness 0.0 by satisfying only the downstream half, while
+`drd_executor.py`'s real validator independently re-evaluates the
+upstream decision against the same row and (correctly) almost never
+finds it selecting the presumed rule for an otherwise-arbitrary
+candidate. Diagnosis only, not fixed -- see `KNOWN_ISSUES.md` for scope
+and what a fix would need to do.
 
 ### Per-case-study provenance (fixture / archive / invocation used to
 produce the numbers above)
