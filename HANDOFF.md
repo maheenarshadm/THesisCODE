@@ -88,6 +88,13 @@ docs/                 Higher-level narrative writeups (may lag behind the latest
 
 QUICK_REFERENCE.md    FAQ + "where do I find X" index + glossary. Check this before
                       re-searching the repo for something already answered.
+
+RULE_TO_OBJECTIVE_MAPPING.md   Exactly how one DMN rule becomes one (or several)
+                      compiled objectives -- the full resolution-kind taxonomy
+                      with real examples, and the chaining mechanism that
+                      produces multiple objectives from one rule. Read this for
+                      "what exactly is the compiler doing," not just the summary
+                      in §3 below.
 ```
 
 ## 3. Core pipeline, briefly
@@ -260,9 +267,12 @@ Full, itemized list with root causes and what fixing each would require:
 
 1. This file.
 2. `QUICK_REFERENCE.md` — glossary + where things live.
-3. `validation_oracle/COVERAGE_REPORT.md` — current numbers.
-4. `validation_oracle/KNOWN_ISSUES.md` — what's open, what's fixed, why.
-5. Whichever of `generator/README.md` / `validation_oracle/DESIGN.md` /
+3. `RULE_TO_OBJECTIVE_MAPPING.md` — how compilation actually works, if
+   you're about to touch `compile_constraints.py` or need to understand
+   why a coverage denominator looks the way it does.
+4. `validation_oracle/COVERAGE_REPORT.md` — current numbers.
+5. `validation_oracle/KNOWN_ISSUES.md` — what's open, what's fixed, why.
+6. Whichever of `generator/README.md` / `validation_oracle/DESIGN.md` /
    `generator/DECISIONS_ALGORITHM.md` / `generator/DECISIONS_EXPERIMENT.md`
    covers the specific area you're about to touch — these are long,
    read the relevant section, not the whole thing cold.

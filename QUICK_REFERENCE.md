@@ -38,7 +38,7 @@ calls to resolve.
 | "What experiments have actually been run, with what budgets/seeds?" | `generator/DECISIONS_EXPERIMENT.md`, raw data in `generator/experiment_runs/` |
 | "What's the overall research narrative / elevator pitch?" | `HANDOFF.md` §1, or `docs/complete_approach_writeup.md` for the long version (check it isn't stale against `KNOWN_ISSUES.md` first) |
 | "How does the DMN-to-schema mapping actually work, mechanically?" | `docs/dmn_to_schema_mapping.md`, or `generator/compile_constraints.py`'s own docstrings (`classify_derived` especially) |
-| "What resolution kinds exist and what do they mean?" | `generator/compile_constraints.py` (where they're produced) + `generator/candidate.py`'s `derive_value` (canonical read-side semantics) |
+| "What resolution kinds exist and what do they mean, and exactly how does a DMN rule turn into an objective?" | `RULE_TO_OBJECTIVE_MAPPING.md` — the full, example-grounded walkthrough. `generator/compile_constraints.py` (where they're produced) + `generator/candidate.py`'s `derive_value` (canonical read-side semantics) for the source itself. |
 | "Is this specific gap a bug or a deliberate scope decision?" | `validation_oracle/KNOWN_ISSUES.md` — scope decisions get their own explicit "OUT OF SCOPE" entries, distinct from ordinary open bugs |
 | "What are ALL the disclosed-override files, and what does each cover?" | See §3 immediately below |
 
