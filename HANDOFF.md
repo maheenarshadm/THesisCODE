@@ -173,10 +173,10 @@ file's last recorded values, not a fresh `coverage.py` invocation,
 unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
-provenance): raw verified coverage OpenMRS 57.7%, Spree 45.2%, FLEX2
+provenance): raw verified coverage OpenMRS 57.7%, Spree 58.1%, FLEX2
 38.2%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-73.2%, Spree 63.6%, FLEX2 39.6%, jBilling 66.7%.
+73.2%, Spree 81.8%, FLEX2 39.6%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -209,20 +209,53 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
 5. Created `KNOWN_ISSUES.md` and `COVERAGE_REPORT.md` as living
    trackers; corrected a real error in the latter (objectives vs.
    distinct DMN rules, see §4) after a user double-check caught it.
+6. Built the `COLUMN IN (SELECT ... WHERE ...)` construction mechanism
+   (`generator/aggregate_self_table.py`, extensions to `candidate.py`/
+   `mutation.py`), closing all 8 of Spree's originally search-claimed-
+   but-never-verified rules across two decisions (`Promotion Usage
+   Limit Exceeded`, `One-Use-Per-User Promotion Eligibility::rule_3`).
+   Two supporting fixes found chasing it: a real schema-extraction gap
+   (`fk_columns: []` where real FKs existed) hit THREE separate times
+   (`spree_order_promotions`/`spree_promotion_rules`,
+   `spree_discounts`, `spree_promotion_actions`), and a `materialize.py`
+   gap where a row missing its own table's surrogate key was left for
+   SQLite's own NULL-rowid auto-assignment, which could silently
+   collide with this pipeline's own explicit offset-derived ids (fixed
+   pipeline-wide with an explicit surrogate-key fill). Spree: 14→18
+   verified rules.
+7. Investigated why FLEX2's `literal_via_upstream_branch`-chained
+   objectives (55 FLEX2, 2 jBilling) never verify despite the search
+   claiming coverage — an initial diagnosis blaming the search's own
+   fitness function was WRONG and retracted (the compiler already
+   correctly ANDs the upstream rule's condition in at compile time,
+   confirmed by inspecting the real compiled record). The actual bug:
+   a case-sensitivity mismatch in `drd_executor.py`'s cross-decision
+   join lookup (`upstream_subject_value`), comparing schema-declared
+   uppercase column names against real lowercase SQLite row keys with
+   no `.lower()` — every cross-decision lookup silently failed. Fixed;
+   verified directly against real data. Net effect on verified counts
+   so far: none — the fix unmasked a separate, previously-unreached
+   gap (`derived_case` resolution kind never implemented in the
+   validator at all, 33 FLEX2 records affected, not yet built).
 
 ## 7. Planned / open work
 
 Full, itemized list with root causes and what fixing each would require:
 **`validation_oracle/KNOWN_ISSUES.md` → "Open issues"**. Headlines:
 
-- Spree: 2 row-finding gaps needing a disclosed join-construction
-  override (`Promotion Customer Group Eligibility`, `Promotion Usage
-  Limit Exceeded`) — confirmed NOT closeable by more search budget alone.
+- Spree: 1 row-finding gap remains (`Promotion Customer Group
+  Eligibility`, needing a disclosed join-construction override —
+  `Promotion Usage Limit Exceeded` is now closed, see §6 above). One
+  further, narrower gap in the now-closed decision:
+  `Promotion Usage Limit Exceeded::rule_3` itself still doesn't verify
+  (no constructed subject reaches `adjustedCreditsCount >= usageLimit`)
+  — a distinct, not-yet-investigated issue.
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
   for Spree/jBilling elsewhere); `Course Replacement Eligibility`
   (likely a one-line fix, reusing existing infrastructure); `Course Load
-  Limit` (0/4 verified, newly found, not yet root-caused); an audit
-  question on `Attendance Eligibility For Final Exam`.
+  Limit` — root-caused (§6 above): implement `derived_case` in
+  `validation_oracle/db_resolver.py`'s `resolve()`, then re-verify; an
+  audit question on `Attendance Eligibility For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

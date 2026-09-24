@@ -122,6 +122,29 @@ discrepancies, on top of the `Preferred Identifier Requirement` and
 scope. What's left is ordinary unfinished work (below), not a declined
 mechanism.
 
+**Fixed a real case-sensitivity bug in `DecisionRunner.
+upstream_subject_value` (2026-09-24), found investigating FLEX2's
+`Course Load Limit` again** (its own subject table now has real rows,
+unlike the earlier "zero rows" finding above — this is a different,
+later bug). The function compared schema-declared column casing
+(`ROLL_NO`) against a row dict whose real keys are lowercase SQLite
+column names (`roll_no`), with no `.lower()` — the identical
+normalization `db_resolver.py`'s own single-decision join-hop code
+already applies, just missing from this newer cross-decision copy of
+the same pattern. Every cross-decision lookup silently returned `None`,
+misreported as `UngroundedForCase("no corresponding upstream row")`
+for every real case, corpus-wide (all 57 `literal_via_upstream_branch`
+records in FLEX2/jBilling) — before the upstream rule's own condition
+(already correctly spliced in by `compile_constraints.py` at compile
+time; an earlier same-day diagnosis blaming the search's own fitness
+function for this was wrong and has been retracted, see
+`KNOWN_ISSUES.md`) was ever even checked. Fixed with two `.lower()`
+calls; verified directly against real FLEX2 data that every
+previously-`None` lookup now resolves a real upstream selected rule.
+Unmasked a separate, previously-unreached gap: `derived_case`
+(a categorical column mapping) is not implemented anywhere in
+`db_resolver.py`'s own `resolve()` — added to "Known gaps" below.
+
 **`coverage.py` built.** Aggregates every decision in a case study
 against one already-materialized database and writes the three spec'd
 output files: `objective_results.csv` (one row per compiled objective:
@@ -1018,6 +1041,19 @@ upstream value.
   rule-selecting decision-table steps.
 - **Risk 2 (FEEL mistranslation) is not closed by Level A** — see
   "Independence levels" above.
+- **`derived_case` resolution kind is not implemented in
+  `db_resolver.py`'s own `resolve()` at all (found 2026-09-24, fixing
+  the `upstream_subject_value` case-sensitivity bug above let evaluation
+  reach it for the first time).** `generator/candidate.py` already
+  handles it on the generation side (a categorical column mapping, e.g.
+  `SEMESTER.TITLE`: `'Fall'/'Spring' -> 'Regular'`, `'Summer' ->
+  'Summer'`), but the validator has no matching case, so any decision
+  using it fails outright with `Unhandled variable_resolution kind
+  'derived_case'` rather than being evaluated. Affects 33 FLEX2 records,
+  including `Course Load Limit`'s own `semesterType` — currently the
+  reason that decision's own 11 objectives still don't verify, now for
+  a real, disclosed reason rather than the fixed validator bug's false
+  one. Not yet built.
 
 ## Output schema (per the agreed specification)
 
