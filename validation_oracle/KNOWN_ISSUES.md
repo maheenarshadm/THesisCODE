@@ -98,24 +98,6 @@ excluded from all coverage numbers per an explicit decision below):
     not the same fix as `Promotion Usage Limit Exceeded` below, even
     though both once looked like the same "missing table" shape.
 
-- **`Promotion Usage Limit Exceeded::rule_3` — new, narrower gap found
-  while verifying the IN-subquery fix (2026-09-24), distinct from the
-  filter-shape gap the fix itself closed.** Rules 1/2/4 of this decision
-  now verify correctly (`adjustedCreditsCount` is correctly constructed
-  against a real `spree_promotion_actions`/`spree_discounts` join). But
-  no constructed subject in the fixture ever has `usageLimitSet=true`
-  AND `adjustedCreditsCount >= usageLimit` — `matched_rule_ids` never
-  includes `rule_3` for any of the 7 real `Promotion Usage Limit
-  Exceeded` subjects in `decision_trace.json` (confirmed 2026-09-24). The
-  search claims this objective is covered (`search_covered=True,
-  best_search_fitness=0.0`), but the row-count driver evidently never
-  needed to push a specific focal promotion's own discount count past
-  its own `usageLimit` to reach that fitness — the same generator/
-  validator mismatch category as the other 8 rules originally, just not
-  yet root-caused to the same mechanical-conjunct-parsing depth. Not
-  fixed this round; needs its own investigation into why the row-count
-  mutation for this specific rule's objective doesn't need to reach a
-  real `count >= limit` state.
 
 ### FLEX2
 
@@ -615,5 +597,52 @@ before being counted as fixed here.
   full accounting, including the one false alarm the cross-case-study
   regression check caught and resolved: a stale `coverage_out/`
   artifact, not a real regression). One rule from the original 8,
-  `Promotion Usage Limit Exceeded::rule_3`, remains open — a narrower,
-  distinct gap, tracked separately above under Open Issues.
+  `Promotion Usage Limit Exceeded::rule_3`, remained open after this
+  round — see the next entry, which closes it.
+
+- **Closed `Promotion Usage Limit Exceeded::rule_3`, the last of the
+  original 8 — a THIRD instance of the `fk_columns: []` schema-extraction
+  gap (2026-09-24).** Investigating why no constructed subject ever had
+  `adjustedCreditsCount >= usageLimit` (confirmed: `matched_rule_ids`
+  never included `rule_3` for any real subject in `decision_trace.json`,
+  despite rules 1/2/4 of the SAME decision already verifying correctly)
+  traced to `spree_promotion_actions.fk_columns` ALSO being `[]` despite
+  `promotion_id` being a real FK to `spree_promotions.id` (confirmed
+  against `schemas/spree_schema.rb`'s own `t.bigint "promotion_id"`
+  declaration — same class of gap as `spree_discounts` and
+  `spree_order_promotions`/`spree_promotion_rules`, fixed earlier this
+  session). Effect: `promotion_id` was never included in either
+  `_seed_shared_population`'s or `merge_archive_candidate`'s own
+  key-column offsetting, so it stayed at its raw, pre-offset placeholder
+  value while the `spree_promotions` row it targets got shifted,
+  breaking the join `adjustedCreditsCount`'s own filter depends on — the
+  real validator always found 0 matching `spree_discounts` rows
+  regardless of how many were actually constructed.
+
+  **A more general lesson surfaced fixing this one**: the schema JSON is
+  read at TWO separate offsetting stages — `_seed_shared_population`
+  (per-objective, at initial seeding) and `merge_archive_candidate` (at
+  final merge) — and both must see the SAME schema for their two offset
+  passes to compose correctly. Editing `fk_columns` and only rebuilding
+  the fixture from an ALREADY-EXISTING archive pickle (skipping the
+  search re-run) leaves the pickle's own baked-in per-objective offsets
+  computed under the OLD schema, while the merge step re-offsets under
+  the NEW schema — double-offsetting a column already shifted once at
+  seed time, while single-offsetting one (`promotion_id` here) that
+  wasn't shifted before at all, corrupting the correspondence between
+  them (a real, reproduced intermediate failure this round: rebuilding
+  the fixture right after the schema edit, without re-running the
+  search first, produced `usage_limit=1` on one row and
+  `promotion_id=18000001` pointing at a DIFFERENT, ownerless row — fixed
+  by re-running the search before rebuilding). **General takeaway,
+  applicable beyond Spree**: any `fk_columns` schema edit needs a full
+  search re-run, not just a fixture rebuild, to take effect consistently
+  — a fixture rebuilt from a stale archive can silently corrupt exactly
+  the correspondence the schema edit was meant to fix.
+
+  **Verified**: re-ran the Spree search, rebuilt `spree_merged.db`,
+  re-ran `coverage.py` — 17→18 verified, all 4 rules of `Promotion Usage
+  Limit Exceeded` now confirmed, closing all 8 of the originally
+  search-claimed-but-unverified rules. Full self-test/regression suite
+  re-run and passing (Spree-only fix — `spree_promotion_actions` doesn't
+  exist in the other 3 case studies).

@@ -7,7 +7,7 @@
   "generations": 200,
   "total_objectives": 31,
   "final_covered": 20,
-  "runtime_seconds": 7.6919801235198975,
+  "runtime_seconds": 7.232218503952026,
   "coverage_history": [
     12,
     15,

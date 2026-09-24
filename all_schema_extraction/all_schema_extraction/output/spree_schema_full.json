@@ -1549,7 +1549,9 @@
     "fks": [],
     "indexes": [],
     "checks": [],
-    "fk_columns": []
+    "fk_columns": [
+      {"column": "promotion_id", "ref_table": "spree_promotions", "ref_column": "id"}
+    ]
   },
   "spree_promotion_categories": {
     "pk": "id",

@@ -43,8 +43,11 @@ runs at all. Full before/after diff across all 4 case studies confirmed
 this shared `materialize.py` fix reproduces OpenMRS/FLEX2/jBilling's
 already-recorded numbers below exactly (they were unaffected in the end
 -- see Run history for the one intermediate false alarm this produced
-against a stale `coverage_out/` artifact) and moves Spree from 14 to 17
-verified.
+against a stale `coverage_out/` artifact) and moves Spree from 14 to 18
+verified -- all 8 of the originally-unverified-but-search-claimed rules
+now confirmed, after a follow-up fix closed the one that remained
+(`Promotion Usage Limit Exceeded::rule_3`; see the "promotion_actions FK
+gap" Run history entry below).
 
 **Objectives vs. distinct DMN rules — read this before the tables.**
 Most DMN rules compile to exactly one DynaMOSA search objective, but a
@@ -73,10 +76,10 @@ not raw compiled objectives; see the note above)
 | Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 41 | 57.7% |
-| Spree | 31 | 31 | 17 | 54.8% |
+| Spree | 31 | 31 | 18 | 58.1% |
 | FLEX2 | 98 | 55 | 21 | 38.2% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **89** | **45.4%** |
+| **Total** | **240** | **196** | **90** | **45.9%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -85,10 +88,10 @@ all counts are DISTINCT DMN rules)
 | Case study | Distinct rules | Not solvable | Undetermined | Solvable | Verified | Solvable coverage |
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 41 | 73.2% |
-| Spree | 31 | 9 | 0 | 22 | 17 | 77.3% |
+| Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
 | FLEX2 | 55 | 0 | 2 | 53 | 21 | 39.6% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **89** | **61.0%** |
+| **Total** | **196** | **27** | **23** | **146** | **90** | **61.6%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -146,6 +149,46 @@ this count further).
 ---
 
 ## Run history
+
+### 2026-09-24 — `spree_promotion_actions.promotion_id` FK gap (closes the last of the original 8)
+Numbers: Spree 17→18 verified. `Promotion Usage Limit Exceeded::rule_3`
+(the one rule left open after the round below) never had any subject
+where `adjustedCreditsCount >= usageLimit` — traced to a THIRD instance
+of the same schema-extraction gap: `spree_promotion_actions.fk_columns`
+was also `[]` despite `promotion_id` being a real FK to
+`spree_promotions.id` (confirmed against `schemas/spree_schema.rb`'s own
+`t.bigint "promotion_id"` declaration, same convention-over-configuration
+class as the other two Spree FK gaps fixed this session). Symptom before
+the fix: `spree_promotion_actions.promotion_id` never got included in
+either `_seed_shared_population`'s or `merge_archive_candidate`'s own
+key-column offsetting, so it stayed at its raw, pre-offset placeholder
+value while the `spree_promotions` row it targets got shifted --
+breaking the join `adjustedCreditsCount`'s own filter depends on, so the
+validator's real SQL always found 0 matching `spree_discounts` rows
+regardless of how many were actually constructed.
+
+**A second, more general lesson found fixing this one:** the schema
+JSON is read at TWO separate offsetting stages --
+`_seed_shared_population` (per-objective, at initial seeding) and
+`merge_archive_candidate` (at final merge) -- and both must see the SAME
+schema for their two offset passes to compose correctly. Editing
+`fk_columns` and then only rebuilding the fixture from an
+ALREADY-EXISTING archive pickle (skipping the search re-run) leaves the
+pickle's own baked-in per-objective offsets computed under the OLD
+schema, while the merge step re-offsets under the NEW schema --
+double-offsetting a column that was already shifted once at seed time,
+while single-offsetting one (like `promotion_id` here) that wasn't
+shifted before at all, corrupting the correspondence between them (a
+real, reproduced intermediate failure this round, fixed by re-running
+`rerun_spree_search.py` before rebuilding the fixture, per this
+project's own established discipline: any `fk_columns` schema edit
+needs a full search re-run, not just a fixture rebuild, to take effect
+consistently).
+
+Verified via full re-run + fixture rebuild + `coverage.py`, plus the
+same self-test/regression suite as the round above -- all pass
+unchanged (this fix is Spree-only, `spree_promotion_actions` doesn't
+exist in the other 3 case studies' schemas).
 
 ### 2026-09-24 — Spree IN-subquery mechanism + merge-offsetting fixes
 Numbers: see "Latest snapshot" above (Spree 14→17 verified, 5/8→6/8
