@@ -142,6 +142,20 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
                 # unresolved for THIS decision rather than crashing the
                 # whole report; every other decision still gets verified.
                 unresolved[decision_name] = f"run_decision failed: {e}"
+            except (sqlite3.OperationalError, KeyError) as e:
+                # A real, disclosed DATABASE/FIXTURE gap, not a resolution
+                # kind the validator lacks: ground truth names a real
+                # table/column that this case study's own materialized
+                # database doesn't have. Confirmed real, not hypothetical
+                # -- Spree's adjustedCreditsCount fix correctly names
+                # spree_discounts, a genuine table in the real Spree
+                # schema, but the merged fixture database for this case
+                # study was only ever materialized with the tables its
+                # PREVIOUS (wrong) ground truth needed, so spree_discounts
+                # was never included ("no such table"). Recorded as
+                # unresolved for THIS decision, same as NotImplementedError
+                # above, rather than crashing every other decision's report.
+                unresolved[decision_name] = f"run_decision failed (database/fixture gap): {e}"
             else:
                 verified_rule_ids = result['verified_covered_rule_ids']
                 verified_covered_rule_ids_overall |= verified_rule_ids

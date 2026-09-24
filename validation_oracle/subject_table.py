@@ -30,9 +30,21 @@ _TABLE_EXTRACTORS = {
     'schema_column': lambda n: {n['table']},
     'null_check': lambda n: {n['table']},
     'derived_case': lambda n: {n['table']},
-    'derived_aggregate': lambda n: {n['table']},
+    # derived_aggregate is ALWAYS self-contained: db_resolver.resolve
+    # queries n['table'] directly via a raw SQL WHERE built entirely from
+    # substituting the SUBJECT row's own columns (self/colon/<bracket>
+    # placeholders) -- it never calls _row_for_table/walks a join path to
+    # reach n['table'] itself, so no join-path connectivity is required.
+    'derived_aggregate': lambda n: set(),
     'derived_join_count': lambda n: {n['prereq_table'], n['registration_table']},
-    'exists': lambda n: set(n['candidate_tables']),
+    # exists is the SAME story, but only when filter_text is present --
+    # then it's a self-contained correlated EXISTS query, identical
+    # reasoning to derived_aggregate above. With NO filter_text (the
+    # OpenMRS-style "does the subject's OWN row have a non-null value"
+    # pattern, or a genuinely bare "(existence)" with no filter at all),
+    # db_resolver DOES call _row_for_table, so a join path is still
+    # required there.
+    'exists': lambda n: set() if n.get('filter_text') else set(n['candidate_tables']),
     'raw_sql_boolean': lambda n: set(n['tables']),
     'any_not_null': lambda n: {c['table'] for c in n['columns']},
     'join_lookup': lambda n: {n['via']['local_table'], n['result_table']},

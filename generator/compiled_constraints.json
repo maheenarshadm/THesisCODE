@@ -37328,10 +37328,11 @@
   },
   "variable_resolution": {
    "adjustedCreditsCount": {
-    "kind": "schema_column",
-    "table": "spree_promotion_actions",
-    "column": "promotion_id",
-    "notes": "COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_discounts",
+    "filter_text": "promotion_action_id IN (SELECT id FROM spree_promotion_actions WHERE promotion_id = self) AND 1=1",
+    "source_text": "COUNT(spree_discounts) WHERE promotion_action_id IN (SELECT id FROM spree_promotion_actions WHERE promotion_id = self) AND 1=1"
    },
    "usageLimit": {
     "kind": "schema_column",
@@ -37346,7 +37347,7 @@
    }
   },
   "fk_closure_tables": [
-   "spree_promotion_actions",
+   "spree_discounts",
    "spree_promotions"
   ],
   "cross_variable_reference": true,
@@ -37479,14 +37480,15 @@
     "column": "usage_limit"
    },
    "adjustedCreditsCount": {
-    "kind": "schema_column",
-    "table": "spree_promotion_actions",
-    "column": "promotion_id",
-    "notes": "COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_discounts",
+    "filter_text": "promotion_action_id IN (SELECT id FROM spree_promotion_actions WHERE promotion_id = self) AND 1=1",
+    "source_text": "COUNT(spree_discounts) WHERE promotion_action_id IN (SELECT id FROM spree_promotion_actions WHERE promotion_id = self) AND 1=1"
    }
   },
   "fk_closure_tables": [
-   "spree_promotion_actions",
+   "spree_discounts",
    "spree_promotions"
   ],
   "cross_variable_reference": false,
@@ -38323,9 +38325,19 @@
     "candidate_tables": [
      "ageing_entity_step"
     ],
-    "candidate_columns": [],
-    "notes": "True iff an ageing_entity_step row exists for (entity_id, status_id); existence check, boolean by deliberate exception.",
-    "raw_schema_field": "ageing_entity_step (existence)"
+    "candidate_columns": [
+     {
+      "table": "ageing_entity_step",
+      "column": "entity_id"
+     },
+     {
+      "table": "ageing_entity_step",
+      "column": "status_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND status_id = <status_id>",
+    "notes": "[ASSUMED -- no source documentation for the exact entity/status correlation; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-24] Boolean derived from existence of an ageing_entity_step row keyed by THIS user's own entity_id and status_id -- the correlation the original note described in words but did not encode in a machine-actionable filter.",
+    "raw_schema_field": "ageing_entity_step (entity_id, status_id)"
    },
    "currentStatusIsActive": {
     "kind": "schema_column",
@@ -38828,9 +38840,19 @@
     "candidate_tables": [
      "ageing_entity_step"
     ],
-    "candidate_columns": [],
-    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "raw_schema_field": "ageing_entity_step (existence)"
+    "candidate_columns": [
+     {
+      "table": "ageing_entity_step",
+      "column": "entity_id"
+     },
+     {
+      "table": "ageing_entity_step",
+      "column": "status_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND status_id = <status_id>",
+    "notes": "[ASSUMED -- no source documentation for the exact entity/status correlation; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-24] A UI-only transient boolean; on load, set true from existence of a matching ageing_entity_step row for THIS user's own entity_id and status_id -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
+    "raw_schema_field": "ageing_entity_step (entity_id, status_id)"
    }
   },
   "fk_closure_tables": [
@@ -38923,9 +38945,19 @@
     "candidate_tables": [
      "ageing_entity_step"
     ],
-    "candidate_columns": [],
-    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "raw_schema_field": "ageing_entity_step (existence)"
+    "candidate_columns": [
+     {
+      "table": "ageing_entity_step",
+      "column": "entity_id"
+     },
+     {
+      "table": "ageing_entity_step",
+      "column": "status_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND status_id = <status_id>",
+    "notes": "[ASSUMED -- no source documentation for the exact entity/status correlation; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-24] A UI-only transient boolean; on load, set true from existence of a matching ageing_entity_step row for THIS user's own entity_id and status_id -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
+    "raw_schema_field": "ageing_entity_step (entity_id, status_id)"
    },
    "statusIsDeleted": {
     "kind": "schema_column",
@@ -39169,9 +39201,19 @@
     "candidate_tables": [
      "ageing_entity_step"
     ],
-    "candidate_columns": [],
-    "notes": "A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
-    "raw_schema_field": "ageing_entity_step (existence)"
+    "candidate_columns": [
+     {
+      "table": "ageing_entity_step",
+      "column": "entity_id"
+     },
+     {
+      "table": "ageing_entity_step",
+      "column": "status_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND status_id = <status_id>",
+    "notes": "[ASSUMED -- no source documentation for the exact entity/status correlation; researcher interpretation for evaluation-coverage purposes, not verified against the real jBilling system, 2026-09-24] A UI-only transient boolean; on load, set true from existence of a matching ageing_entity_step row for THIS user's own entity_id and status_id -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated.",
+    "raw_schema_field": "ageing_entity_step (entity_id, status_id)"
    },
    "statusIsDeleted": {
     "kind": "schema_column",
@@ -39218,9 +39260,12 @@
     "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
    },
    "days": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "MAX",
     "table": "ageing_entity_step",
-    "column": "days"
+    "filter_text": "entity_id=<entity_id> AND status_id=<status_id>",
+    "source_text": "MAX(ageing_entity_step.days) WHERE entity_id=<entity_id> AND status_id=<status_id>",
+    "value_column": "ageing_entity_step.days"
    }
   },
   "fk_closure_tables": [

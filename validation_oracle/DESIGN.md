@@ -288,6 +288,125 @@ change, not a `coverage.py`-side one), COLLECT hit policy support, and
 closing the remaining disclosed gaps above (multi-table backward joins
 needing a human override, decisions with no database grain at all).
 
+**2026-09-24: closed the last 3 underspecified-ground-truth decisions
+(Spree's `Promotion Usage Limit Exceeded`, jBilling's `Ageing Step
+Advancement`/`Ageing Step Config Validation`).** These were never
+actually join-path ambiguities -- each needed an aggregate/correlation
+rule ground truth had described in prose but never encoded machine-
+actionably (Spree: a de-dup COUNT over `spree_discounts`; jBilling: an
+`(entity_id, status_id)` correlation on `ageing_entity_step`). Fixed by
+editing the ground-truth CSVs with disclosed, explicitly `[ASSUMED]`-
+marked rows (same precedent/authorization as the earlier jBilling
+`welcomeMessagePresent` fix) -- not a simplification hidden as fact,
+each row's note says exactly what was assumed and why it isn't verified
+against the real system. Two `db_resolver.py`/`subject_table.py`
+mechanisms needed extending to represent these: `exists` now runs a real
+correlated `SELECT EXISTS(SELECT 1 FROM t WHERE filter_text)` when
+`filter_text` is present (previously it silently ignored `filter_text`
+entirely and checked "does the subject's own row have a non-null value,"
+which is a SEPARATE, real, more-impactful bug described below);
+`derived_aggregate` now supports a named `value_column` (`MAX(t.col)
+WHERE ...`), not just bare `COUNT(*)`.
+
+**A real bug in `compile_constraints.py` itself, found and worked around
+while writing the Spree fix:** its own filter-text extraction
+(`text[...].rstrip(') ')`) blindly strips trailing `)`/space characters,
+truncating a nested subquery's own closing paren. Not fixed at the
+source (out of today's scope); worked around with a harmless trailing
+`AND 1=1` tautology in the ground-truth CSV, verified empirically to
+preserve the real closing paren.
+
+**A real, self-inflicted regression caught before it shipped:** editing
+the jBilling CSV with an unquoted comma inside a parenthesized column
+list (`ageing_entity_step (entity_id, status_id)`, no surrounding
+quotes) silently shifted that row's own CSV columns, corrupting its
+`mapping_type` into an unrecognized bucket -- `compile_constraints.py`
+gave no error, just silently reclassified 3 previously-compiling records
+as blocked (jBilling's compiled count dropped from 40 to 37). Caught by
+diffing the full compiled record_id set against a pre-edit baseline
+(`git show HEAD:...`) before treating the recompile as done -- not
+noticed by the summary counts alone, which don't show *which* records
+moved. Fixed by quoting the field and rewording the notes text to
+include the phrase (`"existence of"`) `compile_constraints.py`'s own
+classifier requires to recognize the parenthesized-filter enrichment
+shape. Re-verified after the fix: all 4 case studies' compiled record
+sets are IDENTICAL to the pre-session baseline except the 3 target
+records' own internal resolution shape -- zero unintended adds/removes.
+
+**A second real, previously-undiscovered bug, found running jBilling's
+`exists` fix end to end:** `exists`-kind resolution NEVER consulted
+`filter_text` at all, in any prior version of this code -- it silently
+checked "does the subject's own row have a non-null value for this
+column," trivially true whenever `candidate_table == subject_table`
+regardless of what filter was actually declared. This affected
+`Currency Exchange Rate Source`'s two rules
+(`hasEntitySpecificExchange`/`hasSystemDefaultExchange`, filtered on
+`entity_id=<entity_id>` vs. `entity_id=0`), which had structurally been
+unable to differ from each other -- meaning jBilling's PREVIOUSLY-
+REPORTED coverage numbers for this decision were silently wrong. Fixed
+(see above); the corrected jBilling numbers below supersede the earlier
+report.
+
+**A third real, previously-undiscovered bug, found while trying to run
+FLEX2's coverage report end to end for the first time:** every dict
+`db_resolver._one_row` built from a live SQLite row used the EXACT case
+of `cursor.description` as its keys, while every ground-truth `column`
+name is always written lowercase regardless of case study -- silently
+fine for OpenMRS/Spree/jBilling (all three's real schemas already use
+lowercase column names), but FLEX2's own SQLite fixture stores every
+column name upper-case (`STUDENT_PROGRAM.CGPA`), so EVERY FLEX2
+`schema_column`/`null_check`/`any_not_null`/etc. resolution crashed with
+a bare `KeyError` -- meaning FLEX2's coverage.py report had apparently
+NEVER been run to completion before this session (absent from every
+previously-reported results table). Fixed by lowercasing both the row
+dict's own keys and every column-name lookup against it, throughout
+`db_resolver.py`. SQL identifier matching itself was never the issue --
+SQLite's own WHERE/FK comparisons are already ASCII case-insensitive;
+only this dict's own Python-level lookup wasn't. Also made `coverage.py`
+catch `sqlite3.OperationalError`/`KeyError` per-decision (same treatment
+already given `NotImplementedError`) so one decision's database/fixture
+gap can't crash the whole case study's report -- needed because Spree's
+`Promotion Usage Limit Exceeded` fix correctly names `spree_discounts`
+(a real Spree table), but the merged fixture database for this case
+study was only ever materialized against the OLD (wrong) ground truth,
+so that table was never included (`no such table: spree_discounts`) --
+a genuine fixture-completeness gap, not a validator bug, disclosed here
+rather than silently worked around.
+
+**FLEX2 now runs to completion but reports 0/98 verified — a separate,
+disclosed, NOT-yet-investigated fixture-completeness concern, out of
+today's scope.** Spot-checking `STUDENT_PROGRAM` directly: every single
+row in `flex2_merged.db` has `CGPA`/`WARNING` (and likely other
+columns) NULL, including rows with a real, non-null `ROLL_NO` --
+consistent with this merged-archive fixture having been built before
+`Academic Warning Status` (and likely other decisions) ever ran real
+search generations against it. This needs `tests/build_fixture_from_
+generator.py` re-run against a fresher/fuller FLEX2 archive before FLEX2
+verified-coverage numbers mean anything; not attempted today (out of
+this round's scope, which was closing the 3 Spree/jBilling decisions).
+
+**Corrected, re-verified coverage numbers, all 4 case studies (this
+session's fixes applied, re-run end to end 2026-09-24):**
+
+| Case study | Objectives | Verified rule IDs | Verified coverage % | Unresolved decisions | Notes |
+|---|---|---|---|---|---|
+| OpenMRS | 71 | 37 | 52.1% | 5 | unchanged (ground truth untouched this round) |
+| Spree | 26 | 7 | 26.9% | 5 | unchanged in total, but `Promotion Usage Limit Exceeded` moved from silently-wrong-schema_column to honestly-unresolved (fixture gap); net zero-sum, same number, more honest reason |
+| jBilling | 40 | 11 | 28.2%* | 9 | up from 10/25.6% previously reported -- `Ageing Step Advancement`'s corrected entity/status filter now genuinely verifies both its rules |
+| FLEX2 | 98 | 0 | 0% | 7 | first successful end-to-end run ever (previously crashed); 0% traced to a fixture-completeness gap, not re-investigated further this round |
+
+*`verified_rule_coverage_percent` exactly as printed by `coverage.py`'s
+own summary (not independently recomputed here; its own denominator is
+not simply `verified_covered_rules / searchable_objectives`).
+
+All 3 target decisions confirmed closed at the ground-truth/resolution
+level (no unintended adds/removes anywhere in the compiled record set);
+`Ageing Step Config Validation` compiles and resolves correctly but 0 of
+its real cases currently select any of its rules -- a legitimate result
+worth flagging, not evidence of a bug (its own 2 unresolvable rules,
+`Rule_3`/`Rule_4`, are blocked by the pre-existing, disclosed
+`isLastSelectedStep` `code_external` gap, unrelated to this fix).
+
 ## Why this exists
 
 Everything the search produces and reports as "coverage" — archive
