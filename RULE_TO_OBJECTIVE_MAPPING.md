@@ -63,8 +63,10 @@ The fact has **no real table backing at all** — a genuine scenario/
 runtime parameter (never silently defaulted; needs an explicit,
 disclosed override at verification time).
 
+Example — OpenMRS, `Order Date Activated Consistency Violations` →
+`evaluationTime`:
+
 ```json
-// OpenMRS, "Order Date Activated Consistency Violations" -> evaluationTime
 {"kind": "not_persisted"}
 ```
 
@@ -73,11 +75,12 @@ disclosed override at verification time).
 An explicit, disclosed "we know this fact has no clean resolution" —
 never silently guessed at, never forced into a wrong shape.
 
+Example — Spree, `Promotion Customer Group Eligibility` →
+`promotionTargetGroupIds`:
+
 ```json
-// Spree, "Promotion Customer Group Eligibility" -> promotionTargetGroupIds
 {"kind": "schema_gap",
- "notes": "CustomerGroup rule's customer_group_ids array lives in the
-           serialized preferences blob, not a dedicated join table..."}
+ "notes": "CustomerGroup rule's customer_group_ids array lives in the serialized preferences blob, not a dedicated join table..."}
 ```
 
 ### Bucket: `serialized-field` / `serialized field` → kind `serialized_field` or `null_check` (with `key`)
@@ -90,8 +93,9 @@ key inside an already schema-declared serialized (YAML/JSON) column.
 - Otherwise → **`serialized_field`** (read the key's real value, with an
   optional default for when it's unset).
 
+Example — Spree, `Promotion Item Total Eligibility` → `amountMin`:
+
 ```json
-// Spree, "Promotion Item Total Eligibility" -> amountMin
 {"kind": "serialized_field", "table": "spree_promotion_rules",
  "column": "preferences", "key": "amount_min", "default": 100.0}
 ```
@@ -100,8 +104,9 @@ key inside an already schema-declared serialized (YAML/JSON) column.
 
 The straightforward case: the variable **is** a real column.
 
+Example — FLEX2, `Academic Warning Status` → `cumulativeGPA`:
+
 ```json
-// FLEX2, "Academic Warning Status" -> cumulativeGPA
 {"kind": "schema_column", "table": "student_program", "column": "cgpa",
  "also_valid_in": [["student_semester", "cgpa"]]}
 ```
@@ -153,15 +158,23 @@ all — it's the **output of another decision** (a DRD upstream link,
   — still exactly ONE compiled record, since there's only one possible
   value.
 
-  ```json
-  // FLEX2, "Attendance Eligibility For Final Exam" -> attendancePercentage
-  {"kind": "substituted_decision", "substituted_from": "Attendance Percentage",
-   "expression": {"op": "*", "left": {"op": "/",
-       "left": {"kind": "variable", "ref": "lecturesAttended"},
-       "right": {"kind": "variable", "ref": "lecturesHeldForOffering"}},
-     "right": {"kind": "literal", "value": 100}},
-   "free_variable_resolutions": {"lecturesAttended": {...}, "lecturesHeldForOffering": {...}}}
-  ```
+Example — FLEX2, `Attendance Eligibility For Final Exam` →
+`attendancePercentage` (its two free variables, `lecturesAttended` and
+`lecturesHeldForOffering`, are each their own real `derived_aggregate`
+node — omitted below for brevity, not shown as `{...}` since that isn't
+valid JSON):
+
+```json
+{"kind": "substituted_decision", "substituted_from": "Attendance Percentage",
+ "expression": {"op": "*",
+   "left": {"op": "/",
+     "left": {"kind": "variable", "ref": "lecturesAttended"},
+     "right": {"kind": "variable", "ref": "lecturesHeldForOffering"}},
+   "right": {"kind": "literal", "value": 100}},
+ "free_variable_resolutions": {
+   "lecturesAttended": "(its own derived_aggregate node, omitted here)",
+   "lecturesHeldForOffering": "(its own derived_aggregate node, omitted here)"}}
+```
 
 - **The upstream decision is itself a multi-rule decision table**
   (`chained_decision_output`) — there is no single answer, because
