@@ -159,7 +159,7 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
                 f"not_persisted_overrides={{{var!r}: <value>}} explicitly, disclosed, "
                 f"never read from search state (see DESIGN.md known gaps)")
         result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
-                          join_paths, declared_not_persisted_value=overrides[var])
+                          join_paths, declared_not_persisted_value=overrides[var], case_study=case_study)
         if trace is not None:
             trace[var] = {'value': result.value, 'resolution_type': result.resolution_type,
                           'source_table': None}
@@ -177,7 +177,8 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
             raise UngroundedForCase(
                 f"{var}: upstream {upstream_decision!r} selected {actual_selected!r}, "
                 f"not the required {node['from_rule_id']!r}")
-        result = resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths)
+        result = resolve(conn, node['value'], subject_table, subject_pk_cols, subject_pk_vals, join_paths,
+                          case_study=case_study)
         if trace is not None:
             trace[var] = {'value': result.value, 'resolution_type': 'literal_via_upstream_branch',
                           'source_table': None, 'upstream_decision': upstream_decision,
@@ -196,7 +197,8 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
                           'source_table': None, 'free_variables': free_values}
         return value
 
-    result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths)
+    result = resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals, join_paths,
+                      case_study=case_study)
     if trace is not None:
         trace[var] = {'value': result.value, 'resolution_type': result.resolution_type,
                       'source_table': result.source_table}

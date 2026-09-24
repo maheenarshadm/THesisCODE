@@ -114,23 +114,51 @@ def _row_for_table(conn, target_table, subject_table, subject_pk_cols, subject_p
     return current_row
 
 
-def _resolve_placeholders(conn, filter_text, subject_row):
+def _resolve_placeholders(conn, filter_text, subject_row, case_study=None,
+                           subject_table=None, subject_pk_cols=None,
+                           subject_pk_vals=None, join_paths=None):
     """`filter_text` conjuncts of the form `COLUMN = <placeholder>` name
     the target table's own column directly -- the placeholder's real
-    value is the SUBJECT ROW's own value for a column of the SAME NAME,
-    if one exists (the same matching principle DESIGN.md's per-kind
-    table describes). Returns {placeholder_name: value}; raises naming
-    the first placeholder it cannot match to any subject-row column,
-    rather than silently treating it as NULL/wildcard."""
+    value is FIRST the SUBJECT ROW's own value for a column of the SAME
+    NAME, if one exists (the same matching principle DESIGN.md's
+    per-kind table describes; unchanged from before this fallback
+    existed, so every already-working placeholder -- jBilling's
+    entity_id/status_id, Spree's own price_list_id/user_id/email -- is
+    completely unaffected).
+
+    Only when a placeholder is NOT on the subject row does this consult
+    `filter_placeholder_sources.py`: if THAT names a table for it, the
+    real value is read off the already-joined row via `_row_for_table`
+    (`join_paths[table]`, from `subject_table.subject_table_for_decision`
+    -- the SAME hop-walker every other cross-table kind already uses, no
+    new join-finding logic). A placeholder with no override there, or
+    with one but no `join_paths`/`case_study` supplied by the caller,
+    falls through to the original error -- never a silent guess.
+
+    Returns {placeholder_name: value}; raises naming the first
+    placeholder it cannot resolve either way."""
     bindings = {}
     for column, placeholder in _CONJUNCT_RE.findall(filter_text or ''):
         column = column.lower()
-        if column not in subject_row:
-            raise NotImplementedError(
-                f"filter_text placeholder <{placeholder}> binds to column {column!r}, "
-                f"not present on the subject row ({sorted(subject_row)}) -- "
-                f"cannot resolve independently of a declared scenario value")
-        bindings[placeholder] = subject_row[column]
+        if column in subject_row:
+            bindings[placeholder] = subject_row[column]
+            continue
+        source_table = None
+        if case_study is not None and join_paths is not None:
+            from filter_placeholder_sources import get_source_table
+            source_table = get_source_table(case_study, placeholder)
+        if source_table is not None:
+            joined_row = _row_for_table(conn, source_table, subject_table, subject_pk_cols,
+                                         subject_pk_vals, join_paths)
+            if joined_row is not None and column in joined_row:
+                bindings[placeholder] = joined_row[column]
+                continue
+        raise NotImplementedError(
+            f"filter_text placeholder <{placeholder}> binds to column {column!r}, "
+            f"not present on the subject row ({sorted(subject_row)})"
+            + (f" or on {source_table!r} (joined, but the column/row wasn't there)"
+               if source_table else "")
+            + " -- cannot resolve independently of a declared scenario value")
     return bindings
 
 
@@ -181,7 +209,7 @@ def _substitute_self_and_colon(text, subject_row, subject_pk_cols):
 
 
 def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
-            join_paths=None, declared_not_persisted_value=None):
+            join_paths=None, declared_not_persisted_value=None, case_study=None):
     """`node` is one Phase 1 `variable_resolution` entry. `subject_table`/
     `subject_pk_cols`/`subject_pk_vals` identify the real case under
     test -- the ONE piece of identity the caller supplies (both always
@@ -195,6 +223,11 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
     caller knows which variable it's resolving; this function does not,
     since a bare `{'kind': 'not_persisted'}` node carries no name) --
     see module docstring for why this can never be database-derived.
+
+    `case_study`, if given, lets a `filter_text` placeholder not found on
+    the subject row fall back to `filter_placeholder_sources.py` (see
+    `_resolve_placeholders`) -- omitted, that fallback is simply never
+    attempted and behavior is identical to before it existed.
     """
     join_paths = join_paths or {}
     kind = node.get('kind')
@@ -273,7 +306,9 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         if node.get('filter_text'):
             table = node['candidate_tables'][0]
             where = _substitute_self_and_colon(node['filter_text'], subject_row or {}, subject_pk_cols)
-            bindings = _resolve_placeholders(conn, where, subject_row or {})
+            bindings = _resolve_placeholders(conn, where, subject_row or {}, case_study=case_study,
+                                              subject_table=subject_table, subject_pk_cols=subject_pk_cols,
+                                              subject_pk_vals=subject_pk_vals, join_paths=join_paths)
             for ph, val in bindings.items():
                 where = where.replace(f'<{ph}>', _sql_literal(val))
             sql = f'SELECT EXISTS(SELECT 1 FROM "{table}" WHERE {where})'
@@ -299,7 +334,9 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
     if kind == 'raw_sql_boolean':
         sql = _substitute_self_and_colon(node['sql_template'], subject_row or {}, subject_pk_cols)
         if _PLACEHOLDER_RE.search(sql):
-            bindings = _resolve_placeholders(conn, sql, subject_row or {})
+            bindings = _resolve_placeholders(conn, sql, subject_row or {}, case_study=case_study,
+                                              subject_table=subject_table, subject_pk_cols=subject_pk_cols,
+                                              subject_pk_vals=subject_pk_vals, join_paths=join_paths)
             for ph, val in bindings.items():
                 sql = sql.replace(f'<{ph}>', _sql_literal(val))
         cur = conn.execute(sql)
@@ -309,7 +346,9 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
 
     if kind == 'derived_aggregate':
         where = _substitute_self_and_colon(node['filter_text'], subject_row or {}, subject_pk_cols)
-        bindings = _resolve_placeholders(conn, where, subject_row or {})
+        bindings = _resolve_placeholders(conn, where, subject_row or {}, case_study=case_study,
+                                          subject_table=subject_table, subject_pk_cols=subject_pk_cols,
+                                          subject_pk_vals=subject_pk_vals, join_paths=join_paths)
         for ph, val in bindings.items():
             where = where.replace(f'<{ph}>', _sql_literal(val))
         # value_column (e.g. "MAX(ageing_entity_step.days) WHERE ...") is

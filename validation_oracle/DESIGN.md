@@ -587,6 +587,65 @@ out to be legitimately closeable that way:
   table backs this" framing. Re-verified: zero regressions across all 4
   case studies (identical OpenMRS/FLEX2/jBilling numbers; full
   regression suite unchanged).
+
+**2026-09-24 (a fourth round): built the join-aware `filter_text`
+placeholder mechanism, on request, after a user challenge correctly
+pushed back on treating it as a bigger architecture change than it is.**
+The pushback was right to make explicit: the actual gap has exactly two
+separate parts, not one -- (1) a trivial DATA fact (which table a
+placeholder's real value lives on), no different in kind from any other
+ground-truth mapping in this project, and (2) a small, mechanical CODE
+gap (`_resolve_placeholders` had no fallback path at all beyond the
+subject row's own columns). Neither part alone needed new architecture;
+only (2) needed writing.
+
+Built as three additive pieces, in the SAME disclosed-override tradition
+as `join_disambiguation.py`/`supplementary_fk_edges.py`:
+- `filter_placeholder_sources.py`: `{(case_study, placeholder_name):
+  table_name}`, one real entry (`('Spree', 'promotion_id'):
+  'spree_order_promotions'`).
+- `subject_table.tables_referenced()`: for `exists`/`derived_aggregate`
+  with `filter_text`, now also includes any table this file names for
+  one of the filter's own placeholders -- every placeholder with NO
+  override (every currently-working case: jBilling's `entity_id`/
+  `status_id`, Spree's own `price_list_id`/`user_id`/`email`) is
+  completely unaffected, confirmed by the unchanged OpenMRS/FLEX2/
+  jBilling numbers below.
+- `db_resolver._resolve_placeholders`: tries the subject row first,
+  exactly as before; only when a placeholder isn't there does it consult
+  the override and fetch the value off the already-joined row via
+  `_row_for_table` -- the SAME hop-walker every other cross-table kind
+  already uses, reusing `schema_utility.build_join_path`'s own BFS/
+  ambiguity-refusal machinery entirely as-is. `case_study` threaded
+  through `resolve()`/`_resolve_one`'s existing call chain to reach it
+  (both already had a `case_study` value in scope; this only forwards
+  it, no new parameter-passing pattern).
+
+**Confirmed working exactly as designed, against the real Spree data:**
+`subject_table_for_decision` now picks `spree_order_promotions` as this
+decision's root (not `spree_orders`) -- and correctly so, not merely as
+a workaround: `_pick_root`'s existing algorithm finds `spree_orders`
+cannot itself forward-reach `spree_order_promotions` (that direction is
+backward/one-to-many, correctly refused), while `spree_order_promotions`
+forward-reaches `spree_orders` in one real hop -- so the mechanism
+naturally lands on the more correct per-(order, promotion) grain,
+without any decision-specific special-casing. `run_decision` then fails
+with `no such table: spree_order_promotions` -- the exact, disclosed
+fixture gap flagged before building this (this decision's own PAYOFF
+still needs that table added to the fixture, unchanged from the earlier
+finding; the mechanism itself is what was being verified here).
+
+**Locked in with a new, standalone regression test**
+(`tests/test_spec_cases.py::test_case_11_filter_placeholder_via_join`,
+an 11th case beyond the original 10-case spec) since the real Spree case
+can't itself demonstrate success yet -- a synthetic `order`/`customer`/
+`flagged_regions` scenario where `<region>` resolves via a real join
+from `order` to `customer`, hand-verified end to end (`Rule_1`/`Rule_2`
+selected correctly for two different real cases). Full regression suite
+re-run clean; all 4 case studies' coverage numbers re-verified identical
+to the previous round except Spree's own diagnostic message for this one
+decision (now the precise fixture-gap reason, per above).
+
 - **`Price List Volume Adjustment Tier Selection` -- the INITIAL
   assessment here was wrong, corrected after being challenged, and then
   actually fixed.** First pass wrongly trusted the ground truth's own

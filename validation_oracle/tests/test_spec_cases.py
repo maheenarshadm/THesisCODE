@@ -260,6 +260,58 @@ def test_case_10_duplicate_outputs():
           f"(both tracked despite identical output {out1})")
 
 
+# ---------------------------------------------------------------------------
+# Case 11 (beyond the original 10-case spec) -- a filter_text placeholder
+# resolved via a JOIN, not the subject row's own columns
+# (filter_placeholder_sources.py, 2026-09-24). Subject is `order`; the
+# EXISTS check's own `<region>` placeholder lives on `customer` (joined
+# via order.customer_id), never on `order` itself -- exercises the new
+# fallback path in db_resolver._resolve_placeholders end to end, since
+# the real Spree case this was built for (Promotion Customer Group
+# Eligibility) can't itself demonstrate success -- spree_order_promotions
+# is missing from the current merged fixture (a separate, disclosed
+# fixture gap, not a mechanism problem).
+# ---------------------------------------------------------------------------
+
+def test_case_11_filter_placeholder_via_join():
+    rule_flagged = _rec('T', 'D_join_placeholder', 'Rule_1', 'FIRST',
+                         {'op': '=', 'left': {'kind': 'variable', 'ref': 'isFlaggedRegion'},
+                          'right': {'kind': 'literal', 'value': True, 'type': 'boolean'}},
+                         {'isFlaggedRegion': {'kind': 'exists', 'candidate_tables': ['flagged_regions'],
+                                               'candidate_columns': [{'table': 'flagged_regions', 'column': 'region'}],
+                                               'filter_text': 'region = <region>'}})
+    rule_default = _rec('T', 'D_join_placeholder', 'Rule_2', 'FIRST',
+                         {'kind': 'literal', 'value': True, 'type': 'boolean'},
+                         {'isFlaggedRegion': {'kind': 'exists', 'candidate_tables': ['flagged_regions'],
+                                               'candidate_columns': [{'table': 'flagged_regions', 'column': 'region'}],
+                                               'filter_text': 'region = <region>'}})
+
+    conn = sqlite3.connect(':memory:')
+    conn.execute('CREATE TABLE customer (customer_id INTEGER PRIMARY KEY, region TEXT)')
+    conn.execute('CREATE TABLE "order" (order_id INTEGER PRIMARY KEY, customer_id INTEGER)')
+    conn.execute('CREATE TABLE flagged_regions (region TEXT)')
+    conn.executemany('INSERT INTO customer VALUES (?, ?)', [(1, 'CA'), (2, 'TX')])
+    conn.executemany('INSERT INTO "order" (order_id, customer_id) VALUES (?, ?)', [(100, 1), (101, 2)])
+    conn.execute("INSERT INTO flagged_regions VALUES ('CA')")
+    conn.commit()
+
+    # order.customer_id -> customer.customer_id, the ONLY hop this test
+    # needs -- built by hand here (a real run gets this from
+    # subject_table.subject_table_for_decision/schema_utility.build_join_path,
+    # already exercised against real data elsewhere; this test is about
+    # _resolve_placeholders's own join-based fallback, not path-finding).
+    join_paths = {'customer': [{'from_table': 'order', 'from_column': 'customer_id',
+                                 'to_table': 'customer', 'to_column': 'customer_id'}]}
+    result = run_decision(conn, 'D_join_placeholder', [rule_flagged, rule_default],
+                           'order', ['order_id'], join_paths=join_paths)
+    assert result['selected_by_case'][(100,)] == 'Rule_1', \
+        f"order 100's customer is in region CA (flagged, via a join, not a local column): {result['selected_by_case']}"
+    assert result['selected_by_case'][(101,)] == 'Rule_2', \
+        f"order 101's customer is in region TX (not flagged), must fall through: {result['selected_by_case']}"
+    print("case 11 (filter_text placeholder resolved via a join): PASS")
+    print(f"  selected_by_case = {result['selected_by_case']}")
+
+
 if __name__ == '__main__':
     test_case_1_first_earlier_rule_wins()
     test_case_2_first_fallthrough_to_target()
@@ -268,6 +320,7 @@ if __name__ == '__main__':
     test_case_7_aggregate_input()
     test_case_8_join_based_input()
     test_case_10_duplicate_outputs()
+    test_case_11_filter_placeholder_via_join()
     print("\nCases 5, 6, 9 already verified elsewhere:")
     print("  5/6 -- test_drd_chaining_synthetic.test_literal_via_upstream_branch "
           "(grounded + ungrounded cases)")

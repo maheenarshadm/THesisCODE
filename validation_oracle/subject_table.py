@@ -24,32 +24,60 @@ free variables). Both are handled here as "no direct table -- needs the
 upstream decision's real output," not as a table reference.
 """
 
+import re
+
+_PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
+
+
+def _placeholder_source_tables(case_study, filter_text):
+    """Every table `filter_placeholder_sources.py` names for one of
+    `filter_text`'s own `<placeholder>`s -- empty for every placeholder
+    with no override (the common case: it's a same-named column already
+    on the subject row, needing no join at all, see `derived_aggregate`/
+    `exists`'s own comments below)."""
+    from filter_placeholder_sources import get_source_table
+    tables = set()
+    for name in _PLACEHOLDER_NAME_RE.findall(filter_text or ''):
+        table = get_source_table(case_study, name)
+        if table:
+            tables.add(table)
+    return tables
+
+
 # Resolution kinds that read one or more tables directly. Maps kind ->
-# a function extracting the set of table names it references.
+# a function extracting the set of table names it references. Every
+# entry takes (node, case_study) even where case_study is unused, so
+# `tables_referenced` can call them uniformly.
 _TABLE_EXTRACTORS = {
-    'schema_column': lambda n: {n['table']},
-    'null_check': lambda n: {n['table']},
-    'derived_case': lambda n: {n['table']},
-    # derived_aggregate is ALWAYS self-contained: db_resolver.resolve
-    # queries n['table'] directly via a raw SQL WHERE built entirely from
-    # substituting the SUBJECT row's own columns (self/colon/<bracket>
-    # placeholders) -- it never calls _row_for_table/walks a join path to
-    # reach n['table'] itself, so no join-path connectivity is required.
-    'derived_aggregate': lambda n: set(),
-    'derived_join_count': lambda n: {n['prereq_table'], n['registration_table']},
+    'schema_column': lambda n, cs: {n['table']},
+    'null_check': lambda n, cs: {n['table']},
+    'derived_case': lambda n, cs: {n['table']},
+    # derived_aggregate is ALWAYS self-contained for its OWN target table:
+    # db_resolver.resolve queries n['table'] directly via a raw SQL WHERE
+    # built entirely from substituting the SUBJECT row's own columns
+    # (self/colon/<bracket> placeholders) -- it never calls
+    # _row_for_table/walks a join path to reach n['table'] itself. But a
+    # filter_text placeholder can ALSO need a value from a DIFFERENT
+    # table when it's not on the subject row (see
+    # filter_placeholder_sources.py) -- that table DOES need a real join
+    # path, so it's added here when named.
+    'derived_aggregate': lambda n, cs: _placeholder_source_tables(cs, n.get('filter_text')),
+    'derived_join_count': lambda n, cs: {n['prereq_table'], n['registration_table']},
     # exists is the SAME story, but only when filter_text is present --
-    # then it's a self-contained correlated EXISTS query, identical
-    # reasoning to derived_aggregate above. With NO filter_text (the
-    # OpenMRS-style "does the subject's OWN row have a non-null value"
-    # pattern, or a genuinely bare "(existence)" with no filter at all),
-    # db_resolver DOES call _row_for_table, so a join path is still
-    # required there.
-    'exists': lambda n: set() if n.get('filter_text') else set(n['candidate_tables']),
-    'raw_sql_boolean': lambda n: set(n['tables']),
-    'any_not_null': lambda n: {c['table'] for c in n['columns']},
-    'join_lookup': lambda n: {n['via']['local_table'], n['result_table']},
-    'join_null_check': lambda n: {n['via']['local_table'], n['result_table']},
-    'regex_match': lambda n: {n['value_column']['table'], n['pattern_column']['table']},
+    # then it's a self-contained correlated EXISTS query against its OWN
+    # candidate table, identical reasoning to derived_aggregate above
+    # (including the same filter_placeholder_sources addition). With NO
+    # filter_text (the OpenMRS-style "does the subject's OWN row have a
+    # non-null value" pattern, or a genuinely bare "(existence)" with no
+    # filter at all), db_resolver DOES call _row_for_table, so a join
+    # path is still required there.
+    'exists': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
+                              if n.get('filter_text') else set(n['candidate_tables'])),
+    'raw_sql_boolean': lambda n, cs: set(n['tables']),
+    'any_not_null': lambda n, cs: {c['table'] for c in n['columns']},
+    'join_lookup': lambda n, cs: {n['via']['local_table'], n['result_table']},
+    'join_null_check': lambda n, cs: {n['via']['local_table'], n['result_table']},
+    'regex_match': lambda n, cs: {n['value_column']['table'], n['pattern_column']['table']},
 }
 
 # Resolution kinds that do NOT read a table directly -- either a fixed
@@ -61,19 +89,22 @@ _NON_TABLE_KINDS = {
 }
 
 
-def tables_referenced(node):
+def tables_referenced(node, case_study=None):
     """Every table one `variable_resolution` node reads directly. Empty
     set for a non-table kind (see `_NON_TABLE_KINDS`) -- NOT an error;
-    the caller must check kind, not assume an empty set means failure."""
+    the caller must check kind, not assume an empty set means failure.
+    `case_study` is only consulted for a `filter_text` placeholder that
+    needs a table other than the node's own (see
+    `filter_placeholder_sources.py`); every other kind ignores it."""
     kind = node.get('kind')
     if kind in _TABLE_EXTRACTORS:
-        return _TABLE_EXTRACTORS[kind](node)
+        return _TABLE_EXTRACTORS[kind](node, case_study)
     if kind in _NON_TABLE_KINDS:
         return set()
     if kind == 'substituted_decision':
         tables = set()
         for sub_node in node.get('free_variable_resolutions', {}).values():
-            tables |= tables_referenced(sub_node)
+            tables |= tables_referenced(sub_node, case_study)
         return tables
     raise ValueError(f"Unrecognized variable_resolution kind {kind!r} -- "
                       f"fail loudly rather than silently skip (node={node!r})")
@@ -159,7 +190,7 @@ def subject_table_for_decision(records, case_study):
                             for t in r.get('fk_closure_tables', [])}
         for node in r.get('variable_resolution', {}).values():
             all_tables |= {canonical_table_name(case_study, t)
-                           for t in tables_referenced(node)}
+                           for t in tables_referenced(node, case_study)}
 
     if len(all_tables) == 0:
         raise ValueError(
