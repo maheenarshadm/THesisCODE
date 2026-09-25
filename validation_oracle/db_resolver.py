@@ -457,12 +457,41 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
                                               subject_pk_vals=subject_pk_vals, join_paths=join_paths)
             for ph, val in bindings.items():
                 sql = sql.replace(f'<{ph}>', _sql_literal(val))
-        cur = conn.execute(sql)
+        # `sql_template` is a bare boolean EXPRESSION (e.g. "(SELECT ...)
+        # = 'Visiting' AND NOT EXISTS (...)"), never a full SQL statement
+        # on its own -- confirmed real, not hypothetical: FLEX2's own
+        # Summer Semester Registration templates (the only corpus-wide
+        # user of this kind) both raised `sqlite3.OperationalError: near
+        # "(": syntax error` when executed directly, since neither is a
+        # standalone statement SQLite can run. Wrapping it in a `SELECT
+        # (...)` makes it one, without changing what the expression means.
+        cur = conn.execute(f'SELECT ({sql})')
         row = cur.fetchone()
         value = row[0] if row else None
         return ResolvedValue(value, 'raw_sql_boolean', ','.join(node['tables']), sql, None)
 
     if kind == 'derived_aggregate':
+        if node.get('filter_text') is None:
+            # A real, structural compile-time gap, not a per-row data
+            # issue -- confirmed corpus-wide (2026-09-25) this is now the
+            # ONLY remaining `derived_aggregate` shape with `filter_text:
+            # null` (every other real case was fixed by teaching
+            # compile_constraints.py's own extractor the "for COL"
+            # correlation phrasing; this one's own ground truth, "COUNT
+            # per USER_ID/semester", uses a genuinely different, more
+            # complex phrasing that extractor deliberately doesn't parse
+            # -- and REPEAT_COURSE.USER_ID traces only to APPUSER ->
+            # EMPLOYEE, with NO schema path to a student at all, so "per
+            # USER_ID" likely isn't even the correlation the variable's
+            # own name implies). Building `... WHERE ''` here would be
+            # malformed SQL; raising `UnresolvableForCase` instead lets
+            # `drd_executor.py` isolate this to just the rule variant(s)
+            # that need it (same as `derived_case` hitting an uncovered
+            # value), rather than crashing the WHOLE decision the way an
+            # uncaught `sqlite3.OperationalError` used to.
+            raise UnresolvableForCase(
+                f"derived_aggregate on {node['table']!r} has no filter_text -- its own "
+                f"correlation isn't understood (source_text: {node.get('source_text')!r})")
         where = _substitute_self_and_colon(node['filter_text'], subject_row or {}, subject_pk_cols)
         bindings = _resolve_placeholders(conn, where, subject_row or {}, case_study=case_study,
                                           subject_table=subject_table, subject_pk_cols=subject_pk_cols,

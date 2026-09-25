@@ -445,6 +445,49 @@ Registration` is unchanged (its own subject row, `COURSE`, never had the
 needed columns regardless). Full regression across all 4 case studies
 confirms zero collateral. FLEX2 33→36 verified rules.
 
+**Fixed `Summer Semester Registration`'s own remaining blocker, the same
+day, on request — three separate real things.** (1) New `subject_root_
+overrides.py`: once `<this course offering>` resolves to `COURSE_OFFER`
+(`filter_placeholder_sources.py`), `_pick_root` finds 3 mechanically-valid
+roots reaching both `COURSE` and `COURSE_OFFER` — `COURSE_OFFER`,
+`COURSE_REGISTRATION`, `REPEAT_COURSE`. Re-examined against the real
+schema: `COURSE_OFFER`/`REPEAT_COURSE` both have a bare `OFFER_ID` PK (no
+per-student column — `REPEAT_COURSE.USER_ID` traces only to `APPUSER` →
+`EMPLOYEE`, no schema path to a student at all); `COURSE_REGISTRATION` is
+the only candidate with composite PK `(OFFER_ID, ROLL_NO)`, the exact
+granularity every one of this decision's own variables needs. A new kind
+of disclosed override — none of the existing ones (`join_disambiguation.
+py`, `filter_placeholder_sources.py`) cover "which of several valid
+roots is correct" — still requires the override to be an actually-
+qualifying candidate, or it raises rather than silently trusting a stale
+entry. (2) A real, previously-unreached bug in `db_resolver.py`'s
+`raw_sql_boolean` branch: `conn.execute(sql)` was called directly on
+`sql`, but `sql` is a bare boolean EXPRESSION, never a full SQL statement
+— SQLite rejected it (`near "(": syntax error`), confirmed only reachable
+now that subject-picking above finally succeeds. Fixed by wrapping
+`SELECT ({sql})`. (3) `derived_aggregate` now raises `UnresolvableForCase`
+(not a crash) when `filter_text` is `None`: `repeatCourseCountRequested`'s
+own "COUNT per USER_ID/semester" is a genuinely different, more complex
+correlation than the "for COL" fix above parses, and `REPEAT_COURSE.
+USER_ID` doesn't even trace to a student in the schema — a real,
+disclosed, unresolved gap, not guessed at. Previously this built
+malformed SQL and crashed the WHOLE decision the same way `semester
+sElapsed`'s bug used to; raising `UnresolvableForCase` lets `drd_executor.
+py`'s EXISTING translation (`_resolve_one` → `UngroundedForCase`, already
+used for `derived_case`) isolate it to just the rule variants that need
+it, confirmed corpus-wide as the ONLY remaining `filter_text: null`
+`derived_aggregate` node. Net result, verified against the real fixture:
+the decision now resolves and runs cleanly (no longer in `unresolved_
+decisions.json`) but genuinely 0/5 verified — `Rule_1` needs a
+`course_type_id = 'RESEARCH'` registration absent from the fixture;
+`Rule_2`'s own conditions aren't jointly true for any real row;
+`Rule_3`/`4`/`5` stay ungrounded on the still-unresolved correlation. A
+full per-rule before/after diff confirms ZERO flips anywhere (FLEX2
+verified count unchanged at 36) — a diagnosis upgrade, not a verified-
+count change. Side effect: `Attendance Eligibility For Final Exam`'s own
+unresolved reason changed too (same `<this course offering>` placeholder
+now resolves partway), same 0/2 outcome either way.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

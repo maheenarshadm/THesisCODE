@@ -492,6 +492,43 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     Full regression across all 4 case studies confirms zero collateral.
     FLEX2 33→36 verified rules (60.0%→65.5% raw, 62.3%→67.9% solvable),
     decision-table coverage 6/10→7/10.
+17. **Fixed `Summer Semester Registration`'s remaining blocker, on
+    request — three separate real things, built together.** (1) New
+    `subject_root_overrides.py`: once `<this course offering>` resolves
+    to `COURSE_OFFER`, `_pick_root` finds 3 mechanically-valid roots
+    (`COURSE_OFFER`, `COURSE_REGISTRATION`, `REPEAT_COURSE`). Re-examined
+    against the schema: `COURSE_OFFER`/`REPEAT_COURSE` both have a bare
+    `OFFER_ID` PK (no per-student column — `REPEAT_COURSE.USER_ID` traces
+    only to `APPUSER` → `EMPLOYEE`, no path to a student at all);
+    `COURSE_REGISTRATION` is the only one with composite PK
+    `(OFFER_ID, ROLL_NO)`, the exact granularity this decision's own
+    variables need. A new kind of disclosed override (none of the
+    existing ones cover "which of several valid roots"), still requires
+    the override to be an actually-qualifying candidate. (2) A real,
+    previously-unreached bug in `db_resolver.py`'s `raw_sql_boolean`
+    branch: `conn.execute(sql)` on a bare boolean expression, not a full
+    statement — SQLite rejected it. Fixed by wrapping `SELECT ({sql})`.
+    (3) `derived_aggregate` now raises `UnresolvableForCase` (not a
+    crash) when `filter_text` is `None` — `repeatCourseCountRequested`'s
+    own "COUNT per USER_ID/semester" is a genuinely different, more
+    complex correlation than the "for COL" fix (item 16) parses, and
+    `REPEAT_COURSE.USER_ID` doesn't even trace to a student in the
+    schema, so this stays an open, disclosed gap rather than a guess.
+    Previously this crashed the WHOLE decision (same shape as item 15/16's
+    `semestersElapsed` bug); now `drd_executor.py`'s existing
+    `UnresolvableForCase` → `UngroundedForCase` translation (already used
+    for `derived_case`) isolates it to just the rule variants that need
+    it. Net result, verified against the real fixture: the decision now
+    resolves and runs cleanly (no longer in `unresolved_decisions.json`),
+    but genuinely 0/5 verified — `Rule_1` needs a `course_type_id =
+    'RESEARCH'` registration absent from the fixture; `Rule_2`'s own
+    conditions aren't jointly true for any real row; `Rule_3`/`4`/`5` all
+    stay ungrounded on the still-unresolved correlation. A full per-rule
+    before/after diff confirms ZERO flips anywhere (FLEX2 verified count
+    unchanged at 36) — this is a diagnosis upgrade (unresolved → precisely
+    diagnosed), not a verified-count change. Side effect: `Attendance
+    Eligibility For Final Exam`'s own unresolved reason changed too (same
+    `<this course offering>` placeholder), same 0/2 outcome either way.
 
 ## 7. Planned / open work
 
@@ -516,9 +553,10 @@ Full, itemized list with root causes and what fixing each would require:
   rest an ordinary data-coverage gap); `Graduation Eligibility` (§6 items
   15/16) has both its join-mechanism limitation AND the compile-time bug
   it surfaced fixed (3/5 verified; `Rule_4`/`Rule_5` are an ordinary
-  data-coverage gap). Remaining: `Summer Semester Registration` still
-  hits a different, precisely-diagnosed gap (its own subject row never
-  had the needed columns, unaffected by either fix above);
+  data-coverage gap); `Summer Semester Registration` (§6 item 17) now
+  resolves and runs cleanly (subject-root override + `raw_sql_boolean`
+  executor fix + isolated correlation gap) but is 0/5 verified for
+  confirmed data-coverage/gap reasons, not a bug. Remaining:
   `Admission Closure Eligibility` has no declared FK relationship at all
   in the real schema. An audit question remains on `Attendance
   Eligibility For Final Exam`.

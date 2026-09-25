@@ -38,6 +38,15 @@ FILTER_PLACEHOLDER_SOURCES = {
     # against flex2_schema_full.json, 2026-09-24).
     ('FLEX2', 'program'): 'STUDENT_PROGRAM',
     ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
+    # FLEX2's `Summer Semester Registration`: `isElectiveTaughtByVisiting
+    # ScholarUnavailableOtherwise`'s own raw SQL reads `CO.OFFER_ID =
+    # <this course offering>` -- OFFER_ID is a real column on
+    # COURSE_OFFER (its own PK), not on the subject row. Together with
+    # `subject_root_overrides.py` (COURSE_REGISTRATION as this
+    # decision's own root, which has a real, direct FK to COURSE_OFFER),
+    # this lets `<this course offering>` resolve to the subject's own
+    # correlated COURSE_OFFER row instead of raising.
+    ('FLEX2', 'this course offering'): 'COURSE_OFFER',
     # Case study 'T' is this project's own synthetic test namespace
     # (tests/test_spec_cases.py) -- this entry is exercised only by
     # test_case_11_filter_placeholder_via_join, never by real data.

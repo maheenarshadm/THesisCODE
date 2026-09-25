@@ -163,7 +163,7 @@ def tables_referenced(node, case_study=None):
                       f"fail loudly rather than silently skip (node={node!r})")
 
 
-def _pick_root(case_study, all_tables, closure_tables):
+def _pick_root(case_study, all_tables, closure_tables, decision_name=None):
     """The ROOT is whichever table can reach EVERY directly-referenced
     table (`all_tables`) via a forward FK join path within the decision's
     own fk_closure (`schema_utility.build_join_path` -- real multi-hop
@@ -178,8 +178,15 @@ def _pick_root(case_study, all_tables, closure_tables):
     BOTH. Requires EXACTLY ONE table (from the closure OR from
     all_tables itself) to have this reach-everything property; more than
     one (genuine ambiguity between candidate junction tables) or none is
-    refused, not guessed."""
+    refused, not guessed -- UNLESS `subject_root_overrides.py` names one
+    of the (still mechanically-qualifying) candidates for this exact
+    decision, in which case the tie is broken using that DISCLOSED,
+    inspectable reason instead of raising. An override naming a table
+    that isn't actually among the qualifying candidates is a stale
+    override, not a silent guess -- it raises, same as `join_
+    disambiguation.py`'s own equivalent check."""
     from schema_utility import build_join_path
+    from subject_root_overrides import get_override
 
     def _reaches(root, t):
         # A ValueError here means build_join_path found ONLY an
@@ -199,6 +206,15 @@ def _pick_root(case_study, all_tables, closure_tables):
                   if all(_reaches(root, t) for t in all_tables - {root})]
 
     if len(candidates) != 1:
+        override = get_override(case_study, decision_name) if decision_name else None
+        if override is not None:
+            if override not in candidates:
+                raise ValueError(
+                    f"subject_root_overrides.py names {override!r} as the root for "
+                    f"{decision_name!r}, which is not among the actual qualifying "
+                    f"candidates ({sorted(candidates)}) -- the override is stale, fix "
+                    f"it rather than silently ignoring it.")
+            return override
         raise ValueError(
             f"Cannot pick a unique root reaching {sorted(all_tables)} among the closure: "
             f"{len(candidates)} candidate(s) qualify ({sorted(candidates)}) -- "
@@ -255,7 +271,7 @@ def subject_table_for_decision(records, case_study):
         subject = next(iter(all_tables))
         return subject, pk_columns(case_study, subject), {}
 
-    root = _pick_root(case_study, all_tables, closure_tables)
+    root = _pick_root(case_study, all_tables, closure_tables, records[0]['decision_name'])
     join_paths = {}
     for t in all_tables:
         if t == root:

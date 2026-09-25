@@ -465,9 +465,12 @@ excluded from all coverage numbers per an explicit decision below):
   (1/4 distinct rule_ids verified; the rest are an ordinary data-coverage
   gap). `Graduation Eligibility`'s own join-mechanism limitation AND the
   compile-time bug it surfaced are both fixed (3/5 verified; the other 2
-  are an ordinary data-coverage gap). `Summer Semester Registration` and
-  `Admission Closure
-  Eligibility` remain open for their own distinct reasons.
+  are an ordinary data-coverage gap). `Summer Semester Registration` now
+  also resolves and runs cleanly (subject-root override + a real
+  `raw_sql_boolean` executor bug + isolating an unresolved correlation
+  gap, all fixed the same day) but is 0/5 verified for confirmed
+  data-coverage/gap reasons, not a bug. `Admission Closure Eligibility`
+  remains open — no declared FK relationship at all in the real schema.
 - **FIXED 2026-09-25: `subject_table.py`'s own `_TABLE_EXTRACTORS
   ['derived_join_count']` unconditionally required BOTH `prereq_table`
   AND `registration_table` to be forward-reachable from the subject —
@@ -526,35 +529,79 @@ excluded from all coverage numbers per an explicit decision below):
   545 real materialized rows in this fixture, the same "search never
   generated data for this branch" pattern already established elsewhere
   in this project, not a new gap. FLEX2 32→33 verified rules.
-- **`Summer Semester Registration` — open; found and confirmed a SECOND
-  real extractor bug testing the same idea (2026-09-25), but it alone
-  doesn't close this decision.** `_TABLE_EXTRACTORS['raw_sql_boolean']`
-  had the SAME over-strict shape: `db_resolver.resolve()`'s own
-  `raw_sql_boolean` branch never walks a join path to reach
-  `node['tables']` either — it executes the raw SQL directly against the
-  live connection, resolving at most a `<placeholder>` inside the
-  template via the SAME subject-row-column-first/`filter_placeholder_
-  sources.py`-second priority every other kind uses. Fixed by mirroring
-  `derived_aggregate`'s own extractor (`_placeholder_source_tables`
-  instead of blindly `set(n['tables'])`); confirmed corpus-wide,
-  `raw_sql_boolean` is used ONLY by this decision's own 2 records, so
-  zero collateral anywhere else. This alone resolves subject-picking to
-  `COURSE` (its only remaining directly-read table), but running
-  `coverage.py` shows this just trades the "can't pick a root" refusal
-  for a DIFFERENT, more precise one: `isElectiveTaughtByVisitingScholar
-  UnavailableOtherwise`'s own `<this course offering>` placeholder needs
-  `offer_id`, which isn't on `COURSE`. Tested adding a
-  `filter_placeholder_sources.py` override (`('FLEX2', 'this course
-  offering'): 'COURSE_OFFER'`) to see if `COURSE_OFFER` would then
-  become the (correct-looking) subject instead — it does NOT cleanly
-  resolve: `COURSE_OFFER`, `COURSE_REGISTRATION`, AND `REPEAT_COURSE` all
-  independently qualify as valid roots once `COURSE_OFFER` is required
-  too, a genuine 3-way ambiguity needing a domain-informed disambiguation
-  decision (not attempted, override reverted — not committed). The
-  `raw_sql_boolean` extractor fix itself IS kept (correct and
-  independently justified, matching the derived_aggregate/exists
-  precedent exactly, confirmed zero side effects), even though it alone
-  doesn't verify anything new for this specific decision yet.
+- **`Summer Semester Registration` — no longer an "unresolved decision"
+  (FIXED 2026-09-25, three separate real things), but still 0/5 verified
+  for confirmed, disclosed reasons — not a bug.** The `raw_sql_boolean`
+  extractor fix (this same day, above) got subject-picking to `COURSE`,
+  but that just traded one refusal for a more precise one
+  (`isElectiveTaughtByVisitingScholarUnavailableOtherwise`'s own
+  `<this course offering>` needs `offer_id`, not on `COURSE`). Fixing it
+  needed three things, built together on request:
+  1. **New `subject_root_overrides.py`** (a kind of disclosed override
+     that didn't exist before): once `<this course offering>` resolves
+     to `COURSE_OFFER` (`filter_placeholder_sources.py`), `_pick_root`
+     finds THREE mechanically-valid roots reaching both `COURSE` and
+     `COURSE_OFFER` — `COURSE_OFFER`, `COURSE_REGISTRATION`, and
+     `REPEAT_COURSE` (the same 3-way tie found and left unresolved
+     earlier this same day). Re-examined against the real schema:
+     `COURSE_OFFER` and `REPEAT_COURSE` both have a BARE `OFFER_ID` as
+     their own PK (no per-student column at all — `REPEAT_COURSE.USER_ID`
+     is a plain FK column, not part of its key, and traces only to
+     `APPUSER` → `EMPLOYEE`, with no schema path to a student at all).
+     `COURSE_REGISTRATION` is the only candidate with a composite PK of
+     `(OFFER_ID, ROLL_NO)` — a specific student's specific registration
+     for a specific offering, the exact granularity every one of this
+     decision's own variables needs. Not an arbitrary pick among 3 equal
+     options; `_pick_root` still requires the override to be one of the
+     mechanically-qualifying candidates (raises if it names a stale one).
+  2. **A real, previously-unreached validator bug in `db_resolver.py`'s
+     `raw_sql_boolean` branch**: it called `conn.execute(sql)` directly
+     on `sql`, but `sql` is a bare boolean EXPRESSION (e.g.
+     `(SELECT ...) = 'Visiting' AND NOT EXISTS (...)`), never a full SQL
+     statement — SQLite rejected it (`near "(": syntax error`). This
+     kind is used ONLY by this decision (confirmed corpus-wide), so it
+     was never reached until subject-picking above actually succeeded
+     for the first time. Fixed by wrapping: `SELECT ({sql})`.
+  3. **`derived_aggregate` now raises `UnresolvableForCase` (not a crash)
+     when `filter_text` is `None`.** `repeatCourseCountRequested`'s own
+     "COUNT per USER_ID/semester" phrasing is a genuinely different,
+     more complex correlation the "for COL" fix above deliberately
+     doesn't parse — and it turns out `REPEAT_COURSE.USER_ID` traces only
+     to `APPUSER` → `EMPLOYEE` (confirmed: no schema path to a student at
+     all), so "per USER_ID" likely isn't even the student-correlation the
+     variable's own name (`repeatCourseCountRequested`) implies — a real,
+     unresolved semantic question, not attempted here. Previously this
+     built malformed SQL (`... WHERE ` with nothing) and crashed the
+     WHOLE decision (every rule, every case) the same way `Graduation
+     Eligibility`'s `semestersElapsed` bug used to. Raising
+     `UnresolvableForCase` lets `drd_executor.py`'s existing translation
+     (`_resolve_one` → `UngroundedForCase`, the SAME mechanism already
+     used for `derived_case` hitting an uncovered value) isolate the
+     failure to just the rule variants that need it, instead of aborting
+     every other rule's evaluation too. Confirmed corpus-wide this is the
+     ONLY remaining `derived_aggregate` node with `filter_text: null`.
+
+  **Net result, verified directly against the real fixture**: the
+  decision now resolves and runs cleanly end to end (no longer in
+  `unresolved_decisions.json`), but genuinely 0/5 verified, for three
+  confirmed, disclosed, non-bug reasons: `Rule_1` needs a registration
+  for a `course_type_id = 'RESEARCH'` course, and none of the 545 real
+  `COURSE_REGISTRATION` rows in this fixture reference one; `Rule_2`'s
+  own conditions (`priorRegistrationCount = 0` etc.) aren't jointly true
+  for any of them either; `Rule_3`/`Rule_4`/`Rule_5` all also declare
+  `repeatCourseCountRequested` in their own compiled `variable_
+  resolution` (even though only `Rule_3` actually branches on its value),
+  so every one of them stays ungrounded until that correlation is
+  resolved for real. A full per-rule before/after diff (`objective_
+  results.csv`) confirms ZERO flips anywhere in FLEX2 or the other 3
+  case studies — this round is a pure diagnosis upgrade (unresolved →
+  precisely diagnosed), not a verified-count change. One disclosed side
+  effect: `Attendance Eligibility For Final Exam`'s own `lecturesHeldFor
+  Offering` also reads a `<this course offering>` placeholder, so the new
+  `filter_placeholder_sources.py` entry changes ITS unresolved reason too
+  (from "no table-backed inputs at all" to "resolves to `COURSE_OFFER`,
+  then fails on a separate, still-unresolved `<student>` placeholder") —
+  same 0/2 verified outcome either way, confirmed via the same diff.
 - **`Admission Closure Eligibility` — genuinely unresolvable given the
   real schema, a DIFFERENT and deeper category than "one-to-many,
   refuse to guess" (confirmed 2026-09-25, checked directly against the

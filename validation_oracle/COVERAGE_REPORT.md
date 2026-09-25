@@ -19,6 +19,27 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-25 `Summer Semester Registration` three-part fix**
+(`subject_root_overrides.py` [new] + a `raw_sql_boolean` executor bug fix
++ `derived_aggregate`'s `filter_text: None` now raises `UnresolvableForCase`
+instead of crashing, all built on request) — verified-rule counts are
+UNCHANGED (still FLEX2 36; confirmed via a full per-rule before/after
+diff of `objective_results.csv`, zero flips anywhere). What changed:
+`Summer Semester Registration` is no longer an "unresolved decision" —
+it now resolves its subject (`COURSE_REGISTRATION`, via a new kind of
+disclosed root-tiebreak override) and runs `run_decision` end to end
+without crashing, but is honestly 0/5 verified: `Rule_1` needs a
+`course_type_id = 'RESEARCH'` registration that doesn't exist among the
+545 real rows in this fixture; `Rule_2`'s own conditions aren't jointly
+true for any of them; `Rule_3`/`Rule_4`/`Rule_5` stay ungrounded on
+`repeatCourseCountRequested`, a real correlation gap (its ground truth's
+"per USER_ID" doesn't even trace to a student in the schema) left
+disclosed rather than guessed. One side effect: `Attendance Eligibility
+For Final Exam`'s own unresolved reason changed (same table lookup, `<this
+course offering>`, now resolves partway before hitting an unrelated
+`<student>` gap) — same 0/2 verified outcome, confirmed via the same
+diff. See `KNOWN_ISSUES.md`'s own entry for the full three-part writeup.
+
 **As of the 2026-09-25 `AGGREGATE_FOR_CORRELATION_RE` compile-time fix**
 (`compile_constraints.py`, built on request as "option 2" — a general
 parser fix, not a one-off override) — FLEX2 33→36 verified rules
