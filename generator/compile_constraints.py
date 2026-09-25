@@ -1129,6 +1129,61 @@ def compute_cross_table_placeholder_correlations(cs, node):
     return correlations
 
 
+def compute_subject_hop_placeholder_correlations(subject, node):
+    """A SECOND, related shape a `derived_aggregate`/`exists` node's own
+    filter_text placeholder can need correlating against (2026-09-25,
+    FLEX2's `Course Replacement Eligibility::courseOfferedInFollowing
+    Semesters`): the conjunct's own COLUMN -- not the placeholder's own
+    name -- matches the SAME decision's own subject row's real FK column
+    (`decision_subject['joins']`'s own `from_column`), rather than a
+    `filter_placeholder_sources.py`-declared DIFFERENT table. The
+    validator resolves this kind directly off the subject row itself
+    (`db_resolver._resolve_placeholders`'s own FIRST priority, "the
+    subject row's own column of the same name" -- it never even reaches
+    `filter_placeholder_sources.py` for this shape), so nothing about
+    this needs a declared override on that side. The generator-side gap
+    is the mirror image of `compute_cross_table_placeholder_
+    correlations` above: confirmed real via the actual archive,
+    `Rule_4`'s own `COURSE_OFFER.COURSE_ID` correctly tracks
+    `scenario['COURSE_ID']` throughout (both offset together), while the
+    SAME record's own `COURSE.COURSE_ID` -- never independently set by
+    any leaf, since `courseTypeId`'s own `course_type_id` read needs no
+    placeholder at all -- only ever gets a value from `mutation.py`'s
+    `_repair_row`, computed as a GLOBALLY fresh key across the whole
+    merged database (not per-record-offset-based at all), e.g.
+    `COURSE_ID=65000001` on one side, `COURSE_ID=70000006` on the other,
+    for the exact same record.
+
+    Returns {placeholder_name: {'table': ..., 'column': ...}} in the
+    SAME shape `compute_cross_table_placeholder_correlations` returns --
+    consumed by the identical `dynamosa.py` merge-time step, just fed by
+    a second, distinct compile-time source. Unlike that function, this
+    one needs `subject` (a specific DECISION's own already-computed
+    `decision_subject`, not just the case study), so it runs in
+    `compile_case_study`'s own per-decision loop, after `subject` is
+    known -- see the call site there for why the DIRECTION of the fix
+    (copying `scenario[placeholder]` onto the subject's OWN hop target,
+    same as the cross-table case) also means it must run BEFORE
+    `merge_archive_candidate`'s own subject-junction wiring step, not
+    after: that step reads the hop target's own column to wire the
+    subject row itself, and must see the corrected value, not a
+    not-yet-repaired one it would otherwise lock in first."""
+    correlations = {}
+    filter_text = node.get('filter_text')
+    if node.get('kind') not in ('exists', 'derived_aggregate') or not filter_text or not subject:
+        return correlations
+    hops_by_from_column = {}
+    for hops in subject['joins'].values():
+        for hop in hops:
+            if hop['from_table'].upper() == subject['table'].upper():
+                hops_by_from_column[hop['from_column'].upper()] = hop
+    for column, placeholder in _PLACEHOLDER_CONJUNCT_RE.findall(filter_text):
+        hop = hops_by_from_column.get(column.upper())
+        if hop and placeholder not in correlations:
+            correlations[placeholder] = {'table': hop['to_table'], 'column': hop['to_column']}
+    return correlations
+
+
 def _build_subject_join_path(raw_schema, root, target, allowed_tables):
     """Forward-FK-only BFS from `root` to `target`, restricted to
     `allowed_tables` -- see this section's own docstring for the
@@ -1879,17 +1934,30 @@ def compile_case_study(cs, mapping_source='ground_truth'):
             for r in decision_records:
                 r['decision_subject'] = subject
 
-    # Cross-table filter_text placeholder correlations (§ above,
-    # 2026-09-24) -- attached directly to the node that needs it, not
-    # the record, since two nodes of the same record could in principle
-    # use the same placeholder name for different real facts.
-    for r in records:
-        for node in r.get('variable_resolution', {}).values():
-            if not isinstance(node, dict):
-                continue
-            correlations = compute_cross_table_placeholder_correlations(cs, node)
-            if correlations:
-                node['cross_table_placeholders'] = correlations
+        # Filter_text placeholder correlations (2026-09-24/25) --
+        # attached directly to the node that needs it, not the record,
+        # since two nodes of the same record could in principle use the
+        # same placeholder name for different real facts. Two distinct
+        # compile-time sources feed the SAME field, consumed identically
+        # by `dynamosa.py`'s own merge step: a `filter_placeholder_
+        # sources.py`-declared cross-table reference
+        # (`compute_cross_table_placeholder_correlations`, needs only
+        # `cs`), and a placeholder whose conjunct column matches the
+        # decision's OWN subject row's real FK column
+        # (`compute_subject_hop_placeholder_correlations`, needs
+        # `subject`, hence computed here rather than in an earlier,
+        # subject-agnostic pass).
+        for r in decision_records:
+            for node in r.get('variable_resolution', {}).values():
+                if not isinstance(node, dict):
+                    continue
+                correlations = compute_cross_table_placeholder_correlations(cs, node)
+                correlations.update({
+                    k: v for k, v in compute_subject_hop_placeholder_correlations(subject, node).items()
+                    if k not in correlations
+                })
+                if correlations:
+                    node['cross_table_placeholders'] = correlations
 
     return records, blocked
 

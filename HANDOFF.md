@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-54.5%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+56.4%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 56.6%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 58.5%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -366,10 +366,32 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     `merge_archive_candidate` copy the record's own already-offset
     scenario value onto the correlated table's own column before repair
     runs. Verified: `Rule_3` flips false_positive→confirmed (FLEX2
-    29→30 verified), zero flips elsewhere. `Rule_4` still doesn't
-    verify — separate, unrelated, not yet investigated
-    (`courseOfferedInFollowingSemesters` resolves `False` for every real
-    subject; unconnected to `degreeTotalCredits`).
+    29→30 verified), zero flips elsewhere. `Rule_4` did not yet verify —
+    closed the next day, same bug shape, item 13 below.
+13. **Investigated and fixed `Rule_4`, on request.** Same bug shape as
+    item 12, mirrored within one table pair instead of across two:
+    `courseOfferedInFollowingSemesters` needed a second `COURSE_OFFER`
+    row for the subject's own `COURSE_ID`, but `COURSE.COURSE_ID` —
+    never independently set by any leaf — only ever got a value from a
+    global, cross-record fresh-key repair, unrelated to
+    `scenario['COURSE_ID']` (which `COURSE_OFFER`'s own row correctly
+    tracks). Unlike `<program>`/`<batch>`, the validator resolves
+    `<COURSE_ID>` directly off the subject row's own column, never
+    reaching `filter_placeholder_sources.py` at all — a purely
+    generator-side gap. Extended `cross_table_placeholders` with a
+    second compile-time source: a conjunct column matching the
+    decision's own subject-FK hop needs no declared override, just a
+    lookup against the already-computed `decision_subject['joins']`.
+    Reordered `dynamosa.py`'s consumption to run BEFORE the
+    subject-junction wiring step (this correlated table is the SAME one
+    a subject hop reads FROM) and taught it to synthesize a missing
+    correlated row. Found and fixed a genuine PK/UNIQUE collision along
+    the way (`degreeTotalCredits`'s own separate `COURSE` row-building
+    landed on the identical `COURSE_ID` after offsetting) by bumping the
+    other, non-authoritative row via `mutation.py`'s own
+    `_fresh_key_value`. Verified: `Rule_4` flips false_positive→confirmed
+    (FLEX2 30→31 verified), `Course Replacement Eligibility` now fully
+    6/6, zero flips elsewhere across all 4 case studies.
 
 ## 7. Planned / open work
 
@@ -388,13 +410,9 @@ Full, itemized list with root causes and what fixing each would require:
   — a distinct, not-yet-investigated issue.
 - FLEX2: 5 multi-table backward-join gaps (same category already solved
   for Spree/jBilling elsewhere); an audit question on `Attendance
-  Eligibility For Final Exam`. `Course Load Limit` is now fully closed
-  (§6 items 8/9 above: 11/11 confirmed). `Course Replacement
-  Eligibility` is now 5/6 closed (§6 items 10-12: `Rule_1`/`Rule_2`/
-  `Rule_3`/`Rule_5`/`Rule_6` confirmed) — only `Rule_4` remains open, a
-  separate, unrelated, not-yet-investigated issue
-  (`courseOfferedInFollowingSemesters` resolves `False` for every real
-  subject).
+  Eligibility For Final Exam`. `Course Load Limit` (§6 items 8/9:
+  11/11) and `Course Replacement Eligibility` (§6 items 10-13: 6/6) are
+  now BOTH fully closed.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

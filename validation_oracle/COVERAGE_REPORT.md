@@ -19,13 +19,17 @@ the numbers back in chat.
 
 ## Latest snapshot
 
-**As of the 2026-09-24 cross-table filter_text placeholder fix** — see
+**As of the 2026-09-25 subject-hop placeholder correlation fix** — see
 "Run history" below for the full writeup. Tables above already reflect
-this: FLEX2 29→30 verified rules (52.7%→54.5% raw, 54.7%→56.6% solvable)
-— `Course Replacement Eligibility::Rule_3` newly confirmed. `Rule_4`
-alone remains open in that decision, for a separate, unrelated,
-not-yet-investigated reason; zero flips anywhere else in FLEX2 or in
+this: FLEX2 30→31 verified rules (54.5%→56.4% raw, 56.6%→58.5% solvable)
+— `Course Replacement Eligibility::Rule_4` newly confirmed, closing this
+decision fully at 6/6; zero flips anywhere else in FLEX2 or in
 OpenMRS/Spree/jBilling.
+
+**As of the 2026-09-24 cross-table filter_text placeholder fix** —
+FLEX2 29→30 verified rules (52.7%→54.5% raw, 54.7%→56.6% solvable) —
+`Course Replacement Eligibility::Rule_3` newly confirmed; zero flips
+anywhere else in FLEX2 or in OpenMRS/Spree/jBilling.
 
 **As of the 2026-09-24 `dynamosa.py` junction-row wiring fix** — FLEX2
 28→29 verified rules (50.9%→52.7% raw, 52.8%→54.7% solvable) —
@@ -106,9 +110,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 30 | 54.5% |
+| FLEX2 | 98 | 55 | 31 | 56.4% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **100** | **51.0%** |
+| **Total** | **240** | **196** | **101** | **51.5%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -118,9 +122,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 30 | 56.6% |
+| FLEX2 | 55 | 0 | 2 | 53 | 31 | 58.5% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **100** | **68.5%** |
+| **Total** | **196** | **27** | **23** | **146** | **101** | **69.2%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -237,15 +241,19 @@ produce the numbers above)
   `_unique_key_sets` casing fix -- see "Latest snapshot" above),
   `generator/experiment_runs/OpenMRS__dynamosa_nsga2__budget1x__seed0.pkl`,
   no `--not-persisted-json`.
-- **Spree**: `tests/fixtures/spree_merged.db` (rebuilt 2026-09-24 after
-  the IN-subquery construction mechanism, `spree_discounts.fk_columns`
-  schema fix, and the `materialize.py` surrogate-key fill fix -- see
-  "Latest snapshot" above), `generator/experiment_runs/
+- **Spree**: `tests/fixtures/spree_merged.db` (rebuilt 2026-09-25 after
+  the subject-hop placeholder correlation fix above -- gains one extra
+  `spree_order_promotions` row for `Promotion Customer Group
+  Eligibility`'s own already-unresolved decision, confirmed harmless;
+  originally rebuilt 2026-09-24 after the IN-subquery construction
+  mechanism, `spree_discounts.fk_columns` schema fix, and the
+  `materialize.py` surrogate-key fill fix -- see "Latest snapshot"
+  above), `generator/experiment_runs/
   Spree__dynamosa_nsga2__budget1x__seed0.pkl` (re-run to pick up the
   IN-subquery mechanism), `--not-persisted-json`
   `{"evaluationTime": 20000}`.
-- **FLEX2**: `tests/fixtures/flex2_merged.db` (rebuilt 2026-09-24 after
-  the cross-table placeholder correlation fix above), `generator/
+- **FLEX2**: `tests/fixtures/flex2_merged.db` (rebuilt 2026-09-25 after
+  the subject-hop placeholder correlation fix above), `generator/
   experiment_runs/FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`, no
   override.
 - **jBilling**: `tests/fixtures/jbilling_merged.db`,
@@ -262,6 +270,56 @@ history below), jBilling 6/16.
 ---
 
 ## Run history
+
+### 2026-09-25 — subject-hop placeholder correlation fix (closes `Course Replacement Eligibility::Rule_4`, decision now 6/6)
+Numbers: FLEX2 30->31 verified rules (54.5%->56.4% raw, 56.6%->58.5%
+solvable), decision-table coverage unchanged at 4/10. `Rule_4`'s own
+`courseOfferedInFollowingSemesters` (an `exists` check needing a second
+`COURSE_OFFER` row for the same subject's own `COURSE_ID`) resolved
+`False` for every one of the 545 real subjects -- the SAME bug SHAPE as
+`Rule_3`'s own fix the day before, mirrored within one table pair
+instead of across two: `COURSE_OFFER.COURSE_ID` correctly tracks
+`scenario['COURSE_ID']` throughout search (both shift together under
+the SAME per-record offset), while the SAME record's own
+`COURSE.COURSE_ID` -- never independently set by any leaf -- only ever
+gets a value from a global, cross-record fresh-key repair, unrelated to
+either. Unlike `<program>`/`<batch>`, the validator never even reaches
+`filter_placeholder_sources.py` for `<COURSE_ID>`: it resolves directly
+off the subject row's own `course_id` column (already wired to
+`COURSE.COURSE_ID` by the earlier junction-row fix), so the gap is
+purely generator-side.
+
+Extended `compile_constraints.py`'s own `cross_table_placeholders` field
+with a second compile-time source: a conjunct whose own column matches
+the decision's own subject row's real FK column (per `decision_subject
+['joins']`) needs no declared override at all -- the target table/column
+is read straight off that hop. Reordered `dynamosa.py`'s own consumption
+to run BEFORE the subject-junction wiring step (not after, as the
+2026-09-24 version did): for this shape the correlated table (`COURSE`)
+is the SAME one a subject hop reads FROM, so the correction must land
+before that hop is wired. Also taught the consumer to synthesize the
+correlated row when none exists yet.
+
+A genuine collision surfaced verifying this: `degreeTotalCredits`'s own
+`derived_aggregate` seeding independently builds 3 of its OWN separate
+`COURSE` rows for the SAME record (numbered 1,2,3 pre-offset, the same
+starting point `<COURSE_ID>`'s own scenario default uses) -- after the
+identical per-record offset, the correlated row and the first of those 3
+rows landed on the identical `COURSE_ID`, a real `UNIQUE constraint
+failed` reproduced directly rebuilding the fixture. Fixed by checking,
+after writing the correlated value, whether it's now a genuine PK/UNIQUE
+collision with a DIFFERENT row this record owns, and if so bumping that
+OTHER row to a fresh, collision-safe value via `mutation.py`'s own
+`_fresh_key_value`.
+
+Verified via a full per-objective before/after diff across all 4 case
+studies: `Rule_4` flips false_positive->confirmed, `Course Replacement
+Eligibility` now fully 6/6; zero flips anywhere else (Spree's fixture
+also gained rows here -- the same consumer's new row-synthesis behavior
+building an extra `spree_order_promotions` row for `Promotion Customer
+Group Eligibility`'s own already-unresolved decision -- confirmed
+harmless: Spree's own `objective_results.csv` is byte-identical before
+and after). Full regression suite re-run and passing.
 
 ### 2026-09-24 — cross-table filter_text placeholder correlation fix (closes `Course Replacement Eligibility::Rule_3`)
 Numbers: FLEX2 29→30 verified rules (52.7%→54.5% raw, 54.7%→56.6%

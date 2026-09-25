@@ -300,14 +300,43 @@ new compile-time field, `compile_constraints.py`'s
 with such a placeholder; `merge_archive_candidate` copies the record's
 own already-offset `scenario[placeholder]` value onto the correlated
 table's own focal row/column before `repair_candidate` runs. Verified:
-`Rule_3` flips false_positive → confirmed (FLEX2 29→30); `Rule_4` still
-doesn't verify, for a separate, unrelated, not-yet-investigated reason
-(`courseOfferedInFollowingSemesters` resolves `False` for every real
-subject, and `Rule_4`'s own condition never references
-`degreeTotalCredits` at all). Zero flips anywhere else across all 4 case
-studies; `compiled_constraints.json` re-diffed field-by-field (only the
-new field, on exactly 6 nodes). Full regression suite re-run and
-passing.
+`Rule_3` flips false_positive → confirmed (FLEX2 29→30). Zero flips
+anywhere else across all 4 case studies; `compiled_constraints.json`
+re-diffed field-by-field (only the new field, on exactly 6 nodes). Full
+regression suite re-run and passing. `Rule_4` did not yet verify at
+this point — closed the next day, same bug shape, see immediately below.
+
+**`Rule_4` closed 2026-09-25 — the SAME bug shape as `Rule_3` above,
+mirrored within one table pair instead of across two.**
+`courseOfferedInFollowingSemesters` (an `exists` check needing a second
+`COURSE_OFFER` row for the same subject's own `COURSE_ID`) resolved
+`False` for every real subject: `COURSE_OFFER.COURSE_ID` correctly
+tracks `scenario['COURSE_ID']` throughout search, while the SAME
+record's own `COURSE.COURSE_ID` only ever gets a value from a global,
+cross-record fresh-key repair, unrelated to either. Unlike `<program>`/
+`<batch>`, the validator never even reaches `filter_placeholder_
+sources.py` for `<COURSE_ID>` — it resolves directly off the subject
+row's own `course_id` column (already wired to `COURSE.COURSE_ID` by
+the junction-row fix), so the gap is purely generator-side. Extended
+`cross_table_placeholders` with a second compile-time source
+(`compute_subject_hop_placeholder_correlations`): a conjunct whose own
+column matches the decision's own subject row's real FK column (per
+`decision_subject['joins']`) needs no declared override — the target is
+read straight off that hop. Reordered `dynamosa.py`'s own consumption to
+run BEFORE the subject-junction wiring step (not after): for this shape
+the correlated table (`COURSE`) is the one a subject hop reads FROM, so
+the correction must land first. Also taught the consumer to synthesize
+the correlated row when none exists yet. A genuine PK/UNIQUE collision
+surfaced verifying this (`degreeTotalCredits`'s own separate `COURSE`
+row-building landed on the identical `COURSE_ID` after offsetting) —
+fixed by bumping the OTHER, non-authoritative colliding row to a fresh
+value via `mutation.py`'s own `_fresh_key_value`, the same mechanism
+every other such clash resolves through. Verified: `Rule_4` flips
+false_positive → confirmed (FLEX2 30→31), `Course Replacement
+Eligibility` now fully 6/6; zero flips anywhere else across all 4 case
+studies (Spree's fixture gains one harmless extra row from the same
+consumer's new synthesis behavior, confirmed byte-identical
+`objective_results.csv`). Full regression suite re-run and passing.
 
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead

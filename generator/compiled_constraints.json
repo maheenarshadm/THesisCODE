@@ -22738,7 +22738,13 @@
     ],
     "filter_text": "COURSE_ID = <COURSE_ID>",
     "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
-    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)",
+    "cross_table_placeholders": {
+     "COURSE_ID": {
+      "table": "COURSE",
+      "column": "COURSE_ID"
+     }
+    }
    },
    "courseTypeId": {
     "kind": "schema_column",
@@ -22981,7 +22987,13 @@
     ],
     "filter_text": "COURSE_ID = <COURSE_ID>",
     "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
-    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)",
+    "cross_table_placeholders": {
+     "COURSE_ID": {
+      "table": "COURSE",
+      "column": "COURSE_ID"
+     }
+    }
    }
   },
   "fk_closure_tables": [
@@ -23194,7 +23206,13 @@
     ],
     "filter_text": "COURSE_ID = <COURSE_ID>",
     "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] existence of another COURSE_OFFER row for this course. Approximates 'offered in a following semester' as 'offered more than once' -- does not enforce strict chronological ordering (before vs. after), since the compiler's mechanical exists-kind filter grammar only supports equality conjuncts, not an ordering comparison.",
-    "raw_schema_field": "COURSE_OFFER(COURSE_ID)"
+    "raw_schema_field": "COURSE_OFFER(COURSE_ID)",
+    "cross_table_placeholders": {
+     "COURSE_ID": {
+      "table": "COURSE",
+      "column": "COURSE_ID"
+     }
+    }
    },
    "replacingCoursePassedAtLeastOneSemesterAfter": {
     "kind": "schema_column",
@@ -28180,6 +28198,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28198,20 +28230,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }
@@ -28332,6 +28350,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28350,20 +28382,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }
@@ -28516,6 +28534,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28534,20 +28566,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }
@@ -28744,6 +28762,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28762,20 +28794,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }
@@ -29004,6 +29022,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -29022,20 +29054,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }
@@ -29296,6 +29314,20 @@
     "obs_id"
    ],
    "joins": {
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
+     }
+    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -29314,20 +29346,6 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
-     }
-    ],
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
      }
     ]
    }

@@ -18,7 +18,7 @@ excluded from all coverage numbers per an explicit decision below):
 | Case study | Verified rule coverage | Verified decision-table coverage |
 |---|---|---|
 | OpenMRS | 42/56 (75.0%) | 14/14 (100%) |
-| FLEX2 | 30/55 (54.5%) | 4/10 |
+| FLEX2 | 31/55 (56.4%) | 4/10 |
 | Spree | 18/31 (58.1%) | 6/8 |
 | jBilling | 10/40 (25.0%) | 6/16 |
 
@@ -469,18 +469,9 @@ excluded from all coverage numbers per an explicit decision below):
   to be before that was corrected to a real column. Worth checking
   whether the SAME kind of mis-mapping exists here before accepting it
   as a genuine non-database fact.
-- **`Course Replacement Eligibility` — FIXED 2026-09-24, partially: 5 of
-  its 6 rules now verify (`Rule_1`, `Rule_2`, `Rule_3`, `Rule_5`,
-  `Rule_6`); `Rule_4` remains open for a separate, unrelated,
-  not-yet-investigated reason — see below.** See "Fixed issues" below
-  for the full writeup.
-- **`Course Replacement Eligibility::Rule_4` — open, not yet
-  investigated (2026-09-24).** `courseOfferedInFollowingSemesters`
-  (needs a second `COURSE_OFFER` row for the same real subject's own
-  `COURSE_ID`) resolves `False` for every one of the 545 real subjects —
-  unrelated to the `degreeTotalCredits`/cross-table-placeholder fix just
-  below (`Rule_4`'s own condition doesn't reference `degreeTotalCredits`
-  at all). Not yet root-caused.
+- **`Course Replacement Eligibility` — FULLY FIXED 2026-09-25: all 6 of
+  its 6 rules now verify.** See "Fixed issues" below for the full
+  writeup, including `Rule_4`'s own separate fix (2026-09-25).
 
 ### OpenMRS
 
@@ -672,24 +663,92 @@ before being counted as fixed here.
   own (already-offset) `scenario[placeholder]` value onto the correlated
   table's own focal row/column — before `repair_candidate` runs, so its
   later generic fallback never fires (its own guard already skips a
-  column that already has a real value). Only applied when a focal row
-  for the correlated table already exists (from another leaf, or from
-  the subject-junction step) — nothing is synthesized just for this.
+  column that already has a real value). (As of 2026-09-25's own fix
+  immediately below, this step also synthesizes the correlated row when
+  none exists yet, rather than a no-op — see that entry.)
 
   **Verified result**: `Rule_3` flips `false_positive` → `confirmed`
   (FLEX2 29→30 verified rules; decision-table coverage unchanged at
-  4/10). `Rule_4` still doesn't verify — a separate, unrelated,
-  not-yet-investigated reason (`courseOfferedInFollowingSemesters`
-  resolves `False` for every real subject; `Rule_4`'s own condition
-  never references `degreeTotalCredits` at all, so this fix was never
-  going to reach it) — see that decision's own entry under "Open issues"
-  above. Confirmed via a full per-objective before/after diff across all
-  4 case studies: zero flips anywhere except `Rule_3`. `compiled_
+  4/10). `Rule_4` did not yet verify at this point — see the SAME shape
+  of bug, found and fixed separately the next day, immediately below.
+  Confirmed via a full per-objective before/after diff across all 4
+  case studies: zero flips anywhere except `Rule_3`. `compiled_
   constraints.json` re-diffed field-by-field: the only change anywhere
   is the new `cross_table_placeholders` key on exactly 6 nodes (4 in
   this decision, 2 in Spree's already-unresolved `Promotion Customer
   Group Eligibility`, harmless there since that decision's subject can't
   be found at all). Full regression suite re-run and passing.
+
+- **`Course Replacement Eligibility::Rule_4` closed 2026-09-25 — the
+  SAME bug SHAPE as `Rule_3` above, mirrored within one table pair
+  instead of across two decision-related tables.**
+  `courseOfferedInFollowingSemesters` (an `exists` check: does another
+  `COURSE_OFFER` row exist with `COURSE_ID = <COURSE_ID>`) resolved
+  `False` for every one of the 545 real subjects. Root cause, confirmed
+  directly against the pre-merge archive: `COURSE_OFFER.COURSE_ID`
+  correctly tracks `scenario['COURSE_ID']` throughout search (both
+  shift together under the SAME per-record offset), while the SAME
+  record's own `COURSE.COURSE_ID` — never independently set by any leaf,
+  since `courseTypeId`'s own `course_type_id` read needs no placeholder
+  at all — only ever gets a value from a GLOBAL, cross-record fresh-key
+  repair, unrelated to either. Unlike `<program>`/`<batch>`, the
+  validator never even reaches `filter_placeholder_sources.py` for
+  `<COURSE_ID>`: `db_resolver._resolve_placeholders`'s own FIRST
+  priority — "the subject row's own column of the same name" — already
+  finds `course_id` directly on `COURSE_REGISTRATION` (the decision's
+  own subject), correctly wired to `COURSE.COURSE_ID` by the earlier
+  junction-row fix. So the real gap is purely generator-side, and purely
+  within this ONE record's own candidate.
+
+  Extended `compile_constraints.py`'s own `cross_table_placeholders`
+  field with a SECOND compile-time source
+  (`compute_subject_hop_placeholder_correlations`, alongside the
+  existing `compute_cross_table_placeholder_correlations`), sharing the
+  same field and the same `dynamosa.py` consumer: a conjunct whose own
+  COLUMN matches the decision's own subject row's real FK column (per
+  `decision_subject['joins']`, already computed) needs no declared
+  override at all — the target table/column is read straight off that
+  hop. Reordered `merge_archive_candidate`'s own consumption to run
+  BEFORE the subject-junction wiring step, not after: for this shape the
+  correlated table (`COURSE`) is the SAME one a subject hop reads FROM,
+  so the correction must land before that hop is wired, not after (the
+  reverse of no consequence for `<program>`/`<batch>`, which never
+  shares a column with anything the subject-wiring step itself reads).
+  Also taught the consumer to SYNTHESIZE the correlated row when none
+  exists yet (previously a no-op) — needed here since `Rule_4` builds no
+  OTHER `COURSE` row of its own besides the one `courseTypeId` already
+  provides, but disclosed as a real behavior change from the 2026-09-24
+  version of this same step.
+
+  **A genuine collision found and fixed while verifying this**:
+  `degreeTotalCredits`'s own `derived_aggregate` seeding
+  (`candidate.py`'s `joined_value_table` branch) independently builds 3
+  of its OWN separate `COURSE` rows for the SAME record, numbered `1, 2,
+  3` pre-offset — the SAME starting point `<COURSE_ID>`'s own scenario
+  default uses. After the identical per-record offset, the correlated
+  focal row and the FIRST of those 3 rows landed on the IDENTICAL
+  `COURSE_ID`, a real `UNIQUE constraint failed: COURSE.COURSE_ID`
+  reproduced directly rebuilding the fixture. Fixed by checking, after
+  writing the correlated value, whether `column` is a genuine PK/UNIQUE
+  key for `table` (via the SAME `_own_solo_unique_columns_for` schema
+  helper `_key_columns_for` already uses) and whether it now collides
+  with a DIFFERENT row this record owns on that table — if so, THAT
+  other row (never the semantically-required correlated one) is bumped
+  to a fresh, collision-safe value via `mutation.py`'s own
+  `_fresh_key_value`, the same mechanism every other such clash in this
+  pipeline already resolves through.
+
+  **Verified result**: `Rule_4` flips `false_positive` → `confirmed`
+  (FLEX2 30→31 verified rules; `Course Replacement Eligibility` now
+  fully 6/6, decision-table coverage unchanged at 4/10, already counted
+  from the earlier fixes). Confirmed via a full per-objective before/
+  after diff across all 4 case studies: zero flips anywhere except
+  `Rule_4` (Spree's fixture also changed rows here — the SAME `cross_
+  table_placeholders` consumer's new row-synthesis behavior now builds
+  an extra `spree_order_promotions` row for `Promotion Customer Group
+  Eligibility`'s own already-unresolved decision — confirmed harmless:
+  Spree's own `objective_results.csv` is byte-identical before and
+  after). Full regression suite re-run and passing.
 
 - **FLEX2 fixture: every row's own primary key was null.**
   `generator/mutation.py`'s `_repair_row` only assigned a NOT-NULL
