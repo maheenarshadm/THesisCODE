@@ -1,5 +1,75 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, discard/reclassify decisions implemented; new-rule building starting next)
+
+Direct follow-up to the planning-only audit entry directly below (still
+worth reading first for full context — this entry assumes it). The user
+answered that entry's 5 open questions:
+
+1. **Discard list confirmed** — FLEX2 `Summer Semester
+   Registration::Rule_3`, jBilling's whole `Cancellation Fee Eligibility`
+   decision (6 rules). Implemented as bookkeeping-only (both already
+   either pre-excluded from denominators or non-poisoning for siblings —
+   no code change needed); full reasoning in `KNOWN_ISSUES.md`'s and
+   `COVERAGE_REPORT.md`'s matching newest entries.
+2. **Spree `Promotion Customer Group Eligibility::rule_4` → out of
+   scope** — yes. This one needed a REAL fix, not just a label: without
+   it, `rule_4`'s own unreachable-table requirement was silently
+   poisoning `subject_table_for_decision`'s shared union for the WHOLE
+   decision, blocking `rule_1`/`rule_2` too even though neither touches
+   `spree_customer_group_users`. Built `validation_oracle/
+   out_of_scope_rules.py` (new disclosed registry) + wired it into
+   `coverage.py` (`in_scope_by_name`, filters before subject
+   determination/evaluation, keeps the ORIGINAL unfiltered records for
+   `objective_results.csv` so excluded rules stay visible, never
+   verified). **Verified via a real re-run, not assumed**: `rule_1`
+   flips `false_positive` → confirmed; `rule_4` stays `agreed_uncovered`
+   (never pursued, by design); `rule_2` did NOT flip — a separate,
+   still-open finding, not the same issue. Spree: **16 → 17 verified**,
+   solvable coverage 72.7% → **81.0%** (17/21). Zero collateral confirmed
+   across all 4 case studies + full regression suite. Full writeup:
+   `KNOWN_ISSUES.md`/`COVERAGE_REPORT.md` newest entries.
+3. **Build the new-rule candidates** — yes, greenlit as the next phase
+   (started after this bookkeeping; see "Planned next" below). Re-running
+   DynaMOSA at 2x/5x budget (question 4) is explicitly DEFERRED until the
+   user asks for it separately — don't start it proactively.
+4. **jBilling's ~9 never-compiled, unaudited rules** — explicitly
+   SKIPPED for now (user's own call, asked directly). jBilling's own
+   "solvable denominator" stays the audit's own approximate figure
+   (~29, itself internally imprecise — see `COVERAGE_REPORT.md`) until
+   that's revisited.
+
+**Updated current-state snapshot** (supersedes the audit table's
+provisional numbers where they changed — OpenMRS/FLEX2/jBilling
+unchanged, confirmed via fresh re-runs; Spree updated):
+
+| Case study | Total | Verified now | Solvable denom | Current % |
+|---|---:|---:|---:|---:|
+| OpenMRS | 71 | 42 | 56 | 75.0% |
+| Spree | 31 | 17 | 21 | **81.0%** |
+| FLEX2 | 55 | 37 | 49 | 75.5% |
+| jBilling | 39 (+6 discarded, +~9 unaudited) | 15 | ~29 | ~51.7% |
+
+**Still open, not pursued this round (separate, smaller levers, flagged
+not forgotten):** Spree's `Promotion Temporal Availability::rule_1/2/3`
+— a zero-code-change quick win (`--not-persisted-json
+'{"evaluationTime":...}'`, already demonstrated working) — wasn't part of
+what was decided this round; likely pushes Spree noticeably higher
+whenever it's picked up. `Promotion Customer Group
+Eligibility::rule_2`'s fresh `false_positive` is a new, distinct,
+not-yet-investigated finding.
+
+**Planned next**: building the 14 high-confidence new-rule candidates
+from the audit's own table (below, unchanged from the prior entry) —
+real, multi-step work per rule (DMN authoring, a provenance/schema-
+mapping CSV entry, compile, confirm the search can actually solve it —
+not guaranteed on the first try even for a high-confidence candidate).
+Given the scale (4 case studies, up to 14 rules), this proceeds
+incrementally, one case study at a time, with each rule's own real
+source re-confirmed (via the case study's real GitHub source / handbook
+text) before authoring — never guessed. Progress gets recorded here as
+it lands, not batched to the end.
+
 ## Latest continuation — 2026-09-25 (Claude, 95-97% coverage-push planning — NO CODE CHANGED, read this first)
 
 **Start here.** This entry is a planning/audit round only — nothing in
@@ -569,10 +639,12 @@ file's last recorded values, not a fresh `coverage.py` invocation,
 unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
-provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-58.2%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
-`code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 60.4%, jBilling 66.7%.
+provenance, updated 2026-09-25): raw verified coverage OpenMRS 59.2%,
+Spree 54.8%, FLEX2 67.3%, jBilling 38.5%; solvable-rules coverage (the
+finer 4-category classification — permanent out-of-scope / search-
+limited / known-bug-fixable / discarded — see this file's own newest
+entry above) OpenMRS 75.0%, Spree **81.0%**, FLEX2 75.5%, jBilling ~51.7%
+(approximate, ~9 rules still unaudited).
 
 ## 6. Recent actions (most recent session)
 

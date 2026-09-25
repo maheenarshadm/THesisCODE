@@ -33,6 +33,7 @@ import sqlite3
 from phase1_utility import records_by_decision, statically_infeasible_count
 from subject_table import subject_table_for_decision
 from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+from out_of_scope_rules import is_out_of_scope
 
 OBJECTIVE_RESULTS_COLUMNS = [
     'case_id', 'algorithm', 'run_id', 'construction_strategy', 'objective_id',
@@ -81,10 +82,21 @@ def build_subject_tables(case_study, decisions_by_name):
     decision that resolves, and {decision_name: error_message} for every
     one that doesn't -- both returned, so the caller can process the
     resolvable ones and still honestly report the unresolved ones,
-    rather than one failure aborting the whole case study."""
+    rather than one failure aborting the whole case study.
+
+    `decisions_by_name` here is expected to already be filtered to
+    IN-SCOPE records only (see `out_of_scope_rules.py` /
+    `run_coverage`'s own `in_scope_by_name`) -- an out-of-scope rule's
+    own table requirement must never be allowed to poison subject
+    determination for its in-scope siblings."""
     resolved = {}
     unresolved = {}
     for name, records in decisions_by_name.items():
+        if not records:
+            unresolved[name] = (
+                "Every rule in this decision is declared out of scope "
+                "(out_of_scope_rules.py) -- no in-scope input to determine a subject from.")
+            continue
         try:
             resolved[name] = subject_table_for_decision(records, case_study)
         except ValueError as e:
@@ -113,9 +125,21 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
     os.makedirs(out_dir, exist_ok=True)
     conn = sqlite3.connect(db_path)
     decisions_by_name = records_by_decision(case_study)
-    resolved, unresolved = build_subject_tables(case_study, decisions_by_name)
+    # Out-of-scope rules (out_of_scope_rules.py) are dropped here, BEFORE
+    # subject determination and evaluation, so one out-of-scope rule's own
+    # unreachable table never poisons its in-scope siblings' subject pick
+    # (subject_table_for_decision unions every record's own tables). The
+    # ORIGINAL, unfiltered decisions_by_name is still used below for
+    # objective_rows, so an out-of-scope rule still appears in
+    # objective_results.csv with verified_rule_selected=False -- never
+    # silently dropped from the report.
+    in_scope_by_name = {
+        name: [r for r in records if not is_out_of_scope(case_study, r['rule_id'])]
+        for name, records in decisions_by_name.items()
+    }
+    resolved, unresolved = build_subject_tables(case_study, in_scope_by_name)
 
-    runner = DecisionRunner(conn, case_study, decisions_by_name, resolved,
+    runner = DecisionRunner(conn, case_study, in_scope_by_name, resolved,
                              not_persisted_overrides=not_persisted_overrides)
 
     objective_rows = []
@@ -132,7 +156,8 @@ def run_coverage(db_path, case_study, algorithm, run_id, construction_strategy,
         if decision_name not in unresolved:
             subject_table, pk_cols, join_paths = resolved[decision_name]
             try:
-                result = run_decision(conn, decision_name, records, subject_table, pk_cols,
+                result = run_decision(conn, decision_name, in_scope_by_name[decision_name],
+                                       subject_table, pk_cols,
                                        join_paths=join_paths, runner=runner, collect_trace=True,
                                        not_persisted_overrides=not_persisted_overrides)
             except NotImplementedError as e:

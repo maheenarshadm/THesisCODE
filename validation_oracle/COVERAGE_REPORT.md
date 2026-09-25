@@ -19,6 +19,87 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — Discard/out-of-scope decisions from the 95-97% coverage-push audit, user-decided; Spree Rule_4 reclassification implemented and verified
+
+Follows up the planning-only audit entry in `HANDOFF.md` (four-case-study
+audit, no code changed). The user answered the audit's open questions:
+
+1. **Discard list confirmed** — `FLEX2::Summer Semester
+   Registration::Decision_SummerSemesterRegistration_Rule_3` and the
+   whole jBilling `Cancellation Fee Eligibility` decision (6 rules,
+   `Decision_CancellationFeeEligibility_Rule_1..6`) are removed from the
+   solvable-rules corpus. Neither needed a code change: `Rule_3`'s own
+   ground truth (`repeatCourseCountRequested`, "COUNT per USER_ID/
+   semester") already resolves and runs cleanly as a decision (doesn't
+   block its siblings — see `KNOWN_ISSUES.md`'s "Summer Semester
+   Registration" entry), it just has no honest schema path of its own
+   (`REPEAT_COURSE.USER_ID -> APPUSER -> EMPLOYEE`, never reaches a
+   student) — a dead end for ITS OWN verification only. `Cancellation
+   Fee Eligibility`'s 6 rules never compiled at all (0/6, confirmed via
+   `grep` against the real `.dmn` source and a fresh `objective_results.csv`
+   — genuinely absent, not merely unresolved), so they were never in any
+   previously-reported total to begin with; this documents the decision
+   not to pursue compiling them. Both discards are BOOKKEEPING ONLY —
+   real `.dmn`/provenance source files are left untouched (audit trail
+   preserved, nothing silently deleted); they're excluded from the
+   "solvable" denominator table below with reason "discarded" (ground
+   truth judged unfixably broken), distinct from "out of scope" (a
+   deliberate scope boundary) only in REASON, not in mechanism — both
+   stay visible in raw `coverage.py` counts.
+2. **Spree `Promotion Customer Group Eligibility::rule_4` reclassified
+   out of scope** (same one-to-many-backward-join-to-
+   `spree_customer_group_users` precedent as this project's other
+   "0 candidates qualify, refusing to guess" decisions) — but doing this
+   as a LABEL ONLY would have changed nothing: `subject_table_for_decision`
+   unions every record's own required tables across a WHOLE decision, so
+   `rule_4`'s own unreachable table was silently poisoning `rule_1`/
+   `rule_2`'s shared subject pick too, even though neither reads
+   `spree_customer_group_users`. Implemented for real: new
+   `validation_oracle/out_of_scope_rules.py` (a disclosed registry,
+   `{(case_study, rule_id): reason}`), consulted by `coverage.py`'s new
+   `in_scope_by_name` (filters BEFORE subject determination and
+   `run_decision`, using the ORIGINAL unfiltered records for
+   `objective_results.csv` so `rule_4` still appears, always
+   `verified_rule_selected=False` — never silently dropped from the
+   report). Verified via a fresh `coverage.py` run, diffed row-by-row
+   against the pre-fix run (identical invocation otherwise): `rule_1`
+   flips `false_positive` → **confirmed**; `rule_4` unchanged
+   (`agreed_uncovered`, as intended — never pursued); `rule_2` does
+   **NOT** flip, stays `false_positive` — the audit's own "very plausibly
+   become fixable too" for BOTH rule_1/rule_2 was only half right; `rule_2`'s
+   own condition genuinely isn't satisfied by any real row in the current
+   fixture, a separate, not-yet-investigated gap, left open. Zero
+   collateral confirmed by re-running all 4 case studies byte-for-byte
+   identical elsewhere (OpenMRS 42/71, FLEX2 37/151, jBilling 15/42
+   unchanged) before trusting the Spree diff. Full regression suite
+   (`candidate.py`/`mutation.py`/`fitness.py`/`test_spec_cases.py`/
+   `test_drd_chaining_synthetic.py`/`test_serialized_field_roundtrip.py`/
+   `drd_executor.py`) passes with zero changes.
+
+**Result: Spree 16 → 17 verified rules** (51.6% → 54.8% raw, out of 31
+distinct rules). Solvable-rules table below updated: Spree's permanent-
+out-of-scope count 9 → 10 (the former "+1 open question" now resolved
+in), solvable denominator 22 → 21, solvable coverage 72.7% → **81.0%**
+(17/21). FLEX2's solvable denominator 49 → 48 (Rule_3 discarded, `Total`
+55 unchanged since discard ≠ out-of-scope in the raw-count sense —
+Rule_3 stays visible in `total_dmn_rules`, just excluded from
+"solvable"). jBilling's solvable-rules table is unaffected by discarding
+`Cancellation Fee Eligibility` (those 6 rules were never counted in any
+prior total).
+
+**Still open, not touched this round (separate levers, not yet
+authorized):** Spree's other known-bug-fixable quick win —
+`Promotion Temporal Availability::rule_1/2/3` needs
+`--not-persisted-json '{"evaluationTime":...}'` passed at coverage-run
+time (zero code change, already demonstrated working per this file's
+own history) — would likely push Spree's solvable coverage toward the
+audit's predicted 95.5-100% range, but wasn't part of what was decided
+this round (discard list, Rule_4 reclassification, new-rule building);
+flagged here as the next easy win if/when asked. `Promotion Customer
+Group Eligibility::rule_2`'s own fresh false_positive is a new, distinct,
+not-yet-investigated finding (not the same issue `rule_4`'s exclusion
+was meant to fix).
+
 ### 2026-09-25 — jBilling: Currency Exchange Rate Source subject-table decision resolved (user-decided, `base_user`)
 
 Resolves the PENDING decision flagged at the end of the prior jBilling
@@ -341,45 +422,85 @@ below (2026-09-24 correction, prompted by a user double-check).
 `verified_rule_coverage_percent` — denominator is DISTINCT DMN rules,
 not raw compiled objectives; see the note above)
 
+**Updated 2026-09-25** by a fresh `coverage.py` re-run of all 4 case
+studies in one sitting (see the dated entry above this table's own
+section for the exact invocations/provenance) — the row below had gone
+stale relative to fixes landed in commits between the last time this
+table was updated and now.
+
 | Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
-| Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 36 | 65.5% |
-| jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **106** | **54.1%** |
+| Spree | 31 | 31 | 17 | 54.8% |
+| FLEX2 | 98 | 55 | 37 | 67.3% |
+| jBilling | 40 | 39 | 15 | 38.5% |
+| **Total** | **240** | **196** | **111** | **56.6%** |
 
-### Solvable-rules coverage (excludes rules that are structurally not
-reachable by data generation at all — see category definitions below;
-all counts are DISTINCT DMN rules)
+### Solvable-rules coverage
 
-| Case study | Distinct rules | Not solvable | Undetermined | Solvable | Verified | Solvable coverage |
-|---|---|---|---|---|---|---|
-| OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
-| Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 36 | 67.9% |
-| jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **106** | **72.6%** |
+**Superseded 2026-09-25 — this table now follows the finer 4-category
+classification from `HANDOFF.md`'s 95-97%-coverage-push audit entry
+(permanent out-of-scope / search-limited real hard case / known-bug-
+fixable / discard) instead of the older, coarser "not solvable /
+undetermined" split.** Per-rule reasoning for every row lives in
+`HANDOFF.md`'s audit table and `KNOWN_ISSUES.md`, not duplicated here —
+this table stays numbers-only, per this file's own stated purpose.
 
-**Category definitions:**
-- **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
-  doesn't support it — OpenMRS 15 rules across 5 decisions, Spree 5
-  rules in `Price Adjustment Tier Validity Violations`), `code_external`
-  facts genuinely computed by application code and never in any table
-  (jBilling's `Ageing Step Config Validation`, 3 rules), and the
-  explicitly scoped-out Spree blob-level facts (`Promotion Item Total
-  Eligibility`, 4 rules — see `KNOWN_ISSUES.md`'s scope-decision entry).
-- **Undetermined:** currently `not_persisted`/no-table-backed-input per
-  ground truth, but never individually audited for a possible
-  mis-mapping (the same species of error `purchaseQuantity` turned out
-  to be before it was corrected to a real column). FLEX2's `Attendance
-  Eligibility For Final Exam` (2 rules); jBilling's 6 "no table-backed
-  input" decisions (13 distinct rules) + 2 decisions needing a
-  `not_persisted` override (8 rules) = 21 rules.
-- **Solvable:** distinct rules minus the two categories above — either
-  already verified, or open with a known, in-principle-fixable cause
-  (a disclosed join-construction override, more search budget/seeds, or
-  a quick-win placeholder mapping already scoped in `KNOWN_ISSUES.md`).
+| Case study | Distinct rules | Verified | Perm. out-of-scope | Search-limited | Known-bug-fixable | Discarded | Solvable denom | Solvable coverage |
+|---|---|---|---|---|---|---|---|---|
+| OpenMRS | 71 | 42 | 15 | 10 | 4 | 0 | 56 | 75.0% |
+| Spree | 31 | 17 | 10 | 0 | 4 | 0 | 21 | **81.0%** |
+| FLEX2 | 55 | 37 | 5 | 7 | 5 | 1 | 49 | 75.5% |
+| jBilling | 39 compiled (+6 discarded, +~9 never-compiled unaudited) | 15 | 10 | 12 | 3 | 6 | ~29 (approximate — see note) | ~51.7% (approximate) |
+
+**What changed this round vs. the audit's own working numbers:**
+- **Spree**: the audit's own "+1 open question" (`Promotion Customer
+  Group Eligibility::rule_4`) is now resolved into permanent-out-of-scope
+  (9→10) — implemented for real (not just relabeled), see the dated entry
+  above. Solvable denom 31−10=21. Verified is 17, not the audit's
+  provisional 16, because implementing the reclassification correctly
+  ALSO freed `rule_1` (confirmed via a real coverage re-run, not assumed)
+  — `rule_4`'s own known-bug-fixable count in the audit table (5) already
+  counted `rule_1`/`rule_2` as one prospective fix; `rule_1` landed,
+  `rule_2` didn't (still `false_positive`, a separate open finding), so
+  4 (not 5) of that known-bug-fixable count remain genuinely open
+  (`Promotion Temporal Availability::rule_1/2/3` + `rule_2` itself).
+  **81.0% verified/solvable, achieved, not merely predicted.**
+- **FLEX2**: `Summer Semester Registration::Rule_3` discard is now
+  CONFIRMED (was already a "discard-candidate" pre-subtracted into the
+  audit's own solvable-denom=49 figure) — no numeric change, the audit's
+  49/37=75.5% already assumed this discard.
+- **jBilling**: `Cancellation Fee Eligibility` (6 rules) discard is now
+  CONFIRMED — these were never inside the 39-rule "Total" baseline to
+  begin with (0/6 compiled, confirmed absent from a fresh
+  `objective_results.csv`), so confirming the discard changes no number
+  here either; it only formalizes "don't pursue compiling these," so
+  future sessions don't re-attempt it. jBilling's own solvable-denom
+  ("~29") carries the audit's own acknowledged internal-arithmetic
+  imprecision (its 4 categories don't cleanly sum to 39 — flagged, not
+  silently smoothed over) — NOT recomputed here, since the user
+  explicitly deferred auditing jBilling's ~9 never-compiled unaudited
+  rules (2026-09-25), which could shift this denominator in either
+  direction before it's worth tightening.
+
+**Category definitions (per HANDOFF.md's audit):**
+- **Permanent out-of-scope:** COLLECT hit policy (`rule_evaluator.py`
+  doesn't support it), `code_external` facts genuinely computed by
+  application code and never in any table, and blob-level serialized
+  facts this project deliberately doesn't pursue (see `KNOWN_ISSUES.md`'s
+  scope-decision entry) — now also Spree's
+  `Promotion Customer Group Eligibility::rule_4` (one-to-many backward
+  join, no honest single-row subject).
+- **Search-limited:** a real, in-scope, in-principle-solvable rule the
+  saved 1x-budget DynaMOSA archive never found a satisfying case for —
+  not a bug, a search-budget/seed question (lever 4, deferred).
+- **Known-bug-fixable:** a diagnosed, disclosed generator/validator bug
+  or a documented quick-win flag (e.g. `--not-persisted-json`) away from
+  verifying.
+- **Discarded:** ground truth judged unfixably broken for THAT rule
+  specifically (no honest schema path exists) — excluded from the
+  solvable denominator, but the underlying `.dmn`/provenance source is
+  left untouched, never silently deleted.
 
 **Investigated 2026-09-24, root cause CORRECTED then fixed the same
 day (see `KNOWN_ISSUES.md`'s cross-case-study entry for the full

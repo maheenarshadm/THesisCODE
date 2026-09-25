@@ -1,5 +1,83 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — Out-of-scope-rule subject poisoning fixed; discard decisions confirmed (Claude)
+
+Follow-up to the 95-97%-coverage-push planning audit (`HANDOFF.md`'s
+newest entry at the time). The user answered its open questions: confirm
+the discard list; reclassify Spree `Promotion Customer Group
+Eligibility::rule_4` out of scope; build the audit's proposed new rules
+next; defer 2x/5x search-budget re-runs until asked; skip auditing
+jBilling's ~9 never-compiled rules for now.
+
+**New finding, not anticipated by the audit: reclassifying `rule_4`
+"out of scope" as a LABEL ONLY would have changed nothing.**
+`subject_table.subject_table_for_decision` unions every record's own
+required tables across a WHOLE decision before picking one subject table
+— `rule_4`'s own `matchingCustomerGroupCount` needs
+`spree_customer_group_users` (a genuine one-to-many backward join, no
+honest single-row answer, same category as this project's other
+"0 candidates qualify" decisions), and that requirement was silently
+poisoning `rule_1`/`rule_2`'s own subject pick too, even though neither
+of them reads that table at all. The whole decision was landing in
+`unresolved_decisions`, and every rule (including the two in-scope ones)
+was reported `false_positive`/`agreed_uncovered` for that reason, not
+because either rule's own condition had been checked against real data.
+
+**Fixed with a new, disclosed mechanism**: `validation_oracle/
+out_of_scope_rules.py` — `{(case_study, rule_id): reason}`, consulted by
+`coverage.py`'s new `in_scope_by_name` (built once in `run_coverage`,
+BEFORE `build_subject_tables`/`DecisionRunner`/`run_decision`, dropping
+any out-of-scope rule's own record from subject-determination and
+evaluation). The ORIGINAL, unfiltered record set is still used for
+`objective_results.csv` row emission, so an out-of-scope rule still
+appears in the report — always `verified_rule_selected=False`, never
+silently dropped. `build_subject_tables` gets a matching guard: if
+filtering leaves a decision with NO in-scope records left, it's recorded
+as unresolved with a clear reason, rather than crashing on an empty list
+(not hit by today's one registry entry, but a real edge case the next
+one could hit).
+
+**Verified, not assumed**: re-ran `coverage.py` for all 4 case studies,
+diffed the Spree run row-by-row against the pre-fix run (identical
+invocation otherwise). Result: `rule_1` flips `false_positive` →
+**confirmed**; `rule_4` stays `agreed_uncovered` (as intended — it's
+genuinely never pursued now, not silently marked passing); `rule_4`'s
+sibling `rule_2` does **NOT** flip — the audit's own "very plausibly
+become fixable too" language covered both siblings, but only `rule_1`'s
+own condition is actually satisfied by any real row in the current
+fixture; `rule_2` is a separate, not-yet-investigated `false_positive`,
+left open. OpenMRS (42/71), FLEX2 (37/151), jBilling (15/42) confirmed
+byte-for-byte unchanged elsewhere. Full regression suite (`candidate.py`/
+`mutation.py`/`fitness.py`/`test_spec_cases.py`/
+`test_drd_chaining_synthetic.py`/`test_serialized_field_roundtrip.py`/
+`drd_executor.py`) passes, zero changes. Exact before/after numbers and
+the updated solvable-coverage tables are in `COVERAGE_REPORT.md`'s
+matching newest entry — this file's own copy stays to the mechanism and
+root-cause writeup, per each file's stated purpose.
+
+**Discard decisions confirmed, both bookkeeping-only (no poisoning risk,
+so no code change needed):**
+- FLEX2 `Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3`
+  — already established in this file's own history (`repeatCourseCountRequested`,
+  "COUNT per USER_ID/semester" has no real schema path to a student:
+  `REPEAT_COURSE.USER_ID -> APPUSER -> EMPLOYEE`, never reaches `ROLL_NO`).
+  Confirmed this decision already resolves and runs cleanly WITHOUT
+  `Rule_3` needing any exclusion (its own dead end doesn't block its
+  siblings, unlike Spree's `rule_4` above) — a pure "this one rule's own
+  ground truth is unfixably broken" call, not a poisoning fix.
+- jBilling `Cancellation Fee Eligibility` (all 6 rules,
+  `Decision_CancellationFeeEligibility_Rule_1..6`) — confirmed absent
+  from a fresh `objective_results.csv` (0/6 compiled, matching the prior
+  session's own diagnosis: stacked before/after-state, `code_external`,
+  and pure-side-effect-output problems with no honest fix path). Formally
+  documents the decision not to pursue compiling these going forward.
+
+Full updated coverage numbers, the new 4-category solvable-rules table
+(superseding the older 2-category one), and what's still open (Spree's
+`Promotion Temporal Availability::rule_1/2/3` not-persisted-override
+quick win, `rule_2`'s new finding, jBilling's deferred 9-unaudited-rules
+question) are all in `COVERAGE_REPORT.md`'s matching newest entry.
+
 ## 2026-09-25 — Attendance Eligibility For Final Exam audit (Claude)
 
 Checkpoint before this entry: `ac6aeee` (priorRegistrationCount fix,
@@ -705,6 +783,15 @@ excluded from all coverage numbers per an explicit decision below):
     `spree_customer_group_users` at all. Needs the same kind of
     disclosed backward-join override as the other "0 candidates"
     decisions, not the generator-side fix built above.
+    **RESOLVED 2026-09-25** (see this file's own newest entry, top of
+    file): `rule_4` reclassified out of scope via the new
+    `out_of_scope_rules.py` registry, which excludes it from subject
+    determination (not just a documentation label — that alone would
+    have changed nothing, see the newest entry for why). `rule_1` now
+    verifies (`false_positive` → `confirmed`); `rule_4` itself stays
+    `agreed_uncovered`, never pursued, by design. `rule_2` did **NOT**
+    flip — still `false_positive`, a separate, not-yet-investigated
+    finding, left open.
 
 
 ### FLEX2
