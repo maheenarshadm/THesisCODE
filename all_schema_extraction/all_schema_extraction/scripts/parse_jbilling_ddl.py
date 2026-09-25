@@ -31,6 +31,15 @@ KNOWN LIMITATIONS:
   - CHECK constraints: same treatment; confirmed 0 in this file.
   - DEFAULT values, sequences, and non-constraint DDL (SET statements, OWNER TO,
     COMMENT ON) are ignored entirely.
+
+FIXED 2026-09-11 (while extending generator/fitness.py's FK constraint
+distance term to jBilling, matching the same fix already applied to
+FLEX2's own parser): FK detail was being discarded down to just the
+target table name (`_fkcols`/`_refcols` captured by FK_RE and thrown
+away) -- insufficient for a real per-column FK distance, which needs to
+know *which* column to check, not just which tables are related. Now
+preserved as `fk_columns` (local column -> ref table.column), one entry
+per local/ref column pair for composite FKs.
 """
 import argparse
 import json
@@ -87,7 +96,7 @@ def parse(text):
                 'null_false': bool(notnull),
             }
         tables[tname] = {
-            'pk': None, 'columns': cols, 'fks': set(), 'indexes': [], 'checks': [],
+            'pk': None, 'columns': cols, 'fks': set(), 'fk_columns': [], 'indexes': [], 'checks': [],
         }
 
     for m in PK_RE.finditer(text):
@@ -101,9 +110,12 @@ def parse(text):
             tables[tname]['indexes'].append({'unique': True, 'cols': cols})
 
     for m in FK_RE.finditer(text):
-        tname, _fkcols, ref_table, _refcols = m.group(1), m.group(2), m.group(3), m.group(4)
+        tname, fkcols, ref_table, refcols = m.group(1), plain_cols(m.group(2)), m.group(3), plain_cols(m.group(4))
         if tname in tables:
             tables[tname]['fks'].add(ref_table)
+            for local_col, ref_col in zip(fkcols, refcols):
+                tables[tname]['fk_columns'].append(
+                    {'column': local_col, 'ref_table': ref_table, 'ref_column': ref_col})
 
     for m in CHECK_RE.finditer(text):
         tname, body = m.group(1), m.group(2)
@@ -129,6 +141,7 @@ def main():
             'pk': t['pk'],
             'columns': t['columns'],
             'fks': sorted(t['fks']),
+            'fk_columns': t['fk_columns'],
             'indexes': t['indexes'],
             'checks': t['checks'],
         }
@@ -142,12 +155,14 @@ def main():
     n_pk = sum(1 for t in export.values() if t['pk'])
     n_fk_raw = len(FK_RE.findall(text))
     n_fk_relationships = sum(len(t['fks']) for t in export.values())
+    n_fk_columns = sum(len(t['fk_columns']) for t in export.values())
     n_unique = sum(1 for t in export.values() for idx in t['indexes'] if idx['unique'])
     n_checks = sum(len(t['checks']) for t in export.values())
     print(f"Tables: {n_tables}")
     print(f"Tables with PK: {n_pk}")
     print(f"Raw FK constraint declarations: {n_fk_raw}")
     print(f"Distinct table-to-table FK relationships (deduplicated): {n_fk_relationships}")
+    print(f"Per-column FK entries (local column -> ref table.column, 'fk_columns'): {n_fk_columns}")
     print(f"Total UNIQUE constraints: {n_unique}")
     print(f"Total CHECK constraints: {n_checks}")
     print(f"Wrote {args.out}")

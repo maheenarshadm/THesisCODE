@@ -1,0 +1,275 @@
+case_study,decision_name,variable_name,io,category,mapping_type_raw,notes
+FLEX2,Academic Warning Status,cumulativeGPA,input,Direct Attribute Reference,direct,
+FLEX2,Academic Warning Status,priorWarningCount,input,Direct Attribute Reference,direct,
+FLEX2,Academic Warning Status,newWarningCount,output,Decision Output / Write-Back Target,direct,written back after each semester's processing
+FLEX2,Academic Warning Status,admissionStatus,output,Decision Output / Write-Back Target,direct,Active/Closed must be mapped to the real STATUS_ID values in D_STUDENT_STATUS (not visible in this DDL-only export - no seed data)
+FLEX2,Academic Warning Status,warningAction,output,Not-Persisted,not_persisted,Workflow/notification text only - no matching column found
+FLEX2,Course Load Limit,semesterType,input,Single-Column Predicate,derived,"Corrected 2026-09-11 per domain-knowledge input from the project owner (not derivable from Flex1.sql's DDL alone, which shows only the column definition, not its data): TITLE IS the semester-type field, a clean categorical column with exactly 3 possible values -- 'Fall' / 'Spring' / 'Summer' -- not free text with an embedded year. Superseded again the same day, found while testing mutation.py: the Course Load Limit DMN rules themselves compare semesterType against 'Regular'/'Summer', a *different* two-category vocabulary than TITLE's own three real values -- a plain passthrough can never equal 'Regular' for any real row (confirmed: mutation.py's own operator exploited exactly this by writing an impossible TITLE='Regular' value into a candidate row to fake a fitness-zero solution). Reclassified from a plain schema_column passthrough to a derived categorical mapping. CASE_MAP: SEMESTER.TITLE: 'Fall' -> 'Regular'; 'Spring' -> 'Regular'; 'Summer' -> 'Summer'"
+FLEX2,Course Load Limit,newWarningCount,input,Direct Attribute Reference,direct,fed from Academic Warning Status decision (DRD edge)
+FLEX2,Course Load Limit,maxCoursesAllowed,output,Aggregate Function,derived,validated against COUNT(COURSE_REGISTRATION) for ROLL_NO+SEM_ID at registration time
+FLEX2,Course Load Limit,courseLoadBasis,output,Not-Persisted,not_persisted,explanatory text only
+FLEX2,Admission Closure Eligibility,newWarningCount,input,Direct Attribute Reference,direct,fed from Academic Warning Status decision (DRD edge)
+FLEX2,Admission Closure Eligibility,newAdmissionEligibilityNotMet,input,Compound / Unclassified Derivation,derived,admission-module cross-reference
+FLEX2,Admission Closure Eligibility,admissionStatus,output,Decision Output / Write-Back Target,direct,
+FLEX2,Admission Closure Eligibility,closureReason,output,Compound / Unclassified Derivation,direct,table exists specifically for this purpose
+FLEX2,Course Registration Eligibility,newWarningCount,input,Direct Attribute Reference,direct,fed from Academic Warning Status (DRD edge)
+FLEX2,Course Registration Eligibility,projectedTotalCoursesThisRegistration,input,Aggregate Function,derived,"Verified directly against Flex1.sql (2026-09-11): COURSE_REGISTRATION has both ROLL_NO and SEM_ID columns, exactly as this fact requires. Filter clause added so this compiles to a real derived_aggregate recipe instead of an aggregate with no WHERE text."
+FLEX2,Course Registration Eligibility,maxCoursesAllowed,input,Compound / Unclassified Derivation,direct,fed from Course Load Limit (DRD edge)
+FLEX2,Course Registration Eligibility,canRegisterCourse,output,Compound / Unclassified Derivation,derived,
+FLEX2,Course Registration Eligibility,reason,output,Compound / Unclassified Derivation,direct,table exists specifically for this purpose
+FLEX2,Attendance Percentage,lecturesHeldForOffering,input,Aggregate Function,direct,"Course-wise and duration-driven: LECTURE holds one row per session actually held for that COURSE_OFFER, so this count varies per course/semester (credit hours, weekly frequency, COURSE_OFFER.START_DATE/END_DATE) instead of a fixed lecture count for every course."
+FLEX2,Attendance Percentage,lecturesAttended,input,Aggregate Function,direct,Raw attended-session count for this student in this course offering.
+FLEX2,Attendance Percentage,attendancePercentage,output,Compound / Unclassified Derivation,derived,attendancePercentage = (lecturesAttended / lecturesHeldForOffering) * 100; feeds Attendance Eligibility For Final Exam via the DRD.
+FLEX2,Attendance Eligibility For Final Exam,attendancePercentage,input,Direct Attribute Reference,derived,"Now computed by the upstream ""Attendance Percentage"" literal-expression decision (see its rows below) rather than assumed pre-computed."
+FLEX2,Attendance Eligibility For Final Exam,eligibleForFinalExam,output,Decision Output / Write-Back Target,derived,
+FLEX2,Attendance Eligibility For Final Exam,assignedGradeOverride,output,Decision Output / Write-Back Target,direct,
+FLEX2,Grade Points and Interpretation,letterGrade,input,Direct Attribute Reference,direct,
+FLEX2,Grade Points and Interpretation,gradePoints,output,Decision Output / Write-Back Target,direct,this decision is effectively a DMN mirror of the GRADE reference table; can be validated/generated directly from it once seed data is available
+FLEX2,Grade Points and Interpretation,interpretation,output,Not-Persisted,not_persisted,GRADE table has no interpretation text column; sourced purely from policy doc rule 2.2
+FLEX2,Course Replacement Eligibility,gradeInCourseToReplace,input,Direct Attribute Reference,direct,
+FLEX2,Course Replacement Eligibility,courseOfferedInFollowingSemesters,input,Compound / Unclassified Derivation,derived,
+FLEX2,Course Replacement Eligibility,replacingCoursePassedAtLeastOneSemesterAfter,input,Direct Attribute Reference,direct,schema has dedicated columns for exactly this
+FLEX2,Course Replacement Eligibility,eligibleForReplacement,output,Decision Output / Write-Back Target,direct,
+FLEX2,Course Replacement Eligibility,reason,output,Compound / Unclassified Derivation,derived,
+FLEX2,Graduation Eligibility,creditHoursEarned,input,Direct Attribute Reference,direct,
+FLEX2,Graduation Eligibility,degreeMinimumCreditHours,input,Direct Attribute Reference,direct,Corrected 2026-09-11: PROGRAM itself was finally actually inspected and has no credit-hour column at all (PROG_ID/CODE/TITLE/LEVEL_ID/SHORT_NAME/SCH_ID/NO_OF_SEM/MAX_DURATION_YEAR/CREATED_BY/CREATED_ON/PROG_RGB/RPT_TITLE only) -- the old note's claim was never actually checked. BATCH_PROGRAM.MIN_CR_HRS (keyed by BATCH_NO+PROG_ID) is the real minimum-credit-hours requirement column.
+FLEX2,Graduation Eligibility,cumulativeGPA,input,Direct Attribute Reference,direct,
+FLEX2,Graduation Eligibility,semestersElapsed,input,Aggregate Function,derived,
+FLEX2,Graduation Eligibility,yearsElapsed,input,Direct Attribute Reference,derived,
+FLEX2,Graduation Eligibility,eligibleToGraduate,output,Decision Output / Write-Back Target,derived,
+FLEX2,Graduation Eligibility,reason,output,Compound / Unclassified Derivation,derived,
+FLEX2,Summer Semester Registration,isElectiveTaughtByVisitingScholarUnavailableOtherwise,input,Existence / Correlated Subquery,derived,"Corrected 2026-09-11 per project-owner domain knowledge: D_EMP_TYPE.TITLE='Visiting' is the real visiting-faculty type value, the same coded-dimension pattern as semesterType. Confirmed meaning: this offering's own instructor is Visiting-type AND no other offering of the same course this semester has a non-Visiting instructor. RAW_SQL: (SELECT DT.TITLE FROM COURSE_OFFER CO JOIN EMPLOYEE E ON CO.EMP_ID = E.EMP_ID JOIN D_EMP_TYPE DT ON E.EMP_TYPE_ID = DT.EMP_TYPE_ID WHERE CO.OFFER_ID = <this course offering>) = 'Visiting' AND NOT EXISTS (SELECT 1 FROM COURSE_OFFER CO2 JOIN EMPLOYEE E2 ON CO2.EMP_ID = E2.EMP_ID JOIN D_EMP_TYPE DT2 ON E2.EMP_TYPE_ID = DT2.EMP_TYPE_ID WHERE CO2.COURSE_ID = (SELECT COURSE_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND CO2.SEM_ID = (SELECT SEM_ID FROM COURSE_OFFER WHERE OFFER_ID = <this course offering>) AND DT2.TITLE <> 'Visiting') TABLES: COURSE_OFFER, EMPLOYEE, D_EMP_TYPE"
+FLEX2,Summer Semester Registration,isNeededToGraduateThisSummer,input,Compound / Unclassified Derivation,derived,
+FLEX2,Summer Semester Registration,repeatCourseCountRequested,input,Aggregate Function,direct,table exists specifically for this purpose
+FLEX2,Summer Semester Registration,registrationAllowed,output,Compound / Unclassified Derivation,derived,
+FLEX2,Summer Semester Registration,reason,output,Compound / Unclassified Derivation,direct,
+FLEX2,Credit Transfer Exemption,cumulativeExemptedCreditPercentIfGranted,input,Direct Attribute Reference,derived,
+FLEX2,Credit Transfer Exemption,exemptionGranted,output,Compound / Unclassified Derivation,direct,
+FLEX2,Credit Transfer Exemption,creditGivenForPrerequisite,output,Compound / Unclassified Derivation,direct,
+FLEX2,Credit Transfer Exemption,countsTowardCGPA,output,Not-Persisted,not_persisted,"enforced by exclusion logic in CGPA calculation, not a stored flag"
+FLEX2,Credit Transfer Exemption,reason,output,Decision Output / Write-Back Target,direct,column is literally intended for this
+FLEX2,Admission Closure Eligibility,yearsSinceProgramStart,input,Direct Attribute Reference,derived,"exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Admission Closure Eligibility,regStatus,input,Direct Attribute Reference,direct,"exposed as a real status-code test, replacing suspendedRegistrationNotRestored; specific code value unconfirmed (Flex1.sql has no seed data), same caveat as other coded values in this schema (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Course Registration Eligibility,unmetPrerequisiteCount,input,Direct Attribute Reference,derived,"exposed as a count (>0 means blocked), replacing allPrerequisitesPassed; matches the count-instead-of-EXISTS pattern used for Spree/OpenMRS (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Course Registration Eligibility,previousGradeInCourse,input,Direct Attribute Reference,derived,"exposed as a real FEEL list-membership test against {F,D,D+,C-}, replacing isMandatoryReregistration (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Course Replacement Eligibility,creditsEarned,input,Direct Attribute Reference,direct,"exposed directly, replacing degreeRequirementsCompletedOrCompletingThisSemester (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Course Replacement Eligibility,degreeTotalCredits,input,Aggregate Function,derived,"Corrected 2026-09-11 per project-owner domain knowledge: PROGRAM has no total-credits column (verified directly, same finding as degreeMinimumCreditHours), and 'total required credits' is not a stored scalar at all -- it is a sum of credit hours over every course linked to the program/batch via PROGRAM_COURSE (see the schema-field column for the exact recipe). Exposed for the cross-variable comparison (creditsEarned < degreeTotalCredits)."
+FLEX2,Course Replacement Eligibility,courseTypeId,input,Direct Attribute Reference,direct,"exposed as a real category test (= ""CORE""), replacing isCoreCourse (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Summer Semester Registration,courseTypeId,input,Direct Attribute Reference,direct,"exposed as a real category test (= ""RESEARCH""), replacing isResearchCourseOrProject (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Summer Semester Registration,priorRegistrationCount,input,Aggregate Function,derived,"exposed as a count (=0 means new request), replacing isNewCourseRequest (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Summer Semester Registration,enrolledStudentCount,input,Aggregate Function,derived,"exposed as a count (<10 blocks), replacing minimumTenStudentsEnrolled (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+FLEX2,Credit Transfer Exemption,unmetPrerequisiteAlsoPassedCount,input,Compound / Unclassified Derivation,derived,"exposed as a count (=0 means passed), replacing prerequisiteCourseAlsoPassed (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Birthdate Validity,yearsSinceBirthdate,input,Direct Attribute Reference,derived,"TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)"
+OpenMRS,Birthdate Validity,birthdateValid,output,Not-Persisted,not_persisted,"validation outcome only, not stored"
+OpenMRS,Birthdate Validity,reasonCode,output,Not-Persisted,not_persisted,"validation outcome only, not stored"
+OpenMRS,Death Record Consistency,dead,input,Direct Attribute Reference,direct,
+OpenMRS,Death Record Consistency,causeOfDeathSet,input,Single-Column Predicate,derived,cause_of_death IS NOT NULL (FK to concept)
+OpenMRS,Death Record Consistency,causeOfDeathNonCodedSet,input,Single-Column Predicate,derived,cause_of_death_non_coded IS NOT NULL
+OpenMRS,Death Record Consistency,deathRecordValid,output,Not-Persisted,not_persisted,
+OpenMRS,Death Record Consistency,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Death Date Consistency Violations,deathDateSet,input,Single-Column Predicate,derived,death_date IS NOT NULL
+OpenMRS,Death Date Consistency,deathDateValid,output,Not-Persisted,not_persisted,"Redesigned 2026-09-10: now a literal-expression decision (count(violationReasons) = 0) downstream of the new *_Violations COLLECT table, rather than an output column on the same table."
+OpenMRS,Death Date Consistency Violations,violationReasons,output,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10, verified against live openmrs-core source): each independently-true row contributes its reason to a list, since the real Java method has no early return between these checks and can raise multiple simultaneously."
+OpenMRS,Preferred Identifier Requirement,identifierCount,input,Direct Attribute Reference,direct,"COUNT(*) FROM patient_identifier GROUP BY patient_id (active or all, per patient.voided)"
+OpenMRS,Preferred Identifier Requirement,preferredIdentifierValid,output,Not-Persisted,not_persisted,
+OpenMRS,Preferred Identifier Requirement,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Location Requirement,locationSet,input,Single-Column Predicate,derived,location_id IS NOT NULL
+OpenMRS,Identifier Location Requirement,locationBehavior,input,Direct Attribute Reference,direct,stored enum-like VARCHAR; null treated as REQUIRED per validator L96
+OpenMRS,Identifier Location Requirement,locationRequirementValid,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Location Requirement,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Uniqueness Check,uniquenessBehavior,input,Direct Attribute Reference,direct,
+OpenMRS,Identifier Uniqueness Check,inUseByAnotherPatient,input,Existence / Correlated Subquery,derived,EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)
+OpenMRS,Identifier Uniqueness Check,duplicateWithinSamePatient,input,Existence / Correlated Subquery,derived,"self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)"
+OpenMRS,Identifier Uniqueness Check,identifierUniquenessValid,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Uniqueness Check,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Format Validity,identifierBlank,input,Single-Column Predicate,derived,identifier IS NULL OR TRIM(identifier) = ''
+OpenMRS,Identifier Format Validity,formatSet,input,Single-Column Predicate,derived,format IS NOT NULL
+OpenMRS,Identifier Format Validity,identifierMatchesFormat,input,Pattern/Regex Match,derived,"regex match of identifier against format (application-level, format is a regex string column)"
+OpenMRS,Identifier Format Validity,identifierFormatValid,output,Not-Persisted,not_persisted,
+OpenMRS,Identifier Format Validity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Obs Value Required By Datatype,isObsGroup,input,Direct Attribute Reference,derived,EXISTS child obs rows with obs_group_id = this.obs_id (self-referencing FK)
+OpenMRS,Obs Value Required By Datatype,conceptDatatype,input,Direct Attribute Reference,direct,join obs.concept_id -> concept.concept_id -> concept.datatype_id -> concept_datatype.concept_datatype_id
+OpenMRS,Obs Value Required By Datatype,requiredValueColumn,output,Not-Persisted,not_persisted,generation-guidance label; the value itself names a real obs.value_* column (see decision rules)
+OpenMRS,Obs Group Value Exclusivity,isObsGroup,input,Direct Attribute Reference,derived,same as above
+OpenMRS,Obs Group Value Exclusivity,anyValueFieldSet,input,Multi-Column Existence (any-of),derived,OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept
+OpenMRS,Obs Group Value Exclusivity,obsStructureValid,output,Not-Persisted,not_persisted,
+OpenMRS,Obs Group Value Exclusivity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Numeric Precision Validity,allowDecimal,input,Direct Attribute Reference,direct,joined via obs.concept_id = concept_numeric.concept_id
+OpenMRS,Numeric Precision Validity,valueNumericHasFraction,input,Direct Attribute Reference,derived,"MOD(value_numeric, 1) <> 0"
+OpenMRS,Numeric Precision Validity,precisionValid,output,Not-Persisted,not_persisted,
+OpenMRS,Numeric Precision Validity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Numeric Absolute Range Validity,hiAbsoluteSet,input,Single-Column Predicate,derived,IS NOT NULL; OpenMRS >=2.7 prefers a matching concept_reference_range row when criteria matches the person
+OpenMRS,Numeric Absolute Range Validity,lowAbsoluteSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Numeric Absolute Range Validity,absoluteRangeValid,output,Not-Persisted,not_persisted,
+OpenMRS,Numeric Absolute Range Validity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Numeric Interpretation Classification,interpretation,output,Decision Output / Write-Back Target,direct,the ONE output in this rule set that is itself a persisted column
+OpenMRS,Concept Preferred Name Validity,localePreferred,input,Direct Attribute Reference,direct,
+OpenMRS,Concept Preferred Name Validity,isIndexTerm,input,Direct Attribute Reference,derived,concept_name_type = 'INDEX_TERM'
+OpenMRS,Concept Preferred Name Validity,isShortName,input,Direct Attribute Reference,derived,concept_name_type = 'SHORT'
+OpenMRS,Concept Preferred Name Validity,voided,input,Direct Attribute Reference,direct,
+OpenMRS,Concept Preferred Name Validity,preferredNameValid,output,Not-Persisted,not_persisted,
+OpenMRS,Concept Preferred Name Validity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Order Date Activated Consistency Violations,dateActivatedSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Order Date Activated Consistency Violations,dateStoppedSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Order Date Activated Consistency Violations,autoExpireDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Order Date Activated Consistency Violations,encounterDatetimeSet,input,Existence / Correlated Subquery,derived,joined via orders.encounter_id; IS NOT NULL
+OpenMRS,Order Date Activated Consistency,dateActivatedValid,output,Not-Persisted,not_persisted,"Redesigned 2026-09-10: now a literal-expression decision (count(violationReasons) = 0) downstream of the new *_Violations COLLECT table, rather than an output column on the same table."
+OpenMRS,Order Date Activated Consistency Violations,violationReasons,output,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10, verified against live openmrs-core source): each independently-true row contributes its reason to a list, since the real Java method has no early return between these checks and can raise multiple simultaneously."
+OpenMRS,Order Scheduled Date Urgency Consistency,scheduledDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Order Scheduled Date Urgency Consistency,scheduledDateUrgencyValid,output,Not-Persisted,not_persisted,
+OpenMRS,Order Scheduled Date Urgency Consistency,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Program Enrollment Date Consistency Violations,dateCompletedSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Program Enrollment Date Consistency,enrollmentDatesValid,output,Not-Persisted,not_persisted,"Redesigned 2026-09-10: now a literal-expression decision (count(violationReasons) = 0) downstream of the new *_Violations COLLECT table, rather than an output column on the same table."
+OpenMRS,Program Enrollment Date Consistency Violations,violationReasons,output,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10, verified against live openmrs-core source): each independently-true row contributes its reason to a list, since the real Java method has no early return between these checks and can raise multiple simultaneously."
+OpenMRS,Patient State Date Validity,startDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Patient State Date Validity,endDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Patient State Date Validity,patientStateDatesValid,output,Not-Persisted,not_persisted,
+OpenMRS,Patient State Date Validity,reasonCode,output,Not-Persisted,not_persisted,
+OpenMRS,Relationship Date Validity Violations,startDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Relationship Date Validity Violations,endDateSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Relationship Date Validity,relationshipDatesValid,output,Not-Persisted,not_persisted,"Redesigned 2026-09-10: now a literal-expression decision (count(violationReasons) = 0) downstream of the new *_Violations COLLECT table, rather than an output column on the same table."
+OpenMRS,Relationship Date Validity Violations,violationReasons,output,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10, verified against live openmrs-core source): each independently-true row contributes its reason to a list, since the real Java method has no early return between these checks and can raise multiple simultaneously."
+OpenMRS,Encounter Datetime Validity Violations,visitSet,input,Single-Column Predicate,derived,IS NOT NULL
+OpenMRS,Encounter Datetime Validity,encounterDatetimeValid,output,Not-Persisted,not_persisted,"Redesigned 2026-09-10: now a literal-expression decision (count(violationReasons) = 0) downstream of the new *_Violations COLLECT table, rather than an output column on the same table."
+OpenMRS,Encounter Datetime Validity Violations,violationReasons,output,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10, verified against live openmrs-core source): each independently-true row contributes its reason to a list, since the real Java method has no early return between these checks and can raise multiple simultaneously."
+OpenMRS,Birthdate Validity,birthdate,input,Direct Attribute Reference,direct,"exposed directly, replacing birthdateIsFutureDate (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Birthdate Validity,evaluationTime,input,Not-Persisted,not_persisted,"scenario/runtime parameter (time of validation), not a stored column"
+OpenMRS,Death Date Consistency Violations,deathDate,input,Direct Attribute Reference,direct,"exposed directly, replacing deathDateIsFutureDate/deathDateBeforeBirthdate (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Death Date Consistency Violations,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter
+OpenMRS,Death Date Consistency Violations,birthdate,input,Direct Attribute Reference,direct,"exposed directly for the cross-variable deathDate < birthdate comparison (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Preferred Identifier Requirement,preferredIdentifierCount,input,Direct Attribute Reference,derived,"COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Numeric Absolute Range Validity,valueNumeric,input,Direct Attribute Reference,direct,"exposed directly, replacing valueExceedsHiAbsolute/valueBelowLowAbsolute (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Numeric Absolute Range Validity,hiAbsolute,input,Direct Attribute Reference,direct,exposed directly for the cross-variable comparison
+OpenMRS,Numeric Absolute Range Validity,lowAbsolute,input,Direct Attribute Reference,direct,exposed directly for the cross-variable comparison
+OpenMRS,Numeric Interpretation Classification,valueNumeric,input,Direct Attribute Reference,direct,"exposed directly, replacing all four valueGe/Gt/Le/Lt* booleans; now a single FIRST-hit threshold ladder, same pattern as the Spree tiered-percent redesign (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Numeric Interpretation Classification,hiCritical,input,Direct Attribute Reference,direct,threshold column referenced by valueNumeric's comparisons
+OpenMRS,Numeric Interpretation Classification,hiNormal,input,Direct Attribute Reference,direct,threshold column
+OpenMRS,Numeric Interpretation Classification,lowCritical,input,Direct Attribute Reference,direct,threshold column
+OpenMRS,Numeric Interpretation Classification,lowNormal,input,Direct Attribute Reference,direct,threshold column
+OpenMRS,Order Date Activated Consistency Violations,dateActivated,input,Direct Attribute Reference,direct,"exposed directly, replacing dateActivatedIsFuture (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Order Date Activated Consistency Violations,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter
+OpenMRS,Order Date Activated Consistency Violations,dateStopped,input,Direct Attribute Reference,direct,"exposed directly, replacing dateActivatedAfterDateStopped"
+OpenMRS,Order Date Activated Consistency Violations,autoExpireDate,input,Direct Attribute Reference,direct,"exposed directly, replacing dateActivatedAfterAutoExpireDate"
+OpenMRS,Order Date Activated Consistency Violations,encounterDatetime,input,Cross-Table Join,derived,"joined via orders.encounter_id; exposed directly, replacing encounterDatetimeAfterDateActivated"
+OpenMRS,Order Scheduled Date Urgency Consistency,urgency,input,Direct Attribute Reference,direct,"exposed directly as a categorical test (= ""ON_SCHEDULED_DATE""), replacing urgencyIsOnScheduledDate (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Program Enrollment Date Consistency Violations,dateEnrolled,input,Direct Attribute Reference,direct,"exposed directly, replacing dateEnrolledIsFuture (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Program Enrollment Date Consistency Violations,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter
+OpenMRS,Program Enrollment Date Consistency Violations,dateCompleted,input,Direct Attribute Reference,direct,"exposed directly, replacing dateCompletedIsFuture/dateCompletedBeforeDateEnrolled"
+OpenMRS,Patient State Date Validity,startDate,input,Direct Attribute Reference,direct,"exposed directly, replacing endDateBeforeStartDate (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Patient State Date Validity,endDate,input,Direct Attribute Reference,direct,exposed directly for the cross-variable comparison
+OpenMRS,Relationship Date Validity Violations,startDate,input,Direct Attribute Reference,direct,"exposed directly, replacing startDateAfterEndDate/startDateIsFuture (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Relationship Date Validity Violations,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter
+OpenMRS,Relationship Date Validity Violations,endDate,input,Direct Attribute Reference,direct,exposed directly for the cross-variable comparison
+OpenMRS,Encounter Datetime Validity Violations,visitPatientId,input,Cross-Table Join,derived,"joined via encounter.visit_id = visit.visit_id; exposed as an ID-equality test, replacing visitPatientMismatch (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+OpenMRS,Encounter Datetime Validity Violations,encounterPatientId,input,Direct Attribute Reference,direct,tested via != visitPatientId
+OpenMRS,Encounter Datetime Validity Violations,encounterDatetime,input,Direct Attribute Reference,direct,"exposed directly, replacing encounterDatetimeIsFuture/BeforeVisitStart/AfterVisitStop"
+OpenMRS,Encounter Datetime Validity Violations,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter
+OpenMRS,Encounter Datetime Validity Violations,visitStartDatetime,input,Cross-Table Join,derived,joined via encounter.visit_id
+OpenMRS,Encounter Datetime Validity Violations,visitStopDatetime,input,Cross-Table Join,derived,joined via encounter.visit_id
+Spree,Promotion Item Total Eligibility,itemTotal,input,Direct Attribute Reference,direct,
+Spree,Effective Minimum Amount Threshold,operatorMin,input,Schema Gap,schema_gap,"serialized text blob (t.text ""preferences""), discriminated by type='Spree::Promotion::Rules::ItemTotal'; no dedicated column, not directly SQL-addressable without JSON/YAML parsing (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11 against Spree's own source (spree/spree core/app/models/spree/promotion/rules/item_total.rb): the real serialized preference key is operator_min (string, 'gt'/'gte'). Column/location was already right; the key name is now known too, but the value still isn't SQL-extractable without a fragile, engine-specific string/regex pull against the serialized blob, and no real sample row was available to verify the exact serialization format -- not attempted rather than guessed."
+Spree,Effective Minimum Amount Threshold,amountMin,input,Schema Gap,schema_gap,"same preferences-blob limitation as operatorMin (redesigned 2026-09-10: now consumed only inside the Effective Minimum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_min (decimal, default 100.00) -- same source and same caveat as operatorMin."
+Spree,Effective Minimum Amount Threshold,effectiveMinThreshold,input,Not-Persisted,not_persisted,"formula output; resolves operatorMin into one concrete number (amountMin, or amountMin+0.01 if strict)"
+Spree,Promotion Item Total Eligibility,amountMaxSet,input,Schema Gap,schema_gap,"existence check, unchanged by the redesign. Re-examined 2026-09-11: unlike operatorMin/amountMin/operatorMax/amountMax, this one stays genuinely uncertain even with the real preference keys confirmed -- ItemTotal declares amount_min/amount_max with hard non-null defaults, so a plain 'is the key present' test would always be true regardless of whether an admin actually configured a max threshold, and no real sample promotion_rules row was available to tell what 'amountMaxSet' is actually meant to distinguish (a sentinel value? a second rule instance existing at all?). Left unresolved rather than guessing a specific boolean test with no way to check it."
+Spree,Effective Maximum Amount Threshold,operatorMax,input,Schema Gap,schema_gap,"same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is operator_max (string, 'lt'/'lte') -- same source and same extraction caveat as operatorMin."
+Spree,Effective Maximum Amount Threshold,amountMax,input,Schema Gap,schema_gap,"same preferences-blob limitation (redesigned 2026-09-10: now consumed only inside the Effective Maximum Amount Threshold literal expression, not a decision-table column). Confirmed 2026-09-11: real serialized preference key is amount_max (decimal, default 1000.00) -- same source and same extraction caveat as amountMin."
+Spree,Effective Maximum Amount Threshold,effectiveMaxThreshold,input,Not-Persisted,not_persisted,"formula output; resolves operatorMax into one concrete number (amountMax, or amountMax-0.01 if strict)"
+Spree,Promotion Item Total Eligibility,itemTotalEligible,input,Not-Persisted,not_persisted,"write-back target is a runtime eligibility_errors check, not a column; realized indirectly via whether a spree_discounts row is created. Redesigned twice 2026-09-10: round 1 moved operators upstream; round 2 switched to UNIQUE hit policy with a FEEL range literal, validated exhaustive/non-overlapping by in-session brute-force sweep"
+Spree,Promotion Temporal Availability,evaluationTime,input,Not-Persisted,not_persisted,scenario/runtime parameter (Time.current at evaluation)
+Spree,Promotion Temporal Availability,startsAt,input,Direct Attribute Reference,direct,
+Spree,Promotion Temporal Availability,expiresAtSet,input,Single-Column Predicate,derived,existence check (IS NOT NULL)
+Spree,Promotion Temporal Availability,expiresAt,input,Direct Attribute Reference,direct,
+Spree,Promotion Temporal Availability,availabilityStatus,input,Not-Persisted,not_persisted,computed at call time
+Spree,Promotion Usage Limit Exceeded,usageLimitSet,input,Single-Column Predicate,derived,existence check (IS NOT NULL)
+Spree,Promotion Usage Limit Exceeded,usageLimit,input,Direct Attribute Reference,direct,
+Spree,Promotion Usage Limit Exceeded,adjustedCreditsCount,input,Direct Attribute Reference,derived,"COUNT of spree_discounts rows where promotion_action_id IN (actions for this promotion), minus same-order-group double count per adjusted_credits_count()'s sibling_order_ids logic"
+Spree,Promotion Usage Limit Exceeded,usageLimitExceeded,input,Not-Persisted,not_persisted,runtime boolean
+Spree,Customer Group Match Count,customerGroupIds,input,Direct Attribute Reference,derived,join; column is customer_id after 20260728000003_rename_user_id_to_customer_id.rb renamed it from user_id
+Spree,Customer Group Match Count,promotionTargetGroupIds,input,Schema Gap,schema_gap,"CustomerGroup rule's customer_group_ids array lives in the serialized preferences blob, not a dedicated join table. Confirmed 2026-09-11: likely preference key customer_group_ids (an array of spree_customer_groups.id values -- that table and spree_customer_group_users, which record actual customer<->group membership, are real, normalized tables in this schema; only the promotion rule's own list of TARGETED group ids is still blob-serialized, not the groups themselves). Less certain than the amount/operator keys above -- current Spree source names the accessor preferred_customer_group_ids, which may reflect a newer version than this schema snapshot; not verified against a real row."
+Spree,Customer Group Match Count,matchingCustomerGroupCount,input,Not-Persisted,not_persisted,formula output
+Spree,Promotion Customer Group Eligibility,customerIdPresent,input,Single-Column Predicate,derived,existence check (IS NOT NULL); column renamed from user_id
+Spree,Promotion Customer Group Eligibility,promotionTargetGroupsConfigured,input,Schema Gap,schema_gap,"existence check over the same blob as promotionTargetGroupIds. Same limitation as amountMaxSet above: even with the likely preference key named (customer_group_ids), what 'configured' means precisely (a non-empty array? the rule row existing at all?) isn't verifiable without a real sample row."
+Spree,Promotion Customer Group Eligibility,matchingCustomerGroupCount,input,Compound / Unclassified Derivation,derived,substituted from Customer Group Match Count per DRD edge
+Spree,Promotion Customer Group Eligibility,customerGroupEligible,input,Not-Persisted,not_persisted,runtime boolean
+Spree,Prior Completed Order Count,customerOrEmail,input,Direct Attribute Reference,derived,join key
+Spree,Prior Completed Order Count,priorCompletedOrderCount,input,Not-Persisted,not_persisted,formula output (COUNT over spree_orders)
+Spree,First-Order Promotion Eligibility,userOrEmailPresent,input,Multi-Column Existence (any-of),derived,existence check (either populated)
+Spree,First-Order Promotion Eligibility,priorCompletedOrderCount,input,Compound / Unclassified Derivation,derived,substituted from Prior Completed Order Count per DRD edge
+Spree,First-Order Promotion Eligibility,firstOrderEligible,input,Not-Persisted,not_persisted,runtime boolean
+Spree,One-Use-Per-User Promotion Eligibility,customerPresent,input,Single-Column Predicate,derived,existence check (IS NOT NULL)
+Spree,One-Use-Per-User Promotion Eligibility,priorPromotionUsageCount,input,Direct Attribute Reference,derived,"COUNT of prior spree_discounts rows for this promotion attributable to this customer's completed orders, per used_by?()"
+Spree,One-Use-Per-User Promotion Eligibility,oneUsePerUserEligible,input,Not-Persisted,not_persisted,runtime boolean
+Spree,Promotion Tiered Percent Discount Selection,orderAmount,input,Direct Attribute Reference,derived,the object.amount the calculator is invoked against; exact object varies by promotion action type
+Spree,Promotion Tiered Percent Discount Selection,basePercent,input,Schema Gap,schema_gap,"Calculator preferences (base_percent/tiers hash) live in the polymorphic spree_calculators table's own preferences blob. Confirmed 2026-09-11 against Spree::Calculator::TieredPercent's own source: real preference keys are base_percent (decimal) and tiers (hash, order-total-threshold -> percent), discriminated by type='Spree::Calculator::TieredPercent' and calculable_type/calculable_id pointing at the owning promotion action. Same extraction caveat as the promotion-rule blob facts above -- no real sample row available."
+Spree,Promotion Tiered Percent Discount Selection,discountPercent,input,Direct Attribute Reference,derived,write-back target once the computed discount is materialized as a spree_discounts row
+Spree,Price List Volume Adjustment Tier Selection,purchaseQuantity,input,Not-Persisted,not_persisted,scenario parameter (the quantity being priced)
+Spree,Price List Volume Adjustment Tier Selection,adjustmentPercentage,input,Direct Attribute Reference,direct,genuine dedicated column -- a rare direct hit in this case study
+Spree,Price List Volume Adjustment Tier Selection,priceListBasePercentage,input,Direct Attribute Reference,direct,fallback base rate when no tier band matches
+Spree,Price Adjustment Tier Validity Violations,minQuantity,input,Direct Attribute Reference,direct,genuine dedicated column
+Spree,Price Adjustment Tier Validity Violations,percentage,input,Direct Attribute Reference,direct,genuine dedicated column
+Spree,Price Adjustment Tier Validity Violations,siblingTierCount,input,Aggregate Function,derived,count of other tiers on the same price list; cap is a fixed source constant (10)
+Spree,Price Adjustment Tier Validity Violations,invalidReason,input,Not-Persisted,not_persisted,"COLLECT hit policy (redesigned 2026-09-10): each matching row contributes one reason to a list, so multiple simultaneous violations (e.g. minQuantity<=1 AND percentage=0 at once) are all reported, matching real ActiveRecord validation behavior which accumulates all errors rather than stopping at the first"
+Spree,Price Adjustment Tier Validity,tierValid,input,Not-Persisted,not_persisted,"redesigned 2026-09-10: now a separate literal-expression decision (count(invalidReasons) = 0) downstream of the COLLECT violations table, rather than a column on the same table"
+jBilling,Is Ageing Required,expiryDate,input,Code-External (no schema representation),derived,"base_user.last_status_change (fallback base_user.create_datetime, both real columns) plus ageing_entity_step.days, added as calendar days (BasicAgeingTask) or business days via BusinessDays (BusinessDayAgeingTask); no single column holds this computed date."
+jBilling,Is Ageing Required,ageingRequired,output,Not-Persisted,not_persisted,Transient boolean computed per review pass; not written back to ageing_entity_step or base_user.
+jBilling,Invoice Overdue Check,dueDatePlusGrace,input,Direct Attribute Reference,derived,"invoice.due_date plus the entity process.grace_period preference (a system preference row, not a column)."
+jBilling,Invoice Overdue Check,invoiceOverdue,output,Not-Persisted,not_persisted,Transient result used only to decide whether to advance ageing in the excluded set-level review loop.
+jBilling,Ageing Step Advancement,currentStatusIsActive,input,Direct Attribute Reference,derived,base_user.status_id compared against the hardcoded constant UserDTOEx.STATUS_ACTIVE=1; no boolean column exists.
+jBilling,Ageing Step Advancement,ageingStepConfigFound,input,Existence / Correlated Subquery,derived,"True iff an ageing_entity_step row exists for (entity_id, status_id); existence check, boolean by deliberate exception."
+jBilling,Ageing Step Advancement,ageingRequired,input,Not-Persisted,not_persisted,Consumed directly from Is Ageing Required's output -- this is the DRD chain edge.
+jBilling,Ageing Step Advancement,advanceToNextStep,output,Not-Persisted,not_persisted,Drives a subsequent write to base_user.status_id and base_user.last_status_change; the flag itself is never stored.
+jBilling,Ageing Step Advancement,advancementReason,output,Not-Persisted,not_persisted,Synthetic label for DMN readability; the Java code has no reason-code variable or column of its own.
+jBilling,Ageing Status Change Order Action,newStatusIsDeleted,input,Direct Attribute Reference,derived,generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8.
+jBilling,Ageing Status Change Order Action,oldStatusCanLogin,input,Direct Attribute Reference,direct,Read off the entity's PREVIOUS status row; generic_status.can_login is a real smallint column (dtype='user_status').
+jBilling,Ageing Status Change Order Action,newStatusCanLogin,input,Direct Attribute Reference,direct,"Same column, read off the NEW status row being transitioned to."
+jBilling,Ageing Status Change Order Action,orderAction,output,Not-Persisted,not_persisted,"Drives order_line status writes (ORDER_STATUS_SUSPENDED_AGEING / ORDER_STATUS_ACTIVE) and/or user deletion; the action label itself is implicit in which if-block ran, not a stored value."
+jBilling,Ageing Step Config Validation,statusIsActive,input,Direct Attribute Reference,derived,"Loop index over the STATUS_ACTIVE..STATUS_DELETED range, itself keyed off generic_status.id, compared to the STATUS_ACTIVE constant."
+jBilling,Ageing Step Config Validation,statusIsDeleted,input,Direct Attribute Reference,derived,Same loop index compared to the STATUS_DELETED constant.
+jBilling,Ageing Step Config Validation,isLastSelectedStep,input,Code-External (no schema representation),derived,Computed as the highest array index with inUse=true across the submitted admin-screen steps array; not a stored flag.
+jBilling,Ageing Step Config Validation,inUse,input,Existence / Correlated Subquery,derived,"A UI-only transient boolean; on load, set true iff a matching ageing_entity_step row exists -- there is no in_use column on the table itself. Force-overridden to true for the ACTIVE row before this gate is evaluated."
+jBilling,Ageing Step Config Validation,welcomeMessagePresent,input,Compound / Unclassified Derivation,derived,"Reads from a generic i18n description mechanism keyed by ""welcome_message"", not a direct column on ageing_entity_step."
+jBilling,Ageing Step Config Validation,days,input,Direct Attribute Reference,direct,ageing_entity_step.days is a real NOT NULL integer column.
+jBilling,Ageing Step Config Validation,validationResult,output,Not-Persisted,not_persisted,Validation is either a thrown exception (with an error-message code) or a silent pass; there is no stored validation-result column -- this is a synthetic aggregation of which exception (if any) is thrown.
+jBilling,Payment Outcome Resolution,processorUnavailable,input,Not-Persisted,not_persisted,Transient loop flag in PaymentBL.processPayment; never written to any table column.
+jBilling,Payment Outcome Resolution,paymentResultId,input,Direct Attribute Reference,derived,"Read from the last pluggable payment task attempt, before any persistence step visible in this file."
+jBilling,Payment Outcome Resolution,resultCode,output,Schema Gap,schema_gap,"Re-examined 2026-09-11: unlike semesterType, this was never a closest-table-not-found gap -- payment.result_id (a real FK to payment_result.id, codes 1-4 in the data) was already correctly identified. The SCHEMA GAP label is about a different, already-verified concern: PaymentBL.java never shows this decision's computed value being saved back onto the payment entity (create(info) runs before the pluggable-task loop) -- the save-back path, if any, is outside this file, so the write side stays a genuine gap regardless of the read-side mapping being correct. Per project-owner domain knowledge, the codes mean: 1=approved, 2=declined, 3=incorrect (data), 4=reject."
+jBilling,Payment Balance Assignment,resultCode,input,Direct Attribute Reference,derived,Consumed as-is from Payment Outcome Resolution's output (requires chain).
+jBilling,Payment Balance Assignment,paymentAmount,input,Direct Attribute Reference,direct,"payment.amount is a NOT NULL numeric(22,10) column."
+jBilling,Payment Balance Assignment,balance,output,Decision Output / Write-Back Target,direct,"Written directly onto the payment.balance numeric(22,10) column."
+jBilling,Blacklist Filter Enabled,blacklistPluginId,input,Direct Attribute Reference,derived,"Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column."
+jBilling,Blacklist Filter Enabled,blacklistEnabled,output,Not-Persisted,not_persisted,Returned directly to callers (payment processing / filter instantiation); never stored anywhere.
+jBilling,Cancellation Fee Eligibility,eventType,input,Code-External (no schema representation),derived,Discriminated from which Java event subclass fired (NewActiveUntilEvent vs NewQuantityEvent); not a stored column.
+jBilling,Cancellation Fee Eligibility,newActiveUntilProvided,input,Single-Column Predicate,derived,"Null-check on the event's new active-until value, sourced from purchase_order.active_until."
+jBilling,Cancellation Fee Eligibility,oldActiveUntilProvided,input,Single-Column Predicate,derived,"Null-check on the event's prior active-until value (same column, earlier snapshot)."
+jBilling,Cancellation Fee Eligibility,processCancellationFee,output,Not-Persisted,not_persisted,"Gates whether a fee-order-generation routine runs; the decision result itself is not stored, only its side effect (a new one-time fee order row) is."
+jBilling,Order Period Already Invoiced,candidateDateProvided,input,Not-Persisted,not_persisted,"Null-check on a transient Date parameter (either ""now"", or a proposed new purchase_order.active_until)."
+jBilling,Order Period Already Invoiced,nextBillableDayProvided,input,Single-Column Predicate,derived,Null-check on purchase_order.next_billable_day (nullable date column).
+jBilling,Order Period Already Invoiced,periodAlreadyInvoiced,output,Not-Persisted,not_persisted,Gates whether a period-cancelled event fires and whether a refund order is generated; never itself persisted.
+jBilling,Order Date Range Valid,parseOrAccessError,input,Not-Persisted,not_persisted,"Boolean by deliberate exception: collapses several reflection/parsing exception types into one technical failure flag, not a business comparison."
+jBilling,Order Date Range Valid,startDateProvided,input,Not-Persisted,not_persisted,Generic @DateRange bean-validation annotation resolves the field name per use-site via reflection; no single fixed schema column applies.
+jBilling,Order Date Range Valid,endDateProvided,input,Not-Persisted,not_persisted,"Same as startDateProvided -- annotation-parameterized field name, not a fixed column."
+jBilling,Order Date Range Valid,dateRangeValid,output,Not-Persisted,not_persisted,"Bean-validation pass/fail result, never stored -- only used to accept or reject the incoming request."
+jBilling,Cycle Start Source,hasNextBillableDay,input,Single-Column Predicate,derived,Boolean derived from next_billable_day IS NOT NULL.
+jBilling,Cycle Start Source,hasCycleStarts,input,Single-Column Predicate,derived,Boolean derived from cycle_start IS NOT NULL. Getter name is plural (getCycleStarts()) vs. singular column name.
+jBilling,Cycle Start Source,cycleStartDateSource,output,Not-Persisted,not_persisted,"A string label naming which real column/parameter supplies the winning date, not itself a stored value."
+jBilling,Daily Pro-Rate Amount,daysInCycle,input,Code-External (no schema representation),derived,Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.
+jBilling,Daily Pro-Rate Amount,daysInPeriod,input,Code-External (no schema representation),derived,"Computed the same way as daysInCycle, for the actual (possibly partial) billed date range."
+jBilling,Daily Pro-Rate Amount,fullPrice,input,Direct Attribute Reference,derived,"Traces back to the item's full-period price, passed down through the composition-task pipeline rather than read directly from the column in this decision."
+jBilling,Daily Pro-Rate Amount,proratedAmount,output,Decision Output / Write-Back Target,derived,"The returned value is what an invoice/order line eventually persists as order_line.amount, via construction code outside this decision."
+jBilling,Tax Calculation Needed,customContactFieldConfigured,input,Not-Persisted,not_persisted,"A pluggable_task_parameter configuration value, not a row in a business table."
+jBilling,Tax Calculation Needed,primaryContactFound,input,Existence / Correlated Subquery,derived,Boolean derived from whether a primary contact row exists for the customer.
+jBilling,Tax Calculation Needed,matchingFieldValue,input,Direct Attribute Reference,direct,"contact_field.content, tested case-insensitively against ""yes""/""true""."
+jBilling,Tax Calculation Needed,taxCalculationNeeded,output,Not-Persisted,not_persisted,Runtime gate for whether a tax invoice line is added; no column records this decision's outcome.
+jBilling,Tax Calculation Mode,taxItemHasPercentage,input,Single-Column Predicate,derived,Boolean derived from item.percentage IS NOT NULL for the configured tax item.
+jBilling,Tax Calculation Mode,taxCalculationMode,output,Schema Gap,schema_gap,No explicit tax-type/discriminator column exists on item; PERCENTAGE vs. FLAT is entirely implied by the nullability of the single percentage column.
+jBilling,Currency Exchange Rate Source,hasEntitySpecificExchange,input,Existence / Correlated Subquery,derived,Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.
+jBilling,Currency Exchange Rate Source,hasSystemDefaultExchange,input,Existence / Correlated Subquery,derived,Boolean derived from existence of a currency_exchange row keyed by the undocumented sentinel entity_id=0; nothing in the schema marks entity_id=0 as special.
+jBilling,Currency Exchange Rate Source,exchangeRateSource,output,Not-Persisted,not_persisted,"Which row wins is decided at read time; the winning currency_exchange.rate value is a direct column read, but which source won is never itself recorded."
+jBilling,Cancellation Fee Eligibility,newActiveUntil,input,Direct Attribute Reference,derived,"exposed directly (event’s new value), replacing newActiveUntilBeforeOld (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+jBilling,Cancellation Fee Eligibility,oldActiveUntil,input,Direct Attribute Reference,derived,"exposed directly (event’s prior value, same column) for the cross-variable comparison"
+jBilling,Cancellation Fee Eligibility,newQuantity,input,Direct Attribute Reference,derived,"exposed directly, replacing quantityDecreased (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+jBilling,Cancellation Fee Eligibility,oldQuantity,input,Direct Attribute Reference,derived,"exposed directly (prior value, same column) for the cross-variable comparison"
+jBilling,Order Period Already Invoiced,candidateDate,input,Not-Persisted,not_persisted,"exposed directly (transient parameter -- ""now"" or a proposed active_until), replacing candidateDateBeforeNextBillableDay (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+jBilling,Order Period Already Invoiced,nextBillableDay,input,Direct Attribute Reference,direct,exposed directly for the cross-variable comparison
+jBilling,Order Date Range Valid,startDate,input,Not-Persisted,not_persisted,"exposed directly, replacing startBeforeEnd; still not a fixed column since @DateRange(start=,end=) names whichever two DTO fields apply per use-site (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+jBilling,Order Date Range Valid,endDate,input,Not-Persisted,not_persisted,exposed directly for the cross-variable comparison; same per-use-site caveat as startDate

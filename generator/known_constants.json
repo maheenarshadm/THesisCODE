@@ -1,0 +1,6 @@
+{
+  "_comment": "Domain-realistic constants the search should PIN a leaf variable to, rather than letting best_value_for() converge to whatever cheapest value merely proves the DMN branch. Keyed by {case_study: {var_name: fixed_value}} -- var_name is the leaf's own free-variable name exactly as it appears in a compiled record's variable_resolution (or nested inside a substituted_decision's own free_variable_resolutions), the same name best_value_for()/mutate() already key off of. See generator/README.md's 'Known real-world constants' section and docs/generationalgorithmdesign.md sec 13.44 for why this file exists and how it's applied.",
+  "FLEX2": {
+    "lecturesHeldForOffering": 30
+  }
+}

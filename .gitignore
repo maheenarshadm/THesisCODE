@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+# generator output -- fully reproducible via generate_dataset.py/
+# materialize.py, not source, doesn't belong in version control
+generator/_generated_*/
+generator/_materialize_selftest_csv/
+
+# validation_oracle/coverage.py's own output -- fully reproducible in
+# seconds against the committed fixture databases + compiled_constraints.json,
+# not source; findings/numbers it produces are written up in DESIGN.md instead
+validation_oracle/coverage_out/

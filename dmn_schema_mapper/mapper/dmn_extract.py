@@ -15,7 +15,15 @@ against each other.
 
 Usage:
     python3 dmn_extract.py --out dmn_variables.csv
-(case-study DMN directories are hard-coded below, relative to scratchpad/)
+(case-study DMN directories are hard-coded below, relative to the repo root)
+
+Fixed 2026-09-11: CASE_STUDY_DIRS previously pointed at a different
+session's scratchpad layout (flex2_dmn/, openmrs_dmn/, ofbiz_dmn/,
+prestashop_dmn/ directly under this script's parent directory) -- none of
+those paths exist in this repository, and OFBiz/PrestaShop are no longer
+part of the active case-study program in any case (superseded by Spree and
+jBilling, design doc §13.1/§7e). Repointed at the actual current package
+locations and case-study set.
 """
 import os
 import re
@@ -25,7 +33,7 @@ import argparse
 from xml.etree import ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRATCHPAD = os.path.dirname(HERE)
+REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
 
 DMN_NS = "https://www.omg.org/spec/DMN/20191111/MODEL/"
 
@@ -35,15 +43,58 @@ def q(tag):
 
 
 CASE_STUDY_DIRS = {
-    'FLEX2': os.path.join(SCRATCHPAD, 'flex2_dmn', 'dmn'),
-    'OpenMRS': os.path.join(SCRATCHPAD, 'openmrs_dmn', 'dmn'),
-    'OFBiz': os.path.join(SCRATCHPAD, 'ofbiz_dmn', 'dmn'),
-    'PrestaShop': os.path.join(SCRATCHPAD, 'prestashop_dmn', 'dmn'),
+    'FLEX2': os.path.join(REPO_ROOT, 'jbillingandflex', 'flex2_dmn', 'flex2_dmn', 'dmn'),
+    'OpenMRS': os.path.join(REPO_ROOT, 'openmrs_dmn', 'dmn'),
+    'Spree': os.path.join(REPO_ROOT, 'spree_dmn', 'dmn'),
+    'jBilling': os.path.join(REPO_ROOT, 'jbillingandflex', 'jbilling_dmn', 'jbilling_dmn', 'dmn'),
 }
 
 
 def extract_string_literals(text):
     return set(re.findall(r'"([^"]*)"', text or ''))
+
+
+# FEEL reserved words and built-in function names that can appear as bare
+# identifiers in a literal expression's text without being a real input
+# variable. Needed once Spree's literal expressions (FEEL list filters/
+# "for x in ... where ... return ...", "if ... then ... else ...") are in
+# scope -- FLEX2's/OpenMRS's own literal expressions never needed more than
+# excluding and/or/not/true/false, since they're plain arithmetic formulas.
+FEEL_KEYWORDS = {
+    'and', 'or', 'not', 'true', 'false', 'null',
+    'if', 'then', 'else', 'for', 'in', 'return', 'where',
+    'some', 'every', 'satisfies', 'instance', 'of',
+}
+FEEL_BUILTIN_FUNCTIONS = {
+    'count', 'sum', 'min', 'max', 'mean', 'median', 'mode', 'stddev',
+    'product', 'intersection', 'union', 'distinct', 'values', 'flatten',
+    'sort', 'append', 'insert', 'before', 'remove', 'reverse', 'index',
+    'contains', 'starts', 'ends', 'matches', 'substring', 'string',
+    'number', 'date', 'time', 'duration', 'upper', 'lower', 'case',
+    'length', 'list',
+}
+
+
+def extract_free_identifiers(expr_text, exclude=()):
+    """Free (external) identifiers referenced in a FEEL literal expression,
+    for use as a literal-expression decision's pseudo-inputs.
+
+    Handles what FLEX2's/OpenMRS's plain arithmetic formulas never needed
+    to: string literals (stripped first, so words inside them are never
+    mistaken for identifiers), a "for X in ..." loop-bound variable X
+    (excluded -- it's locally bound, not an external input), dotted-path
+    field access (order.customer -> only the root "order" is the real free
+    reference; the rest is a property access on it), and FEEL reserved
+    words / built-in function names (excluded via the lists above).
+    """
+    if not expr_text:
+        return []
+    text = re.sub(r'"[^"]*"', ' ', expr_text)
+    bound_vars = set(re.findall(r'\bfor\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\b', text))
+    tokens = re.findall(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*', text)
+    roots = {tok.split('.', 1)[0] for tok in tokens}
+    excluded = FEEL_KEYWORDS | FEEL_BUILTIN_FUNCTIONS | bound_vars | set(exclude)
+    return sorted(roots - excluded)
 
 
 def extract_case_study(case_study, dmn_dir):
@@ -75,8 +126,7 @@ def extract_case_study(case_study, dmn_dir):
                     text_el = lit_el.find(q('text'))
                     expr_text = text_el.text if text_el is not None else ''
                     out_name = var_el.get('name') if var_el is not None else ''
-                    idents = sorted(set(re.findall(r'[A-Za-z_][A-Za-z0-9_]*', expr_text)) -
-                                     {out_name, 'and', 'or', 'not', 'true', 'false'})
+                    idents = extract_free_identifiers(expr_text, exclude={out_name} if out_name else ())
                     for ident in idents:
                         rows.append({
                             'case_study': case_study, 'dmn_file': fname,
