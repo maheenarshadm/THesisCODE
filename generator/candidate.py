@@ -234,6 +234,39 @@ _BARE_TABLE_DOT_COLUMN_RE = re.compile(r'^[A-Za-z_]\w*\.[A-Za-z_]\w*$')
 # validator mismatch, not a search-budget problem.
 _IS_NOT_NULL_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NOT\s+NULL\s*$', re.I)
 _IS_NULL_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NULL\s*$', re.I)
+# A third recognized conjunct shape, found necessary 2026-09-25 running
+# FLEX2's `Graduation Eligibility`/`Summer Semester Registration` for the
+# first time: `compile_constraints.py`'s own `AGGREGATE_FOR_CORRELATION_RE`
+# fix translates ground truth's "for COL" phrasing into a `COLUMN =
+# :COLUMN` self-reference (the SAME convention `validation_oracle/
+# db_resolver.py`'s own `_substitute_self_and_colon` already resolves at
+# verification time: "this row's own value for COLUMN", read off the
+# decision's own subject/self row, not a `scenario` binding or literal
+# value). Before this fix, `_SIMPLE_EQ_CONJUNCT_RE`'s generic `COLUMN =
+# (.+?)` capture still matched a `:COLUMN` conjunct, but with no bracket
+# `<placeholder>` and no scenario binding, it fell through to being
+# treated as a literal STRING value (the bare text ':COLUMN') -- which no
+# real row's own column could ever equal, so the search's own approximate
+# fitness would treat the aggregate as unconditionally forced to 0
+# matching rows, exactly the same "systematic generator-vs-validator
+# mismatch" class of bug `_IS_NOT_NULL_RE`'s own comment above already
+# documents for a different conjunct shape. Resolved via `self_row` (the
+# decision's own subject row, from `focal`), passed in by every caller
+# that already has `focal` in scope.
+_COLON_SELF_REF_RE = re.compile(r'^:([A-Za-z_]\w*)$')
+
+
+def _self_row_value(self_row, column):
+    """Case-insensitive lookup, matching `_row_get`'s own convention
+    elsewhere in this module -- `self_row` (from `focal`) may use either
+    the schema's own declared casing or a real materialized column's
+    lowercase name, depending on which stage produced it."""
+    if self_row is None:
+        return None, False
+    for key in (column, column.upper(), column.lower()):
+        if key in self_row:
+            return self_row[key], True
+    return None, False
 
 
 def _top_level_and_conjuncts(filter_text):
@@ -415,7 +448,7 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
     return inner_row['id']
 
 
-def _mechanical_filter_predicate(filter_text, scenario, candidate=None):
+def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row=None):
     """-> (predicate(row) -> bool, [skipped conjunct strings]). Splits on
     ' AND ' (the only combinator actually seen in these facts' filter
     text) and keeps only conjuncts of the plain `COLUMN = VALUE` or
@@ -437,7 +470,17 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None):
     `candidate`, that itself satisfies the subquery's own mechanically
     bindable conjuncts? Without a `candidate` (a bare predicate check
     with no construction context), this shape is skipped like any other
-    the read side can't resolve -- consistent, not a wrong guess."""
+    the read side can't resolve -- consistent, not a wrong guess.
+
+    `self_row`, when given, is the decision's own subject/self row (from
+    `focal`, keyed by whichever table `node.get('self_table')` names, or
+    the aggregate's own `node['table']` by default -- see the caller),
+    letting a `COLUMN = :COLUMN` conjunct (2026-09-25) resolve against
+    THIS ROW's own same-named column, the same self-reference convention
+    `validation_oracle/db_resolver.py`'s `_substitute_self_and_colon`
+    already uses at verification time. Without `self_row`, or when the
+    named column isn't actually on it, the conjunct is skipped -- same
+    honest-approximation convention as every other unparseable shape."""
     if not filter_text:
         return (lambda row: True), []
     conjuncts = _top_level_and_conjuncts(filter_text)
@@ -500,6 +543,14 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None):
         if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
             skipped.append(c.strip())  # a real cross-table join, not a value comparison -- see docstring
             continue
+        colon_m = _COLON_SELF_REF_RE.fullmatch(raw_val)
+        if colon_m:
+            self_value, found = _self_row_value(self_row, colon_m.group(1))
+            if not found:
+                skipped.append(c_stripped)
+                continue
+            checks.append((col, 'eq', self_value))
+            continue
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
             if ph.group(1) not in scenario:
@@ -560,7 +611,13 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
     instead of being silently skipped -- without `candidate`, this shape
     degrades to the old skip-it behavior (a caller with no construction
     context, e.g. a bare seed for a leaf this project doesn't yet thread
-    candidate/focal through for)."""
+    candidate/focal through for). `focal`/`self_table` also let a
+    `COLUMN = :COLUMN` conjunct (2026-09-25, same self-reference
+    convention as `_mechanical_filter_predicate`'s own) copy the real
+    value straight off the decision's own subject/self row -- without
+    both given, or when the named column isn't on that row, the conjunct
+    is skipped, same as any other unparseable shape."""
+    self_row = focal.get(self_table.upper()) if (focal and self_table) else None
     row = {}
     for c in _top_level_and_conjuncts(filter_text):
         c_stripped = c.strip()
@@ -590,6 +647,12 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
             continue  # a SQL tautology guard (e.g. "1=1"), never a real column -- see the predicate's own docstring
         if _BARE_TABLE_DOT_COLUMN_RE.match(raw_val):
             continue  # a real cross-table join conjunct, not a value to assign -- see the predicate's own docstring
+        colon_m = _COLON_SELF_REF_RE.fullmatch(raw_val)
+        if colon_m:
+            self_value, found = _self_row_value(self_row, colon_m.group(1))
+            if found:
+                row[col] = self_value
+            continue
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
             if ph.group(1) in scenario:
@@ -748,7 +811,9 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         except re.error as e:
             raise FitnessEvaluationError(f"{var_name!r}'s pattern column holds an invalid regex: {e}")
     if kind == 'derived_aggregate':
-        predicate, skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
+        self_table = node.get('self_table') or node['table']
+        self_row = focal.get(self_table.upper()) if focal else None
+        predicate, skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
         if skipped:
             warnings.append(f"{var_name}: derived_aggregate filter has prose this bridge can't "
                              f"mechanically apply, counted without it: {skipped}")
@@ -802,7 +867,9 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         # `hasSystemDefaultExchange`, both over `currency_exchange`)
         # finally read as genuinely different booleans instead of
         # collapsing to the identical "any row at all" answer.
-        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
+        self_table = node.get('self_table') or table
+        self_row = focal.get(self_table.upper()) if focal else None
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
         return any(predicate(r) for r in _owned_rows(candidate, table, owner_id))
     if kind == 'raw_sql_boolean':
         return _raw_sql_boolean_value(node, candidate, scenario, warnings)
@@ -1055,7 +1122,7 @@ def build_seed_candidate(record, today=20000):
             seed_count = known_constant(record['case_study'], var) or 3
             for i in range(1, seed_count + 1):
                 row = _row_from_filter_conjuncts(node.get('filter_text'), scenario,
-                                                  candidate, focal, node.get('self_table'))
+                                                  candidate, focal, node.get('self_table') or tables[0])
                 # no artificial distinguishing key needed -- these are
                 # still 3 separate row objects in the list even with
                 # identical content, and a fake 'X' column would only
@@ -1114,7 +1181,8 @@ def build_seed_candidate(record, today=20000):
                 # either (see the derived_aggregate case above, same bug,
                 # same fix).
                 if node.get('filter_text'):
-                    candidate.add_row(table, _row_from_filter_conjuncts(node['filter_text'], scenario, candidate))
+                    candidate.add_row(table, _row_from_filter_conjuncts(
+                        node['filter_text'], scenario, candidate, focal, node.get('self_table') or table))
                 else:
                     candidate.add_row(table, {})
         elif kind == 'raw_sql_boolean':

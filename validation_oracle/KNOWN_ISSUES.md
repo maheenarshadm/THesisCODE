@@ -602,6 +602,76 @@ excluded from all coverage numbers per an explicit decision below):
   (from "no table-backed inputs at all" to "resolves to `COURSE_OFFER`,
   then fails on a separate, still-unresolved `<student>` placeholder") —
   same 0/2 verified outcome either way, confirmed via the same diff.
+
+  **Found and fixed a real, generalizable GENERATOR-side bug the same
+  day, on request ("if there's a grounding problem, fix it generally, no
+  hardcoding") — confirmed it genuinely helps, but a SEPARATE, deeper
+  gap still blocks it from showing up as a real verified row.** The
+  EXISTING archive (`experiment_runs/FLEX2__dynamosa_nsga2__budget1x__
+  seed0.pkl`) claims `fitness=0.0` (fully covered) for ALL 5 of this
+  decision's rules — a textbook false positive this whole project exists
+  to catch. Root cause: `candidate.py`'s own `_mechanical_filter_
+  predicate`/`_row_from_filter_conjuncts` (the search's in-memory
+  fitness/mutation bridge for `derived_aggregate`/`exists` filter_text)
+  had NO support for the `:COLUMN` self-reference syntax the "for COL"
+  compile-time fix (above) introduced — a bare `:COLUMN` conjunct fell
+  through to being treated as a literal STRING value no real row could
+  ever equal, so the search's own approximate fitness treated
+  `priorRegistrationCount`/`enrolledStudentCount` as unconditionally
+  forced to 0 matching rows, the exact same "systematic generator-vs-
+  validator mismatch" class of bug this module's own `_IS_NOT_NULL_RE`
+  comment already documents for a different conjunct shape. Fixed
+  generally: `_mechanical_filter_predicate` and both files' own
+  `_row_from_filter_conjuncts` (candidate.py's and mutation.py's
+  independent copies, kept in sync per that function's own stated
+  convention) now resolve `:COLUMN` against the decision's own subject/
+  self row (`focal[self_table]`), mirroring `db_resolver.py`'s
+  `_substitute_self_and_colon` exactly — falling back to the aggregate's
+  own `node['table']` when no `self_table` override is given (correct
+  for `priorRegistrationCount`/`enrolledStudentCount`, whose own subject
+  IS their aggregate table), and consulting the EXISTING, already-
+  designed `aggregate_self_table.py` override (extended to also trigger
+  on `:COLUMN`, not just bare `self`) for `semestersElapsed`, whose real
+  subject (`STUDENT_PROGRAM`) differs from its own aggregate table
+  (`STUDENT_SEMESTER`). Zero hardcoded facts about Summer Semester
+  Registration itself — a real, reusable capability. Verified via
+  `candidate.py`'s own full-corpus self-test (236/240 evaluable,
+  UNCHANGED) and `mutation.py`'s own self-test (byte-identical output) —
+  zero regression anywhere in the corpus.
+
+  **Confirmed the fix genuinely works**, via `search.py`'s own
+  `solve_branch` run fresh, in isolation, on this decision's own 5
+  compiled records (8.8s, population 12, 40 generations): `Rule_1`,
+  `Rule_3`, `Rule_4`, `Rule_5` now reach real `fitness=0.0` for the
+  RIGHT reason (a real `COURSE` row with `course_type_id='RESEARCH'`,
+  confirmed present in the solved candidate); `Rule_2` still doesn't
+  fully solve (`fitness=0.5`), but for a DIFFERENT, pre-existing,
+  already-disclosed reason unrelated to this fix: `isNeededToGraduate
+  ThisSummer`'s own `raw_sql_boolean` has no automatic mutation support
+  at all (`mutation.py`'s own long-standing, documented limitation for
+  every bespoke raw-SQL fact corpus-wide), so its value is whatever the
+  seed produced, never search-adjusted.
+
+  **But**: merging this freshly-solved archive into the real, materialized
+  FLEX2 database (via the existing `merge_archive_candidate` pipeline)
+  and re-running `coverage.py` shows Rule_1 STILL doesn't verify — a
+  SEPARATE, deeper gap, found investigating why. `Decision_subject` (the
+  compile-time field `dynamosa.py`'s own merge step uses to tie a
+  decision's several facts to ONE real, uniquely-identified subject row)
+  is `None` for every Summer Semester Registration record — the
+  generator has NO equivalent, on its own side, of the `subject_root_
+  overrides.py`/`filter_placeholder_sources.py` work built earlier today
+  on the VALIDATOR side. Confirmed directly: the solved candidate's own
+  `COURSE` row correctly has `course_type_id='RESEARCH'`, but its
+  `COURSE_REGISTRATION` row list is EMPTY — `courseTypeId`'s own
+  `schema_column` resolution reads `focal['COURSE']` directly, with no
+  requirement that a real, uniquely-identified `COURSE_REGISTRATION`
+  subject row ever exists connecting to it, so nothing ties this
+  decision's facts to one real case the validator can enumerate. Porting
+  the subject-determination logic to the generator side (a genuinely
+  separate, substantial task, mirroring today's own validator-side work)
+  is what closing this the rest of the way would need — NOT attempted
+  here; disclosed rather than silently left implying "fixed."
 - **`Admission Closure Eligibility` — genuinely unresolvable given the
   real schema, a DIFFERENT and deeper category than "one-to-many,
   refuse to guess" (confirmed 2026-09-25, checked directly against the

@@ -529,6 +529,44 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     diagnosed), not a verified-count change. Side effect: `Attendance
     Eligibility For Final Exam`'s own unresolved reason changed too (same
     `<this course offering>` placeholder), same 0/2 outcome either way.
+18. **Found and fixed a real, generalizable GENERATOR-side "grounding"
+    bug, on request — confirmed it works, but a separate, deeper gap
+    still blocks it from becoming a real verified row.** The existing
+    archive claims `fitness=0.0` (fully covered) for ALL 5 of `Summer
+    Semester Registration`'s rules — a textbook false positive. Root
+    cause: `candidate.py`'s own `_mechanical_filter_predicate`/`_row_
+    from_filter_conjuncts` (the search's in-memory fitness/mutation
+    bridge) had no support for the `:COLUMN` self-reference syntax the
+    "for COL" fix (item 16) introduced — it silently treated `:COLUMN`
+    as a literal string no real row could match, forcing the search to
+    believe `priorRegistrationCount`/`enrolledStudentCount` were always
+    0, the same "generator-vs-validator mismatch" class of bug this
+    module's own `_IS_NOT_NULL_RE` comment already documents for a
+    different shape. Fixed generally in both files (kept as independent
+    copies per their own stated convention): resolves `:COLUMN` against
+    the decision's own subject/self row (`focal[self_table]`), falling
+    back to the aggregate's own table by default, using the EXISTING
+    `aggregate_self_table.py` disclosed-override mechanism (extended to
+    also trigger on `:COLUMN`, not just bare `self`) for the one case
+    that needs a different table (`semestersElapsed`). Zero hardcoded
+    facts about this decision — a real, reusable capability, verified via
+    `candidate.py`'s/`mutation.py`'s own self-tests (byte-identical
+    output, zero regression) and confirmed working via `search.py`'s own
+    `solve_branch` run fresh on this decision's 5 records (8.8s): `Rule_
+    1`/`3`/`4`/`5` now reach real `fitness=0.0` for the RIGHT reason;
+    `Rule_2` still doesn't, but for a separate, pre-existing, already-
+    disclosed reason (`isNeededToGraduateThisSummer`'s `raw_sql_boolean`
+    has no automatic mutation support at all). **But**: merging this
+    freshly-solved archive into a real, materialized FLEX2 database and
+    re-running `coverage.py` shows `Rule_1` still doesn't verify —
+    `decision_subject` (the field `dynamosa.py`'s merge step uses to tie
+    a decision's facts to ONE real subject row) is `None` for this whole
+    decision on the generator side; the solved candidate's own `COURSE`
+    row correctly has `course_type_id='RESEARCH'`, but has NO owning
+    `COURSE_REGISTRATION` row at all, so nothing ties it to one real,
+    enumerable case. Closing this needs porting today's own validator-
+    side subject-determination work to the generator too — a separate,
+    substantial task, not attempted here.
 
 ## 7. Planned / open work
 
@@ -556,10 +594,14 @@ Full, itemized list with root causes and what fixing each would require:
   data-coverage gap); `Summer Semester Registration` (§6 item 17) now
   resolves and runs cleanly (subject-root override + `raw_sql_boolean`
   executor fix + isolated correlation gap) but is 0/5 verified for
-  confirmed data-coverage/gap reasons, not a bug. Remaining:
-  `Admission Closure Eligibility` has no declared FK relationship at all
-  in the real schema. An audit question remains on `Attendance
-  Eligibility For Final Exam`.
+  confirmed data-coverage/gap reasons, not a bug; a real generator-side
+  "grounding" bug (§6 item 18, `:COLUMN` self-reference support in
+  `candidate.py`/`mutation.py`) is also fixed and confirmed working in
+  isolation, but a still-missing `decision_subject` wiring on the
+  generator side (a separate, substantial task) keeps it from showing up
+  as an actual verified row yet. Remaining: `Admission Closure
+  Eligibility` has no declared FK relationship at all in the real schema.
+  An audit question remains on `Attendance Eligibility For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

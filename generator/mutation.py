@@ -860,7 +860,13 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
     -- imported directly rather than re-duplicated a third time, since
     unlike the rest of this function's own conjunct-recognition rules
     (kept independent per the docstring above), THIS piece has no
-    case-study-specific text-shape variance to track two copies of."""
+    case-study-specific text-shape variance to track two copies of.
+    `focal`/`self_table` also let a `COLUMN = :COLUMN` conjunct
+    (2026-09-25) copy the real value off the decision's own subject/self
+    row -- candidate.py's own mirror fix has the full writeup; kept as an
+    independent inline copy here too, same as this function's other
+    conjunct-recognition rules."""
+    self_row = focal.get(self_table.upper()) if (focal and self_table) else None
     row = {} if owner_id is None else {_OWNER_KEY: owner_id}
     for conjunct in _top_level_and_conjuncts(filter_text):
         c_stripped = conjunct.strip()
@@ -882,6 +888,14 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
         col, raw_val = cm.group(1), cm.group(2).strip()
         if col.isdigit():
             continue  # a SQL tautology guard (e.g. "1=1"), never a real column -- see candidate.py's own mirror fix
+        colon_m = re.fullmatch(r':([A-Za-z_]\w*)', raw_val)
+        if colon_m:
+            if self_row is not None:
+                for key in (colon_m.group(1), colon_m.group(1).upper(), colon_m.group(1).lower()):
+                    if key in self_row:
+                        row[col] = self_row[key]
+                        break
+            continue
         ph = re.fullmatch(r'<([^>]+)>', raw_val)
         if ph:
             if ph.group(1) in scenario:
@@ -942,11 +956,13 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         # rows actually matching it, letting two differently-filtered
         # `exists` facts on the same table finally diverge instead of
         # both reading the identical "any row at all" answer.
-        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
+        self_table = node.get('self_table') or table
+        self_row = focal.get(self_table.upper()) if focal else None
+        predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
         owned = _owned_rows(candidate, table, owner_id)
         if value and not any(predicate(r) for r in owned):
             row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
-                                              candidate, focal, node.get('self_table'))
+                                              candidate, focal, self_table)
             row = candidate.add_row(table, row)
             return [(table, row)]
         elif not value:
@@ -1027,13 +1043,15 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         return []
     tables = [t.strip() for t in node['table'].split(',')]
     table = tables[0]
-    predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate)
+    self_table = node.get('self_table') or table
+    self_row = focal.get(self_table.upper()) if focal else None
+    predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
     n = int(round(value)) - int(round(current or 0))
     if n > 0:
         touched = []
         for _ in range(n):
             row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
-                                              candidate, focal, node.get('self_table'))
+                                              candidate, focal, self_table)
             if node.get('value_column'):
                 row[node['value_column'].split('.')[1]] = 1
             candidate.add_row(table, row)

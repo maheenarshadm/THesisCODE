@@ -26885,7 +26885,8 @@
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
     "filter_text": "ROLL_NO = :ROLL_NO",
-    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
+    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO",
+    "self_table": "STUDENT_PROGRAM"
    },
    "creditHoursEarned": {
     "kind": "schema_column",
@@ -27031,7 +27032,8 @@
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
     "filter_text": "ROLL_NO = :ROLL_NO",
-    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
+    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO",
+    "self_table": "STUDENT_PROGRAM"
    }
   },
   "fk_closure_tables": [
@@ -27164,7 +27166,8 @@
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
     "filter_text": "ROLL_NO = :ROLL_NO",
-    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
+    "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO",
+    "self_table": "STUDENT_PROGRAM"
    },
    "yearsElapsed": {
     "kind": "schema_column",

@@ -805,8 +805,20 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
     if bucket == 'derived':
         classified = classify_derived(row)
         if classified:
+            # `self_table` is consulted whenever `filter_text` carries
+            # EITHER self-reference convention `validation_oracle/
+            # db_resolver.py`'s own `_substitute_self_and_colon` resolves
+            # at verification time: bare `self` (this row's own PK --
+            # Spree's `id != self`) or `COLUMN = :COLUMN` (this row's own
+            # value for COLUMN -- the shape `AGGREGATE_FOR_CORRELATION_RE`
+            # above produces, e.g. FLEX2's `semestersElapsed`: "ROLL_NO =
+            # :ROLL_NO"). Broadened 2026-09-25 from bare-`self`-only: the
+            # generator's own candidate.py/mutation.py bridge needs the
+            # SAME `self_table` binding to construct/score real matching
+            # data for either convention, not just the bare-`self` one.
             if classified.get('kind') == 'derived_aggregate' \
-                    and re.search(r'\bself\b', classified.get('filter_text') or '', re.I):
+                    and (re.search(r'\bself\b', classified.get('filter_text') or '', re.I)
+                         or re.search(r'=\s*:[A-Za-z_]\w*', classified.get('filter_text') or '')):
                 self_table = get_self_table(cs, var_name)
                 if self_table:
                     classified['self_table'] = self_table

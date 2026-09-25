@@ -29,6 +29,20 @@ directly, never re-deriving or re-guessing it.
 # spree_promotions, confirming that's the decision's real subject.
 _SELF_REFERENCE_TABLE = {
     ('Spree', 'adjustedCreditsCount'): 'spree_promotions',
+    # FLEX2's `semestersElapsed` (Graduation Eligibility): `COUNT
+    # (STUDENT_SEMESTER) WHERE ROLL_NO = :ROLL_NO` -- STUDENT_SEMESTER
+    # isn't this decision's own subject table (STUDENT_PROGRAM is,
+    # confirmed by every one of this decision's OTHER facts -- creditHours
+    # Earned/degreeMinimumCreditHours/cumulativeGPA -- all reading
+    # STUDENT_PROGRAM/BATCH_PROGRAM directly), so the `:ROLL_NO` self
+    # -reference must resolve against STUDENT_PROGRAM's own row, not a
+    # STUDENT_SEMESTER row. `priorRegistrationCount`/`enrolledStudentCount`
+    # (Summer Semester Registration) need no entry here -- their own
+    # aggregate table (COURSE_REGISTRATION) already IS the decision's
+    # subject, so candidate.py's/mutation.py's own default (fall back to
+    # the aggregate's own `node['table']` when no override is given here)
+    # is already correct.
+    ('FLEX2', 'semestersElapsed'): 'STUDENT_PROGRAM',
 }
 
 
