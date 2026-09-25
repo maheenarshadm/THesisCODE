@@ -1,5 +1,19 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Codex)
+
+Generator-side Summer Semester Registration subject wiring is now fixed and
+independently verified: Rule_1 changed from false positive to confirmed.
+The committed FLEX2 fixture now verifies 37/55 distinct rules (67.3% raw,
+37/53 = 69.8% under the existing solvable-rule denominator). Summer itself is
+1/5, not fully closed. Read the newest KNOWN_ISSUES.md entry for the unresolved
+repeat-request identity, prior-count self-inclusion, raw-SQL mutation and
+fresh-archive fixture-completeness issues. These supersede the missing-subject
+status in historical items 18 / section 7 below. The saved search archives are
+unchanged. Changes are on the user-requested Claude branch; rollback checkpoint
+is 6a9b80151d277e2958ac90a3146919758b45007d (codex/thesis-fixes).
+
+
 **Purpose of this file:** the single entry point for picking this project
 back up — in a new session, with a different LLM, or after time away —
 without re-explaining the project from scratch. It answers: what is
