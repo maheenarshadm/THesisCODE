@@ -254,6 +254,14 @@ _IS_NULL_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s+IS\s+NULL\s*$', re.I)
 # decision's own subject row, from `focal`), passed in by every caller
 # that already has `focal` in scope.
 _COLON_SELF_REF_RE = re.compile(r'^:([A-Za-z_]\w*)$')
+# A fourth shape, found necessary 2026-09-25 fixing `priorRegistration
+# Count`'s own self-inclusion bug (`aggregate_self_exclusions.py`): a
+# `COLUMN != :COLUMN` conjunct, excluding the decision's own subject row
+# from an aggregate that would otherwise always count it (the subject IS
+# one of the rows its own filter matches). `_SIMPLE_EQ_CONJUNCT_RE` only
+# ever recognizes `=`, so this needs its own check, same self-reference
+# resolution as the `=` case above -- just negated.
+_NEQ_COLON_SELF_REF_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s*!=\s*:([A-Za-z_]\w*)\s*$')
 
 
 def _self_row_value(self_row, column):
@@ -514,6 +522,14 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
 
             checks.append((None, 'custom', subquery_check))
             continue
+        neq_m = _NEQ_COLON_SELF_REF_RE.match(c_stripped)
+        if neq_m:
+            self_value, found = _self_row_value(self_row, neq_m.group(2))
+            if not found:
+                skipped.append(c_stripped)
+                continue
+            checks.append((neq_m.group(1), 'neq', self_value))
+            continue
         m = _IS_NOT_NULL_RE.match(c_stripped)
         if m:
             checks.append((m.group(1), 'not_null', None))
@@ -585,6 +601,9 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
             elif mode == 'is_null':
                 if value is not None:
                     return False
+            elif mode == 'neq':
+                if value == expected:
+                    return False
             elif value != expected:
                 return False
         return True
@@ -616,7 +635,14 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
     convention as `_mechanical_filter_predicate`'s own) copy the real
     value straight off the decision's own subject/self row -- without
     both given, or when the named column isn't on that row, the conjunct
-    is skipped, same as any other unparseable shape."""
+    is skipped, same as any other unparseable shape. A `COLUMN != :COLUMN`
+    self-EXCLUSION conjunct (`aggregate_self_exclusions.py`, 2026-09-25)
+    is deliberately left unhandled here too -- it names a value the new
+    row must NOT take, not one to assign, and `_SIMPLE_EQ_CONJUNCT_RE`
+    (`=` only) already skips it silently; leaving the column unset lets
+    `repair_candidate`'s own generic filler pick something, which only
+    coincides with the excluded self-value by the same low-probability
+    chance any other skipped conjunct already accepts."""
     self_row = focal.get(self_table.upper()) if (focal and self_table) else None
     row = {}
     for c in _top_level_and_conjuncts(filter_text):

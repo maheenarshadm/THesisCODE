@@ -27379,7 +27379,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID AND OFFER_ID != :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    }
   },
@@ -27588,7 +27588,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID AND OFFER_ID != :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
@@ -27853,7 +27853,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID AND OFFER_ID != :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
@@ -28137,7 +28137,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID AND OFFER_ID != :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {

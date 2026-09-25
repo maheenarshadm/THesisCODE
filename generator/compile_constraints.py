@@ -63,6 +63,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, 'dmn_schema_mapper', 'mapper'))
 from feel_parser import parse_unary_test, parse_expression, UnsupportedFeelConstruct  # noqa: E402
 from literal_expression_overrides import get_override as get_literal_expression_override  # noqa: E402
 from aggregate_self_table import get_self_table  # noqa: E402
+from aggregate_self_exclusions import get_exclude_self_column  # noqa: E402
 import validate_mapper as vm  # noqa: E402 -- reused for GT_CONFIG / ground-truth loading, not re-implemented
 
 DMN_NS = "https://www.omg.org/spec/DMN/20191111/MODEL/"
@@ -805,6 +806,21 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
     if bucket == 'derived':
         classified = classify_derived(row)
         if classified:
+            # `aggregate_self_exclusions.py`'s own disclosed override:
+            # when a "for COL" self-correlation targets the SAME table as
+            # the decision's own subject, the subject's own row always
+            # matches its own filter, so the aggregate can never read 0
+            # for any real row without excluding it. Appends one more
+            # `:COLUMN` conjunct, resolved by the SAME self-reference
+            # machinery the base correlation already uses -- see that
+            # module's own docstring for why this is a disclosed domain
+            # call, not something the generic "for COL" translation could
+            # ever infer from ground truth's own plain text.
+            if classified.get('kind') == 'derived_aggregate' \
+                    and re.search(r'=\s*:[A-Za-z_]\w*', classified.get('filter_text') or ''):
+                exclude_col = get_exclude_self_column(cs, var_name)
+                if exclude_col:
+                    classified['filter_text'] += f' AND {exclude_col} != :{exclude_col}'
             # `self_table` is consulted whenever `filter_text` carries
             # EITHER self-reference convention `validation_oracle/
             # db_resolver.py`'s own `_substitute_self_and_colon` resolves

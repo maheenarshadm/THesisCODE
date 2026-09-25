@@ -1,5 +1,67 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — priorRegistrationCount self-inclusion fix (Claude)
+
+Checkpoint before this entry: `412585e25708d0c2c97f6092e76bfd0fe7255260`
+(Codex's generator subject-wiring fix, see the entry directly below).
+
+**Fixed:** `Summer Semester Registration::Rule_2`'s own blocker, flagged
+in Codex's entry below ("the current `priorRegistrationCount` recipe
+counts the subject registration itself... so a non-null, matching
+subject cannot have count zero"). `COURSE_REGISTRATION`'s own subject
+row always matches its own `ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID`
+filter (it IS a `COURSE_REGISTRATION` row for that exact pair), so the
+count could never read 0 for any real row. New, disclosed
+`generator/aggregate_self_exclusions.py` (`{(case_study, var_name):
+exclude_column}`, same status/shape as `aggregate_self_table.py`) names
+`OFFER_ID` as the column to exclude for this one fact — not an arbitrary
+choice: `COURSE_REGISTRATION`'s own PK is `(OFFER_ID, ROLL_NO)`, and two
+DIFFERENT `OFFER_ID` rows sharing the same `(ROLL_NO, COURSE_ID)` is
+exactly what "a prior registration for this course" means (an earlier
+semester's own offering of the same course) — confirmed against the real
+schema, not guessed from nothing. Wired into `compile_constraints.py`
+right alongside the existing `self_table` patch: when a "for COL"
+correlation's own filter_text already carries a `:COLUMN` self-reference
+and an exclusion override exists for that variable, appends one more
+` AND COLUMN != :COLUMN` conjunct — resolved by the SAME self-reference
+machinery the base correlation already uses, no new capability needed on
+the validator side at all (confirmed directly: `db_resolver.py`'s own
+`_substitute_self_and_colon` already handles a `!=` conjunct with no
+code changes, since it substitutes `:COLUMN` regardless of the
+surrounding operator).
+
+Also taught the generator's OWN fitness/mutation bridge this same
+`COLUMN != :COLUMN` shape generally (not hardcoded to this one fact) —
+`candidate.py`'s `_mechanical_filter_predicate` (new `_NEQ_COLON_SELF_
+REF_RE`, a `'neq'` check mode) plus a documentation-only note in both
+`_row_from_filter_conjuncts` copies (candidate.py's and mutation.py's)
+explaining why the construction side needs no functional change: a `!=`
+conjunct names a value the new row must NOT take, not one to assign, and
+the existing `=`-only regex already skips it silently, leaving the
+column for `repair_candidate`'s own generic filler — the same honest
+approximation every other skipped conjunct already accepts.
+
+Confirmed via `search.py`'s own `solve_branch` run fresh on `Rule_2`:
+`priorRegistrationCount` now genuinely resolves to `0` in the solved
+candidate (previously impossible). `Rule_2` still doesn't fully solve
+(`fitness=0.5`) — but for the OTHER, already-known, unrelated reason:
+`isNeededToGraduateThisSummer`'s own `raw_sql_boolean` has no automatic
+mutation support at all (a general, corpus-wide limitation, not specific
+to this fact), so its value stays whatever the seed produced. Verified
+via `candidate.py`'s/`mutation.py`'s own self-tests (236/240, byte-
+identical, zero regression) and `generator/test_decision_subject.py`
+(5/5, unaffected). Re-ran `coverage.py` against the already-committed
+FLEX2 fixture: **zero flips** (still 37/55) — expected, since the OLD,
+buggy count only ever happened to equal 1 for real rows with exactly one
+real registration, never coincidentally flipping any currently-verified
+rule's own outcome. This is a real, confirmed correctness fix (verified
+via a fresh search re-run producing the correct value), just not one
+that changes today's own committed numbers — the fixture would need a
+fresh full search re-run (not attempted here) to actually construct a
+"student already registered once before, in a different offering"
+scenario and materialize it. Full regression across all 4 case studies
+confirms zero collateral anywhere else.
+
 ## 2026-09-25 — generator summer subject wiring (Codex)
 
 Checkpoint: `6a9b80151d277e2958ac90a3146919758b45007d`, also preserved by

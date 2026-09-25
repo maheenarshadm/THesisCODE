@@ -1,5 +1,22 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, after Codex's subject-wiring fix)
+
+Fixed the "prior-count self-inclusion" issue Codex's own entry below
+flagged as unresolved: `priorRegistrationCount`'s filter always matched
+its own subject row, so it could never read 0. New, disclosed
+`generator/aggregate_self_exclusions.py` appends an `OFFER_ID != :OFFER_ID`
+exclusion conjunct (real schema justification: two different offerings of
+the same course for the same student is exactly what "a prior
+registration" means); also generalized the generator's own fitness bridge
+to understand `COLUMN != :COLUMN` self-exclusion, not just self-equality.
+Confirmed via `solve_branch`: `priorRegistrationCount` now genuinely
+resolves to 0. `Rule_2` still doesn't fully verify — blocked by the
+SEPARATE, already-known `isNeededToGraduateThisSummer` no-mutation-support
+gap — so the committed fixture's own verified count is unchanged at 37/55
+(confirmed via full regression, zero flips). Full writeup in
+`KNOWN_ISSUES.md`'s own newest entry, directly above Codex's.
+
 ## Latest continuation — 2026-09-25 (Codex)
 
 Generator-side Summer Semester Registration subject wiring is now fixed and

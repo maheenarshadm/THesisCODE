@@ -865,7 +865,11 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
     (2026-09-25) copy the real value off the decision's own subject/self
     row -- candidate.py's own mirror fix has the full writeup; kept as an
     independent inline copy here too, same as this function's other
-    conjunct-recognition rules."""
+    conjunct-recognition rules. A `COLUMN != :COLUMN` self-EXCLUSION
+    conjunct (`aggregate_self_exclusions.py`, same day) is deliberately
+    left unhandled here too, same as candidate.py's own mirror -- it
+    names a value the new row must NOT take, not one to assign, and the
+    `=`-only conjunct match below already skips it silently."""
     self_row = focal.get(self_table.upper()) if (focal and self_table) else None
     row = {} if owner_id is None else {_OWNER_KEY: owner_id}
     for conjunct in _top_level_and_conjuncts(filter_text):
