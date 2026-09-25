@@ -65,6 +65,8 @@ from literal_expression_overrides import get_override as get_literal_expression_
 from aggregate_self_table import get_self_table  # noqa: E402
 from aggregate_self_exclusions import get_exclude_self_column  # noqa: E402
 from aggregate_filter_overrides import get_filter_text_override  # noqa: E402
+from not_persisted_reclassification import get_reclassification as get_not_persisted_reclassification  # noqa: E402
+from condition_column_overrides import get_column_override  # noqa: E402
 import validate_mapper as vm  # noqa: E402 -- reused for GT_CONFIG / ground-truth loading, not re-implemented
 
 DMN_NS = "https://www.omg.org/spec/DMN/20191111/MODEL/"
@@ -804,6 +806,9 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
                 'decision_name': decision_name, 'variable': var_name}
     bucket = row['bucket']
     if bucket == 'not_persisted':
+        reclassified = get_not_persisted_reclassification(cs, var_name)
+        if reclassified:
+            return reclassified
         return {'kind': 'not_persisted'}
     if bucket == 'schema_gap':
         return {'kind': 'schema_gap', 'notes': row['notes'], 'hinted_pairs': row['schema_pairs']}
@@ -1477,8 +1482,9 @@ def build_rule_condition(decision, rule):
     column_predicates = []
     parse_errors = []
     for (col_var, _typeref), text in zip(decision.inputs, rule['input_texts']):
+        effective_col_var = get_column_override(rule['id'], col_var)
         try:
-            node = parse_unary_test(text, col_var)
+            node = parse_unary_test(text, effective_col_var)
         except UnsupportedFeelConstruct as e:
             parse_errors.append(f"{col_var}: {e}")
             node = None

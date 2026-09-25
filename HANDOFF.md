@@ -673,9 +673,28 @@ Full, itemized list with root causes and what fixing each would require:
   as an actual verified row yet. Remaining: `Admission Closure
   Eligibility` has no declared FK relationship at all in the real schema.
   An audit question remains on `Attendance Eligibility For Final Exam`.
-- jBilling: an audit question on 8 decisions currently marked
-  non-table-backed or needing a `not_persisted` override — genuine, or a
-  `purchaseQuantity`-style mis-mapping? Not yet checked.
+- jBilling: audited 9 flagged decisions. `Is Ageing Required`, `Daily
+  Pro-Rate Amount`, `Order Date Range Valid` confirmed genuinely not
+  fixable (real Java runtime state, no fixed schema column). Two real
+  bugs found and fixed (see `validation_oracle/KNOWN_ISSUES.md`'s
+  2026-09-25 jBilling entry): `Order Period Already Invoiced`::
+  Rule_3/Rule_4 had a DMN-authoring column swap (comparison text on the
+  wrong input column, producing a tautology/contradiction pair) — fixed
+  via `generator/condition_column_overrides.py`; `Tax Calculation
+  Needed`::`customContactFieldConfigured` was a `purchaseQuantity`-style
+  mis-mapping (`pluggable_task_parameter` IS a real table despite the
+  ground truth calling it "not a row in a business table") — fixed via
+  `generator/not_persisted_reclassification.py`, though its real effect
+  is currently blocked by `jbilling_merged.db` never having materialized
+  `pluggable_task_parameter` (a fixture-rebuild gap, not a code gap).
+  Still open: `Currency Exchange Rate Source` (real `exists`-kind
+  filter_text already present, but its placeholders aren't registered in
+  `filter_placeholder_sources.py` yet), `Payment Outcome Resolution`/
+  `Payment Balance Assignment` (likely the same
+  `processorUnavailable`-needs-a-declared-override shape as
+  `candidateDateProvided`, not yet investigated as deeply), and
+  `Cancellation Fee Eligibility` (0 compiled rules — root cause not yet
+  investigated).
 - Cross-case-study: COLLECT hit-policy support (real new code, currently
   out of scope) if the project's scope is ever extended to it.
 

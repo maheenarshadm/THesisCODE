@@ -1804,3 +1804,138 @@ before being counted as fixed here.
   search-claimed-but-unverified rules. Full self-test/regression suite
   re-run and passing (Spree-only fix — `spree_promotion_actions` doesn't
   exist in the other 3 case studies).
+
+- **jBilling audit: a genuine DMN-authoring column swap in `Order Period
+  Already Invoiced`, and a genuine `not-persisted` mis-mapping in `Tax
+  Calculation Needed` (2026-09-25).** Following the FLEX2 Attendance
+  Eligibility audit's own methodology, checked every jBilling decision
+  this project's provenance work had flagged. Two real, fixable findings,
+  four confirmed-not-fixable (`Is Ageing Required`, `Daily Pro-Rate
+  Amount`, `Order Date Range Valid` — all three genuinely need Java
+  runtime state/reflection with no fixed schema column, correctly
+  `code_external`/`not_persisted`), and two still open (`Currency
+  Exchange Rate Source` — its own `exists`-kind inputs already carry
+  real `filter_text` against `currency_exchange`, but contribute nothing
+  to `all_tables` because their `<entity_id>`/`<currency_id>`
+  placeholders have no `filter_placeholder_sources.py` entry, the same
+  class of gap `('FLEX2', 'student')` closed earlier — not yet
+  registered, since the entity/currency FK correlation needs its own
+  careful check first; `Payment Outcome Resolution`/`Payment Balance
+  Assignment` — likely the same `processorUnavailable`-needs-an-override
+  shape, not yet investigated to the same depth).
+
+  1. **`Order Period Already Invoiced`::Rule_3/Rule_4 — a real bug in the
+     source `.dmn` rule table itself, not a mapping error.** Both rules'
+     4th input column ("Next Billable Day", bound variable
+     `nextBillableDay`) carries the unary-test text `>= nextBillableDay`
+     / `< nextBillableDay`; `feel_parser.parse_unary_test` faithfully
+     binds that text to ITS OWN column's variable (its documented
+     contract), so the compiled condition was a literal self-comparison
+     (`nextBillableDay >= nextBillableDay`, always true;
+     `nextBillableDay < nextBillableDay`, always false) — making Rule_3
+     a tautology and Rule_4 permanently unreachable under FIRST hit
+     policy. Both rules' 3rd column ("Candidate Date", bound variable
+     `candidateDate`) was left as a bare wildcard `-`. Confirmed against
+     the real cited source, not just the rules' own prose: `OrderBL.
+     java`'s own `isDateInvoiced(Date date)` (source_documents/
+     OrderBL.java, ~L1104-1107) is exactly `date != null &&
+     order.getNextBillableDay() != null &&
+     date.before(order.getNextBillableDay())` — i.e. `candidateDate <
+     nextBillableDay` → already invoiced — matching Rule_4's own
+     description exactly and Rule_3's negation. Fixed via a new,
+     disclosed `generator/condition_column_overrides.py`, keyed by
+     rule_id (globally unique — no cross-case-study collision), consulted
+     from `build_rule_condition` right before `parse_unary_test` — swaps
+     which column's variable that ONE cell's text binds to for these two
+     rule_ids only, leaving every other rule's parsing untouched. This is
+     a new *class* of override for this project (correcting the source
+     `.dmn` rule table's own column placement, not a ground-truth CSV
+     row's label) — the `.dmn` file itself is left untouched, same
+     discipline as every other override module.
+
+  2. **`Tax Calculation Needed`::`customContactFieldConfigured` — the
+     SAME class of mis-mapping as FLEX2's `purchaseQuantity`/
+     `semesterType`, just caught in the `not_persisted` bucket instead of
+     `direct`.** `variable_to_schema_mapping.csv` labels it
+     `not-persisted` ("A pluggable_task_parameter configuration value,
+     not a row in a business table"), but `pluggable_task_parameter` IS a
+     real, queryable table in jBilling's own schema (confirmed directly
+     against `all_schema_extraction/output/jbilling_schema_full.json`:
+     columns `id`, `task_id`, `int_value`, `optlock`, `name`, `str_value`,
+     `float_value`, real FK `task_id -> pluggable_task.id`). The DMN's own
+     Rule_1 description ("no custom_contact_field_id plugin parameter
+     configured -> tax is always calculated") confirms this is a GLOBAL,
+     system-wide "has this plugin parameter been configured at all"
+     check, not per-customer — matching a subject-independent `exists`
+     query with no join path needed, which `db_resolver.resolve`'s own
+     `exists`-with-`filter_text` branch already supports directly. Fixed
+     via a new, disclosed `generator/not_persisted_reclassification.py`
+     (mirrors `literal_expression_overrides.py`'s own precedent — the
+     ground truth's own mis-label is kept as `notes`, never silently
+     corrected in the CSV itself), wired into `resolve_variable`'s
+     `not_persisted` branch, replacing the node with
+     `{'kind': 'exists', 'candidate_tables': ['pluggable_task_parameter'],
+     'filter_text': "name = 'custom_contact_field_id'"}` — the parameter
+     name is the one disclosed, cited identifier this project already had
+     (from BOTH the DMN description text and
+     `build_jbilling_mapping.py`'s own schema-mapping tuple), never
+     guessed.
+
+     **This fix's real effect is currently blocked by a fixture gap, the
+     SAME pattern already documented for Spree's `spree_discounts`**:
+     `tests/fixtures/jbilling_merged.db` has no `pluggable_task_parameter`
+     table at all (never materialized, since the OLD ground truth said
+     `not_persisted` so nothing ever needed it) — `coverage.py` correctly
+     catches this as `run_decision failed (database/fixture gap): no such
+     table: pluggable_task_parameter` and reports the decision
+     `unresolved`, rather than crashing or silently reporting a false
+     result. The fix is real and verified correct in isolation; making it
+     show up in `verified_covered_rules` needs a fixture rebuild that
+     adds `pluggable_task_parameter`/`pluggable_task` (and populates at
+     least one row named `custom_contact_field_id`) — deliberately not
+     attempted this round, given this session's own earlier,
+     not-yet-resolved finding about `merge_archive_candidate` silently
+     dropping tables on an incomplete rebuild (see the FLEX2 Attendance
+     Eligibility entry above).
+
+  **Verified via a full, order-independent `json.dumps(sort_keys=True)`
+  diff across all 240 compiled records** (all 4 case studies): exactly
+  the 6 targeted records changed (`Order Period Already Invoiced`'s
+  Rule_3/Rule_4, `Tax Calculation Needed`'s Rule_1-4), zero collateral
+  changes anywhere else — patched surgically into the committed
+  `compiled_constraints.json`, same discipline as every prior round, to
+  avoid committing unrelated dict-reordering noise. Full regression
+  (`candidate.py` 236/240 evaluable — byte-identical to the established
+  baseline, `mutation.py`, `feel_parser.py`, `subject_table.py`,
+  `rule_evaluator.py`, `drd_executor.py`'s own OpenMRS acceptance test,
+  `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+  `test_decision_subject.py`, `test_serialized_field_roundtrip.py` — all
+  passing) plus a fresh `coverage.py` run per case study: OpenMRS 42,
+  Spree 18, FLEX2 37 — all three byte-identical to their established
+  values, confirming zero collateral effect outside jBilling. jBilling
+  itself, with NO `--not-persisted-json` (matching this project's own
+  prior official jBilling invocation): unchanged at 10 verified/10
+  unresolved decisions (the `Tax Calculation Needed` fix's real effect is
+  blocked by the fixture gap above; `Order Period Already Invoiced` still
+  needs `candidateDateProvided`/`candidateDate` declared, since both are
+  genuinely-transient runtime parameters — same class as `evaluationTime`,
+  correctly `not_persisted`, not a mapping bug). WITH
+  `--not-persisted-json {"candidateDateProvided": true, "candidateDate":
+  0}` on the patched constraints: `Order Period Already Invoiced` now
+  resolves (`unresolved_decisions` 10→9), `verified_covered_rules` 10→12
+  — `Rule_2` flips `false_positive`→`confirmed` (real, search-claimed
+  coverage now independently confirmed) and `Rule_4` flips
+  `agreed_uncovered`→`false_negative` (the oracle now finds this rule
+  genuinely reachable in the real data — `next_billable_day=1`,
+  `candidateDate=0` → `0 < 1` → `periodAlreadyInvoiced=true`, matching
+  `OrderBL.java`'s real semantics exactly — but the SEARCH itself never
+  claimed/found it, an honest new finding about the search's own
+  coverage gap on this decision, not a validator bug). `Rule_3` stays
+  `false_positive` under this particular override value (`0` never
+  satisfies `>= nextBillableDay` against the fixture's real
+  `next_billable_day=1` rows) — a real, data-driven, disclosed
+  consequence of the one representative value chosen, same open
+  methodology question `evaluationTime`/`__today__` already carry (see
+  above), not a new gap. `Tax Calculation Needed`'s 4 rules stay
+  `false_positive` under this run, exactly as expected given the fixture
+  gap.

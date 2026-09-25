@@ -42556,7 +42556,7 @@
      "op": ">=",
      "left": {
       "kind": "variable",
-      "ref": "nextBillableDay"
+      "ref": "candidateDate"
      },
      "right": {
       "kind": "variable",
@@ -42624,6 +42624,9 @@
    ]
   },
   "variable_resolution": {
+   "candidateDate": {
+    "kind": "not_persisted"
+   },
    "candidateDateProvided": {
     "kind": "not_persisted"
    },
@@ -42698,7 +42701,7 @@
      "op": "<",
      "left": {
       "kind": "variable",
-      "ref": "nextBillableDay"
+      "ref": "candidateDate"
      },
      "right": {
       "kind": "variable",
@@ -42796,7 +42799,7 @@
         "op": ">=",
         "left": {
          "kind": "variable",
-         "ref": "nextBillableDay"
+         "ref": "candidateDate"
         },
         "right": {
          "kind": "variable",
@@ -42809,6 +42812,9 @@
    ]
   },
   "variable_resolution": {
+   "candidateDate": {
+    "kind": "not_persisted"
+   },
    "candidateDateProvided": {
     "kind": "not_persisted"
    },
@@ -44300,10 +44306,24 @@
   },
   "variable_resolution": {
    "customContactFieldConfigured": {
-    "kind": "not_persisted"
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
    }
   },
-  "fk_closure_tables": [],
+  "fk_closure_tables": [
+   "currency",
+   "entity",
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
+  ],
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
@@ -44388,7 +44408,13 @@
   },
   "variable_resolution": {
    "customContactFieldConfigured": {
-    "kind": "not_persisted"
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
    },
    "primaryContactFound": {
     "kind": "exists",
@@ -44401,7 +44427,14 @@
    }
   },
   "fk_closure_tables": [
-   "contact"
+   "contact",
+   "currency",
+   "entity",
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown",
@@ -44531,7 +44564,13 @@
   },
   "variable_resolution": {
    "customContactFieldConfigured": {
-    "kind": "not_persisted"
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
    },
    "matchingFieldValue": {
     "kind": "schema_column",
@@ -44554,7 +44593,11 @@
    "contact_field_type",
    "currency",
    "entity",
-   "language"
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown",
@@ -44728,7 +44771,13 @@
   },
   "variable_resolution": {
    "customContactFieldConfigured": {
-    "kind": "not_persisted"
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
    },
    "matchingFieldValue": {
     "kind": "schema_column",
@@ -44751,7 +44800,11 @@
    "contact_field_type",
    "currency",
    "entity",
-   "language"
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
   ],
   "cross_variable_reference": false,
   "feasibility": "unknown",
