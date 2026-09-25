@@ -1,5 +1,146 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — Attendance Eligibility For Final Exam audit (Claude)
+
+Checkpoint before this entry: `ac6aeee` (priorRegistrationCount fix,
+entry directly below).
+
+**Audited on request** ("check FLEX2's Attendance Eligibility For Final
+Exam for the same kind of mis-mapping `purchaseQuantity`/`semesterType`
+turned out to be"). Verdict: NOT a mis-mapping -- `attendancePercentage`
+was already correctly modeled as a `substituted_decision` (an upstream
+literal-expression decision, `lecturesAttended / lecturesHeldForOffering
+* 100`, correctly inlined). The real blocker was subject-picking (same
+shape as `Summer Semester Registration`) plus TWO genuinely new, real
+bugs this audit found along the way -- fixed, not guessed around:
+
+1. **Subject-picking**: `all_tables` only ever contained `COURSE_OFFER`
+   (from `lecturesHeldForOffering`'s own `<this course offering>`
+   placeholder), so the decision resolved to `COURSE_OFFER` directly --
+   which has no `ROLL_NO` at all, so `lecturesAttended`'s own `<student>`
+   placeholder had nothing to resolve against. New
+   `('FLEX2', 'student'): 'COURSE_REGISTRATION'` entry in both
+   `filter_placeholder_sources.py` (validator) and `_DECISION_SUBJECT_
+   PLACEHOLDER_SOURCES` (generator, `compile_constraints.py`) makes
+   `COURSE_REGISTRATION` (composite PK `(OFFER_ID, ROLL_NO)` -- one
+   student's attendance in one course offering, exactly this decision's
+   real grain) the recognized, unique root. Confirmed harmless for
+   `Course Registration Eligibility`'s own UNRELATED `<student>` usage
+   (its subject is already `COURSE_REGISTRATION`, so `<student>` already
+   resolved via the subject row's own `ROLL_NO` before this override
+   would ever be consulted) via a full before/after subject-table sweep.
+2. **Malformed filter_text**: the real ground truth for `lecturesAttended`
+   reads `ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that
+   OFFER_ID) AND ATTEND_FLAG='Y'` -- "LECTURE for that OFFER_ID" is
+   informal prose, not SQL; executed verbatim it is a real SQL syntax
+   error. New, disclosed `generator/aggregate_filter_overrides.py`
+   (same status as `literal_expression_overrides.py`) hand-translates it
+   into a real subquery: `LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE
+   WHERE OFFER_ID = <this course offering>)`, reusing the SAME two
+   bracket placeholders the surrounding ground truth already names.
+3. **A real bug found applying #2**: the override was silently never
+   applied at all. `lecturesAttended`'s own ground-truth row is bucketed
+   `'direct'`, not `'derived'` (its schema-field text merely LOOKS like
+   an aggregate) -- `resolve_variable` has two SEPARATE code paths that
+   can produce a `derived_aggregate` node (a genuinely-`'derived'`-
+   bucketed row, and a `'direct'`-bucketed row whose text turns out to
+   describe an aggregate anyway), and the override-application logic had
+   only ever been wired into the first one. Fixed by factoring ALL
+   `derived_aggregate` overrides (filter-text, self-exclusion, self-
+   table) into one `_apply_aggregate_overrides` helper, called from BOTH
+   paths -- confirmed via a full corpus-wide compiled-record diff that
+   ONLY the 24 records actually touched (Attendance Eligibility's own 2,
+   plus 22 `Course Registration Eligibility` records gaining a genuinely
+   correct, previously-missing `cross_table_placeholders` correlation as
+   a beneficial side effect of the new placeholder-source entry) changed
+   at all.
+4. **A real, generalizable bug in `candidate.py`'s own IN-subquery
+   bridge**: `_IN_SUBQUERY_RE`'s own match captures the subquery's real
+   `SELECT <col>` name but both `subquery_check` (read/fitness) and
+   `_construct_subquery_parent` (write/construction) discarded it,
+   hardcoding a bare `'id'`/`'ID'` lookup instead -- correct only for
+   Spree's own Rails-convention PK naming (the only case study this
+   mechanism had ever been exercised against before), but wrong for
+   FLEX2's own named-PK convention (`LECTURE`'s real PK is `LECTURE_ID`,
+   no bare `id` column exists at all). Every real match silently failed,
+   under-counting `lecturesAttended` to 0 regardless of how much real
+   matching data existed. Fixed to use the subquery's own captured
+   `select_col` instead of a hardcoded name, on both the read and write
+   side. Confirmed via `candidate.py`'s own flagship self-test (a
+   hand-built real candidate with explicit noise rows a correct filter
+   must exclude): `lecturesAttended` now genuinely reads 40 (matching
+   the test's own real, verifiable answer), not 0.
+5. **A second real, LATENT bug found fixing #4**: `_construct_subquery_
+   parent`'s own `self_table` branch fired whenever the CALLER passed a
+   non-`None` `self_table` at all, never checking whether the inner WHERE
+   actually references `self` (its own docstring already described this
+   as the intended condition, just never implemented). Harmless as long
+   as every caller only ever passed `self_table` for a genuinely self-
+   referencing fact -- until `_row_from_filter_conjuncts`'s own default
+   (added the same day, priorRegistrationCount fix below) started
+   passing a non-`None` `self_table` unconditionally (falling back to the
+   aggregate's own table), which stamped a bogus, schema-invalid `id`
+   column onto a real `STUDENT_ATTENDANCE` seed row (that table has no
+   `id` column at all) purely because `lecturesAttended`'s own filter
+   happens to combine an IN-subquery with a non-self-referencing
+   `self_table` default. Fixed by gating the branch on
+   `_SELF_TOKEN_RE.search(inner_where)`, matching the function's own
+   pre-existing docstring. Confirmed zero regression via `candidate.py`'s
+   own full-corpus sweep (236/240, byte-identical) -- including Spree's
+   own genuinely self-referencing facts, which still correctly trigger
+   this branch.
+6. **A real, generalizable bug in `validation_oracle/rule_evaluator.py`**,
+   found running this decision through `run_decision` for the first
+   time: `_ARITHMETIC`'s own `/` already guarded against a zero/`None`
+   denominator (FEEL's own null-on-divide-by-zero semantics), but `+`/
+   `-`/`*` had no `None` guard at all, and even `/`'s own guard didn't
+   cover a `None` NUMERATOR. A real course offering with zero scheduled
+   `LECTURE` rows correctly makes `lecturesHeldForOffering = 0`, so
+   `lecturesAttended / lecturesHeldForOffering` correctly evaluates to
+   FEEL `null` -- but the OUTER `* 100` then crashed with an uncaught
+   `TypeError`, aborting the WHOLE decision (every case), not just this
+   one. Fixed to propagate `None` consistently across all four
+   operators, matching FEEL's own null-propagation semantics (already
+   correctly implemented elsewhere in this same module, e.g.
+   `_ordered_compare`'s own explicit `None` handling).
+
+**Net result**: `Attendance Eligibility For Final Exam` now resolves and
+runs `run_decision` cleanly end to end against the real, ALREADY-
+COMMITTED FLEX2 fixture (no longer in `unresolved_decisions.json`, no
+crash) -- confirmed via `coverage.py`: `unresolved_decisions` 2→1 (only
+`Admission Closure Eligibility` remains). Still genuinely 0/2 verified,
+for a confirmed, disclosed, non-bug reason: the current fixture's own
+real `LECTURE` data (88 rows, only 2 distinct `OFFER_ID`s) and its real
+`COURSE_REGISTRATION` data are disconnected islands -- ZERO real
+registration shares an `OFFER_ID` with any real lecture (confirmed by
+direct SQL join, returns 0 rows), so `lecturesHeldForOffering` is always
+0 and `attendancePercentage` is always `null` for every one of the 550
+real cases, correctly not matching either rule (FEEL null semantics,
+confirmed via `_ordered_compare`). This is the SAME "disconnected search
+objectives never got materialized together" pattern already seen
+elsewhere this session, not a new kind of gap.
+
+**Confirmed BOTH rules are genuinely solvable**, though: a fresh
+`search.py.solve_branch` run on each of this decision's own 2 compiled
+records (in isolation, `mutation_budget=300`) reaches real `fitness=0.0`
+for both, with correct, connected data (`Rule_1`: 34/30 lectures ≈113%;
+`Rule_2`: 3/33 ≈9%). **Not yet reflected in the committed fixture**: a
+from-scratch rebuild merging just these solved individuals into the
+saved archive (the same technique that closed `Summer Semester
+Registration::Rule_1`) produced a database MISSING the `STUDENT_
+ATTENDANCE` table entirely (`no such table: STUDENT_ATTENDANCE`) --
+`dynamosa.py`'s own `merge_archive_candidate`, when driven from only a
+handful of patched objectives against the ORIGINAL, unmodified saved
+archive, doesn't correctly carry every table a decision's own solved
+individual touches through to the final merged candidate for a decision
+whose `decision_subject`'s own `joins` don't already name every table
+involved (`COURSE_OFFER` is listed; `STUDENT_ATTENDANCE`/`LECTURE`
+aren't). Root cause not fully diagnosed -- disclosed rather than shipped
+broken; the REAL fixture was left untouched (still `1869` rows, matching
+the last commit). Closing this needs either a proper fix inside `merge_
+archive_candidate` itself, or a full, fresh DynaMOSA search re-run for
+all of FLEX2's 98 objectives together (both out of scope for this pass).
+
 ## 2026-09-25 — priorRegistrationCount self-inclusion fix (Claude)
 
 Checkpoint before this entry: `412585e25708d0c2c97f6092e76bfd0fe7255260`

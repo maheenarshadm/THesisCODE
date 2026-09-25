@@ -439,9 +439,25 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
     later reads the SAME focal row agree on one real identity."""
     if candidate is None:
         return None
-    outer_col, _select_col, inner_table, inner_where = match.groups()
+    outer_col, select_col, inner_table, inner_where = match.groups()
     self_value = None
-    if self_table and focal is not None:
+    # A real, latent bug found 2026-09-25 running FLEX2's own
+    # `lecturesAttended` for the first time: this branch used to fire
+    # whenever the CALLER passed a non-None `self_table`, regardless of
+    # whether `inner_where` actually references `self` at all -- harmless
+    # as long as every caller only ever passed `self_table` for a
+    # genuinely self-referencing fact, but `_row_from_filter_conjuncts`'s
+    # own default (falling back to the aggregate's own table when no
+    # explicit override exists, added the same day for `priorRegistration
+    # Count`) now passes a non-None `self_table` unconditionally, which
+    # stamped a bogus, schema-invalid `id` column onto a real table
+    # (STUDENT_ATTENDANCE has no `id` column at all) purely because
+    # `lecturesAttended`'s OWN inner_where ("OFFER_ID = <this course
+    # offering>") happens to share a filter_text with an IN-subquery,
+    # never mentioning `self`. Now gated on the inner WHERE actually
+    # containing the literal word `self`, matching this function's own
+    # docstring, which already described this as the intended condition.
+    if self_table and focal is not None and _SELF_TOKEN_RE.search(inner_where):
         self_row = focal.setdefault(self_table.upper(), {})
         if self_row not in candidate.rows(self_table):
             candidate.add_row(self_table, self_row)
@@ -451,9 +467,17 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
             self_row['id'] = self_value
     bindings = _conjunct_value_bindings(inner_where, scenario, self_value)
     inner_row = dict(bindings)
-    inner_row['id'] = _fresh_id_value(candidate, inner_table)
+    # The subquery's own "SELECT <col>" names `inner_table`'s real key --
+    # a real, generalizable bug (see `subquery_check`'s own mirror fix,
+    # same day): this used to hardcode a bare 'id', correct only for
+    # Spree's own Rails-convention PK naming (the only case study this
+    # mechanism had been exercised against before), but wrong for a named
+    # PK like FLEX2's own LECTURE_ID -- a constructed row would carry a
+    # key ('id') the real schema doesn't have at all, and the read-side
+    # match (looking for the REAL key) would then never find it either.
+    inner_row[select_col] = _fresh_id_value(candidate, inner_table)
     candidate.add_row(inner_table, inner_row)
-    return inner_row['id']
+    return inner_row[select_col]
 
 
 def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row=None):
@@ -501,10 +525,11 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
             if candidate is None:
                 skipped.append(c_stripped)
                 continue
-            outer_col, _select_col, inner_table, inner_where = m.groups()
+            outer_col, select_col, inner_table, inner_where = m.groups()
             inner_bindings = _conjunct_value_bindings(inner_where, scenario, self_value=None)
 
-            def subquery_check(row, outer_col=outer_col, inner_table=inner_table, inner_bindings=inner_bindings):
+            def subquery_check(row, outer_col=outer_col, inner_table=inner_table,
+                                inner_bindings=inner_bindings, select_col=select_col):
                 try:
                     outer_val = _row_get(row, outer_col)
                 except FitnessEvaluationError:
@@ -512,7 +537,22 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
                 if outer_val is None:
                     return False
                 for inner_row in candidate.rows(inner_table):
-                    inner_id = inner_row.get('id', inner_row.get('ID'))
+                    # The subquery's own "SELECT <col>" names which column
+                    # of `inner_table` this IN-list is really built from --
+                    # a real, generalizable bug, found 2026-09-25 running
+                    # FLEX2's own `lecturesAttended` for the first time
+                    # (`LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE
+                    # WHERE ...)`): this used to hardcode a bare 'id'/'ID'
+                    # key instead, a real, correct assumption for Spree's
+                    # own Rails-convention PK naming (the only case study
+                    # this subquery mechanism had been exercised against
+                    # before), but wrong for FLEX2 (and any other schema
+                    # using named PKs like LECTURE_ID) -- every real
+                    # LECTURE row has no bare 'id' key at all, so the
+                    # match NEVER succeeded, silently under-counting to 0
+                    # regardless of how many real matching rows existed.
+                    inner_id = inner_row.get(select_col, inner_row.get(
+                        select_col.upper(), inner_row.get(select_col.lower())))
                     if inner_id != outer_val:
                         continue
                     if all(inner_row.get(k, inner_row.get(k.upper())) == v

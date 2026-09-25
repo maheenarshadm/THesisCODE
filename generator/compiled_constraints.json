@@ -10505,7 +10505,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -10911,7 +10917,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -11381,7 +11393,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -11952,7 +11970,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -12619,7 +12643,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -13035,7 +13065,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -13525,7 +13561,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -14079,7 +14121,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -14697,7 +14745,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -15379,7 +15433,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -16125,7 +16185,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "unmetPrerequisiteCount": {
     "kind": "derived_join_count",
@@ -16489,7 +16555,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -16913,7 +16985,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -17327,7 +17405,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -17825,7 +17909,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -18303,7 +18393,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -18865,7 +18961,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -19444,7 +19546,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -20070,7 +20178,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -20745,7 +20859,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -21435,7 +21555,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -22189,7 +22315,13 @@
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
     "filter_text": "ROLL_NO=<student> AND SEM_ID=<semester>",
-    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>"
+    "source_text": "COUNT(COURSE_REGISTRATION) WHERE ROLL_NO=<student> AND SEM_ID=<semester>",
+    "cross_table_placeholders": {
+     "student": {
+      "table": "COURSE_REGISTRATION",
+      "column": "ROLL_NO"
+     }
+    }
    },
    "maxCoursesAllowed": {
     "kind": "literal_via_upstream_branch",
@@ -23656,7 +23788,7 @@
       "kind": "derived_aggregate",
       "aggregate": "COUNT",
       "table": "STUDENT_ATTENDANCE",
-      "filter_text": "ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
+      "filter_text": "ROLL_NO = <student> AND ATTEND_FLAG = 'Y' AND LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)",
       "source_text": "COUNT(STUDENT_ATTENDANCE) WHERE ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
       "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
      },
@@ -23701,11 +23833,21 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "COURSE_OFFER",
+   "table": "COURSE_REGISTRATION",
    "pk_columns": [
-    "OFFER_ID"
+    "OFFER_ID",
+    "ROLL_NO"
    ],
-   "joins": {}
+   "joins": {
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
   }
  },
  {
@@ -23787,7 +23929,7 @@
       "kind": "derived_aggregate",
       "aggregate": "COUNT",
       "table": "STUDENT_ATTENDANCE",
-      "filter_text": "ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
+      "filter_text": "ROLL_NO = <student> AND ATTEND_FLAG = 'Y' AND LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)",
       "source_text": "COUNT(STUDENT_ATTENDANCE) WHERE ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
       "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
      },
@@ -23832,11 +23974,21 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "COURSE_OFFER",
+   "table": "COURSE_REGISTRATION",
    "pk_columns": [
-    "OFFER_ID"
+    "OFFER_ID",
+    "ROLL_NO"
    ],
-   "joins": {}
+   "joins": {
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
   }
  },
  {

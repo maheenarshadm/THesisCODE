@@ -47,10 +47,26 @@ def _eval_operand(node, values):
 
 
 _ARITHMETIC = {
-    '+': lambda a, b: a + b,
-    '-': lambda a, b: a - b,
-    '*': lambda a, b: a * b,
-    '/': lambda a, b: a / b if b else None,
+    # FEEL's own null-propagation semantics: any arithmetic operator
+    # applied to a `null` operand evaluates to `null`, never raises. Only
+    # `/` used to guard for this (against a zero/`None` denominator,
+    # itself incomplete -- a `None` NUMERATOR with a real denominator
+    # still crashed); `+`/`-`/`*` had no guard at all. Found real, not
+    # hypothetical, 2026-09-25: once FLEX2's `Attendance Eligibility For
+    # Final Exam` finally reached real evaluation for the first time (its
+    # own subject-picking gap fixed the same day), a real course offering
+    # with zero scheduled `LECTURE` rows makes `lecturesHeldForOffering =
+    # 0`, so `lecturesAttended / lecturesHeldForOffering` correctly
+    # evaluates to FEEL `null` (division by zero) -- but the OUTER
+    # `* 100` then crashed with `TypeError: unsupported operand type(s)
+    # for *: 'NoneType' and 'int'`, an uncaught crash that aborted the
+    # WHOLE decision (not just this one case), rather than a normal
+    # `None` value the SAME `evaluate_condition`/comparison machinery
+    # already handles correctly elsewhere.
+    '+': lambda a, b: a + b if a is not None and b is not None else None,
+    '-': lambda a, b: a - b if a is not None and b is not None else None,
+    '*': lambda a, b: a * b if a is not None and b is not None else None,
+    '/': lambda a, b: a / b if (a is not None and b) else None,
 }
 
 

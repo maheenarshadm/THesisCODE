@@ -64,6 +64,7 @@ from feel_parser import parse_unary_test, parse_expression, UnsupportedFeelConst
 from literal_expression_overrides import get_override as get_literal_expression_override  # noqa: E402
 from aggregate_self_table import get_self_table  # noqa: E402
 from aggregate_self_exclusions import get_exclude_self_column  # noqa: E402
+from aggregate_filter_overrides import get_filter_text_override  # noqa: E402
 import validate_mapper as vm  # noqa: E402 -- reused for GT_CONFIG / ground-truth loading, not re-implemented
 
 DMN_NS = "https://www.omg.org/spec/DMN/20191111/MODEL/"
@@ -739,6 +740,59 @@ def classify_derived(row):
     return None  # nothing matched -- caller keeps the existing generic 'derived' fallback
 
 
+def _apply_aggregate_overrides(cs, var_name, node):
+    """Applies every disclosed, per-(case_study, var_name) `derived_
+    aggregate` override in one place -- consulted from BOTH paths that
+    can produce this kind: a ground truth row genuinely bucketed
+    'derived', and one mislabeled 'direct' whose own schema-field text
+    turned out to describe an aggregate anyway (confirmed real,
+    2026-09-25: `Attendance Eligibility For Final Exam`'s own
+    `lecturesAttended` is exactly this second case -- its own filter-text
+    hand-translation in `aggregate_filter_overrides.py` was silently
+    never applied until this function unified both call sites). Order
+    matters: the filter-text override runs FIRST so the self-exclusion
+    and self-table checks below see the corrected text, not the original
+    ground-truth prose."""
+    if node.get('kind') != 'derived_aggregate':
+        return node
+    # `aggregate_filter_overrides.py`'s own disclosed override: a
+    # hand-translation of informal, non-SQL prose the ground truth's own
+    # WHERE-clause extraction otherwise passes through verbatim (a real
+    # SQL syntax error at verification time).
+    filter_override = get_filter_text_override(cs, var_name)
+    if filter_override:
+        node['filter_text'] = filter_override
+    # `aggregate_self_exclusions.py`'s own disclosed override: when a
+    # "for COL" self-correlation targets the SAME table as the decision's
+    # own subject, the subject's own row always matches its own filter,
+    # so the aggregate can never read 0 for any real row without
+    # excluding it. Appends one more `:COLUMN` conjunct, resolved by the
+    # SAME self-reference machinery the base correlation already uses --
+    # see that module's own docstring for why this is a disclosed domain
+    # call, not something a generic translation could ever infer from
+    # ground truth's own plain text.
+    if re.search(r'=\s*:[A-Za-z_]\w*', node.get('filter_text') or ''):
+        exclude_col = get_exclude_self_column(cs, var_name)
+        if exclude_col:
+            node['filter_text'] += f' AND {exclude_col} != :{exclude_col}'
+    # `self_table` is consulted whenever `filter_text` carries EITHER
+    # self-reference convention `validation_oracle/db_resolver.py`'s own
+    # `_substitute_self_and_colon` resolves at verification time: bare
+    # `self` (this row's own PK -- Spree's `id != self`) or `COLUMN =
+    # :COLUMN` (this row's own value for COLUMN -- the shape
+    # `AGGREGATE_FOR_CORRELATION_RE` produces, e.g. FLEX2's
+    # `semestersElapsed`: "ROLL_NO = :ROLL_NO"). Broadened 2026-09-25
+    # from bare-`self`-only: the generator's own candidate.py/mutation.py
+    # bridge needs the SAME `self_table` binding to construct/score real
+    # matching data for either convention, not just the bare-`self` one.
+    if (re.search(r'\bself\b', node.get('filter_text') or '', re.I)
+            or re.search(r'=\s*:[A-Za-z_]\w*', node.get('filter_text') or '')):
+        self_table = get_self_table(cs, var_name)
+        if self_table:
+            node['self_table'] = self_table
+    return node
+
+
 def resolve_variable(cs, gt, decision_name, var_name, io='input'):
     """Looks up one variable's ground-truth resolution -> a resolution
     node (never None -- an unmatched lookup becomes an explicit
@@ -800,45 +854,13 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
         recipe = _try_extract_aggregate_recipe(row['raw_schema_field'])
         if recipe:
             recipe['notes'] = f"ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
-            return recipe
+            return _apply_aggregate_overrides(cs, var_name, recipe)
         return {'kind': 'unresolved', 'reason': "labeled 'direct' but no table.column parsed from its schema field",
                 'raw_schema_field': row['raw_schema_field']}
     if bucket == 'derived':
         classified = classify_derived(row)
         if classified:
-            # `aggregate_self_exclusions.py`'s own disclosed override:
-            # when a "for COL" self-correlation targets the SAME table as
-            # the decision's own subject, the subject's own row always
-            # matches its own filter, so the aggregate can never read 0
-            # for any real row without excluding it. Appends one more
-            # `:COLUMN` conjunct, resolved by the SAME self-reference
-            # machinery the base correlation already uses -- see that
-            # module's own docstring for why this is a disclosed domain
-            # call, not something the generic "for COL" translation could
-            # ever infer from ground truth's own plain text.
-            if classified.get('kind') == 'derived_aggregate' \
-                    and re.search(r'=\s*:[A-Za-z_]\w*', classified.get('filter_text') or ''):
-                exclude_col = get_exclude_self_column(cs, var_name)
-                if exclude_col:
-                    classified['filter_text'] += f' AND {exclude_col} != :{exclude_col}'
-            # `self_table` is consulted whenever `filter_text` carries
-            # EITHER self-reference convention `validation_oracle/
-            # db_resolver.py`'s own `_substitute_self_and_colon` resolves
-            # at verification time: bare `self` (this row's own PK --
-            # Spree's `id != self`) or `COLUMN = :COLUMN` (this row's own
-            # value for COLUMN -- the shape `AGGREGATE_FOR_CORRELATION_RE`
-            # above produces, e.g. FLEX2's `semestersElapsed`: "ROLL_NO =
-            # :ROLL_NO"). Broadened 2026-09-25 from bare-`self`-only: the
-            # generator's own candidate.py/mutation.py bridge needs the
-            # SAME `self_table` binding to construct/score real matching
-            # data for either convention, not just the bare-`self` one.
-            if classified.get('kind') == 'derived_aggregate' \
-                    and (re.search(r'\bself\b', classified.get('filter_text') or '', re.I)
-                         or re.search(r'=\s*:[A-Za-z_]\w*', classified.get('filter_text') or '')):
-                self_table = get_self_table(cs, var_name)
-                if self_table:
-                    classified['self_table'] = self_table
-            return classified
+            return _apply_aggregate_overrides(cs, var_name, classified)
         return {'kind': 'derived', 'notes': row['notes'], 'table_hints': row['schema_pairs']}
     return {'kind': 'unresolved', 'reason': f'unrecognized ground-truth mapping_type bucket {bucket!r}'}
 
@@ -1075,6 +1097,11 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
     # Existing disclosed offering reference, also used in raw SQL facts.
     ('FLEX2', 'this course offering'): 'COURSE_OFFER',
+    # FLEX2's `Attendance Eligibility For Final Exam::lecturesAttended`
+    # (hand-corrected in `aggregate_filter_overrides.py`) -- see
+    # validation_oracle/filter_placeholder_sources.py's own matching
+    # entry for the full writeup (2026-09-25).
+    ('FLEX2', 'student'): 'COURSE_REGISTRATION',
 }
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')

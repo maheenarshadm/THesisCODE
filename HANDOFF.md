@@ -1,5 +1,45 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, Attendance Eligibility audit)
+
+Audited FLEX2's `Attendance Eligibility For Final Exam` for the same kind
+of mis-mapping `purchaseQuantity`/`semesterType` turned out to be — NOT a
+mis-mapping (already correctly modeled as a `substituted_decision`), but
+fixed real subject-picking (same shape as `Summer Semester Registration`
+— new `('FLEX2', 'student'): 'COURSE_REGISTRATION'` placeholder-source
+entry on both validator and generator sides) plus FOUR real, generalizable
+bugs found along the way, all fixed: (1) a hand-translation of informal,
+non-SQL ground-truth prose into a real subquery (new, disclosed
+`generator/aggregate_filter_overrides.py`); (2) that override was silently
+never applied at all, because `resolve_variable` has two separate code
+paths that can produce a `derived_aggregate` node and only one of them
+consulted overrides — fixed by unifying both into one `_apply_aggregate_
+overrides` helper; (3) `candidate.py`'s own IN-subquery bridge hardcoded a
+bare `'id'` lookup instead of using the subquery's own real `SELECT <col>`
+name — correct only for Spree's Rails-convention PK naming, silently
+under-counting to 0 for FLEX2's own named-PK convention (`LECTURE_ID`);
+(4) fixing #3 exposed a latent bug where `_construct_subquery_parent`'s
+own `self_table` branch fired whenever a non-`None` `self_table` was
+passed at all, never checking whether the inner WHERE actually references
+`self` — stamped a schema-invalid `id` column onto a real row. Also fixed
+a real, generalizable bug in `validation_oracle/rule_evaluator.py`: its
+own arithmetic operators didn't propagate FEEL `null` consistently (only
+`/` guarded, incompletely), so a real zero-lecture course offering crashed
+the WHOLE decision with an uncaught `TypeError` instead of correctly
+evaluating to `null`.
+
+Net result: the decision now resolves and runs cleanly against the real,
+committed fixture (`unresolved_decisions` 2→1) — genuinely 0/2 verified
+for a confirmed, disclosed, non-bug reason (the fixture's own real
+`LECTURE` and `COURSE_REGISTRATION` data are disconnected islands, zero
+overlap). Confirmed via a fresh `solve_branch` run that BOTH rules ARE
+genuinely solvable with correct, connected data — but reflecting that in
+the committed fixture hit a separate, undiagnosed gap in `dynamosa.py`'s
+own `merge_archive_candidate` (a from-scratch rebuild from just these
+patched objectives loses the `STUDENT_ATTENDANCE` table entirely), not
+fixed here — the real fixture was left untouched. Full writeup in
+`KNOWN_ISSUES.md`'s own newest entry.
+
 ## Latest continuation — 2026-09-25 (Claude, after Codex's subject-wiring fix)
 
 Fixed the "prior-count self-inclusion" issue Codex's own entry below

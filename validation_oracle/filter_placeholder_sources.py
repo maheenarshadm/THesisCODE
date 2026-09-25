@@ -47,6 +47,22 @@ FILTER_PLACEHOLDER_SOURCES = {
     # this lets `<this course offering>` resolve to the subject's own
     # correlated COURSE_OFFER row instead of raising.
     ('FLEX2', 'this course offering'): 'COURSE_OFFER',
+    # FLEX2's `Attendance Eligibility For Final Exam`: `lecturesAttended`'s
+    # own filter_text (hand-corrected in `generator/aggregate_filter_
+    # overrides.py`, the same real ground-truth text this validator reads
+    # unchanged) reads `ROLL_NO = <student> AND ...` -- ROLL_NO is a real
+    # column on `COURSE_REGISTRATION` (its own FK to STUDENT_PROGRAM),
+    # confirmed the correct subject for this decision the same way as
+    # `Summer Semester Registration` (composite PK `(OFFER_ID, ROLL_NO)`,
+    # the exact granularity "one student's attendance in one course
+    # offering" needs). `<student>` is ALSO used by `Course Registration
+    # Eligibility`'s own filter_text, but harmlessly -- that decision's
+    # own subject already IS `COURSE_REGISTRATION`, so `<student>`
+    # already resolves via the subject row's own ROLL_NO column (this
+    # validator's first-priority check) without ever consulting this
+    # entry at all; confirmed zero collateral via a full before/after
+    # subject-table sweep, 2026-09-25.
+    ('FLEX2', 'student'): 'COURSE_REGISTRATION',
     # Case study 'T' is this project's own synthetic test namespace
     # (tests/test_spec_cases.py) -- this entry is exercised only by
     # test_case_11_filter_placeholder_via_join, never by real data.
