@@ -19,6 +19,53 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — jBilling: two real fixes + declared not_persisted overrides (commit `48ed425`)
+
+Two code fixes (see `KNOWN_ISSUES.md`'s jBilling entry for full detail):
+`Order Period Already Invoiced`::Rule_3/Rule_4 (a DMN-authoring column
+swap, confirmed against `OrderBL.java`'s real `isDateInvoiced()`) and
+`Tax Calculation Needed`::`customContactFieldConfigured` (a
+`not_persisted` mis-mapping — `pluggable_task_parameter` is a real
+table, same class as `purchaseQuantity`/`semesterType`; this one's real
+effect is still blocked by a fixture gap, `pluggable_task_parameter`
+never materialized).
+
+Separately, confirmed that supplying the ALREADY-ESTABLISHED disclosed
+`not_persisted` overrides (`__today__`, used for jBilling's `Invoice
+Overdue Check` since the `today()` fix; `candidateDateProvided`/
+`candidateDate`, needed by the Rule_3/Rule_4 fix above) at coverage-run
+time — no new code — closes 2 more decisions outright:
+
+Invocation: `coverage.py --db tests/fixtures/jbilling_merged.db
+--case-study jBilling --algorithm dynamosa_nsga2 --construction-strategy
+merged_archive --archive-pickle generator/experiment_runs/
+jBilling__dynamosa_nsga2__budget1x__seed0.pkl --not-persisted-json
+'{"__today__": 20000, "candidateDateProvided": true, "candidateDate": 0}'`
+
+| | Before (no override) | After (combined override) |
+|---|---:|---:|
+| verified_covered_rules | 10 | **14** |
+| unresolved_decisions | 10 | **8** |
+| verified_rule_coverage_percent | 25.6% | 35.9% |
+
+Rule-level: `Invoice Overdue Check`'s both rules flip `false_positive`
+→`confirmed` (real: `invoice.due_date` vs. the fixed `__today__=20000`
+constant, same value used everywhere else in this project).
+`Order Period Already Invoiced::Rule_2` flips `false_positive`→
+`confirmed`; `Rule_4` flips `agreed_uncovered`→`false_negative` (a real,
+honest finding that the search itself never explored this branch, not a
+validator bug — `candidateDate=0 < next_billable_day=1` matches
+`OrderBL.java`'s real semantics); `Rule_3` stays `false_positive` under
+this particular `candidateDate=0` choice (the fixture's only real
+`next_billable_day` value is `1`, never satisfying `>=`) — the same open
+"one fixed value can't hit every branch" methodology question
+`evaluationTime` already carries, not a new gap. `Tax Calculation
+Needed`'s 4 rules stay `false_positive` (blocked by the fixture gap
+above, unaffected by these overrides).
+
+OpenMRS/Spree/FLEX2 untouched by this round (jBilling-only overrides).
+Full regression suite re-run and passing (see the commit's own message).
+
 ### 2026-09-25 — generator subject wiring verification (Codex)
 
 Baseline commit: `6a9b80151d277e2958ac90a3146919758b45007d`.
