@@ -295,6 +295,22 @@ AGGREGATE_RECIPE_DOTTED_RE = re.compile(
 # it) -- optional; when absent, the aggregated column's own table is used
 # as a single-table FROM, same as the bare-table shapes above.
 AGGREGATE_FROM_RE = re.compile(r'\bFROM\s+(.+?)\s+WHERE\b', re.I | re.S)
+# A fourth, non-WHERE correlation phrasing, found real (2026-09-25)
+# investigating FLEX2's own remaining gaps: ground truth sometimes names
+# the correlating column(s) with "for COL" / "for COL1+COL2" instead of
+# spelling out a WHERE clause at all (`variable_to_schema_mapping.csv`'s
+# own text for `semestersElapsed`: "derived COUNT(STUDENT_SEMESTER) for
+# ROLL_NO"; `Summer Semester Registration`'s own `priorRegistrationCount`/
+# `enrolledStudentCount` use the identical convention). Before this fix,
+# these three fell through to `filter_text: None` -- silently dropping a
+# real, intended correlation instead of raising or guessing, invisible
+# until a validator run actually reached one of them (see KNOWN_ISSUES.md
+# / DESIGN.md's own 2026-09-25 entries). Deliberately anchored to fire
+# IMMEDIATELY after the aggregate/table match (`^\s*for\s+...`, not a bare
+# `search` anywhere in the text) so an unrelated later "for" elsewhere in
+# the same sentence is never mistaken for this convention.
+AGGREGATE_FOR_CORRELATION_RE = re.compile(
+    r'^\s*for\s+([A-Za-z_][A-Za-z0-9_]*(?:\s*\+\s*[A-Za-z_][A-Za-z0-9_]*)*)', re.I)
 
 
 def _try_extract_aggregate_recipe(text):
@@ -346,6 +362,20 @@ def _try_extract_aggregate_recipe(text):
             table, aggregate = m.group(1), m.group(2).upper()
     where_idx = text.upper().find('WHERE', m.end())
     filter_text = text[where_idx + len('WHERE'):].rstrip(') ').strip() if where_idx != -1 else None
+    if filter_text is None:
+        for_m = AGGREGATE_FOR_CORRELATION_RE.match(text[m.end():])
+        if for_m:
+            # "for COL1+COL2" means "correlate to THIS SUBJECT ROW's own
+            # value for each of these columns" -- translated into the
+            # SAME `:column` self-reference syntax `db_resolver.py`'s own
+            # `_substitute_self_and_colon` already resolves (used
+            # elsewhere, e.g. Spree's `price_list_id = :price_list_id AND
+            # id != self`), so this needs NO new validator capability at
+            # all. Requires the SUBJECT row to actually carry each named
+            # column directly -- `_substitute_self_and_colon` already
+            # raises, rather than guessing, when it doesn't.
+            columns = [c.strip() for c in for_m.group(1).split('+')]
+            filter_text = ' AND '.join(f'{c} = :{c}' for c in columns)
     node = {'kind': 'derived_aggregate', 'aggregate': aggregate, 'table': table,
             'filter_text': filter_text, 'source_text': text}
     if value_column:

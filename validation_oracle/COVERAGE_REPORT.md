@@ -19,6 +19,25 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-25 `AGGREGATE_FOR_CORRELATION_RE` compile-time fix**
+(`compile_constraints.py`, built on request as "option 2" — a general
+parser fix, not a one-off override) — FLEX2 33→36 verified rules
+(60.0%→65.5% raw, 62.3%→67.9% solvable), decision-table coverage
+6/10→7/10. Closes the compile-time gap the composite-join fix below had
+surfaced: ground truth's own "for COL"/"for COL1+COL2" correlation
+phrasing (`variable_to_schema_mapping.csv`) was never recognized by
+`_try_extract_aggregate_recipe`, leaving `filter_text: null` for 7
+records corpus-wide (confirmed via an order-independent diff of the
+whole recompiled `compiled_constraints.json` — exactly these 7 changed,
+nothing else). `Graduation Eligibility` jumps from 0/5 to **3/5 verified**
+(`Rule_1`/`Rule_2`/`Rule_3`); `Rule_4`/`Rule_5` don't verify for a
+confirmed ordinary data-coverage reason (hit policy `FIRST`, and all 148
+real `STUDENT_PROGRAM` rows in the fixture already match an earlier
+rule — none reaches the catch-all). `Summer Semester Registration` is
+unchanged (its own separate `<this course offering>` blocker is
+untouched by this fix). Full `coverage.py` re-run confirms zero flips
+anywhere else in FLEX2 or in OpenMRS/Spree/jBilling.
+
 **As of the 2026-09-25 composite-key join fix** (`schema_utility.
 composite_backward_edges`, built on request for `Graduation
 Eligibility`) — FLEX2 32→33 verified rules (58.2%→60.0% raw, 60.4%→62.3%
@@ -137,9 +156,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 33 | 60.0% |
+| FLEX2 | 98 | 55 | 36 | 65.5% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **103** | **52.6%** |
+| **Total** | **240** | **196** | **106** | **54.1%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -149,9 +168,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 33 | 62.3% |
+| FLEX2 | 55 | 0 | 2 | 53 | 36 | 67.9% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **103** | **70.5%** |
+| **Total** | **196** | **27** | **23** | **146** | **106** | **72.6%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`

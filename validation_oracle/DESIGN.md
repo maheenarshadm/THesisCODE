@@ -414,6 +414,37 @@ upstream-chaining gap (above) is also fixed: `Rule_1` verifies for all
 545 real cases (`Rule_2`/`3`/`4` don't, with nothing `ungrounded` — an
 ordinary data-coverage gap). FLEX2 32→33 verified rules.
 
+**Fixed the `semestersElapsed` compile-time bug above, the same day, on
+request ("build option 2" — a general parser fix, not a one-off
+override).** Traced to the real ground truth: `jbillingandflex/
+flex2_dmn/.../provenance/variable_to_schema_mapping.csv` line 37 reads
+"derived COUNT(STUDENT_SEMESTER) for ROLL_NO" — "for COL" phrasing
+instead of a `WHERE` clause, which `generator/compile_constraints.py`'s
+own `_try_extract_aggregate_recipe` had never been taught to recognize.
+New `AGGREGATE_FOR_CORRELATION_RE` matches "for COL"/"for COL1+COL2"
+immediately after the aggregate/table match (anchored right there, never
+a bare `search` elsewhere in the text, so an unrelated later "for" is
+never mistaken for this convention) and translates it into the SAME
+`:column` self-reference syntax `_substitute_self_and_colon` already
+resolves — no new validator capability needed, just a compile-time
+translation into an existing, already-tested mechanism. Confirmed via an
+order-independent diff of the whole recompiled `compiled_constraints.
+json`: exactly 7 records changed (`Graduation Eligibility`'s 3
+`semestersElapsed` variants, `Summer Semester Registration`'s 4
+`priorRegistrationCount`/`enrolledStudentCount` variants), zero others —
+`Summer Semester Registration`'s own THIRD, differently-worded fact
+(`repeatCourseCountRequested`: "COUNT per USER_ID/semester") correctly
+stayed untouched, since "per COL/word" is a different phrasing this fix
+deliberately doesn't parse. Verified against the real FLEX2 fixture (no
+rebuild needed): `Graduation Eligibility` jumped from 0/5 to 3/5 verified
+(`Rule_1`/`Rule_2`/`Rule_3`); `Rule_4`/`Rule_5` don't verify for a
+confirmed, ordinary data-coverage reason (hit policy `FIRST`, `Rule_5` an
+unconditional catch-all, and all 148 real `STUDENT_PROGRAM` rows in the
+fixture already match an earlier rule first). `Summer Semester
+Registration` is unchanged (its own subject row, `COURSE`, never had the
+needed columns regardless). Full regression across all 4 case studies
+confirms zero collateral. FLEX2 33→36 verified rules.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

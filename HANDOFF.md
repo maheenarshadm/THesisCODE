@@ -458,6 +458,40 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     with nothing `ungrounded` — an ordinary data-coverage gap, not a
     bug). FLEX2 32→33 verified rules (58.2%→60.0% raw, 60.4%→62.3%
     solvable), decision-table coverage 5/10→6/10.
+16. **Fixed the `semestersElapsed` compile-time bug from item 15, on
+    request ("build option 2" — a general parser fix, not a one-off
+    override).** Traced to the real ground truth itself
+    (`jbillingandflex/flex2_dmn/.../provenance/variable_to_schema_mapping
+    .csv` line 37): the raw text reads "derived COUNT(STUDENT_SEMESTER)
+    for ROLL_NO" — "for COL" phrasing instead of a `WHERE` clause, which
+    `compile_constraints.py`'s own `_try_extract_aggregate_recipe` had
+    never been taught to recognize at all. New `AGGREGATE_FOR_CORRELATION
+    _RE` matches "for COL"/"for COL1+COL2" immediately after the
+    aggregate/table match (anchored there, never a bare `search`
+    elsewhere in the text) and translates it into the SAME `:column`
+    self-reference syntax `db_resolver.py`'s `_substitute_self_and_colon`
+    already resolves (used elsewhere: Spree's `price_list_id =
+    :price_list_id AND id != self`) — no new validator capability needed,
+    just a compile-time translation into an existing mechanism. Confirmed
+    via an order-independent diff of the whole recompiled
+    `compiled_constraints.json`: exactly 7 records changed (`Graduation
+    Eligibility`'s 3 `semestersElapsed` variants, `Summer Semester
+    Registration`'s 4 `priorRegistrationCount`/`enrolledStudentCount`
+    variants), zero others — `Summer Semester Registration`'s own THIRD,
+    differently-worded fact (`repeatCourseCountRequested`: "COUNT per
+    USER_ID/semester") correctly stayed untouched, since "per COL/word"
+    is a different phrasing this fix deliberately doesn't attempt to
+    parse. Verified against the real FLEX2 fixture (no rebuild needed):
+    `Graduation Eligibility` jumped from 0/5 to 3/5 verified (`Rule_1`/
+    `Rule_2`/`Rule_3`); `Rule_4`/`Rule_5` don't verify for a confirmed,
+    ordinary data-coverage reason (hit policy `FIRST`, `Rule_5` an
+    unconditional catch-all, and all 148 real `STUDENT_PROGRAM` rows in
+    the fixture already match an earlier rule first — none falls through
+    that far). `Summer Semester Registration` is unchanged (its own
+    separate `<this course offering>` blocker is untouched by this fix).
+    Full regression across all 4 case studies confirms zero collateral.
+    FLEX2 33→36 verified rules (60.0%→65.5% raw, 62.3%→67.9% solvable),
+    decision-table coverage 6/10→7/10.
 
 ## 7. Planned / open work
 
@@ -479,12 +513,12 @@ Full, itemized list with root causes and what fixing each would require:
   `Credit Transfer Exemption` (§6 item 14) is fully resolved (1/3
   verified); `Course Registration Eligibility` (§6 items 14/15) is
   resolved through `run_decision` (1/4 distinct rule_ids verified, the
-  rest an ordinary data-coverage gap). Of the original "5 backward-join
-  gaps": `Graduation Eligibility`'s own join-mechanism limitation is
-  fixed (§6 item 15), but it surfaced a separate, not-yet-fixed Phase 1
-  compile-time bug (`semestersElapsed`'s `derived_aggregate` has
-  `filter_text: null`) blocking all 5 of its rules; `Summer Semester
-  Registration` still hits a different, precisely-diagnosed gap;
+  rest an ordinary data-coverage gap); `Graduation Eligibility` (§6 items
+  15/16) has both its join-mechanism limitation AND the compile-time bug
+  it surfaced fixed (3/5 verified; `Rule_4`/`Rule_5` are an ordinary
+  data-coverage gap). Remaining: `Summer Semester Registration` still
+  hits a different, precisely-diagnosed gap (its own subject row never
+  had the needed columns, unaffected by either fix above);
   `Admission Closure Eligibility` has no declared FK relationship at all
   in the real schema. An audit question remains on `Attendance
   Eligibility For Final Exam`.

@@ -463,9 +463,10 @@ excluded from all coverage numbers per an explicit decision below):
   `Credit Transfer Exemption` is FULLY resolved (3/3 verified).
   `Course Registration Eligibility` is resolved through `run_decision`
   (1/4 distinct rule_ids verified; the rest are an ordinary data-coverage
-  gap). `Graduation Eligibility`'s own join-mechanism limitation is fixed,
-  but it surfaced a separate compile-time bug blocking all 5 of its rules
-  (0/5 verified). `Summer Semester Registration` and `Admission Closure
+  gap). `Graduation Eligibility`'s own join-mechanism limitation AND the
+  compile-time bug it surfaced are both fixed (3/5 verified; the other 2
+  are an ordinary data-coverage gap). `Summer Semester Registration` and
+  `Admission Closure
   Eligibility` remain open for their own distinct reasons.
 - **FIXED 2026-09-25: `subject_table.py`'s own `_TABLE_EXTRACTORS
   ['derived_join_count']` unconditionally required BOTH `prereq_table`
@@ -605,26 +606,56 @@ excluded from all coverage numbers per an explicit decision below):
   fixed `Course Registration Eligibility`'s own separate upstream-chaining
   gap as a side effect (same shared mechanism — see its own entry above).
 
-  **But**: running `Graduation Eligibility` all the way through
-  `run_decision` now surfaces a DIFFERENT, previously-unreachable bug —
-  `semestersElapsed`'s own `derived_aggregate` node
-  (`COUNT(STUDENT_SEMESTER)`, `Rule_3`/`Rule_4`/`Rule_5`) has
-  `filter_text: null` despite its own `source_text` explicitly saying
-  "derived COUNT(STUDENT_SEMESTER) for ROLL_NO" — i.e. Phase 1 compilation
-  recorded a human-readable note that a subject correlation is needed, but
-  never actually emitted the machine-actionable WHERE clause for it.
-  `db_resolver.py`'s own `derived_aggregate` branch then builds
-  `f'... WHERE {where}'` with `where=''`, a malformed
-  `sqlite3.OperationalError: incomplete input`. Confirmed corpus-wide this
-  null-`filter_text`-with-a-descriptive-`source_text` pattern is UNIQUE to
-  FLEX2's `Graduation Eligibility` and `Summer Semester Registration`
-  (both already-known-open decisions, so this was never reached before).
-  This is a Phase 1/`compile_constraints.py` compile-time gap, a different
-  root cause from the join-mechanism limitation just fixed, and NOT
-  addressed here — `Graduation Eligibility` is 0/5 verified for now,
-  disclosed rather than silently patched around. `Course Registration
-  Eligibility` is unaffected (its own `derived_join_count`/
-  `literal_via_upstream_branch` nodes don't use this pattern).
+  **FIXED 2026-09-25, the same day, on request (built "option 2"):**
+  running `Graduation Eligibility` all the way through `run_decision`
+  had surfaced a DIFFERENT, previously-unreachable bug — `semestersElapsed`'s
+  own `derived_aggregate` node (`COUNT(STUDENT_SEMESTER)`, `Rule_3`/
+  `Rule_4`/`Rule_5`) had `filter_text: null` despite its own `source_text`
+  explicitly saying "derived COUNT(STUDENT_SEMESTER) for ROLL_NO" — i.e.
+  Phase 1 compilation recorded a human-readable note that a subject
+  correlation is needed, but never actually emitted the machine-actionable
+  WHERE clause for it (traced to the real ground-truth row itself,
+  `jbillingandflex/flex2_dmn/.../provenance/variable_to_schema_mapping.csv`
+  line 37: the raw text uses "for ROLL_NO" phrasing, which
+  `compile_constraints.py`'s own `_try_extract_aggregate_recipe` had never
+  been taught to recognize — it only recognized an explicit `WHERE ...`
+  clause). Fixed generally, not as a one-off patch: a new
+  `AGGREGATE_FOR_CORRELATION_RE` recognizes "for COL" / "for COL1+COL2"
+  immediately after the aggregate/table match (anchored to fire right
+  there, never a bare `search` elsewhere in the text, so an unrelated
+  later "for" in the same sentence can never be mistaken for this
+  convention) and translates it into the SAME `:column` self-reference
+  syntax `db_resolver.py`'s own `_substitute_self_and_colon` already
+  resolves (used elsewhere: Spree's `price_list_id = :price_list_id AND
+  id != self`) — no new validator capability needed at all, just a
+  compile-time translation into an existing, already-tested mechanism.
+  Confirmed corpus-wide via an order-independent diff of the whole
+  recompiled `compiled_constraints.json`: exactly 7 records changed
+  (`Graduation Eligibility`'s 3 `semestersElapsed` variants, `Summer
+  Semester Registration`'s 4 `priorRegistrationCount`/
+  `enrolledStudentCount` variants), zero others — `Summer Semester
+  Registration`'s own THIRD, differently-worded fact
+  (`repeatCourseCountRequested`: "REPEAT_COURSE (COUNT per USER_ID/
+  semester)") correctly stayed `filter_text: null` rather than being
+  guessed at, since "per COL/word" is a genuinely different phrasing this
+  fix deliberately does not attempt to parse. Verified against the real
+  FLEX2 fixture (no rebuild needed — this is a verification-time read,
+  the fixture's own data was already there): `Graduation Eligibility`
+  jumped from 0/5 to **3/5 verified** (`Rule_1`/`Rule_2`/`Rule_3`, FLEX2
+  33→36). `Rule_4`/`Rule_5` don't verify for a confirmed, ordinary
+  data-coverage reason, not a bug: hit policy is `FIRST`, `Rule_5` is an
+  unconditional catch-all, and of the 148 real `STUDENT_PROGRAM` rows in
+  this fixture, every single one already matches `Rule_1`, `Rule_2`, or
+  `Rule_3` first (118/29/1 respectively, confirmed via
+  `decision_trace.json`, zero `ungrounded`) — none ever falls through far
+  enough to reach `Rule_4`/`Rule_5`, the same "search never generated
+  data for this branch" pattern already established elsewhere in this
+  project. `Summer Semester Registration` is UNCHANGED (still hits its
+  own, separate, already-disclosed `<this course offering>` blocker) —
+  expected, since its own subject row (`COURSE`) never had `ROLL_NO`/
+  `COURSE_ID`/`OFFER_ID` directly on it regardless of this fix. Full
+  regression across all 4 case studies (`coverage.py`, before/after):
+  zero collateral anywhere in OpenMRS/Spree/jBilling.
 - **`Attendance Eligibility For Final Exam`** — no table-backed input
   at all (every condition variable is `not_persisted`/upstream), same
   shape as Spree's `Price List Volume Adjustment Tier Selection` used

@@ -26884,7 +26884,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO",
     "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
    },
    "creditHoursEarned": {
@@ -27030,7 +27030,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO",
     "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
    }
   },
@@ -27163,7 +27163,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "STUDENT_SEMESTER",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO",
     "source_text": "derived COUNT(STUDENT_SEMESTER) for ROLL_NO"
    },
    "yearsElapsed": {
@@ -27371,7 +27371,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    }
   },
@@ -27555,7 +27555,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
@@ -27788,14 +27788,14 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "OFFER_ID = :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for OFFER_ID"
    },
    "priorRegistrationCount": {
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
@@ -28054,7 +28054,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "ROLL_NO = :ROLL_NO AND COURSE_ID = :COURSE_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for ROLL_NO+COURSE_ID"
    },
    "isElectiveTaughtByVisitingScholarUnavailableOtherwise": {
@@ -28089,7 +28089,7 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "COURSE_REGISTRATION",
-    "filter_text": null,
+    "filter_text": "OFFER_ID = :OFFER_ID",
     "source_text": "COUNT(COURSE_REGISTRATION) for OFFER_ID"
    }
   },
