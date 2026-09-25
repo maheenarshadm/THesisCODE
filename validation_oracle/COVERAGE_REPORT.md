@@ -19,6 +19,87 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — jBilling: Currency Exchange Rate Source subject-table decision resolved (user-decided, `base_user`)
+
+Resolves the PENDING decision flagged at the end of the prior jBilling
+audit round (see this file's own entry directly below, and
+`KNOWN_ISSUES.md`'s matching jBilling entry): the user was asked, and
+chose `base_user` as this decision's subject table over the alternative
+(`currency_exchange` itself, rejected as degenerate — see the question
+asked and KNOWN_ISSUES.md for both candidates' tradeoffs).
+
+Implementation: one new entry pair in
+`validation_oracle/filter_placeholder_sources.py`
+(`('jBilling', 'entity_id')`/`('jBilling', 'currency_id') -> 'base_user'`).
+Deliberately NOT mirrored into `generator/compile_constraints.py`'s
+`_DECISION_SUBJECT_PLACEHOLDER_SOURCES` — doing so was tried, and found
+to inject a spurious `cross_table_placeholders` correlation into two
+UNRELATED decisions (`Ageing Step Advancement`/`Ageing Step Config
+Validation`, which also happen to use a placeholder literally named
+`<entity_id>` for a completely different fact, `ageing_entity_step`'s
+own scenario value) because that dict is keyed by placeholder name alone,
+with no decision scoping and no "subject row first" guard the validator
+side has. Reverted; full detail and reasoning in the comment left in
+`compile_constraints.py` itself and in `KNOWN_ISSUES.md`. Net effect:
+`compiled_constraints.json` is BYTE-IDENTICAL to before this change
+(confirmed via `json.dumps(sort_keys=True)` diff, 0 records changed) —
+the whole fix lives in the validator, consulted live at coverage-run
+time, not baked into compiled output.
+
+**Result, invocation-identical to the prior round's** (`coverage.py --db
+tests/fixtures/jbilling_merged.db --case-study jBilling --algorithm
+dynamosa_nsga2 --construction-strategy merged_archive --archive-pickle
+generator/experiment_runs/jBilling__dynamosa_nsga2__budget1x__seed0.pkl`,
+plus the same combined `not-persisted-json` used last round):
+
+| | No override | Combined override (`__today__`, `candidateDateProvided`, `candidateDate`) |
+|---|---:|---:|
+| verified_covered_rules | 10 → **11** | 14 → **15** |
+| unresolved_decisions | 10 → **9** | 8 → **7** |
+| verified_rule_coverage_percent | 25.6% → **28.2%** | 35.9% → **38.5%** |
+
+Rule-level: `Currency Exchange Rate Source` is no longer in
+`unresolved_decisions` (was: "No table-backed inputs found"). Its own
+subject now resolves to `base_user` (single-table `all_tables`, no join
+path needed — confirmed via `subject_table_for_decision`). Per-rule,
+under EITHER override configuration:
+- `Rule_3` (`ERROR_NO_RATE`, both conditions false) flips
+  `false_positive` → `confirmed`.
+- `Rule_1`/`Rule_2` stay `false_positive`.
+
+**Honest caveat, disclosed rather than presented as a clean win**: this
+is the SAME "fixture gap" pattern already documented for
+`pluggable_task_parameter`/`spree_discounts`, just manifesting as a
+spurious PASS instead of a hard error. Checked directly against
+`decision_trace.json`: all 4 of `jbilling_merged.db`'s own committed
+`base_user` rows have `entity_id`/`currency_id` = NULL (never populated,
+since no earlier decision ever read them) — so `entity_id = NULL AND
+currency_id = NULL` never matches any real `currency_exchange` row for
+ANY of them, meaning `hasEntitySpecificExchange`/`hasSystemDefaultExchange`
+evaluate `false`/`false` for literally every subject row, uniformly
+selecting Rule_3 (`ERROR_NO_RATE`) every time. This is a real, honest
+match under `db_resolver`'s own NULL-comparison SQL semantics, not a
+validator bug — but it is NOT a meaningful confirmation of "no rate
+configured for this real entity's real currency," since no real
+entity/currency correlation was ever exercised; it is vacuously true
+because the correlating columns are unset. `Rule_1`/`Rule_2` remain
+completely unreachable given this fixture, for the identical reason —
+there is no `base_user` row with a real (non-NULL) `entity_id`/
+`currency_id` pair matching any real `currency_exchange` row. Populating
+real values would need a fixture rebuild, which was NOT attempted this
+round (same caution as the `pluggable_task_parameter` gap: this session's
+generator-side mirror was deliberately skipped, so a rebuild from the
+saved archive couldn't correlate these values correctly without first
+doing that larger, separate fix).
+
+OpenMRS/Spree/FLEX2 fully re-checked, byte-identical to their established
+values (OpenMRS 42, Spree 16 no-override baseline, FLEX2 37) — zero
+collateral. Full regression suite re-run and passing (`candidate.py`
+236/240 evaluable, `mutation.py`, `fitness.py`, `test_decision_subject.py`,
+`test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+`test_serialized_field_roundtrip.py`, `drd_executor.py`'s own OpenMRS
+acceptance test — all passing, all byte-identical to established output).
+
 ### 2026-09-25 — jBilling: two real fixes + declared not_persisted overrides (commit `48ed425`)
 
 Two code fixes (see `KNOWN_ISSUES.md`'s jBilling entry for full detail):

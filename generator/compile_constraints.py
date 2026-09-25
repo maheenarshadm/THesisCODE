@@ -1107,6 +1107,41 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     # validation_oracle/filter_placeholder_sources.py's own matching
     # entry for the full writeup (2026-09-25).
     ('FLEX2', 'student'): 'COURSE_REGISTRATION',
+    # NOT mirroring `('jBilling', 'entity_id') -> 'base_user'` /
+    # `('jBilling', 'currency_id') -> 'base_user'` here, unlike every
+    # entry above -- deliberately, not an oversight (2026-09-25). Checked
+    # first: this dict is keyed by (case_study, placeholder_name) alone,
+    # with no decision-scoping, and `entity_id` is NOT a unique placeholder
+    # name in jBilling -- `Ageing Step Advancement`/`Ageing Step Config
+    # Validation` ALSO have a `<entity_id>` placeholder in their own
+    # `exists` filter_text (`entity_id = <entity_id> AND status_id =
+    # <status_id>` on `ageing_entity_step`), a completely unrelated fact.
+    # On the VALIDATOR side this is harmless -- confirmed via
+    # `subject_table_for_decision`, `db_resolver._resolve_placeholders`
+    # always tries the subject row first, and those two decisions'
+    # subject is ALREADY `base_user` (unchanged by this override, checked
+    # both ways), which has a real `entity_id` column of its own, so the
+    # override is never even consulted for them. But THIS generator-side
+    # mirror has no such guard: `_decision_subject_tables_referenced`'s
+    # `exists` branch and `compute_cross_table_placeholder_correlations`
+    # both consult `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` unconditionally
+    # for every placeholder name found, regardless of decision -- adding
+    # this entry here was confirmed (via a full compiled_constraints.json
+    # diff) to also inject a spurious `cross_table_placeholders: {'entity_id':
+    # {'table': 'base_user', ...}}` onto those two UNRELATED decisions'
+    # own nodes, which `dynamosa.py`'s `merge_archive_candidate` would
+    # then use to copy their own `ageing_entity_step`-scoped `entity_id`
+    # scenario value onto `base_user.entity_id` at merge time -- a fake,
+    # undisclosed correlation this project's own discipline exists to
+    # prevent. Left unmirrored rather than widening this dict's own key
+    # shape to be decision-scoped (a larger, separate refactor, out of
+    # scope for this single-decision fix). Net effect: `Currency Exchange
+    # Rate Source` gets no `decision_subject`/`cross_table_placeholders`
+    # on the generator side, so a FRESH search run over it still can't
+    # independently construct a correlated `base_user` row -- only the
+    # validator's own independent re-derivation (this file's real
+    # purpose) sees the fix. See validation_oracle/filter_placeholder_
+    # sources.py's own matching entry for the full subject-choice writeup.
 }
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')

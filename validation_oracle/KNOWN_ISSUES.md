@@ -1939,3 +1939,112 @@ before being counted as fixed here.
   above), not a new gap. `Tax Calculation Needed`'s 4 rules stay
   `false_positive` under this run, exactly as expected given the fixture
   gap.
+
+- **`Currency Exchange Rate Source`'s subject-table PENDING decision,
+  resolved by the user: `base_user` (2026-09-25).** The prior entry above
+  left this decision's subject undecided, explicitly asking the user to
+  choose between two candidates neither of which is disclosed by the DMN/
+  CSV/DRD itself: `base_user` (has its own real `entity_id`/`currency_id`
+  columns, so all 3 rules stay structurally reachable) or `currency_exchange`
+  itself (the table the facts already query, but degenerate — only Rule_1
+  could ever be confirmed). Asked directly; the user chose `base_user`.
+
+  **Implementation**: one new entry pair in
+  `validation_oracle/filter_placeholder_sources.py` --
+  `('jBilling', 'entity_id')`/`('jBilling', 'currency_id') -> 'base_user'`.
+  Confirmed via `subject_table_for_decision`: `all_tables` for this
+  decision is now the single set `{'base_user'}` (both `exists` nodes'
+  own `<entity_id>`/`<currency_id>` placeholders now resolve to a table),
+  so it's the subject directly, no root-picking/join-path tie-break
+  needed at all -- and at RUNTIME `db_resolver._resolve_placeholders`
+  never even needs to consult this override, since `base_user` (now the
+  subject row itself) already has same-named `entity_id`/`currency_id`
+  columns, resolved via its own first-priority "subject row's own column"
+  check.
+
+  **A real scoping bug found and avoided, not just a design note**:
+  mirroring this into `generator/compile_constraints.py`'s
+  `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` (every prior entry in that dict
+  gets mirrored there) was tried first, and found to be UNSAFE for this
+  specific placeholder name. That dict is keyed by `(case_study,
+  placeholder_name)` alone, with no decision scoping -- fine for every
+  prior entry (`program`/`batch`/`this course offering`/`student`), each
+  of which happens to be decision-unique in practice, but `entity_id`
+  is NOT: `Ageing Step Advancement`/`Ageing Step Config Validation` ALSO
+  have their own, semantically UNRELATED `<entity_id>` placeholder
+  (`entity_id = <entity_id> AND status_id = <status_id>` on
+  `ageing_entity_step`). A full `compiled_constraints.json` diff after
+  adding the mirrored entries showed exactly this: 4 extra records
+  changed beyond the 3 `Currency Exchange Rate Source` ones, all in
+  those two Ageing decisions, each gaining a spurious
+  `cross_table_placeholders: {'entity_id': {'table': 'base_user', ...}}`
+  annotation. The VALIDATOR side has a built-in guard against this exact
+  collision (`db_resolver._resolve_placeholders` always tries the subject
+  row's own same-named column FIRST, only falling back to
+  `filter_placeholder_sources.py` when that fails -- confirmed both
+  Ageing decisions' own subject is ALREADY `base_user`, unchanged before
+  and after this whole change, so the override is never even reached for
+  them); the GENERATOR's mirror mechanism (`_decision_subject_tables_
+  referenced`'s `exists` branch, and `compute_cross_table_placeholder_
+  correlations`) has NO equivalent guard -- it consults the dict
+  unconditionally for every placeholder name found in a filter_text,
+  decision-blind. Left unmirrored (with a full explanatory comment in
+  `compile_constraints.py` itself, at the point where the entry would
+  have gone) rather than widening that dict's own key shape to be
+  decision-scoped, which is a larger, separate refactor touching a
+  system-wide convention, out of scope for a single-decision fix.
+  Verified the revert is clean: with the generator-side entries removed,
+  `compiled_constraints.json` is BYTE-IDENTICAL to before this whole
+  change (`json.dumps(sort_keys=True)` diff across all 240 records, 0
+  changed) -- the entire fix lives in the validator, consulted live by
+  `coverage.py`, never baked into compiled output. **Net consequence,
+  disclosed**: a FRESH search run over jBilling still cannot
+  independently construct a correlated `base_user` row for this decision
+  (no `decision_subject`/`cross_table_placeholders` support on the
+  generator side) -- only the validator's own independent re-derivation
+  benefits from this fix, unlike every prior `filter_placeholder_sources.py`
+  entry, which all got the full generator-side benefit too. Extending the
+  generator side correctly would need decision-scoping this override
+  dict (or an equivalent), open work for a future session if the
+  generator's own search/merge coverage of this decision is ever
+  revisited.
+
+  **Result** (fresh `coverage.py`, invocation identical to the prior
+  round's, both with and without the established combined
+  `not_persisted` override): the decision is no longer in
+  `unresolved_decisions` (10→9 / 8→7). Full numbers and rule-level
+  detail in `COVERAGE_REPORT.md`'s newest entry.
+
+  **Honest caveat -- the SAME fixture-gap pattern as `pluggable_task_
+  parameter`/`spree_discounts` above, just manifesting as a pass instead
+  of a hard error, not a clean win**: checked directly against
+  `decision_trace.json` -- all 4 of `jbilling_merged.db`'s own committed
+  `base_user` rows have NULL `entity_id`/`currency_id` (never populated;
+  no earlier decision ever read either column, so nothing in the
+  generator's own search/repair machinery had a reason to set them).
+  `entity_id = NULL AND currency_id = NULL` never matches any real
+  `currency_exchange` row under SQL's own NULL-comparison semantics, so
+  BOTH `hasEntitySpecificExchange`/`hasSystemDefaultExchange` evaluate
+  `false` for every one of the 4 subject rows, uniformly selecting
+  `Rule_3` (`ERROR_NO_RATE`) -- flipping `false_positive` → `confirmed`,
+  a real match under the executor's own real semantics, but NOT a
+  meaningful confirmation that "no rate is configured for this real
+  entity's real currency" -- it's vacuously true because the correlating
+  columns were simply never populated, not because a real entity/currency
+  pair was checked and found missing. `Rule_1`/`Rule_2` stay
+  `false_positive`, unreachable for the identical reason -- no committed
+  `base_user` row has a real, non-NULL `entity_id`/`currency_id` pair to
+  match against. Populating real values needs a fixture rebuild, NOT
+  attempted this round (same caution as the `pluggable_task_parameter`
+  gap above, compounded here by the generator-side gap just described --
+  a rebuild from the saved archive can't correlate these values correctly
+  without the generator-side fix first, which is itself out of scope).
+
+  Full regression suite re-run and passing, zero collateral confirmed:
+  `candidate.py` (236/240 evaluable, byte-identical to baseline),
+  `mutation.py`, `fitness.py`, `test_decision_subject.py`,
+  `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+  `test_serialized_field_roundtrip.py`, `drd_executor.py`'s own OpenMRS
+  acceptance test, plus a fresh `coverage.py` run per case study:
+  OpenMRS 42, Spree 16 (no-override baseline), FLEX2 37 -- all
+  byte-identical to their established values.

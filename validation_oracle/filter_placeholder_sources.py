@@ -67,6 +67,37 @@ FILTER_PLACEHOLDER_SOURCES = {
     # (tests/test_spec_cases.py) -- this entry is exercised only by
     # test_case_11_filter_placeholder_via_join, never by real data.
     ('T', 'region'): 'customer',
+    # jBilling's `Currency Exchange Rate Source`: `hasEntitySpecificExchange`
+    # /`hasSystemDefaultExchange`'s own filter_text (`entity_id = <entity_id>
+    # AND currency_id = <currency_id>` / `entity_id = 0 AND currency_id =
+    # <currency_id>`) reads real `currency_exchange` columns, but neither
+    # `<entity_id>` nor `<currency_id>` is tied to any specific table by the
+    # DMN, CSV, or DRD -- both are pure `CurrencyBL.findExchange(Integer
+    # entityId, Integer currencyId)` method parameters in the real Java
+    # source, with no schema-declared origin at all. GENUINE RESEARCHER
+    # JUDGMENT CALL (explicitly asked of, and made by, the user,
+    # 2026-09-25 -- not a mechanically-forced choice like every other entry
+    # above): `base_user` has its own real `entity_id`/`currency_id`
+    # columns (confirmed against jbilling_schema_full.json), so "whose
+    # exchange rate" is read as "the currently-relevant user's own entity
+    # and billing currency." This is NOT confirmed by any disclosed FK --
+    # `base_user.entity_id`/`.currency_id` and `currency_exchange`'s own
+    # same-named columns share no declared foreign key at all (confirmed:
+    # `currency_exchange`'s own `fk_columns` only has `currency_id ->
+    # currency.id`, nothing on `entity_id`), so this decision's `exists`
+    # checks query `currency_exchange` directly by value, never via a real
+    # join path -- consistent with every other `exists`-with-`filter_text`
+    # node (see `subject_table.py`'s own `_TABLE_EXTRACTORS['exists']`).
+    # The alternative (`currency_exchange` itself as subject) was rejected
+    # as degenerate -- `hasEntitySpecificExchange` would be trivially true
+    # for any row it enumerates, permanently precluding Rule_2/Rule_3 --
+    # while `base_user` at least leaves all three rules structurally
+    # reachable, data permitting. See KNOWN_ISSUES.md's matching entry for
+    # the fixture-side caveat this uncovered (`base_user`'s own committed
+    # rows have NULL `entity_id`/`currency_id` -- never populated, since no
+    # earlier decision needed them).
+    ('jBilling', 'entity_id'): 'base_user',
+    ('jBilling', 'currency_id'): 'base_user',
 }
 
 

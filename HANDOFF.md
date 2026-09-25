@@ -1,5 +1,49 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, Currency Exchange Rate Source pending decision resolved)
+
+Picked up exactly where the prior entry (directly below) left off: asked
+the user, before touching anything else, to choose `Currency Exchange
+Rate Source`'s subject table between the two candidates that entry laid
+out. **User chose `base_user`.** Implemented it: one new entry pair in
+`validation_oracle/filter_placeholder_sources.py`
+(`('jBilling', 'entity_id')`/`('jBilling', 'currency_id') -> 'base_user'`).
+The decision now resolves (`unresolved_decisions` 10→9 with no override,
+8→7 with the established combined `not_persisted` override; jBilling
+`verified_covered_rules` 10→11 / 14→15).
+
+Along the way, found and avoided a real scoping bug rather than just
+applying the usual mirrored fix: this project's convention is to mirror
+every `filter_placeholder_sources.py` entry into `generator/
+compile_constraints.py`'s own `_DECISION_SUBJECT_PLACEHOLDER_SOURCES`,
+but doing so here was confirmed (via a full `compiled_constraints.json`
+diff) to inject a spurious cross-table correlation into two UNRELATED
+decisions (`Ageing Step Advancement`/`Ageing Step Config Validation`),
+which happen to reuse the SAME placeholder name `<entity_id>` for a
+completely different fact -- that dict has no decision-scoping and,
+unlike the validator side, no "try the subject row first" guard.
+Deliberately left unmirrored, with the reasoning disclosed in both files;
+`compiled_constraints.json` itself is untouched by this round (confirmed
+byte-identical). Net honest result, NOT a clean win: the committed
+`jbilling_merged.db` fixture's own `base_user` rows all have NULL
+`entity_id`/`currency_id` (never populated, same "fixture gap" pattern as
+`pluggable_task_parameter`/`spree_discounts`), so only `Rule_3`
+(`ERROR_NO_RATE`) verifies, and only because the NULL comparison is
+vacuously true, not because a real entity/currency pair was checked --
+`Rule_1`/`Rule_2` stay unreachable with this fixture. Full writeup,
+including exactly what the generator-side scoping bug looked like and
+why it was left unfixed, in `KNOWN_ISSUES.md`'s newest entry;
+before/after coverage numbers in `COVERAGE_REPORT.md`'s newest entry.
+Full regression suite re-run and passing; OpenMRS/Spree/FLEX2 confirmed
+byte-identical to established values (42/16/37), zero collateral.
+
+Remaining jBilling items from the prior entry are still open, untouched
+this round: `Payment Outcome Resolution`/`Payment Balance Assignment`
+(the `parse_output_value` bare-identifier-as-string bug, needs new
+"output-as-variable-reference" support -- medium effort) and
+`Cancellation Fee Eligibility` (0 compiled rules, root cause not yet
+investigated).
+
 ## Latest continuation — 2026-09-25 (Claude, jBilling audit — session ending here, PENDING DECISION below)
 
 Followed up the FLEX2 Attendance Eligibility audit (previous entry) with
