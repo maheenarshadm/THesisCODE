@@ -158,9 +158,17 @@ class DecisionRunner:
             # corresponding upstream row" rather than a real case never
             # reached (confirmed directly against FLEX2's own real fixture
             # data, 2026-09-24).
-            fk_value = row.get(hop['from_column'].lower())
-            row = _row_for_table(self.conn, hop['to_table'], hop['to_table'],
-                                  [hop['to_column']], [fk_value], {}) if fk_value is not None else None
+            if 'from_columns' in hop:
+                # A composite-key hop (`schema_utility.composite_backward_edges`)
+                # -- same casing gap as the single-column case below.
+                fk_values = [row.get(c.lower()) for c in hop['from_columns']]
+                row = _row_for_table(self.conn, hop['to_table'], hop['to_table'],
+                                      hop['to_columns'], fk_values, {}) \
+                    if all(v is not None for v in fk_values) else None
+            else:
+                fk_value = row.get(hop['from_column'].lower())
+                row = _row_for_table(self.conn, hop['to_table'], hop['to_table'],
+                                      [hop['to_column']], [fk_value], {}) if fk_value is not None else None
         if row is None:
             return None
         # Same casing gap as `hop['from_column']` above -- `upstream_pk_cols`

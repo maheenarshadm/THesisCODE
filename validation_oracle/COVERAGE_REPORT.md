@@ -19,6 +19,24 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+**As of the 2026-09-25 composite-key join fix** (`schema_utility.
+composite_backward_edges`, built on request for `Graduation
+Eligibility`) — FLEX2 32→33 verified rules (58.2%→60.0% raw, 60.4%→62.3%
+solvable), decision-table coverage 5/10→6/10. `Course Registration
+Eligibility::Rule_1` newly confirmed, as a side effect of the SAME shared
+mechanism (`Rule_2`/`Rule_3`/`Rule_4` remain unverified for an ordinary
+data-coverage reason, not a validator bug). `Graduation Eligibility`'s
+own join-mechanism limitation is genuinely fixed (root now resolves
+cleanly to `STUDENT_PROGRAM` with a real composite join to
+`BATCH_PROGRAM`), but running it through `run_decision` immediately
+surfaces a SEPARATE, previously-unreachable compile-time bug
+(`semestersElapsed`'s own `derived_aggregate` node has `filter_text:
+null` despite its `source_text` describing a real subject correlation) —
+still 0/5 verified for this decision; see `KNOWN_ISSUES.md`'s own entry
+for the full writeup. Full `coverage.py` re-run confirms zero flips
+anywhere else in FLEX2 or in OpenMRS/Spree/jBilling (identical
+`validation_summary.csv` for all three).
+
 **As of the 2026-09-25 `subject_table.py` extractor fixes** (`derived_
 join_count`/`raw_sql_boolean`) — see "Run history" below for the full
 writeup. Tables above already reflect this: FLEX2 31→32 verified rules
@@ -119,9 +137,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 32 | 58.2% |
+| FLEX2 | 98 | 55 | 33 | 60.0% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **102** | **52.0%** |
+| **Total** | **240** | **196** | **103** | **52.6%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -131,9 +149,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 32 | 60.4% |
+| FLEX2 | 55 | 0 | 2 | 53 | 33 | 62.3% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **102** | **69.9%** |
+| **Total** | **196** | **27** | **23** | **146** | **103** | **70.5%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`

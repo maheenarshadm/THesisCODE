@@ -422,6 +422,42 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     own composite-key correspondence to `BATCH_PROGRAM` needs a
     multi-column join capability this project's own join builder is
     deliberately scoped without.
+15. **Built the composite-key join capability for `Graduation
+    Eligibility`, on request.** New `schema_utility.
+    composite_backward_edges(case_study, table)`: when a table `T`'s own
+    composite (>=2-column) PK is entirely reconstructable from the
+    current table's own single-column FK values (every one of `T`'s PK
+    columns is itself an FK to the exact same `(ref_table, ref_column)`
+    the current table already FKs to — a real, schema-declared value
+    correspondence, confirmed exactly for `STUDENT_PROGRAM.(BATCH_NO,
+    PROG_ID)` vs `BATCH_PROGRAM`'s own PK), `build_join_path` now emits a
+    multi-column hop for it. Deliberately tried ONLY at the BFS's own
+    starting node — testing found that trying it a few hops in let ANY
+    table with an ordinary FK straight to `STUDENT_PROGRAM` (e.g.
+    `STUDENT_SEMESTER`) transitively "reach" `BATCH_PROGRAM` too,
+    manufacturing a spurious second root candidate. `_row_for_table`
+    (`db_resolver.py`) and `upstream_subject_value` (`drd_executor.py`)
+    both updated to walk the new `from_columns`/`to_columns` hop shape
+    alongside the existing single-column one. Verified via a full
+    subject-table sweep (every decision, all 4 case studies) and a full
+    `coverage.py` re-run per case study, before/after: zero collateral
+    anywhere outside FLEX2, zero change to any other FLEX2 decision.
+    `Graduation Eligibility` now resolves its subject cleanly (root
+    `STUDENT_PROGRAM`, composite join to `BATCH_PROGRAM`) — genuinely
+    fixed — but running it through `run_decision` immediately hits a
+    SEPARATE, previously-unreachable bug: `semestersElapsed`'s own
+    `derived_aggregate` node has `filter_text: null` despite its
+    `source_text` explicitly describing a needed subject correlation
+    ("... for ROLL_NO"), producing malformed SQL
+    (`WHERE ` with nothing after it). A Phase 1/`compile_constraints.py`
+    compile-time gap, disclosed rather than patched around — still 0/5
+    verified for this decision. As a side effect of the SAME shared
+    mechanism, `Course Registration Eligibility`'s own separate
+    upstream-chaining gap (item 14 above) is also now fixed:
+    `Rule_1` verifies for all 545 real cases (`Rule_2`/`3`/`4` don't, but
+    with nothing `ungrounded` — an ordinary data-coverage gap, not a
+    bug). FLEX2 32→33 verified rules (58.2%→60.0% raw, 60.4%→62.3%
+    solvable), decision-table coverage 5/10→6/10.
 
 ## 7. Planned / open work
 
@@ -440,15 +476,18 @@ Full, itemized list with root causes and what fixing each would require:
   — a distinct, not-yet-investigated issue.
 - FLEX2: `Course Load Limit` (§6 items 8/9: 11/11) and `Course
   Replacement Eligibility` (§6 items 10-13: 6/6) are fully closed;
-  `Credit Transfer Exemption` (§6 item 14) is now fully resolved and
-  1/3 verified. The remaining 4 of the original "5 backward-join gaps"
-  are NOT one category (§6 item 14 for the full breakdown): `Course
-  Registration Eligibility` and `Summer Semester Registration` each hit
-  a different, precisely-diagnosed (but still open) gap after the
-  extractor fixes; `Admission Closure Eligibility` has no declared FK
-  relationship at all in the real schema; `Graduation Eligibility` needs
-  a composite-key join capability out of current scope. An audit
-  question remains on `Attendance Eligibility For Final Exam`.
+  `Credit Transfer Exemption` (§6 item 14) is fully resolved (1/3
+  verified); `Course Registration Eligibility` (§6 items 14/15) is
+  resolved through `run_decision` (1/4 distinct rule_ids verified, the
+  rest an ordinary data-coverage gap). Of the original "5 backward-join
+  gaps": `Graduation Eligibility`'s own join-mechanism limitation is
+  fixed (§6 item 15), but it surfaced a separate, not-yet-fixed Phase 1
+  compile-time bug (`semestersElapsed`'s `derived_aggregate` has
+  `filter_text: null`) blocking all 5 of its rules; `Summer Semester
+  Registration` still hits a different, precisely-diagnosed gap;
+  `Admission Closure Eligibility` has no declared FK relationship at all
+  in the real schema. An audit question remains on `Attendance
+  Eligibility For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

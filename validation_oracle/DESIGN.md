@@ -381,6 +381,39 @@ join-path builder is deliberately single-column-hop-only — a genuinely
 new composite-join capability, out of current scope. Full regression
 suite re-run and passing; no fixture rebuild needed.
 
+**Built the composite-join capability above, on request (2026-09-25) —
+`Graduation Eligibility`'s own scope limitation is no longer out of
+scope.** New `schema_utility.composite_backward_edges(case_study,
+table)`: a table `T` with a composite (≥2-column) PK is reachable from
+`table` when EVERY one of `T`'s own PK columns is itself an FK to the
+exact same `(ref_table, ref_column)` that some column of `table` already
+FKs to — both tables independently FK to the same real entity in each
+PK slot, a schema-declared correspondence, never a guess. `build_join_
+path` tries this ONLY at its own BFS starting node (never a few hops
+in): trying it deeper let ANY table with an ordinary FK straight to
+`STUDENT_PROGRAM` (e.g. `STUDENT_SEMESTER`) transitively "reach"
+`BATCH_PROGRAM` too, by routing through a table (`STUDENT_PROGRAM`) the
+decision already needs directly — a spurious second root candidate,
+found and eliminated by this restriction. The resulting hop carries
+`from_columns`/`to_columns` lists instead of a single `from_column`/
+`to_column`; `db_resolver.py`'s `_row_for_table` and `drd_executor.py`'s
+`upstream_subject_value` (the two hop-walkers) both handle the new shape
+alongside the old one. Verified via a full subject-table sweep (every
+decision, all 4 case studies) and a full `coverage.py` re-run per case
+study, before/after: zero collateral anywhere outside FLEX2, zero change
+to any other FLEX2 decision. `Graduation Eligibility` now resolves its
+subject cleanly — but running it through `run_decision` immediately
+surfaces a SEPARATE, previously-unreachable bug: `semestersElapsed`'s own
+`derived_aggregate` node has `filter_text: null` despite its
+`source_text` explicitly describing a needed subject correlation ("...
+for ROLL_NO"), producing malformed SQL. A Phase 1/`compile_constraints.
+py` compile-time gap, disclosed rather than patched around here — still
+0/5 verified for this decision. As a side effect of the SAME shared
+mechanism, `Course Registration Eligibility`'s own separate
+upstream-chaining gap (above) is also fixed: `Rule_1` verifies for all
+545 real cases (`Rule_2`/`3`/`4` don't, with nothing `ungrounded` — an
+ordinary data-coverage gap). FLEX2 32→33 verified rules.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

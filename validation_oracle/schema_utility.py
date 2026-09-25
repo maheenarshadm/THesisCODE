@@ -119,6 +119,59 @@ def functional_backward_edges(case_study, table):
     return found
 
 
+def composite_backward_edges(case_study, table):
+    """Tables T whose own COMPOSITE primary key (>=2 columns) can be
+    reconstructed entirely from `table`'s own single-column FK values,
+    because every one of T's PK columns is ITSELF an FK to the exact same
+    (ref_table, ref_column) that some column of `table` already FKs to --
+    a genuine, schema-declared value correspondence, never a guess:
+    `table` and T both independently FK to the same real entity in each
+    PK slot, and T's own PK then guarantees at most one T row shares all
+    of them. Confirmed real, not hypothetical (both found investigating
+    FLEX2's own backward-join gaps, 2026-09-25): STUDENT_PROGRAM's own
+    `(BATCH_NO, PROG_ID)` FK values exactly match BATCH_PROGRAM's own
+    composite PK `(BATCH_NO, PROG_ID)` (both FK to BATCH.BATCH_NO/
+    PROGRAM.PROG_ID respectively); COURSE_REGISTRATION's own
+    `(SEM_ID, ROLL_NO)` FK values exactly match STUDENT_SEMESTER's own
+    composite PK the same way. This is deliberately NOT the same
+    mechanism as `build_join_path`'s ordinary single-column hop (walking
+    ONE FK to ONE PK column) -- it combines SEVERAL of `table`'s own
+    already-known FK columns into ONE match against a multi-column target
+    key, which no single-column hop chain can express at all.
+
+    Returns [{'columns': [...], 'ref_table': T, 'ref_columns': [...]}],
+    `columns`/`ref_columns` in the SAME order (T's own PK column order),
+    one entry per qualifying T. Never fires for a single-column PK (that
+    table is already reachable, if at all, via the ordinary forward-FK
+    BFS -- no need to duplicate it here)."""
+    schema = load_schema(case_study)
+    table = canonical_table_name(case_study, table)
+    source_targets = {(e['ref_table'], e['ref_column']): e['column']
+                       for e in fk_edges(case_study, table)}
+
+    found = []
+    for other_name in schema:
+        other_name = canonical_table_name(case_study, other_name)
+        if other_name == table:
+            continue
+        pk = pk_columns(case_study, other_name)
+        if len(pk) < 2:
+            continue
+        other_fk_target_by_column = {e['column']: (e['ref_table'], e['ref_column'])
+                                      for e in fk_edges(case_study, other_name)}
+        matched_columns = []
+        for pk_col in pk:
+            target = other_fk_target_by_column.get(pk_col)
+            source_column = source_targets.get(target) if target else None
+            if source_column is None:
+                matched_columns = None
+                break
+            matched_columns.append(source_column)
+        if matched_columns and len(set(matched_columns)) == len(matched_columns):
+            found.append({'columns': matched_columns, 'ref_table': other_name, 'ref_columns': pk})
+    return found
+
+
 def build_join_path(case_study, root_table, target_table, allowed_tables):
     """BFS over the FK graph, restricted to `allowed_tables` (a
     decision's own fk_closure_tables -- never wander through the whole
@@ -216,6 +269,46 @@ def build_join_path(case_study, root_table, target_table, allowed_tables):
                             f"{amb_from!r} and {amb_to!r} ({len(amb_cols)} distinct FK "
                             f"columns: {amb_cols}) -- refusing a route that circumvents an "
                             f"unresolved ambiguity between two of its own members.")
+                return new_path
+            visited.add(nxt)
+            queue.append((nxt, new_path))
+
+        # Composite-key matches (see `composite_backward_edges`) are a
+        # separate mechanism from the single-column edges above, so they
+        # never enter `by_target`'s own ambiguity bookkeeping -- a
+        # composite match is unambiguous by construction (it requires
+        # EVERY column of the target's own PK to match), and only ever
+        # supplies a target no ordinary single-column edge already
+        # reached (skip if `nxt` is already in `by_target`, reachable, or
+        # visited).
+        #
+        # Deliberately only tried at `current == root_table` (the FIRST
+        # BFS node), never a few hops in -- a real ambiguity found testing
+        # this against FLEX2's own `Graduation Eligibility`: without this
+        # restriction, ANY table with an ordinary forward FK straight to
+        # `root_table` (e.g. STUDENT_SEMESTER -> STUDENT_PROGRAM) would
+        # transitively "reach" a composite target too (STUDENT_PROGRAM's
+        # own composite match to BATCH_PROGRAM), manufacturing a second,
+        # spurious root candidate that only reaches BATCH_PROGRAM by
+        # routing THROUGH another table the decision already needs
+        # directly (STUDENT_PROGRAM) -- not a genuine independent
+        # junction the way `functional_backward_edges` chains legitimately
+        # are. Restricting to the root itself matches both real motivating
+        # cases exactly: `Graduation Eligibility`'s own root candidate IS
+        # STUDENT_PROGRAM, and `Course Registration Eligibility`'s
+        # upstream chaining (`drd_executor.py`) always calls
+        # `build_join_path` with the decision's OWN subject table as
+        # `root_table` already.
+        if current != root_table:
+            continue
+        for edge in composite_backward_edges(case_study, current):
+            nxt = edge['ref_table']
+            if nxt not in allowed or nxt in visited or nxt in by_target:
+                continue
+            hop = {'from_table': current, 'from_columns': edge['columns'],
+                   'to_table': nxt, 'to_columns': edge['ref_columns']}
+            new_path = path + [hop]
+            if nxt == target_table:
                 return new_path
             visited.add(nxt)
             queue.append((nxt, new_path))

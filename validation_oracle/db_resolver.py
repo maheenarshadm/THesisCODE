@@ -12,11 +12,14 @@ COURSE_REGISTRATION/STUDENT_SEMESTER both have composite PKs).
 Cross-table resolution uses `subject_table.py`'s own forward-only FK
 join paths (`schema_utility.build_join_path`) -- a kind whose own table
 differs from the subject table is resolved by walking that path, hop by
-hop, via real queries, never guessed. A join HOP itself still follows a
-single FK column (schema FKs in this project are all single-column) --
-landing on a composite-PK table via one FK column could, in principle,
-be ambiguous if that one column isn't the WHOLE target key; not yet
-guarded against, disclosed here rather than silently assumed safe.
+hop, via real queries, never guessed. Most hops follow a single FK
+column (schema FKs in this project are mostly single-column); a hop can
+also be a COMPOSITE match (`schema_utility.composite_backward_edges` --
+several of the current row's own single-column FK values jointly
+matching a target table's own multi-column PK, e.g. FLEX2's
+`STUDENT_PROGRAM.(BATCH_NO, PROG_ID)` vs `BATCH_PROGRAM`'s own composite
+PK), carrying `from_columns`/`to_columns` lists instead of a single
+`from_column`/`to_column` -- `_row_for_table` below handles both shapes.
 
 Remaining disclosed gap: kinds whose own `filter_text`/`sql_template`
 binds a placeholder (`<student>`, `<semester>`, ...) to a NAMED COLUMN
@@ -120,9 +123,17 @@ def _row_for_table(conn, target_table, subject_table, subject_pk_cols, subject_p
     for hop in path:
         if current_row is None:
             return None
-        fk_value = current_row.get(hop['from_column'].lower())
-        current_row = _one_row(conn, hop['to_table'], hop['to_column'], fk_value) \
-            if fk_value is not None else None
+        if 'from_columns' in hop:
+            # A composite-key hop (`schema_utility.composite_backward_edges`)
+            # -- several of the current row's own FK columns jointly match
+            # the target table's own composite PK, not a single FK column.
+            fk_values = [current_row.get(c.lower()) for c in hop['from_columns']]
+            current_row = _one_row(conn, hop['to_table'], hop['to_columns'], fk_values) \
+                if all(v is not None for v in fk_values) else None
+        else:
+            fk_value = current_row.get(hop['from_column'].lower())
+            current_row = _one_row(conn, hop['to_table'], hop['to_column'], fk_value) \
+                if fk_value is not None else None
     return current_row
 
 
