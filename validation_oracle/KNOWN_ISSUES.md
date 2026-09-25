@@ -1,5 +1,345 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-26 (later same day) — 39 rules physically moved out of the active corpus, into `validation_oracle/out_of_scope/`
+
+On the user's own explicit request, following the "which rules never
+validate, and why" audit below: rather than keep filtering 22 permanently
+out-of-scope rules (COLLECT hit policy / all-code_external) and 17
+currently-unresolvable-but-not-confirmed-permanent rules at runtime on
+every single call (`is_out_of_scope()`, `build_subject_tables`, both
+recomputed fresh per individual in `per_individual_archive_coverage.py`'s
+own loop), their compiled records were removed from `generator/
+compiled_constraints.json` itself — the shared source both the search and
+the validator read — and archived at `validation_oracle/out_of_scope/`:
+
+- `permanent/records.json` + `README.md` — the 22 COLLECT/code_external
+  rules, confirmed structurally unverifiable by this oracle regardless of
+  data (see that README for the exact split and reasoning).
+- `pending_investigation/records.json` + `README.md` — the 17 rules whose
+  own decisions currently have no resolvable subject table, explicitly NOT
+  claimed permanent — each has a known, previously-successful fix pattern
+  elsewhere in this same corpus (`subject_root_overrides.py`/
+  `supplementary_fk_edges.py` for a join-path gap; `--not-persisted-json`
+  for an all-`not_persisted` decision) that just hasn't been tried here yet.
+- `DISCUSSION_FOR_PAPER.md` — a thesis-citable summary of both groups,
+  corpus size before/after, and the honest framing for a "coverage"
+  percentage once these are excluded.
+
+Corpus size: 204 → 165 distinct rules (79→64 OpenMRS, 31→22 Spree, 55→50
+FLEX2, 39→29 jBilling). `out_of_scope_rules.py`'s own registry entries for
+the 22 permanent rules were removed too (dead code once the rules aren't in
+the corpus at all to be filtered) — its pre-existing manual entry (Spree's
+`Promotion Customer Group Eligibility::rule_4`, a genuinely different,
+one-to-many-join reason) is untouched, since that rule stays in the active
+corpus. `summarize_coverage._mechanical_out_of_scope`'s own drift-check
+(added earlier today) is kept as a standing guard against a FUTURE recompile
+ever silently reintroducing a COLLECT/code_external rule.
+
+**Verified, not just asserted**: full regression suite re-run and passing
+(`candidate.py` now 190/192 evaluable — the 2 remaining gaps are unrelated,
+pre-existing; `mutation.py`, `fitness.py`, `dynamosa.py` self-tests;
+`test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+`test_serialized_field_roundtrip.py`); `coverage.py` re-run cleanly against
+all 4 case studies' fixtures post-removal (no crashes from the now-smaller
+corpus, existing archive pickles' extra record_ids for removed rules are
+silently ignored, not a crash, by the same "owner tag not found -- leave
+alone" handling `_offset_rows_by_owner`/`merge_archive_candidate` already
+had). Also found and fixed, unrelated to this change but discovered while
+re-verifying: `flex2_merged.db` (the committed merged-fixture file) still
+had 0 rows, left over from the original `STUDENT_ATTENDANCE` crash — the
+underlying fix was verified against a temp file earlier today but the real
+committed fixture was never rebuilt. Rebuilt now: 20 tables, 1835 rows.
+
+## 2026-09-26 — Three real fixes: drd_executor.py's cross-rule variable poisoning, permanent out-of-scope registry, two FLEX2 materialization collisions
+
+Four separate, real bugs found and fixed this round, each verified against
+a real run (not just reasoning), each confirmed not to regress anything
+else via the full self-test/test suite plus a fresh per-case-study sweep.
+
+1. **`drd_executor.py`'s `run_decision` resolved EVERY variable in a rule
+   variant's own `variable_resolution` dict, not just the ones its own
+   `condition` actually reads.** A default/catch-all rule (bare
+   `condition: {'kind': 'literal', 'value': true}`) can still carry an
+   unused, structurally-unresolvable variable (`code_external`) in its own
+   `variable_resolution` -- `db_resolver.resolve()` raises a bare
+   `NotImplementedError` for it, uncaught by `_resolve_one`'s own
+   `UngroundedForCase`-only handling, aborting the WHOLE decision (every
+   rule in it) rather than just that one unused variable. Found
+   investigating jBilling's `Ageing Step Config Validation` (Rule_1/Rule_2
+   have real, resolvable inputs; Rule_5 is the unused-code_external
+   culprit) -- also affected `Is Ageing Required` and `Daily Pro-Rate
+   Amount` (both single-rule, all-unused-code_external decisions).
+   **Fixed**: new `_condition_variable_refs()` (generic recursive walk of
+   a condition tree) filters which variables `run_decision` actually
+   resolves per variant to just the ones the condition references.
+   Verified directly: `Ageing Step Config Validation` now resolves and
+   `individual_007` (archived for Rule_1) correctly verifies Rule_1, where
+   before the whole decision was unconditionally `unresolved`.
+
+2. **The out-of-scope classification lived in TWO independently
+   -maintained places that silently drifted apart.** `coverage.py`/
+   `per_individual_archive_coverage.py`'s own real verification runs only
+   ever consulted `out_of_scope_rules.py`'s registry (the manually-curated
+   one); `summarize_coverage.py`'s own `_mechanical_out_of_scope()`
+   additionally classified COLLECT-hit-policy and all-code_external rules
+   as out of scope too, but ONLY for summary-table purposes -- never fed
+   back into the registry the real runs actually use. Caused a real,
+   user-caught bug: Spree's own `claimed_fulfilled` count (unfiltered by
+   ANY scope definition) exceeded `in_scope` outright (29 vs 25), since
+   5 `PriceAdjustmentTierValidity` rules are COLLECT (the search's own
+   fitness function doesn't care about hit policy, so can still claim
+   fitness=0.0 on them) but weren't excluded from the naive claimed-count.
+   **Fixed**: `out_of_scope_rules.py` now carries real, permanent entries
+   for both structural criteria (15 OpenMRS + 5 Spree COLLECT rules, 2
+   jBilling all-code_external rules), computed directly from
+   `compiled_constraints.json`, not guessed. `_mechanical_out_of_scope`
+   now reads the registry as ground truth but still independently
+   recomputes both criteria every call and RAISES if they ever disagree
+   (drift protection, not blind trust). `claimed_fulfilled` (both
+   `per_individual_archive_coverage.py`'s own `_print_summary_line` and
+   `summarize_per_individual.py`'s `_claimed_fulfilled`) now filters
+   through the same registry too.
+
+3. **FLEX2's `STUDENT_ATTENDANCE` composite-PK collision (see the entry
+   directly below, now folded in here) -- fixed.** `_own_solo_unique_
+   columns_for`'s own deliberate exclusion of composite keys from dedup
+   (correct for `COURSE_REGISTRATION`'s own legitimate partial-column
+   sharing) left a genuine composite-PK collision uncaught for
+   `STUDENT_ATTENDANCE` `(LECTURE_ID, ROLL_NO)`: a COUNT-style
+   `derived_aggregate` seed (`Attendance Eligibility For Final Exam`'s own
+   `lecturesAttended`) copies one row verbatim N times to represent "N
+   lectures attended," never varying `LECTURE_ID` across the copies, so
+   all N land on the identical real PK tuple. **Fixed**: new shared
+   `dynamosa._dedup_composite_keys()`, called from both
+   `merge_archive_candidate`'s own `get_copy` AND `per_individual_archive_
+   coverage.py`'s `_offset_rows_by_owner` -- deliberately NOT a general
+   "guess which column" mechanism (bumping the wrong one would silently
+   break the aggregate's own correlating key), only acts on tables
+   explicitly named in `dynamosa._COMPOSITE_KEY_DEDUP_COLUMN`, currently
+   just `('FLEX2', 'STUDENT_ATTENDANCE'): 'LECTURE_ID'`, confirmed correct
+   by reading `lecturesAttended`'s own real aggregate definition (groups
+   by `ROLL_NO`, differentiates by `LECTURE_ID`). Verified: rebuilding
+   FLEX2's fixture via `merge_archive_candidate` now succeeds (21 tables,
+   1908 rows, previously crashed every time); the bumped rows are
+   semantically correct, not just crash-avoiding (`ROLL_NO` stays fixed
+   per student, `LECTURE_ID` correctly differentiated per lecture --
+   checked directly against real materialized rows).
+
+4. **A second, unrelated FLEX2 collision, found only AFTER fix #3 let
+   individuals get far enough to reach it for the first time**: two or
+   more UNTAGGED (no specific objective's own) rows on the same table can
+   already share the identical value on a solo-unique column --
+   confirmed directly, `individual_037`'s own raw archived `LECTURE` table
+   already carries 46 separate, genuinely distinct row objects, every one
+   `LECTURE_ID=1`, none owner-tagged, straight from the pickle, before any
+   offsetting. `_offset_rows_by_owner`'s own "leave untagged rows
+   completely alone" rule (correct for a SINGLE shared value) doesn't
+   apply once the SAME value is independently duplicated across several
+   distinct untagged row objects -- a real `UNIQUE constraint failed`.
+   Unlike fix #3, this needs NO domain judgment call: a solo-unique column
+   can never legitimately hold the same value on two distinct real rows,
+   tagged or not, so keeping the first untagged row at its own value and
+   bumping every later untagged duplicate to a fresh one is always safe,
+   for any table. **Fixed**: a new dedup pass in `_offset_rows_by_owner`,
+   general (not table-specific, unlike fix #3), runs before everything
+   else. Verified: all 6 previously-failing individuals (037, 038, 43, 55,
+   63, 83) now materialize cleanly; a full, un-limited sweep of all 84
+   FLEX2 individuals is 84/84 clean (was 78/84 before this fix, 0/84
+   before fix #3).
+
+   **Not yet checked**: whether `merge_archive_candidate_full`
+   (`include_all_rows=True`, merging several DIFFERENT individuals'
+   untagged rows together) can hit the same untagged-vs-untagged
+   collision across TWO DIFFERENT individuals' own duplicate untagged
+   rows, not just within one. Not fixed there (only the confirmed,
+   reproduced location -- `_offset_rows_by_owner` -- got this fix), and
+   not yet tested either way; flagged here rather than silently assumed
+   safe.
+
+Full regression, all four fixes together: `candidate.py`, `mutation.py`,
+`fitness.py`, `dynamosa.py` self-tests all pass; `test_spec_cases.py`,
+`test_drd_chaining_synthetic.py`, `test_serialized_field_roundtrip.py` all
+pass; a materialize-only sweep of every archived individual in all 4 case
+studies (52 OpenMRS, 23 Spree, 31 jBilling, 84 FLEX2 = 190 total) is
+190/190 clean, zero crashes.
+
+## 2026-09-25 — Per-individual "claimed (fitness=0.0) vs independently verified" audit for jBilling: mostly NOT a bug, a few open leads
+
+User's own request: for each ARCHIVE-best individual materialized standalone by
+`per_individual_archive_coverage.py`, the rule that individual is archived for
+should never come back `not_verified` -- carefully determine whether a gap
+like that is a `coverage.py`/validator bug or a `fitness.py` bug.
+
+**Methodology hazard hit and corrected first**: a first pass cross-referenced
+`generator/experiment_runs/jBilling__..._seed0.pkl` (re-loaded fresh) against
+the ALREADY-WRITTEN `per_individual_out/jBilling/` CSVs/dbs -- looked like a
+huge, systematic bug (23/35 claimed objectives never verified by their own
+individual). Traced one concrete case (`Order Period Already Invoiced::Rule_2`)
+all the way through `_offset_rows_by_owner`/`repair_candidate`/materialize and
+found the `next_billable_day IS NULL` row genuinely intact at every step --
+yet the individual the fresh pickle said should hold it (`individual_011`)
+didn't match the individual the CSV said actually holds it (`individual_013`).
+Root cause: the user was, at that moment, mid-way through re-running
+`generator/rerun_dynamosa_nsga2_all.py` (see the FLEX2 STUDENT_ATTENDANCE
+entry directly below, hit during that same run) -- it OVERWRITES the
+committed `experiment_runs/*.pkl` in place, so a fresh reload no longer
+matches the archive that actually produced the already-written per-individual
+output. **Re-derived `individual_index` from a pickle that isn't the exact
+one a given `per_individual_out/<CaseStudy>/` run used is meaningless** --
+the correct check reads `origin_record_ids`/`verified_rule_ids` straight out
+of that run's own `per_individual_coverage_summary.csv`, never re-associates
+indices via a fresh `pickle.load`.
+
+**Redone correctly** (straight of jBilling's own, self-consistent
+`per_individual_coverage_summary.csv`, full mode, `--not-persisted-json
+{"__today__": 20000, "candidateDateProvided": true, "candidateDate": 0}`):
+15/40 origin-objective claims matched (that individual's own DB verifies the
+exact rule it was archived for), 25 did not. Every one of the 25 checked
+individually, by resolution reason:
+
+- **~18 are structurally unresolvable by ANY individual's database, not a
+  per-individual-tool issue at all** -- confirmed by diffing
+  `unresolved_decisions.json` across 4+ different individuals: `Is Ageing
+  Required`, `Order Date Range Valid`, `Payment Outcome Resolution`/`Payment
+  Balance Assignment`, `Daily Pro-Rate Amount` (all "no table-backed inputs
+  found" -- every input is `not_persisted`/upstream-literal, nothing to
+  entity-enumerate from a database), `Ageing Step Config Validation`
+  (`code_external` -- "computed as the highest array index with inUse=true
+  across the submitted admin-screen steps array; not a stored flag"), `Tax
+  Calculation Needed` (the `pluggable_task_parameter` fixture-gap fix is real
+  but still blocked, exactly as this file's own earlier entry already
+  disclosed -- not re-fixed here). These are honest scope boundaries: the
+  ground truth for these facts lives only in application code or transient
+  runtime parameters that were never given a schema representation, so no
+  DB-based oracle -- merged OR per-individual -- can independently confirm
+  them. `fitness.py` can still score these directly against the
+  candidate's own in-memory values (not a DB read), which is exactly why
+  "claimed" and "independently verifiable" diverge here -- neither side is
+  wrong, they're answering different questions.
+- **`Currency Exchange Rate Source` Rule_1/Rule_2 (2 of the 25)** -- the
+  SAME, already-diagnosed, disclosed generator-side gap this file's own
+  directly-preceding entry documents in full (`base_user.entity_id`/
+  `.currency_id` never populated by the generator, so the validator's own
+  `exists` checks can never independently confirm a real entity/currency
+  pair). Not new, not a per-individual-tool defect.
+- **`Order Period Already Invoiced` Rule_1/Rule_3 (2 of the 25)** -- the
+  expected, already-documented consequence of the ONE representative
+  `not_persisted` override value chosen (`candidateDateProvided` forced
+  `true` always precludes Rule_1's own precondition; `candidateDate=0` never
+  satisfies Rule_3's `>= nextBillableDay`). `Rule_2`, same decision, DOES
+  correctly verify under its own archived individual (`individual_013`) --
+  directly confirmed by tracing that exact row through offset/repair/
+  materialize end to end, proving this pipeline's own row handling is NOT
+  the source of the gap here.
+- **3 still genuinely open, NOT yet root-caused** -- `Ageing Status Change
+  Order Action::Rule_2` (`individual_004`), `Blacklist Filter Enabled::Rule_1`
+  (`individual_024`, `UNIQUE` hit policy), `Cycle Start Source::Rule_2`/
+  `Rule_3` variants seen intermittently across individuals. All three ARE
+  independently resolvable decisions (not in any individual's
+  `unresolved_decisions.json`) where the validator's FIRST/UNIQUE rule
+  selection consistently disagrees with what the search claims, the same
+  age as any other real disagreement `coverage.py` is explicitly designed to
+  surface -- not yet traced to a specific root cause (subject/join
+  misresolution vs a genuine search-side false claim vs a real DMN-table
+  issue like `Order Period Already Invoiced`'s own prior finding). Flagged
+  here for a future round, not fixed or explained away in this one.
+
+**Bottom line for the user's own question**: no evidence found of either
+`coverage.py` or `fitness.py` being systematically wrong. The large majority
+of "claimed but not verified" cases are decisions that were never within
+what an independent database-only oracle CAN check (by design, already
+documented), plus two already-diagnosed disclosed gaps. The
+`per_individual_archive_coverage.py` materialization pipeline itself
+(`_offset_rows_by_owner` + `repair_candidate` + `to_sql_inserts`) was traced
+end-to-end for one concrete objective and found to preserve the search's own
+values correctly. 3 genuine, still-unexplained per-rule disagreements remain
+open for follow-up.
+
+## RESOLVED (2026-09-26, see the top entry) — FLEX2's merge_archive_candidate crashes on STUDENT_ATTENDANCE with a fresh search re-run (found 2026-09-25, NOT YET INVESTIGATED)
+
+Running the full pipeline (`generator/rerun_dynamosa_nsga2_all.py` ->
+`validation_oracle/tests/build_all_fixtures.py`) against a FRESH
+DynaMOSA re-run archive (needed because the compiled corpus changed --
+new OpenMRS rules, the Preferred Identifier Requirement fix, discard/
+reclassify decisions), FLEX2's fixture rebuild crashes:
+
+```
+sqlite3.IntegrityError: UNIQUE constraint failed:
+STUDENT_ATTENDANCE.LECTURE_ID, STUDENT_ATTENDANCE.ROLL_NO
+```
+
+Reproduced directly, twice, not a fluke -- `dynamosa.merge_archive_candidate`
+(via `build_fixture_from_generator.build('FLEX2', ...)`) throws this
+every time against the current `FLEX2__dynamosa_nsga2__budget1x__seed0.pkl`.
+The resulting `flex2_merged.db` is left with all 21 tables created (DDL
+succeeded) but ZERO rows (every INSERT was still inside the one
+uncommitted transaction when the crash hit) -- confirmed by direct
+inspection, not assumed. OpenMRS and Spree's own fixture rebuilds
+succeed cleanly against their own fresh archives (356 and 75 rows
+respectively); this is FLEX2-specific.
+
+**Not a brand-new problem -- a previously-flagged, never-diagnosed gap
+finally getting hit for real.** This exact table is already named in
+this file's own earlier history (the Attendance Eligibility For Final
+Exam audit): "a from-scratch rebuild from just these patched objectives
+loses the STUDENT_ATTENDANCE table entirely" -- an undiagnosed
+`merge_archive_candidate` gap, noted but never actually root-caused
+because the committed archive at the time never search-covered enough
+Attendance-Eligibility-related objectives to trigger it. The fresh
+re-run apparently does now (the corpus/search state has moved on since
+that entry), turning a previously-silent gap into a real crash.
+
+**Working hypothesis, NOT confirmed -- needs real investigation before
+touching `merge_archive_candidate`:** `STUDENT_ATTENDANCE`'s own PK
+looks like a composite `(LECTURE_ID, ROLL_NO)` (per the error's own
+named columns) -- if TWO different covered objectives each independently
+own a `STUDENT_ATTENDANCE` row and `merge_archive_candidate`'s own
+same-record dedup-bump (`used_key_values`) is scoped to
+`_own_solo_unique_columns_for` (single-column keys only, deliberately,
+per that function's own docstring -- composite keys are excluded from
+dedup on purpose, see the 25-objective FLEX2 regression it already
+documents avoiding), a genuine composite-key collision between two
+DIFFERENT objectives' own rows would slip through entirely uncaught.
+That's a real, disclosed gap in the EXISTING mechanism (composite-key
+same-record collisions were never handled, only single-column ones), not
+yet confirmed as THE cause here -- could equally be a same-column-name-
+different-meaning issue, an offset collision, or something else. Do not
+assume this hypothesis and patch around it without checking the actual
+colliding rows first (the same discipline every other merge-collision
+fix this project has made has followed).
+
+**CORRECTION (2026-09-25, later same day) -- the "unaffected" claim below
+was WRONG, now disproven directly.** Running
+`per_individual_archive_coverage.py --mode optimized` for FLEX2 hits the
+IDENTICAL crash, repeatedly, starting at `individual_004`:
+```
+sqlite3.IntegrityError: UNIQUE constraint failed:
+STUDENT_ATTENDANCE.LECTURE_ID, STUDENT_ATTENDANCE.ROLL_NO
+```
+This confirms the working hypothesis above one level further: the gap
+isn't specific to `merge_archive_candidate`'s own `used_key_values` --
+this file's `_offset_rows_by_owner` (see its own docstring) reuses the
+exact same `_key_columns_for` / `_own_solo_unique_columns_for` split and
+therefore has the exact same composite-key blind spot, just triggered by
+one individual's OWN several owner-tagged `STUDENT_ATTENDANCE` rows
+colliding with each other after per-owner offsetting, rather than by two
+different archive entries colliding during a merge. Both offsetting
+paths need the same fix (composite-unique-key dedup, not just
+single-column), whenever this is actually picked up -- still deferred,
+still not root-caused/fixed in this round, but no longer believed to be
+scoped to `merge_archive_candidate` alone.
+
+**Deferred, on request -- tracked here as the reminder to come back to
+it, not fixed in this round.** `per_individual_archive_coverage.py`'s
+own two modes (`--mode full` / `--mode optimized`) never call
+`merge_archive_candidate` itself, but per the correction just above they
+are NOT immune to this bug -- FLEX2 individuals with several
+`STUDENT_ATTENDANCE`-touching objectives can still crash during
+materialization. Individuals that don't happen to carry a colliding
+`STUDENT_ATTENDANCE` pair are unaffected and their results remain valid;
+a full FLEX2 per-individual run currently aborts partway through rather
+than completing cleanly.
+
 ## 2026-09-25 — 4 new OpenMRS rules built (Concept Name Uniqueness/Presence), on the now-fixed COUNT mechanism (see the entry directly below)
 
 First of the audit's 14 high-confidence new-rule candidates (`HANDOFF.md`'s

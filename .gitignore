@@ -10,3 +10,18 @@ generator/_materialize_selftest_csv/
 # seconds against the committed fixture databases + compiled_constraints.json,
 # not source; findings/numbers it produces are written up in DESIGN.md instead
 validation_oracle/coverage_out/
+
+# validation_oracle/tests/per_individual_archive_coverage.py's own output
+# (2026-09-26) -- one throwaway SQLite db + coverage.py run per archived
+# individual, fully reproducible by re-running against the committed
+# generator/experiment_runs/*.pkl archives; findings get written up in
+# KNOWN_ISSUES.md/FAILING_RULES_*.md instead, not tracked as data here
+validation_oracle/tests/per_individual_out/
+validation_oracle/tests/per_i/
+validation_oracle/tests/full_pipeline_out/
+
+# Stray scratch databases this tool (or ad hoc debugging) can leave behind
+# in validation_oracle/tests/ -- never the committed fixtures/*.db files,
+# which stay tracked deliberately (see CLAUDE.md's own fixtures note)
+validation_oracle/tests/fixtures_scratch_*.db
+validation_oracle/tests/*_scratch_*.db

@@ -2146,14 +2146,43 @@ def compile_case_study(cs, mapping_source='ground_truth'):
     # attached to every one of that decision's own compiled records. A
     # decision this pass can't resolve simply gets no `decision_subject`
     # field at all -- never a hard compile error, never a guess.
+    #
+    # `_DECISION_SUBJECT_EXCLUDED_RULES` (2026-09-26): a rule already
+    # registered permanently out of scope for the VALIDATOR
+    # (`validation_oracle/out_of_scope_rules.py`) but still physically
+    # present in this compiled corpus (a rule the `permanent/` archive
+    # folder already removed entirely -- COLLECT/code_external -- never
+    # reaches `records` here at all, so it never needs an entry) is
+    # excluded from `compute_decision_subject`'s own input, mirroring --
+    # not importing, per this section's own "no overlap in function
+    # calls" boundary above -- the SAME exclusion the validator's own
+    # `in_scope_by_name` filtering already applies before its own
+    # `subject_table_for_decision` call. Real bug this closes (2026-09-26,
+    # Spree's `Promotion Customer Group Eligibility`): without this,
+    # `rule_4`'s own `matchingCustomerGroupCount` (needing a one-to-many
+    # backward join to `spree_customer_group_users`, exactly why it was
+    # excluded on the validator side in the first place) poisoned subject
+    # resolution for the WHOLE decision -- `rule_1`/`rule_2`, neither of
+    # which reads `spree_customer_group_users` at all, got no
+    # `decision_subject` either, so the search never learned it needed a
+    # real `spree_order_promotions` junction row to make either of them
+    # independently verifiable. The excluded rule itself stays exactly as
+    # unaffected as before (still no `decision_subject`) -- it's already
+    # out of scope for verification regardless, so this only ever helps
+    # its IN-SCOPE siblings, never the excluded rule.
+    _DECISION_SUBJECT_EXCLUDED_RULES = {
+        ('Spree', 'Decision_PromotionCustomerGroupEligibility_rule_4'),
+    }
     raw_schema = _load_raw_schema(cs)
     records_by_decision_name = {}
     for r in records:
         records_by_decision_name.setdefault(r['decision_name'], []).append(r)
     for decision_records in records_by_decision_name.values():
-        subject = compute_decision_subject(cs, decision_records, raw_schema)
+        subject_input = [r for r in decision_records
+                          if (r['case_study'], r['rule_id']) not in _DECISION_SUBJECT_EXCLUDED_RULES]
+        subject = compute_decision_subject(cs, subject_input, raw_schema)
         if subject is not None:
-            for r in decision_records:
+            for r in subject_input:
                 r['decision_subject'] = subject
 
         # Filter_text placeholder correlations (2026-09-24/25) --

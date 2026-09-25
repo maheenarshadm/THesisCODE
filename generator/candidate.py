@@ -615,14 +615,23 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
             expected = scenario[ph.group(1)]
         else:
             expected = raw_val.strip("'\"")
-            # numeric literals compare as numbers, not strings
-            try:
-                expected = int(expected)
-            except ValueError:
+            # Boolean literals first -- see _row_from_filter_conjuncts's
+            # own matching fix (2026-09-26) for the real bug this closes;
+            # the two functions' own parsing rules must stay identical
+            # (this function's own docstring) or the search's read side
+            # (here) and write side would silently diverge on the exact
+            # same conjunct.
+            if expected.lower() in ('true', 'false'):
+                expected = (expected.lower() == 'true')
+            else:
+                # numeric literals compare as numbers, not strings
                 try:
-                    expected = float(expected)
+                    expected = int(expected)
                 except ValueError:
-                    pass
+                    try:
+                        expected = float(expected)
+                    except ValueError:
+                        pass
         checks.append((col, 'eq', expected))
 
     def predicate(row):
@@ -725,13 +734,32 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
                 row[col] = scenario[ph.group(1)]
         else:
             v = raw_val.strip("'\"")
-            try:
-                v = int(v)
-            except ValueError:
+            # Boolean literals FIRST -- a real, confirmed bug (2026-09-26,
+            # OpenMRS's own `Concept Fully-Specified-Name Presence
+            # Requirement`): `voided = false` in a filter_text conjunct
+            # used to fall all the way through int()/float() (both raise
+            # ValueError on the text "false") to the plain-string branch,
+            # storing the literal STRING 'false' into the row instead of
+            # a real boolean. `materialize.py`'s own `_sql_literal`
+            # already handles a genuine Python `bool` correctly (TRUE/
+            # FALSE), but a STRING 'false' materializes as SQL text
+            # `'false'`, which a real `WHERE voided = false` (SQLite:
+            # `voided = 0`) can never match -- silently zeroing every
+            # COUNT/exists check that filters on this column, regardless
+            # of how many real matching rows the search actually built.
+            # Case-insensitive (FEEL/DMN's own convention), checked before
+            # the numeric coercions below since "false"/"true" would never
+            # parse as either anyway.
+            if v.lower() in ('true', 'false'):
+                v = (v.lower() == 'true')
+            else:
                 try:
-                    v = float(v)
+                    v = int(v)
                 except ValueError:
-                    pass
+                    try:
+                        v = float(v)
+                    except ValueError:
+                        pass
             row[col] = v
     return row
 

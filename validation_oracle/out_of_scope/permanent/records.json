@@ -1,0 +1,1783 @@
+[
+ {
+  "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Order_Validation.dmn",
+  "decision_name": "Order Date Activated Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_OrderDateActivatedConsistencyViolations_Rule_1",
+  "source_citation": "L112-115 -- exposed as a real date comparison against an explicit evaluationTime, replacing dateActivatedIsFuture; verified: this check DOES return early in the real source, so it is mutually exclusive with the three checks below by construction (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivatedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivated"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Order.error.dateActivatedInFuture",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateActivated": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "date_activated"
+   },
+   "dateActivatedSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Order_Validation.dmn",
+  "decision_name": "Order Date Activated Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_OrderDateActivatedConsistencyViolations_Rule_2",
+  "source_citation": "L116-120 -- exposed as a real cross-variable date comparison (dateActivated > dateStopped), replacing dateActivatedAfterDateStopped; verified 2026-09-10: no return after this check, independent of the two below",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivatedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivated"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "dateStopped"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateStoppedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Order.error.dateActivatedAfterDiscontinuedDate",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateActivated": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "date_activated"
+   },
+   "dateActivatedSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
+   },
+   "dateStopped": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "date_stopped"
+   },
+   "dateStoppedSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_stopped",
+    "notes": "IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Order_Validation.dmn",
+  "decision_name": "Order Date Activated Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_OrderDateActivatedConsistencyViolations_Rule_3",
+  "source_citation": "L121-125 -- exposed as a real cross-variable date comparison (dateActivated > autoExpireDate), replacing dateActivatedAfterAutoExpireDate; verified: can co-fire with the discontinued-date and encounter checks",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivatedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivated"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "autoExpireDate"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "autoExpireDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Order.error.dateActivatedAfterAutoExpireDate",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "autoExpireDate": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "auto_expire_date"
+   },
+   "autoExpireDateSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "auto_expire_date",
+    "notes": "IS NOT NULL"
+   },
+   "dateActivated": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "date_activated"
+   },
+   "dateActivatedSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Order Date Activated Consistency Violations::Decision_OrderDateActivatedConsistencyViolations_Rule_4",
+  "case_study": "OpenMRS",
+  "dmn_file": "Order_Validation.dmn",
+  "decision_name": "Order Date Activated Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_OrderDateActivatedConsistencyViolations_Rule_4",
+  "source_citation": "L126-130 -- exposed as a real cross-variable date comparison (encounterDatetime > dateActivated), replacing encounterDatetimeAfterDateActivated; verified: no return before this, the last check in the method; can co-fire with either check above",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateActivatedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "encounterDatetimeSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "encounterDatetime"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "dateActivated"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Order.error.encounterDatetimeAfterDateActivated",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateActivated": {
+    "kind": "schema_column",
+    "table": "orders",
+    "column": "date_activated"
+   },
+   "dateActivatedSet": {
+    "kind": "null_check",
+    "table": "orders",
+    "column": "date_activated",
+    "notes": "IS NOT NULL"
+   },
+   "encounterDatetime": {
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "orders",
+     "local_column": "encounter_id"
+    },
+    "result_table": "encounter",
+    "result_column": "encounter_datetime",
+    "notes": "joined via orders.encounter_id; exposed directly, replacing encounterDatetimeAfterDateActivated"
+   },
+   "encounterDatetimeSet": {
+    "kind": "join_null_check",
+    "via": {
+     "local_table": "orders",
+     "local_column": "encounter_id"
+    },
+    "result_table": "encounter",
+    "result_column": "encounter_datetime",
+    "notes": "joined via orders.encounter_id; IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "orders",
+   "pk_columns": [
+    "order_id"
+   ],
+   "joins": {
+    "encounter": [
+     {
+      "from_table": "orders",
+      "from_column": "encounter_id",
+      "to_table": "encounter",
+      "to_column": "encounter_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Person_Demographics_Validation.dmn",
+  "decision_name": "Death Date Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_DeathDateConsistencyViolations_Rule_1",
+  "source_citation": "rejectIfFutureDate on deathDate (L179,193-197) -- exposed as a real date comparison, replacing deathDateIsFutureDate; verified 2026-09-10: no return before the before-birthdate check below, so both can fire on the same deathDate",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "deathDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "deathDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.date.future",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "deathDate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "death_date"
+   },
+   "deathDateSet": {
+    "kind": "null_check",
+    "table": "person",
+    "column": "death_date",
+    "notes": "death_date IS NOT NULL"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Death Date Consistency Violations::Decision_DeathDateConsistencyViolations_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Person_Demographics_Validation.dmn",
+  "decision_name": "Death Date Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_DeathDateConsistencyViolations_Rule_2",
+  "source_citation": "rejectDeathDateIfBeforeBirthDate (L183,222-226) -- exposed as a real cross-variable date comparison against the sibling birthdate input, replacing deathDateBeforeBirthdate; independent of the future check, no return between them",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "deathDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "<",
+     "left": {
+      "kind": "variable",
+      "ref": "deathDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "birthdate"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.deathdate.before.birthdate",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "birthdate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate"
+   },
+   "deathDate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "death_date"
+   },
+   "deathDateSet": {
+    "kind": "null_check",
+    "table": "person",
+    "column": "death_date",
+    "notes": "death_date IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Program_Enrollment_Validation.dmn",
+  "decision_name": "Program Enrollment Date Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_ProgramEnrollmentDateConsistencyViolations_Rule_1",
+  "source_citation": "L100-102 -- exposed as a real date comparison against an explicit evaluationTime, replacing dateEnrolledIsFuture; verified 2026-09-10: no return after this check; independent of the two below (redesigned 2026-09-10)",
+  "condition": {
+   "op": ">",
+   "left": {
+    "kind": "variable",
+    "ref": "dateEnrolled"
+   },
+   "right": {
+    "kind": "variable",
+    "ref": "evaluationTime"
+   }
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.patientProgram.enrolledDateDateCannotBeInFuture",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateEnrolled": {
+    "kind": "schema_column",
+    "table": "patient_program",
+    "column": "date_enrolled"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "location",
+   "patient",
+   "patient_program",
+   "person",
+   "program",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Program_Enrollment_Validation.dmn",
+  "decision_name": "Program Enrollment Date Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_ProgramEnrollmentDateConsistencyViolations_Rule_2",
+  "source_citation": "L104-106 -- exposed as a real date comparison, replacing dateCompletedIsFuture; verified: no return before or after; a program can have BOTH its enrollment date AND completion date in the future simultaneously",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateCompletedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "dateCompleted"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.patientProgram.completionDateCannotBeInFuture",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateCompleted": {
+    "kind": "schema_column",
+    "table": "patient_program",
+    "column": "date_completed"
+   },
+   "dateCompletedSet": {
+    "kind": "null_check",
+    "table": "patient_program",
+    "column": "date_completed",
+    "notes": "IS NOT NULL"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "location",
+   "patient",
+   "patient_program",
+   "person",
+   "program",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Program Enrollment Date Consistency Violations::Decision_ProgramEnrollmentDateConsistencyViolations_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Program_Enrollment_Validation.dmn",
+  "decision_name": "Program Enrollment Date Consistency Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_ProgramEnrollmentDateConsistencyViolations_Rule_3",
+  "source_citation": "L108-112 -- exposed as a real cross-variable date comparison (dateCompleted < dateEnrolled), replacing dateCompletedBeforeDateEnrolled; verified: runs unconditionally after the two checks above; all three can co-fire on the same PatientProgram",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "dateCompletedSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "<",
+     "left": {
+      "kind": "variable",
+      "ref": "dateCompleted"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "dateEnrolled"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.patientProgram.enrolledDateShouldBeBeforecompletionDate",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "dateCompleted": {
+    "kind": "schema_column",
+    "table": "patient_program",
+    "column": "date_completed"
+   },
+   "dateCompletedSet": {
+    "kind": "null_check",
+    "table": "patient_program",
+    "column": "date_completed",
+    "notes": "IS NOT NULL"
+   },
+   "dateEnrolled": {
+    "kind": "schema_column",
+    "table": "patient_program",
+    "column": "date_enrolled"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "location",
+   "patient",
+   "patient_program",
+   "person",
+   "program",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_program",
+   "pk_columns": [
+    "patient_program_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Relationship Date Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_RelationshipDateValidityViolations_Rule_1",
+  "source_citation": "L54-58 -- exposed as a real cross-variable date comparison (startDate > endDate), replacing startDateAfterEndDate; verified 2026-09-10 against live source: no return after this check (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "endDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "startDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "endDate"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Relationship.InvalidEndDate.error",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "endDate": {
+    "kind": "schema_column",
+    "table": "relationship",
+    "column": "end_date"
+   },
+   "endDateSet": {
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "end_date",
+    "notes": "IS NOT NULL"
+   },
+   "startDate": {
+    "kind": "schema_column",
+    "table": "relationship",
+    "column": "start_date"
+   },
+   "startDateSet": {
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "relationship",
+   "relationship_type",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "relationship",
+   "pk_columns": [
+    "relationship_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Relationship Date Validity Violations::Decision_RelationshipDateValidityViolations_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Relationship Date Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_RelationshipDateValidityViolations_Rule_2",
+  "source_citation": "L60-64 -- exposed as a real date comparison against an explicit evaluationTime, replacing startDateIsFuture; verified: independent of the end-date check, no return between them",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "startDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "error.date.future",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
+   "startDate": {
+    "kind": "schema_column",
+    "table": "relationship",
+    "column": "start_date"
+   },
+   "startDateSet": {
+    "kind": "null_check",
+    "table": "relationship",
+    "column": "start_date",
+    "notes": "IS NOT NULL"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "relationship",
+   "relationship_type",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "relationship",
+   "pk_columns": [
+    "relationship_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Encounter Datetime Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_EncounterDatetimeValidityViolations_Rule_1",
+  "source_citation": "L82-85 -- exposed as a real ID-inequality comparison (encounterPatientId != visitPatientId), replacing visitPatientMismatch; verified 2026-09-10: no return after this check (redesigned 2026-09-10)",
+  "condition": {
+   "op": "!=",
+   "left": {
+    "kind": "variable",
+    "ref": "encounterPatientId"
+   },
+   "right": {
+    "kind": "variable",
+    "ref": "visitPatientId"
+   }
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Encounter.visit.patients.dontMatch",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "encounterPatientId": {
+    "kind": "schema_column",
+    "table": "encounter",
+    "column": "patient_id"
+   },
+   "visitPatientId": {
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "patient_id",
+    "notes": "joined via encounter.visit_id = visit.visit_id; exposed as an ID-equality test, replacing visitPatientMismatch (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "patient",
+   "person",
+   "privilege",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Encounter Datetime Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_EncounterDatetimeValidityViolations_Rule_2",
+  "source_citation": "L89-92 -- exposed as a real date comparison against an explicit evaluationTime, replacing encounterDatetimeIsFuture; verified: independent of the visit-mismatch check and the two visit-range checks",
+  "condition": {
+   "op": ">",
+   "left": {
+    "kind": "variable",
+    "ref": "encounterDatetime"
+   },
+   "right": {
+    "kind": "variable",
+    "ref": "evaluationTime"
+   }
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Encounter.datetimeShouldBeBeforeCurrent",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "encounterDatetime": {
+    "kind": "schema_column",
+    "table": "encounter",
+    "column": "encounter_datetime"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "patient",
+   "person",
+   "privilege",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Encounter Datetime Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_EncounterDatetimeValidityViolations_Rule_3",
+  "source_citation": "L96-99 -- exposed as a real cross-variable date comparison, replacing encounterDatetimeBeforeVisitStart; verified: can co-fire with the future-date check and the visit-mismatch check",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "<",
+     "left": {
+      "kind": "variable",
+      "ref": "encounterDatetime"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "visitStartDatetime"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "visitSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Encounter.datetimeShouldBeInVisitDatesRange",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "encounterDatetime": {
+    "kind": "schema_column",
+    "table": "encounter",
+    "column": "encounter_datetime"
+   },
+   "visitSet": {
+    "kind": "null_check",
+    "table": "encounter",
+    "column": "visit_id",
+    "notes": "IS NOT NULL"
+   },
+   "visitStartDatetime": {
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "date_started",
+    "notes": "joined via encounter.visit_id"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "patient",
+   "person",
+   "privilege",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "OpenMRS::Encounter Datetime Validity Violations::Decision_EncounterDatetimeValidityViolations_Rule_4",
+  "case_study": "OpenMRS",
+  "dmn_file": "Relationship_and_Encounter_Validation.dmn",
+  "decision_name": "Encounter Datetime Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_EncounterDatetimeValidityViolations_Rule_4",
+  "source_citation": "L101-104 -- exposed as a real cross-variable date comparison, replacing encounterDatetimeAfterVisitStop; verified: same message id as the row above but a genuinely distinct real check",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "encounterDatetime"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "visitStopDatetime"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "visitSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "violationReasons": {
+    "kind": "literal",
+    "value": "Encounter.datetimeShouldBeInVisitDatesRange",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "encounterDatetime": {
+    "kind": "schema_column",
+    "table": "encounter",
+    "column": "encounter_datetime"
+   },
+   "visitSet": {
+    "kind": "null_check",
+    "table": "encounter",
+    "column": "visit_id",
+    "notes": "IS NOT NULL"
+   },
+   "visitStopDatetime": {
+    "kind": "join_lookup",
+    "via": {
+     "local_table": "encounter",
+     "local_column": "visit_id"
+    },
+    "result_table": "visit",
+    "result_column": "date_stopped",
+    "notes": "joined via encounter.visit_id"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "patient",
+   "person",
+   "privilege",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "encounter",
+   "pk_columns": [
+    "encounter_id"
+   ],
+   "joins": {
+    "visit": [
+     {
+      "from_table": "encounter",
+      "from_column": "visit_id",
+      "to_table": "visit",
+      "to_column": "visit_id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_1",
+  "case_study": "Spree",
+  "dmn_file": "Volume_and_Tiered_Pricing.dmn",
+  "decision_name": "Price Adjustment Tier Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_PriceAdjustmentTierValidity_rule_1",
+  "source_citation": "",
+  "condition": {
+   "op": "<=",
+   "left": {
+    "kind": "variable",
+    "ref": "minQuantity"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "invalidReason": {
+    "kind": "literal",
+    "value": "min_quantity must be greater than 1",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "minQuantity": {
+    "kind": "schema_column",
+    "table": "spree_price_adjustment_tiers",
+    "column": "min_quantity"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_2",
+  "case_study": "Spree",
+  "dmn_file": "Volume_and_Tiered_Pricing.dmn",
+  "decision_name": "Price Adjustment Tier Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_PriceAdjustmentTierValidity_rule_2",
+  "source_citation": "",
+  "condition": {
+   "op": "<=",
+   "left": {
+    "kind": "variable",
+    "ref": "percentage"
+   },
+   "right": {
+    "kind": "literal",
+    "value": -100,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "invalidReason": {
+    "kind": "literal",
+    "value": "percentage must be greater than -100",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "percentage": {
+    "kind": "schema_column",
+    "table": "spree_price_adjustment_tiers",
+    "column": "percentage"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_3",
+  "case_study": "Spree",
+  "dmn_file": "Volume_and_Tiered_Pricing.dmn",
+  "decision_name": "Price Adjustment Tier Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_PriceAdjustmentTierValidity_rule_3",
+  "source_citation": "",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "percentage"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1000,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "invalidReason": {
+    "kind": "literal",
+    "value": "percentage must be less than 1000",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "percentage": {
+    "kind": "schema_column",
+    "table": "spree_price_adjustment_tiers",
+    "column": "percentage"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_4",
+  "case_study": "Spree",
+  "dmn_file": "Volume_and_Tiered_Pricing.dmn",
+  "decision_name": "Price Adjustment Tier Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_PriceAdjustmentTierValidity_rule_4",
+  "source_citation": "",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "percentage"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 0,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "invalidReason": {
+    "kind": "literal",
+    "value": "percentage cannot be exactly zero",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "percentage": {
+    "kind": "schema_column",
+    "table": "spree_price_adjustment_tiers",
+    "column": "percentage"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "Spree::Price Adjustment Tier Validity Violations::Decision_PriceAdjustmentTierValidity_rule_5",
+  "case_study": "Spree",
+  "dmn_file": "Volume_and_Tiered_Pricing.dmn",
+  "decision_name": "Price Adjustment Tier Validity Violations",
+  "hit_policy": "COLLECT",
+  "rule_id": "Decision_PriceAdjustmentTierValidity_rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "siblingTierCount"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 10,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "invalidReason": {
+    "kind": "literal",
+    "value": "too many tiers on this price list (cap is MAXIMUM_BREAKS_PER_VARIANT = 10)",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "siblingTierCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "spree_price_adjustment_tiers",
+    "filter_text": "price_list_id = :price_list_id AND id != self",
+    "source_text": "spree_price_adjustment_tiers (COUNT WHERE price_list_id = :price_list_id AND id != self)"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_price_adjustment_tiers"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "spree_price_adjustment_tiers",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Is Ageing Required::Decision_IsAgeingRequired_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Ageing_and_Dunning.dmn",
+  "decision_name": "Is Ageing Required",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_IsAgeingRequired_Rule_2",
+  "source_citation": "BasicAgeingTask.java L245-247 (mirrored in BusinessDayAgeingTask.java L95-97): otherwise not yet required",
+  "condition": {
+   "kind": "literal",
+   "value": true,
+   "type": "boolean"
+  },
+  "outputs": {
+   "ageingRequired": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_IsAgeingRequired_Rule_1",
+     "condition": {
+      "op": "<=",
+      "left": {
+       "kind": "variable",
+       "ref": "expiryDate"
+      },
+      "right": {
+       "kind": "call",
+       "name": "today",
+       "args": []
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "expiryDate": {
+    "kind": "code_external",
+    "notes": "base_user.last_status_change (fallback base_user.create_datetime, both real columns) plus ageing_entity_step.days, added as calendar days (BasicAgeingTask) or business days via BusinessDays (BusinessDayAgeingTask); no single column holds this computed date.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Daily Pro-Rate Amount::Decision_DailyProRateAmount_Rule_3",
+  "case_study": "jBilling",
+  "dmn_file": "Proration_and_Tax.dmn",
+  "decision_name": "Daily Pro-Rate Amount",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_DailyProRateAmount_Rule_3",
+  "source_citation": "L54-57: otherwise divide fullPrice by daysInCycle to get a one-day rate, then multiply by daysInPeriod",
+  "condition": {
+   "kind": "literal",
+   "value": true,
+   "type": "boolean"
+  },
+  "outputs": {
+   "proratedAmount": {
+    "kind": "literal",
+    "value": "(fullPrice / daysInCycle) * daysInPeriod",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_DailyProRateAmount_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "daysInCycle"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_DailyProRateAmount_Rule_2",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "daysInCycle"
+      },
+      "right": {
+       "kind": "variable",
+       "ref": "daysInPeriod"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "daysInCycle": {
+    "kind": "code_external",
+    "notes": "Computed at runtime from order_period.value/unit_id via PeriodOfTime; never stored as its own column.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   },
+   "daysInPeriod": {
+    "kind": "code_external",
+    "notes": "Computed the same way as daysInCycle, for the actual (possibly partial) billed date range.",
+    "reason": "no schema field was ever recorded for this fact -- genuinely computed by application code (a Java constant, a UI-only transient value, a runtime calculation over other derived facts), not read from any table at all"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ }
+]

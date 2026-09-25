@@ -1,0 +1,7383 @@
+[
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+  "source_citation": "Rules 3.24, 5.6",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newWarningCount"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 3,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "3rd consecutive academic warning (CGPA<2.00 for 3 consecutive semesters)",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 3,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_6"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+  "source_citation": "Rule 3.25 -- exposed as a real date-derived duration compared against the 7-year cap, replacing maxDurationExceeded (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceProgramStart"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 7,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": ">=",
+       "left": {
+        "kind": "variable",
+        "ref": "cumulativeGPA"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 2.0,
+        "type": "number"
+       }
+      },
+      {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "priorWarningCount"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 0,
+        "type": "number"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Maximum duration to complete degree exceeded",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+  "source_citation": "Rule 3.25 -- exposed as a real date-derived duration compared against the 7-year cap, replacing maxDurationExceeded (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceProgramStart"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 7,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Maximum duration to complete degree exceeded",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+  "source_citation": "Rule 3.25 -- exposed as a real date-derived duration compared against the 7-year cap, replacing maxDurationExceeded (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceProgramStart"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 7,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Maximum duration to complete degree exceeded",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+  "source_citation": "Rule 3.25 -- exposed as a real date-derived duration compared against the 7-year cap, replacing maxDurationExceeded (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceProgramStart"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 7,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 0,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Maximum duration to complete degree exceeded",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 1,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+  "source_citation": "Rule 3.25 -- exposed as a real date-derived duration compared against the 7-year cap, replacing maxDurationExceeded (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceProgramStart"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 7,
+      "type": "number"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Maximum duration to complete degree exceeded",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 2,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+  "source_citation": "Rule 3.26 -- exposed as a real status-code test against STUDENT_PROGRAM.REG_STATUS (via D_STUDENT_REG_STATUS), replacing suspendedRegistrationNotRestored; the specific code value is unconfirmed since Flex1.sql ships no seed/reference data, same caveat already documented for this schema's other coded values",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "regStatus"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "SUSPENDED_NOT_RESTORED",
+      "type": "string"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": ">=",
+       "left": {
+        "kind": "variable",
+        "ref": "cumulativeGPA"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 2.0,
+        "type": "number"
+       }
+      },
+      {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "priorWarningCount"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 0,
+        "type": "number"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Failure to restore suspended registration",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+  "source_citation": "Rule 3.26 -- exposed as a real status-code test against STUDENT_PROGRAM.REG_STATUS (via D_STUDENT_REG_STATUS), replacing suspendedRegistrationNotRestored; the specific code value is unconfirmed since Flex1.sql ships no seed/reference data, same caveat already documented for this schema's other coded values",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "regStatus"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "SUSPENDED_NOT_RESTORED",
+      "type": "string"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Failure to restore suspended registration",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+  "source_citation": "Rule 3.26 -- exposed as a real status-code test against STUDENT_PROGRAM.REG_STATUS (via D_STUDENT_REG_STATUS), replacing suspendedRegistrationNotRestored; the specific code value is unconfirmed since Flex1.sql ships no seed/reference data, same caveat already documented for this schema's other coded values",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "regStatus"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "SUSPENDED_NOT_RESTORED",
+      "type": "string"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Failure to restore suspended registration",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+  "source_citation": "Rule 3.26 -- exposed as a real status-code test against STUDENT_PROGRAM.REG_STATUS (via D_STUDENT_REG_STATUS), replacing suspendedRegistrationNotRestored; the specific code value is unconfirmed since Flex1.sql ships no seed/reference data, same caveat already documented for this schema's other coded values",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "regStatus"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "SUSPENDED_NOT_RESTORED",
+      "type": "string"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 0,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Failure to restore suspended registration",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 1,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+  "source_citation": "Rule 3.26 -- exposed as a real status-code test against STUDENT_PROGRAM.REG_STATUS (via D_STUDENT_REG_STATUS), replacing suspendedRegistrationNotRestored; the specific code value is unconfirmed since Flex1.sql ships no seed/reference data, same caveat already documented for this schema's other coded values",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "regStatus"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "SUSPENDED_NOT_RESTORED",
+      "type": "string"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Failure to restore suspended registration",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 2,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+  "source_citation": "Rule 3.28",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newAdmissionEligibilityNotMet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": ">=",
+       "left": {
+        "kind": "variable",
+        "ref": "cumulativeGPA"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 2.0,
+        "type": "number"
+       }
+      },
+      {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "priorWarningCount"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 0,
+        "type": "number"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Awaited result did not meet eligibility criteria for the degree program",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+  "source_citation": "Rule 3.28",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newAdmissionEligibilityNotMet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Awaited result did not meet eligibility criteria for the degree program",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+  "source_citation": "Rule 3.28",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newAdmissionEligibilityNotMet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Awaited result did not meet eligibility criteria for the degree program",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+  "source_citation": "Rule 3.28",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newAdmissionEligibilityNotMet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 0,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Awaited result did not meet eligibility criteria for the degree program",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 1,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+  "source_citation": "Rule 3.28",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newAdmissionEligibilityNotMet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Closed",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "Awaited result did not meet eligibility criteria for the degree program",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 2,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": ">=",
+       "left": {
+        "kind": "variable",
+        "ref": "cumulativeGPA"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 2.0,
+        "type": "number"
+       }
+      },
+      {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "priorWarningCount"
+       },
+       "right": {
+        "kind": "literal",
+        "value": 0,
+        "type": "number"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Open",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "No closure condition met",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newAdmissionEligibilityNotMet"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_1"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Open",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "No closure condition met",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newAdmissionEligibilityNotMet"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_2"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": ">=",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Open",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "No closure condition met",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newAdmissionEligibilityNotMet"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 0,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_3"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 0,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Open",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "No closure condition met",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newAdmissionEligibilityNotMet"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 1,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_4"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
+  ]
+ },
+ {
+  "record_id": "FLEX2::Admission Closure Eligibility::Decision_AdmissionClosureEligibility_Rule_5::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
+  "case_study": "FLEX2",
+  "dmn_file": "Academic_Standing.dmn",
+  "decision_name": "Admission Closure Eligibility",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AdmissionClosureEligibility_Rule_5",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "and",
+       "clauses": [
+        {
+         "op": "<",
+         "left": {
+          "kind": "variable",
+          "ref": "cumulativeGPA"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 2.0,
+          "type": "number"
+         }
+        },
+        {
+         "op": "=",
+         "left": {
+          "kind": "variable",
+          "ref": "priorWarningCount"
+         },
+         "right": {
+          "kind": "literal",
+          "value": 1,
+          "type": "number"
+         }
+        }
+       ]
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 1,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": ">=",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "and",
+        "clauses": [
+         {
+          "op": "<",
+          "left": {
+           "kind": "variable",
+           "ref": "cumulativeGPA"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 2.0,
+           "type": "number"
+          }
+         },
+         {
+          "op": "=",
+          "left": {
+           "kind": "variable",
+           "ref": "priorWarningCount"
+          },
+          "right": {
+           "kind": "literal",
+           "value": 0,
+           "type": "number"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "admissionStatus": {
+    "kind": "literal",
+    "value": "Open",
+    "type": "string"
+   },
+   "closureReason": {
+    "kind": "literal",
+    "value": "No closure condition met",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newWarningCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 3,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_2",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "yearsSinceProgramStart"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 7,
+       "type": "number"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_3",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "regStatus"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "SUSPENDED_NOT_RESTORED",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AdmissionClosureEligibility_Rule_4",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newAdmissionEligibilityNotMet"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newWarningCount": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 2,
+     "type": "number"
+    },
+    "from_decision": "Academic Warning Status",
+    "from_rule_id": "Decision_AcademicWarningStatus_Rule_5"
+   },
+   "yearsSinceProgramStart": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "created_date",
+    "notes": "exposed as a real duration compared against the 7-year cap (>7), replacing maxDurationExceeded (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+   },
+   "regStatus": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "reg_status"
+   },
+   "newAdmissionEligibilityNotMet": {
+    "kind": "schema_column",
+    "table": "adm_merit_list",
+    "column": "is_selected",
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation for evaluation-coverage purposes, not verified against the real FLEX2 system, 2026-09-22] Mutable proxy for the admission-eligibility outcome via the merit-list selection flag (ADM_MERIT_LIST.IS_SELECTED). ADM_OFFER_SUMMARY (the row's other originally-cited table) was excluded: it is a program/campus-level aggregate summary with no per-applicant identity column, so it cannot represent one student's own outcome. Whether IS_SELECTED=1 vs 0 truly corresponds to 'eligibility not met' is not independently confirmed against real system documentation."
+   },
+   "cumulativeGPA": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "cgpa",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "cgpa"
+     ]
+    ]
+   },
+   "priorWarningCount": {
+    "kind": "schema_column",
+    "table": "student_program",
+    "column": "warning",
+    "also_valid_in": [
+     [
+      "student_semester",
+      "warning"
+     ]
+    ]
+   }
+  },
+  "fk_closure_tables": [
+   "ADM_MERIT_LIST",
+   "BATCH",
+   "CAMPUS",
+   "CITY",
+   "COUNTRY",
+   "D_PROGRAM_LEVEL",
+   "D_SHIFT",
+   "D_STUDENT_REG_STATUS",
+   "D_STUDENT_STATUS",
+   "PROGRAM",
+   "SCHOOL",
+   "SECTION",
+   "SEMESTER",
+   "STUDENT_PERSONAL_INFO",
+   "STUDENT_PROGRAM",
+   "STUDENT_SEMESTER"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
+  ]
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_1",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_1",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": ">=",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_2",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_2",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "<",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_3",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_3",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "between",
+     "left": {
+      "kind": "variable",
+      "ref": "itemTotal"
+     },
+     "low": {
+      "kind": "variable",
+      "ref": "effectiveMinThreshold"
+     },
+     "high": {
+      "kind": "variable",
+      "ref": "effectiveMaxThreshold"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "<",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMaxThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Maximum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "lte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMax"
+     },
+     "else": {
+      "op": "-",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_max",
+      "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's wrong default -- the real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT 1000.00 as previously guessed. No default given here (deliberately -- matches the real nil default exactly: an unconfigured amount_max resolves to None, same as Spree's own preferred_amount_max would)."
+     },
+     "operatorMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_max",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :operator_max, :string, default: '<', item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": "<"
+     }
+    }
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "Spree::Promotion Item Total Eligibility::Decision_ItemTotalEligibility_rule_4",
+  "case_study": "Spree",
+  "dmn_file": "Promotion_Order_Level_Eligibility.dmn",
+  "decision_name": "Promotion Item Total Eligibility",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ItemTotalEligibility_rule_4",
+  "source_citation": "",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "not",
+     "clause": {
+      "op": "between",
+      "left": {
+       "kind": "variable",
+       "ref": "itemTotal"
+      },
+      "low": {
+       "kind": "variable",
+       "ref": "effectiveMinThreshold"
+      },
+      "high": {
+       "kind": "variable",
+       "ref": "effectiveMaxThreshold"
+      }
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "amountMaxSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "itemTotalEligible": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": ">=",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "<",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ItemTotalEligibility_rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "between",
+        "left": {
+         "kind": "variable",
+         "ref": "itemTotal"
+        },
+        "low": {
+         "kind": "variable",
+         "ref": "effectiveMinThreshold"
+        },
+        "high": {
+         "kind": "variable",
+         "ref": "effectiveMaxThreshold"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "amountMaxSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "amountMaxSet": {
+    "kind": "null_check",
+    "table": "spree_promotion_rules",
+    "column": "preferences",
+    "key": "amount_max",
+    "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's mistaken premise -- the actual real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT a hard non-null default as previously assumed; amount_min/operator_min/operator_max do have non-null defaults, but amount_max specifically does not. This makes amountMaxSet a genuine, checkable existence check (null check on this key, no default substituted) after all.] Existence check on the amount_max key -- see operatorMin's own row for the confirmed serialization mechanism."
+   },
+   "effectiveMaxThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Maximum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "lte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMax"
+     },
+     "else": {
+      "op": "-",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMax"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_max",
+      "notes": "[CONFIRMED 2026-09-24, corrects the earlier note's wrong default -- the real source (item_total.rb) declares preference :amount_max, :decimal, default: nil, nullable: true, NOT 1000.00 as previously guessed. No default given here (deliberately -- matches the real nil default exactly: an unconfigured amount_max resolves to None, same as Spree's own preferred_amount_max would)."
+     },
+     "operatorMax": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_max",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :operator_max, :string, default: '<', item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": "<"
+     }
+    }
+   },
+   "effectiveMinThreshold": {
+    "kind": "substituted_decision",
+    "substituted_from": "Effective Minimum Amount Threshold",
+    "expression": {
+     "op": "if",
+     "cond": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "operatorMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "gte",
+       "type": "string"
+      }
+     },
+     "then": {
+      "kind": "variable",
+      "ref": "amountMin"
+     },
+     "else": {
+      "op": "+",
+      "left": {
+       "kind": "variable",
+       "ref": "amountMin"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0.01,
+       "type": "number"
+      }
+     }
+    },
+    "free_variable_resolutions": {
+     "amountMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "amount_min",
+      "notes": "[CONFIRMED 2026-09-24 against Spree's real source directly -- preference :amount_min, :decimal, default: 100.00, item_total.rb -- not a guess.] Same serialized_field mechanism as operatorMin; see that row's own note.",
+      "default": 100.0
+     },
+     "operatorMin": {
+      "kind": "serialized_field",
+      "table": "spree_promotion_rules",
+      "column": "preferences",
+      "key": "operator_min",
+      "notes": "[CONFIRMED 2026-09-24 -- Spree's real source cloned and read directly (core/app/models/spree/promotion/rules/item_total.rb: preference :operator_min, :string, default: '>'; core/lib/spree/core/preferences/preferable.rb: serialize :preferences, type: Hash, coder: YAML), not a guess. Supersedes the earlier SCHEMA GAP call, which predates this confirmation and was written before validation_oracle/db_resolver.py's own serialized_field mechanism existed to read it. See generator/materialize.py's serialize_yaml_hash_blob for the write-side convention this relies on.",
+      "default": ">"
+     }
+    }
+   },
+   "itemTotal": {
+    "kind": "schema_column",
+    "table": "spree_orders",
+    "column": "item_total"
+   }
+  },
+  "fk_closure_tables": [
+   "spree_orders",
+   "spree_promotion_rules"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Date Range Valid",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderDateRangeValid_Rule_1",
+  "source_citation": "DateRangeValidator.java L74-84: any reflection or date-parsing failure is treated as invalid",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "parseOrAccessError"
+   },
+   "right": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "dateRangeValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "parseOrAccessError": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Date Range Valid",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderDateRangeValid_Rule_2",
+  "source_citation": "L63-64: a missing start date is vacuously valid",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "parseOrAccessError"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "dateRangeValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "parseOrAccessError"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "parseOrAccessError": {
+    "kind": "not_persisted"
+   },
+   "startDateProvided": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_3",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Date Range Valid",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderDateRangeValid_Rule_3",
+  "source_citation": "L66-67: a missing end date is likewise vacuously valid",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "parseOrAccessError"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "endDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "dateRangeValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "parseOrAccessError"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "endDateProvided": {
+    "kind": "not_persisted"
+   },
+   "parseOrAccessError": {
+    "kind": "not_persisted"
+   },
+   "startDateProvided": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_4",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Date Range Valid",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderDateRangeValid_Rule_4",
+  "source_citation": "L69-72: both dates present and start genuinely precedes end -- exposed as a real cross-variable date comparison, replacing startBeforeEnd (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "parseOrAccessError"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "endDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "endDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "startDate"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "dateRangeValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "parseOrAccessError"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "endDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "endDate": {
+    "kind": "not_persisted"
+   },
+   "endDateProvided": {
+    "kind": "not_persisted"
+   },
+   "parseOrAccessError": {
+    "kind": "not_persisted"
+   },
+   "startDate": {
+    "kind": "not_persisted"
+   },
+   "startDateProvided": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Order Date Range Valid::Decision_OrderDateRangeValid_Rule_5",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Date Range Valid",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderDateRangeValid_Rule_5",
+  "source_citation": "L69-72: both dates present but start is on/after end -- invalid",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "parseOrAccessError"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "startDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "endDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "<=",
+     "left": {
+      "kind": "variable",
+      "ref": "endDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "startDate"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "dateRangeValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "parseOrAccessError"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "endDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_OrderDateRangeValid_Rule_4",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "parseOrAccessError"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "startDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "endDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": ">",
+        "left": {
+         "kind": "variable",
+         "ref": "endDate"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "startDate"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "endDate": {
+    "kind": "not_persisted"
+   },
+   "endDateProvided": {
+    "kind": "not_persisted"
+   },
+   "parseOrAccessError": {
+    "kind": "not_persisted"
+   },
+   "startDate": {
+    "kind": "not_persisted"
+   },
+   "startDateProvided": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": true,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Payment_Authorization_and_Blacklist.dmn",
+  "decision_name": "Payment Outcome Resolution",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_PaymentOutcomeResolution_Rule_1",
+  "source_citation": "PaymentBL.java L340-341: if the while-loop over pluggable payment tasks exits with processorUnavailable still true, the outcome is forced to RESULT_UNAVAILABLE (3), overriding whatever result code the last attempted task left on the payment",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "processorUnavailable"
+   },
+   "right": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "resultCode": {
+    "kind": "literal",
+    "value": 3,
+    "type": "number"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "processorUnavailable": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Payment_Authorization_and_Blacklist.dmn",
+  "decision_name": "Payment Outcome Resolution",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_PaymentOutcomeResolution_Rule_2",
+  "source_citation": "PaymentBL.java L342-344: otherwise (a task actually completed, success or decline) the outcome is exactly the last task's payment result id, passed through unchanged",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "processorUnavailable"
+   },
+   "right": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "resultCode": {
+    "kind": "literal",
+    "value": "paymentResultId",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_PaymentOutcomeResolution_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "processorUnavailable"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "processorUnavailable": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_2::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Payment_Authorization_and_Blacklist.dmn",
+  "decision_name": "Payment Balance Assignment",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_PaymentBalanceAssignment_Rule_2",
+  "source_citation": "PaymentBL.java L349-350: else payment.setBalance(ZERO) -- a failed or processor-unavailable payment has no usable balance",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "processorUnavailable"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "balance": {
+    "kind": "literal",
+    "value": 0,
+    "type": "number"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_PaymentBalanceAssignment_Rule_1",
+     "condition": {
+      "op": "in",
+      "left": {
+       "kind": "variable",
+       "ref": "resultCode"
+      },
+      "values": [
+       {
+        "kind": "literal",
+        "value": 1,
+        "type": "number"
+       },
+       {
+        "kind": "literal",
+        "value": 4,
+        "type": "number"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "resultCode": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": 3,
+     "type": "number"
+    },
+    "from_decision": "Payment Outcome Resolution",
+    "from_rule_id": "Decision_PaymentOutcomeResolution_Rule_1"
+   },
+   "processorUnavailable": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_1"
+  ]
+ },
+ {
+  "record_id": "jBilling::Payment Balance Assignment::Decision_PaymentBalanceAssignment_Rule_2::via::Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Payment_Authorization_and_Blacklist.dmn",
+  "decision_name": "Payment Balance Assignment",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_PaymentBalanceAssignment_Rule_2",
+  "source_citation": "PaymentBL.java L349-350: else payment.setBalance(ZERO) -- a failed or processor-unavailable payment has no usable balance",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "kind": "literal",
+     "value": true,
+     "type": "boolean"
+    },
+    {
+     "op": "and",
+     "clauses": [
+      {
+       "op": "=",
+       "left": {
+        "kind": "variable",
+        "ref": "processorUnavailable"
+       },
+       "right": {
+        "kind": "literal",
+        "value": false,
+        "type": "boolean"
+       }
+      },
+      {
+       "op": "not",
+       "clause": {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "processorUnavailable"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "balance": {
+    "kind": "literal",
+    "value": 0,
+    "type": "number"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_PaymentBalanceAssignment_Rule_1",
+     "condition": {
+      "op": "in",
+      "left": {
+       "kind": "variable",
+       "ref": "resultCode"
+      },
+      "values": [
+       {
+        "kind": "literal",
+        "value": 1,
+        "type": "number"
+       },
+       {
+        "kind": "literal",
+        "value": 4,
+        "type": "number"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "resultCode": {
+    "kind": "literal_via_upstream_branch",
+    "value": {
+     "kind": "literal",
+     "value": "paymentResultId",
+     "type": "string"
+    },
+    "from_decision": "Payment Outcome Resolution",
+    "from_rule_id": "Decision_PaymentOutcomeResolution_Rule_2"
+   },
+   "processorUnavailable": {
+    "kind": "not_persisted"
+   }
+  },
+  "fk_closure_tables": [],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "grounded_upstream_branches": [
+   "Payment Outcome Resolution::Decision_PaymentOutcomeResolution_Rule_2"
+  ]
+ },
+ {
+  "record_id": "OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Numeric Precision Validity",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_NumericPrecisionValidity_Rule_2",
+  "source_citation": "Math.ceil(v)==v (L195)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "allowDecimal"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "valueNumericHasFraction"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "precisionValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "integerValue",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_NumericPrecisionValidity_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "allowDecimal"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "allowDecimal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "allow_decimal"
+   },
+   "valueNumericHasFraction": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric",
+    "notes": "MOD(value_numeric, 1) <> 0"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "concept_numeric",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Numeric Precision Validity",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_NumericPrecisionValidity_Rule_3",
+  "source_citation": "Math.ceil(v)!=v (L195-201)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "allowDecimal"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "valueNumericHasFraction"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "precisionValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "Obs.error.precision",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_NumericPrecisionValidity_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "allowDecimal"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_NumericPrecisionValidity_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "allowDecimal"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "valueNumericHasFraction"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "allowDecimal": {
+    "kind": "schema_column",
+    "table": "concept_numeric",
+    "column": "allow_decimal"
+   },
+   "valueNumericHasFraction": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "value_numeric",
+    "notes": "MOD(value_numeric, 1) <> 0"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "concept_numeric",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Person_Demographics_Validation.dmn",
+  "decision_name": "Birthdate Validity",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_BirthdateValidity_Rule_2",
+  "source_citation": "rejectDateIfBefore140YearsAgo (L199-213)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "<=",
+     "left": {
+      "kind": "variable",
+      "ref": "birthdate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    },
+    {
+     "op": ">",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceBirthdate"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 140,
+      "type": "number"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "birthdateValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "birthdate.olderThan140Years",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_BirthdateValidity_Rule_1",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "birthdate"
+      },
+      "right": {
+       "kind": "variable",
+       "ref": "evaluationTime"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "birthdate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
+   "yearsSinceBirthdate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate",
+    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Birthdate Validity::Decision_BirthdateValidity_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Person_Demographics_Validation.dmn",
+  "decision_name": "Birthdate Validity",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_BirthdateValidity_Rule_3",
+  "source_citation": "passes both checks",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "<=",
+     "left": {
+      "kind": "variable",
+      "ref": "birthdate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "evaluationTime"
+     }
+    },
+    {
+     "op": "<=",
+     "left": {
+      "kind": "variable",
+      "ref": "yearsSinceBirthdate"
+     },
+     "right": {
+      "kind": "literal",
+      "value": 140,
+      "type": "number"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "birthdateValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "none",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_BirthdateValidity_Rule_1",
+     "condition": {
+      "op": ">",
+      "left": {
+       "kind": "variable",
+       "ref": "birthdate"
+      },
+      "right": {
+       "kind": "variable",
+       "ref": "evaluationTime"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_BirthdateValidity_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "<=",
+        "left": {
+         "kind": "variable",
+         "ref": "birthdate"
+        },
+        "right": {
+         "kind": "variable",
+         "ref": "evaluationTime"
+        }
+       },
+       {
+        "op": ">",
+        "left": {
+         "kind": "variable",
+         "ref": "yearsSinceBirthdate"
+        },
+        "right": {
+         "kind": "literal",
+         "value": 140,
+         "type": "number"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "birthdate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate"
+   },
+   "evaluationTime": {
+    "kind": "not_persisted"
+   },
+   "yearsSinceBirthdate": {
+    "kind": "schema_column",
+    "table": "person",
+    "column": "birthdate",
+    "notes": "TIMESTAMPDIFF(YEAR, birthdate, CURRENT_DATE)"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "person",
+   "pk_columns": [
+    "person_id"
+   ],
+   "joins": {}
+  }
+ }
+]

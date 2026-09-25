@@ -24,6 +24,47 @@ from db_resolver import resolve, UnresolvableForCase
 from rule_evaluator import evaluate_condition, evaluate_expression, UniqueViolation
 
 
+def _condition_variable_refs(node):
+    """Every `{'kind': 'variable', 'ref': ...}` leaf reachable anywhere
+    inside one rule's compiled `condition` tree -- a generic structural
+    walk (recurses into every dict value and list item, keyed on nothing
+    but `kind == 'variable'`) rather than one hardcoded per operator
+    shape (and/or/not/in/between/comparators/arithmetic), so it can't
+    silently miss a ref if the condition grammar grows a new operator
+    later. Used to fix a real bug (2026-09-25, found investigating why
+    `jBilling`'s `Ageing Step Config Validation`, `Is Ageing Required` and
+    `Daily Pro-Rate Amount` decisions came back wholesale `unresolved`):
+    `variable_resolution` can carry an entry for a variable a rule's own
+    `condition` never actually reads (a DMN row's default/catch-all
+    variant -- bare `condition: {'kind': 'literal', 'value': true}` --
+    still gets the decision's full variable_resolution dict attached,
+    unused). `run_decision`'s own per-variant loop used to resolve every
+    key in `variable_resolution` unconditionally; if that unused
+    variable's own kind is something `db_resolver.resolve` has no case
+    for (`code_external`), it raises a bare `NotImplementedError` --
+    never caught by this loop's own `UngroundedForCase` handling (that's
+    for a per-case data gap, not a structurally-never-resolvable kind),
+    so it propagated out of `run_decision` entirely and got caught only
+    at the whole-decision level, marking every OTHER rule in that same
+    decision unresolved too, even ones (like `Ageing Step Config
+    Validation`'s own Rule_1/Rule_2) whose own inputs have nothing wrong
+    with them at all."""
+    refs = set()
+
+    def walk(n):
+        if isinstance(n, dict):
+            if n.get('kind') == 'variable' and 'ref' in n:
+                refs.add(n['ref'])
+            for v in n.values():
+                walk(v)
+        elif isinstance(n, list):
+            for item in n:
+                walk(item)
+
+    walk(node)
+    return refs
+
+
 def _distinct_subject_keys(conn, subject_table, pk_cols):
     cols_sql = ', '.join(f'"{c}"' for c in pk_cols)
     cur = conn.execute(f'SELECT DISTINCT {cols_sql} FROM "{subject_table}"')
@@ -341,7 +382,18 @@ def run_decision(conn, decision_name, records, subject_table, subject_pk_cols,
                 values = dict(base_values)
                 var_trace = {} if collect_trace else None
                 ungrounded = False
+                needed_vars = _condition_variable_refs(variant['condition'])
                 for var, node in variant['variable_resolution'].items():
+                    if var not in needed_vars:
+                        # Declared on this rule variant but never actually
+                        # read by ITS OWN condition (see
+                        # _condition_variable_refs's own docstring) --
+                        # resolving it anyway risks an unrelated
+                        # structurally-unresolvable kind (code_external et
+                        # al.) aborting this whole decision for every rule,
+                        # over a variable this specific variant never
+                        # needed an answer for.
+                        continue
                     try:
                         values[var] = _resolve_one(conn, case_study, var, node, subject_table,
                                                     subject_pk_cols, pk_vals, join_paths or {},

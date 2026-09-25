@@ -619,6 +619,86 @@ def _own_solo_unique_columns_for(schema, table):
     return cols
 
 
+_COMPOSITE_KEY_DEDUP_COLUMN = {
+    # A genuine composite-PK collision, confirmed real (2026-09-25, first
+    # hit running `validation_oracle/tests/per_individual_archive_
+    # coverage.py` against a fresh FLEX2 archive, then reproduced directly
+    # against `merge_archive_candidate` too): `STUDENT_ATTENDANCE`'s own
+    # PK is the composite `(LECTURE_ID, ROLL_NO)`. `Attendance Eligibility
+    # For Final Exam`'s own `lecturesAttended` is `COUNT(STUDENT_
+    # ATTENDANCE) WHERE ROLL_NO = <student> AND ATTEND_FLAG='Y' AND
+    # LECTURE_ID IN (...)` (compiled_constraints.json, confirmed directly)
+    # -- ROLL_NO is the aggregate's own GROUPING key, the same student
+    # across every counted row BY DESIGN; LECTURE_ID is what's supposed to
+    # differ, one per distinct lecture actually attended. The seed
+    # mechanism that materializes "N lectures attended" as N copies of one
+    # row never varies LECTURE_ID across those copies (confirmed directly
+    # against the raw archived individual: 3 literally identical
+    # `{ROLL_NO: X, LECTURE_ID: X}` rows under one owner), so all N land on
+    # the exact same real PK tuple the moment they're offset into one
+    # database -- a real `UNIQUE constraint failed` this project's own
+    # `_own_solo_unique_columns_for` deliberately never tried to catch
+    # (composite keys were excluded there on purpose, see its own
+    # docstring's "revisit if one is ever found" note -- this is that).
+    ('FLEX2', 'STUDENT_ATTENDANCE'): 'LECTURE_ID',
+}
+
+
+def _dedup_composite_keys(schema, table, row_copy, used_key_values, case_study=None):
+    """Call once a row's own key columns have ALREADY been offset (the
+    single-column dedup loop just above/its `_offset_rows_by_owner`
+    twin in `validation_oracle/tests/per_individual_archive_coverage.py`
+    both call this immediately after that loop, on the SAME `row_copy`
+    and the SAME `used_key_values` dict they already thread through for
+    solo-unique columns) -- checks every composite (length > 1) PK/UNIQUE
+    keyset this table declares for a genuine FULL-TUPLE collision against
+    another row already placed in this same dedup scope.
+
+    Deliberately NOT a general "guess which column of any composite key
+    to bump" mechanism -- same discipline as `filter_placeholder_
+    sources.py`/`subject_root_overrides.py`: which column is safe to vary
+    is a real domain judgment call (bump the wrong one -- e.g. `STUDENT_
+    ATTENDANCE`'s own `ROLL_NO` instead of `LECTURE_ID` -- and the
+    aggregate's own correlating key silently breaks, corrupting a
+    DIFFERENT, already-verified objective's own count), so this only
+    acts on a table explicitly named in `_COMPOSITE_KEY_DEDUP_COLUMN`
+    above. For every other table this is a no-op, by construction --
+    `_own_solo_unique_columns_for`'s own long-documented "leaves every
+    composite key's own legitimate row-to-row sharing alone" behavior is
+    completely unchanged for anything not in that dict (confirmed:
+    `COURSE_REGISTRATION`'s own composite keys stay untouched, since it
+    has no entry here)."""
+    override_col = _COMPOSITE_KEY_DEDUP_COLUMN.get((case_study, table.upper()))
+    if override_col is None:
+        return
+    real = table if table in schema else (
+        table.upper() if table.upper() in schema else (
+            table.lower() if table.lower() in schema else table))
+    for keyset in _unique_key_sets(schema, real):
+        if len(keyset) < 2:
+            continue
+        keyset_upper = [c.upper() for c in keyset]
+        if override_col.upper() not in keyset_upper:
+            continue
+
+        def _get(col):
+            return row_copy.get(col, row_copy.get(col.upper(), row_copy.get(col.lower())))
+
+        tup = tuple(_get(c) for c in keyset)
+        if any(v is None for v in tup):
+            continue  # not fully populated yet -- nothing to dedup
+        used = used_key_values.setdefault((table.upper(), tuple(keyset_upper)), set())
+        if tup in used:
+            idx = keyset_upper.index(override_col.upper())
+            tup_list = list(tup)
+            while tuple(tup_list) in used:
+                tup_list[idx] += 1
+            actual_col = next(c for c in row_copy if c.upper() == override_col.upper())
+            row_copy[actual_col] = tup_list[idx]
+            tup = tuple(tup_list)
+        used.add(tup)
+
+
 _SEED_KEY_OFFSET_UNIT = 1_000_000  # generous: FLEX2 has ~250 records, nowhere near exhausting int range
 
 
@@ -739,6 +819,131 @@ def _mutations_per_child(active, population_size, mutations_per_child):
     if mutations_per_child == 'auto':
         return max(1, math.ceil(len(active) / (2 * population_size))) if active else 1
     return mutations_per_child
+
+
+def _build_decision_subject_row(candidate, rec_focal, r, rid):
+    """The decision's own real DMN subject row (2026-09-24, extracted into
+    a shared function 2026-09-26) -- `compile_constraints.py`'s own
+    `decision_subject` field (a generator-owned port of `validation_oracle/
+    subject_table.py`'s algorithm, computed once at compile time -- see
+    that module's own docstring for why a port, not an import). No leaf
+    variable ever needs this row DURING search (fitness never reads it),
+    so this was originally called from exactly one place -- a one-time,
+    post-search synthesis step inside `merge_archive_candidate` -- until a
+    real gap was found (2026-09-26, tracing Spree's own `Promotion
+    Customer Group Eligibility`): `validation_oracle/tests/per_individual_
+    archive_coverage.py`'s own no-merge pipeline never calls
+    `merge_archive_candidate` at all, so this row never got built there
+    either, even after the compile-time `decision_subject` fix -- the
+    junction row it depends on simply never existed for ANY individual
+    materialized that way, regardless of the fix. Extracted here, called
+    from BOTH places now, so they can never drift apart on this again.
+
+    `candidate` is whatever candidate `rec_focal`'s own rows already live
+    in (the shared merged candidate, in `merge_archive_candidate`'s own
+    case; one individual's own candidate, in the per-individual tool's).
+    `rec_focal` is `{table: row}` for record `r` specifically -- either
+    `merge_archive_candidate`'s own `merged_rec_focal`, or one entry of a
+    single individual's own `focal_maps[record_id]`. `rid` is `r['record_id']`,
+    used only to tag a freshly-created row's own `_OWNER_KEY`. Mutates
+    `candidate` (via `add_row`) and `rec_focal` in place; returns nothing."""
+    subject = r.get('decision_subject')
+    if not subject:
+        return
+    subject_focal = rec_focal.get(subject['table']) or next(
+        (v for k, v in rec_focal.items() if k.upper() == subject['table'].upper()), None)
+    is_new = subject_focal is None
+    if is_new:
+        subject_focal = {}
+    resolvable = bool(subject['joins'])
+    wired_any = False
+    for target_table, hops in subject['joins'].items():
+        # Deliberately narrow scope, disclosed rather than silently
+        # guessed: only a SINGLE hop from the subject to each other table
+        # this record needs (the confirmed real shape for every decision
+        # this applies to so far) is attempted -- a genuine multi-hop
+        # chain would need a fresh intermediate row this pass does not
+        # attempt to synthesize, so it's skipped instead of half-built.
+        if len(hops) != 1:
+            resolvable = False
+            break
+        hop = hops[0]
+        if subject_focal.get(hop['from_column']) is not None:
+            continue  # already has a real value -- never overwritten
+        target_focal = rec_focal.get(hop['to_table']) or next(
+            (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
+        if target_focal is None:
+            # This record's own construction never built a dedicated row
+            # for a table the subject needs to link through -- e.g. a
+            # rule whose own leaves never touch it at all. Synthesize a
+            # fresh, minimal row instead of leaving this hop unresolved:
+            # `repair_candidate`, called right after this, fills in
+            # whatever else it still needs (NOT NULL columns, its own
+            # FKs) -- the same discipline already applied to every other
+            # row this pass builds, not a new mechanism.
+            target_focal = candidate.add_row(hop['to_table'], {_OWNER_KEY: rid})
+            rec_focal[hop['to_table']] = target_focal
+        pk_value = target_focal.get(hop['to_column'])
+        if pk_value is None:
+            # The referenced row's own PK was never set by search/seeding.
+            # Assigned HERE instead, synchronously, so the new junction
+            # row's own FK can actually reference the real, final value --
+            # reuses `mutation.py`'s own `_fresh_key_value` (already
+            # collision-safe against everything in `candidate` so far),
+            # not a fresh ad hoc scheme.
+            pk_value = _fresh_key_value(candidate, hop['to_table'], hop['to_column'])
+            target_focal[hop['to_column']] = pk_value
+        subject_focal[hop['from_column']] = pk_value
+        wired_any = True
+    if resolvable and is_new and (subject_focal or wired_any):
+        subject_focal[_OWNER_KEY] = rid
+        candidate.add_row(subject['table'], subject_focal)
+        rec_focal[subject['table']] = subject_focal
+
+
+def _deep_copy_individual(individual):
+    """A fresh `(candidate, focal_maps, scenario_maps)`, sharing NOTHING
+    mutable with the original -- every row dict copied, with `focal_maps`
+    remapped through the SAME `id(original_row) -> copied_row`
+    correspondence `merge_archive_candidate`'s own `get_copy` already uses
+    for the identical reason, so a focal row and its own candidate-list
+    row stay the exact same object post-copy, just as they were before it.
+
+    Real bug this fixes (2026-09-26, found tracing Spree's own
+    `Promotion Customer Group Eligibility::Rule_2`): `update_archive`
+    used to store `(f, individual)` with `individual` the literal SAME
+    object still living in the shared `population` list. DynaMOSA runs
+    ONE population across every objective in the case study, and the SAME
+    individual can go on being mutated for OTHER objectives after already
+    being archived at `fitness=0.0` for this one -- `update_archive`'s own
+    strict `f < archive[rid][0]` only ever checks for IMPROVEMENT, never
+    re-verifies an already-recorded 0.0 against later changes. Confirmed
+    directly: `Rule_2` needs `promotionTargetGroupsConfigured = False`
+    (no matching `spree_promotion_rules` row); the archived individual's
+    own scenario (`{'promotion_id': 1000001}`) and a REAL, still-present,
+    still-owned `spree_promotion_rules` row (`promotion_id=1000001,
+    type='...CustomerGroup'`) match EXACTLY -- the fact this rule needed
+    false was true again by the time anyone looked, some later generation
+    having re-added it while mutating a DIFFERENT objective's own leaf on
+    the same shared table. Archiving a deep copy instead means whatever
+    got recorded at the moment of archiving is what stays recorded,
+    permanently insulated from every later generation's own further
+    mutation of the live population -- the same guarantee this project's
+    own independent validator already assumes an archived individual
+    provides, now actually true of the search's own data structure too."""
+    candidate, focal_maps, scenario_maps = individual
+    id_to_copy = {}
+    new_candidate = Candidate()
+    for table, rows in candidate.as_dict().items():
+        for row in rows:
+            row_copy = dict(row)
+            new_candidate.add_row(table, row_copy)
+            id_to_copy[id(row)] = row_copy
+    new_focal_maps = {}
+    for rid, rec_focal in focal_maps.items():
+        new_focal_maps[rid] = {table: id_to_copy[id(row)] for table, row in rec_focal.items()}
+    new_scenario_maps = {rid: dict(scenario) for rid, scenario in scenario_maps.items()}
+    return (new_candidate, new_focal_maps, new_scenario_maps)
 
 
 def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
@@ -872,7 +1077,7 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
             rid = r['record_id']
             f = evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache)
             if f < archive[rid][0]:
-                archive[rid] = (f, individual)
+                archive[rid] = (f, _deep_copy_individual(individual))
 
     for ind in population:
         update_archive(ind)
@@ -1125,6 +1330,72 @@ def _join_lookup_pairs(record):
 
 
 def merge_archive_candidate(archive, records, case_study):
+    """Thin wrapper over `_merge_archive_candidate_impl` (`include_all_rows=
+    False`) -- see that function for the actual implementation and this
+    docstring's own full collision-avoidance writeup, unchanged by the
+    `include_all_rows` toggle added 2026-09-25 (see
+    `merge_archive_candidate_full`'s own docstring for why that variant
+    exists and how it differs)."""
+    return _merge_archive_candidate_impl(archive, records, case_study, include_all_rows=False)
+
+
+def merge_archive_candidate_full(archive, records, case_study):
+    """Variant of `merge_archive_candidate`, built 2026-09-25 at the
+    user's own explicit request: instead of merging in only each covered
+    objective's OWNER-TAGGED rows (that objective's own dedicated focal
+    row plus any other row its own search/mutation specifically touched
+    -- see `merge_archive_candidate`'s own docstring), this merges in
+    EVERY row of each covered objective's ENTIRE candidate, including the
+    untouched shared-seed rows every candidate also carries a copy of.
+
+    Reuses `_merge_archive_candidate_impl`'s identical, already-proven
+    per-record offset (`i * _SEED_KEY_OFFSET_UNIT`, applied to every
+    PK/UNIQUE/FK column in every row this call includes) for collision
+    avoidance -- the SAME mechanism `merge_archive_candidate` itself
+    relies on, not a new one. Chosen over a content-aware dedup/conflict-
+    detection alternative specifically because the uniform per-record
+    offset treats each covered objective's ENTIRE candidate as one
+    atomic, internally self-consistent unit: every reference (FK) within
+    one objective's own contributed rows shifts by the identical amount
+    as the row it points to, so internal referential integrity is
+    preserved automatically, with no selective/partial FK-rewrite step
+    that could target the wrong reference (the class of bug
+    `merge_archive_candidate`'s own docstring documents happening for
+    even the narrower, owner-tagged-only case -- a value-based rewrite
+    heuristic silently broke 25 unrelated FLEX2 objectives before being
+    replaced with a structural one). A content-aware dedup strategy would
+    need exactly that kind of selective rewrite (reassign THIS row's key,
+    but only rewrite the FK references that actually pointed at it,
+    leaving every other reference in the same candidate untouched) to
+    keep the database compact -- judged not worth the risk for this use.
+
+    The accepted, KNOWN tradeoff, not a bug: since every covered
+    objective's candidate starts from the same shared seed template
+    (`build_seed_candidate`) and typically mutates only a few rows/fields
+    for its own fitness, including every row of every objective's
+    candidate means each objective's own untouched copy of the shared
+    baseline becomes its own private, uniquely-offset set of rows --
+    producing a MUCH larger, more redundant database (up to one near-
+    copy of the baseline per covered objective) than
+    `merge_archive_candidate`'s compact, single-shared-baseline result.
+    This does not affect verification CORRECTNESS (a duplicate-content
+    row at a different PK cannot cause a false verification -- a rule
+    still needs a real row satisfying its own condition to verify; extra
+    rows just mean more enumeration work for `subject_table_for_decision`
+    to do), only database size and how "realistic" it reads.
+
+    Everything else -- `used_key_values`'s own same-record/same-table
+    dedup-bump, `filter_cols`/`join_cols` structural offsetting,
+    `cross_table_placeholders` wiring, `decision_subject` junction
+    wiring, and the final `repair_candidate` pass -- is IDENTICAL to
+    `merge_archive_candidate`, unmodified, and applies exactly as
+    correctly to a full-candidate row as to an owner-tagged one, since
+    none of it depends on why a row is being included, only on what
+    table/column it's on."""
+    return _merge_archive_candidate_impl(archive, records, case_study, include_all_rows=True)
+
+
+def _merge_archive_candidate_impl(archive, records, case_study, include_all_rows):
     """Builds ONE consistent `(candidate, focal_maps)` by merging, for
     EVERY objective the archive ever covered (fitness 0.0), just that
     objective's own rows from its own best-ever individual -- see this
@@ -1373,6 +1644,7 @@ def merge_archive_candidate(archive, records, case_study):
                         # inherently between two SPECIFIC, different
                         # tables, not just a column name.
                         row_copy[col] = val + offset
+                _dedup_composite_keys(schema, table, row_copy, used_key_values, case_study)
             merged.add_row(table, row_copy)
             id_to_copy[key] = row_copy
         return row_copy
@@ -1431,10 +1703,17 @@ def merge_archive_candidate(archive, records, case_study):
         # (2) Every OTHER row this record owns anywhere in the candidate
         # (derived_aggregate/exists/derived_join_count's own row SETs) --
         # merged in for scanning, deliberately never touching
-        # merged_rec_focal.
+        # merged_rec_focal. `include_all_rows` (merge_archive_candidate_full's
+        # own toggle, see its docstring) widens this from "only this
+        # record's own owner-tagged rows" to literally every row of this
+        # record's own candidate, including the untouched shared-seed
+        # rows it also carries a copy of -- get_copy's own id_to_copy
+        # memoization (keyed by row IDENTITY) means a row already copied
+        # via merged_rec_focal above is never processed twice here,
+        # whichever mode this is.
         for table, table_rows in candidate.as_dict().items():
             for row in table_rows:
-                if row.get(_OWNER_KEY) == rid:
+                if include_all_rows or row.get(_OWNER_KEY) == rid:
                     get_copy(table, row, offset, filter_cols, join_cols)
 
         if merged_rec_focal:
@@ -1576,69 +1855,8 @@ def merge_archive_candidate(archive, records, case_study):
         # hop onto the subject row REGARDLESS of whether that row already
         # existed, skipping only a hop whose own FK column the subject
         # row already has a real value for (never overwritten).
-        subject = r.get('decision_subject')
-        if subject:
-            subject_focal = merged_rec_focal.get(subject['table']) or next(
-                (v for k, v in merged_rec_focal.items() if k.upper() == subject['table'].upper()), None)
-            is_new = subject_focal is None
-            if is_new:
-                subject_focal = {}
-            resolvable = bool(subject['joins'])
-            wired_any = False
-            for target_table, hops in subject['joins'].items():
-                # Deliberately narrow scope, disclosed rather than
-                # silently guessed: only a SINGLE hop from the subject to
-                # each other table this record needs (the confirmed real
-                # shape for every decision this applies to so far) is
-                # attempted -- a genuine multi-hop chain would need a
-                # fresh intermediate row this pass does not attempt to
-                # synthesize, so it's skipped instead of half-built.
-                if len(hops) != 1:
-                    resolvable = False
-                    break
-                hop = hops[0]
-                if subject_focal.get(hop['from_column']) is not None:
-                    continue  # already has a real value -- never overwritten
-                target_focal = merged_rec_focal.get(hop['to_table']) or next(
-                    (v for k, v in merged_rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
-                if target_focal is None:
-                    # This record's own construction never built a
-                    # dedicated row for a table the subject needs to
-                    # link through -- e.g. a rule whose own leaves never
-                    # touch it at all (confirmed real: FLEX2's `Course
-                    # Replacement Eligibility::Rule_1` only reads
-                    # `COURSE`, never `STUDENT_PROGRAM`, yet the subject,
-                    # `COURSE_REGISTRATION`, structurally needs both).
-                    # Synthesize a fresh, minimal row instead of leaving
-                    # this hop unresolved: `repair_candidate`, called
-                    # right after this loop, fills in whatever else it
-                    # still needs (NOT NULL columns, its own FKs) -- the
-                    # same discipline already applied to every other row
-                    # this pass builds, not a new mechanism.
-                    target_focal = merged.add_row(hop['to_table'], {_OWNER_KEY: rid})
-                    merged_rec_focal[hop['to_table']] = target_focal
-                pk_value = target_focal.get(hop['to_column'])
-                if pk_value is None:
-                    # The referenced row's own PK was never set by
-                    # search/seeding (a real, confirmed gap for e.g.
-                    # STUDENT_PROGRAM.ROLL_NO -- left for materialize.py's
-                    # own LATER, offset-oblivious surrogate-key fill,
-                    # which has no way to also update an FK elsewhere
-                    # that should match it). Assigned HERE instead,
-                    # synchronously, so the new junction row's own FK can
-                    # actually reference the real, final value -- reuses
-                    # `mutation.py`'s own `_fresh_key_value` (already
-                    # collision-safe against everything in `merged` so
-                    # far), not a fresh ad hoc scheme.
-                    pk_value = _fresh_key_value(merged, hop['to_table'], hop['to_column'])
-                    target_focal[hop['to_column']] = pk_value
-                subject_focal[hop['from_column']] = pk_value
-                wired_any = True
-            if resolvable and is_new and (subject_focal or wired_any):
-                subject_focal[_OWNER_KEY] = rid
-                merged.add_row(subject['table'], subject_focal)
-                merged_rec_focal[subject['table']] = subject_focal
-                merged_focal_maps[rid] = merged_rec_focal
+        _build_decision_subject_row(merged, merged_rec_focal, r, rid)
+        merged_focal_maps[rid] = merged_rec_focal
 
     repair_candidate(merged, case_study)
     return merged, merged_focal_maps, merged_scenario_maps, covered_record_ids
