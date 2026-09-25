@@ -1,5 +1,77 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, jBilling audit — session ending here, PENDING DECISION below)
+
+Followed up the FLEX2 Attendance Eligibility audit (previous entry) with
+a full jBilling audit (`Currency Exchange Rate Source`, `Order Period
+Already Invoiced`, `Payment Outcome Resolution`, `Payment Balance
+Assignment`, `Tax Calculation Needed`, `Is Ageing Required`, `Daily
+Pro-Rate Amount`, `Order Date Range Valid`, `Cancellation Fee
+Eligibility`, `Invoice Overdue Check`). Two real bugs found and fixed,
+committed and pushed (`48ed425`, `b353ec0`):
+
+1. **`Order Period Already Invoiced`::Rule_3/Rule_4** — the source
+   `.dmn` rule table put the cross-field date comparison under the wrong
+   input column (comparing `nextBillableDay` to itself instead of
+   `candidateDate` to `nextBillableDay`), confirmed against the real
+   cited Java source (`OrderBL.java`'s `isDateInvoiced()`). Fixed via a
+   new override module, `generator/condition_column_overrides.py`,
+   keyed by rule_id — a NEW class of override for this project
+   (correcting the `.dmn` table's own column placement, not a CSV row).
+2. **`Tax Calculation Needed`::`customContactFieldConfigured`** — same
+   mis-mapping class as `purchaseQuantity`/`semesterType`: ground truth
+   calls it "not a row in a business table," but `pluggable_task_parameter`
+   IS a real, queryable table. Fixed via `generator/not_persisted_
+   reclassification.py`. Its real effect is currently blocked by
+   `jbilling_merged.db` never having materialized `pluggable_task_parameter`
+   (a fixture gap, same pattern as Spree's `spree_discounts`).
+
+Then confirmed that supplying two ALREADY-ESTABLISHED disclosed
+`not_persisted` overrides at coverage-run time (no new code) closes 2
+more decisions on top of the above: `{"__today__": 20000,
+"candidateDateProvided": true, "candidateDate": 0}`. Result: jBilling
+**10 → 14 verified rules** (25.6% → 35.9%), `unresolved_decisions` 10→8.
+Full rule-level before/after and the exact invocation are in
+`validation_oracle/COVERAGE_REPORT.md`'s newest entry.
+
+**PENDING — a real judgment call, NOT yet decided, needs the user's
+input in the next session:** `Currency Exchange Rate Source` looked like
+a third quick win (same "register a `filter_placeholder_sources.py`
+entry" pattern as 6 earlier fixes this project has made), but turned out
+to be a harder case on closer inspection. Both its facts
+(`hasEntitySpecificExchange`/`hasSystemDefaultExchange`) are pure
+function parameters in the real code (`CurrencyBL.findExchange(Integer
+entityId, Integer currencyId)`) — nothing in the DMN, CSV, or DRD ties
+`entity_id`/`currency_id` to any specific real table's row, so there is
+no subject to pick without a genuine guess. Two candidates were found:
+`base_user` (has its own real `entity_id`+`currency_id` columns, but
+nothing declares that a user's own billing currency is what this
+decision means — the same kind of undisclosed-relationship guess this
+project has consistently refused, e.g. FLEX2's `Admission Closure
+Eligibility`); or `currency_exchange` itself (the table the facts
+already query — introduces no new relationship, but is degenerate:
+`hasEntitySpecificExchange` would be trivially true for any real row it
+enumerates, so only Rule_1 could ever be confirmed, Rule_2/Rule_3 the
+fallback/error paths staying permanently unreachable that way). Session
+ended here awaiting the user's call on whether to take the limited-but-
+non-fabricated `currency_exchange`-as-subject fix, or leave this one
+open and documented. **Next session: ask the user this exact question
+before touching `Currency Exchange Rate Source`.**
+
+Remaining jBilling items, still open, not yet investigated as deeply:
+`Payment Outcome Resolution`/`Payment Balance Assignment` (a NEW finding
+made in passing, not yet acted on: `parse_output_value` in
+`generator/compile_constraints.py` mis-parses a bare-identifier DMN
+output cell — `Decision_PaymentOutcomeResolution_Rule_2`'s output text
+is literally `paymentResultId`, meant as "pass through this input
+variable's value" — as the literal STRING `"paymentResultId"` instead of
+a variable reference. Real bug, but fixing it needs new "output-as-
+variable-reference" support threaded through `compile_constraints.py`'s
+grounding logic and `drd_executor.py`, not a one-line override — a
+medium-effort task for a future session, not attempted here).
+`Cancellation Fee Eligibility` (0 compiled rules, root cause not yet
+investigated).
+
 ## Latest continuation — 2026-09-25 (Claude, Attendance Eligibility audit)
 
 Audited FLEX2's `Attendance Eligibility For Final Exam` for the same kind
