@@ -23701,21 +23701,11 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "STUDENT_ATTENDANCE",
+   "table": "COURSE_OFFER",
    "pk_columns": [
-    "LECTURE_ID",
-    "ROLL_NO"
+    "OFFER_ID"
    ],
-   "joins": {
-    "LECTURE": [
-     {
-      "from_table": "STUDENT_ATTENDANCE",
-      "from_column": "LECTURE_ID",
-      "to_table": "LECTURE",
-      "to_column": "LECTURE_ID"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {
@@ -23842,21 +23832,11 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "STUDENT_ATTENDANCE",
+   "table": "COURSE_OFFER",
    "pk_columns": [
-    "LECTURE_ID",
-    "ROLL_NO"
+    "OFFER_ID"
    ],
-   "joins": {
-    "LECTURE": [
-     {
-      "from_table": "STUDENT_ATTENDANCE",
-      "from_column": "LECTURE_ID",
-      "to_table": "LECTURE",
-      "to_column": "LECTURE_ID"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {
@@ -27247,7 +27227,32 @@
    "D_DEPT_TYPE"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_2",
@@ -27408,7 +27413,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3",
@@ -27614,7 +27644,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_4",
@@ -27862,7 +27917,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_5",
@@ -28128,7 +28208,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_1",

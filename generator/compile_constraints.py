@@ -1026,13 +1026,16 @@ def fk_closure(seed_tables, fk_graph, all_tables, max_tables=300):
 #   duplicated here. Skipping can only ever produce "no unique root
 #   found" (this pass attaches nothing), never a wrong answer.
 # - `filter_placeholder_sources.py`'s own disclosed overrides ARE
-#   ported (just the one real, non-test entry that matters for actual
-#   compiled data, `('Spree', 'promotion_id') -> 'spree_order_promotions'`)
+#   ported as declarative metadata (including `('Spree', 'promotion_id') -> 'spree_order_promotions'`)
 #   -- confirmed load-bearing: without it, `Promotion Customer Group
 #   Eligibility`'s own `spree_order_promotions` subject is unreachable
 #   from `all_tables` at all (its own `fk_closure_tables` don't include
 #   it either), so the validator's OWN successful resolution of this
 #   decision's subject depends on this exact override too.
+#
+# September 25 update: correlated raw SQL and nested substituted decisions
+# use the same dependency distinction. decision_subject_overrides.py carries
+# disclosed subject-granularity choices, checked against qualifying roots.
 #
 # A failure to resolve a subject here is never a hard compile error --
 # `compute_decision_subject` returns None (not attaching the field to
@@ -1054,6 +1057,8 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     # entries for the full writeup (2026-09-24).
     ('FLEX2', 'program'): 'STUDENT_PROGRAM',
     ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
+    # Existing disclosed offering reference, also used in raw SQL facts.
+    ('FLEX2', 'this course offering'): 'COURSE_OFFER',
 }
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
@@ -1111,17 +1116,30 @@ def _decision_subject_tables_referenced(cs, record):
     `candidate_tables`, and only the placeholder-sourced table is
     actually reachable from this decision's real subject)."""
     tables = set()
-    for node in record.get('variable_resolution', {}).values():
+
+    def visit(node):
         if not isinstance(node, dict):
-            continue
+            return
+        kind = node.get('kind')
+        if kind == 'substituted_decision':
+            for child in node.get('free_variable_resolutions', {}).values():
+                visit(child)
+            return
         filter_text = node.get('filter_text')
-        if node.get('kind') in ('exists', 'derived_aggregate') and filter_text:
-            for placeholder in _PLACEHOLDER_NAME_RE.findall(filter_text):
+        # SQL query targets do not require a subject-to-target FK path.
+        # Only their correlated inputs do. A missing aggregate filter is
+        # unresolved correlation metadata, not evidence of a direct row read.
+        if kind in ('derived_aggregate', 'raw_sql_boolean') or (kind == 'exists' and filter_text):
+            text = node.get('sql_template') if kind == 'raw_sql_boolean' else filter_text
+            for placeholder in _PLACEHOLDER_NAME_RE.findall(text or ''):
                 extra = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, placeholder))
                 if extra:
                     tables.add(extra)
-            continue
+            return
         collect_tables_from_resolution(node, tables)
+
+    for node in record.get('variable_resolution', {}).values():
+        visit(node)
     return tables
 
 
@@ -1263,13 +1281,18 @@ def _build_subject_join_path(raw_schema, root, target, allowed_tables):
     return None
 
 
-def _pick_subject_root(raw_schema, all_tables, closure_tables):
+def _pick_subject_root(raw_schema, all_tables, closure_tables, override=None):
     candidate_pool = closure_tables | all_tables
     candidates = [
         root for root in candidate_pool
         if all(_build_subject_join_path(raw_schema, root, t, closure_tables) is not None
                for t in all_tables - {root})
     ]
+    if override is not None:
+        override = _canonical_table_name(raw_schema, override)
+        if override not in candidates:
+            raise ValueError(f"Stale subject-root override {override!r}; qualifying roots: {sorted(candidates)}")
+        return override
     return candidates[0] if len(candidates) == 1 else None
 
 
@@ -1293,7 +1316,9 @@ def compute_decision_subject(cs, decision_records, raw_schema):
         table = next(iter(all_tables))
         return {'table': table, 'pk_columns': _pk_columns_for(raw_schema, table), 'joins': {}}
 
-    root = _pick_subject_root(raw_schema, all_tables, closure_tables)
+    from decision_subject_overrides import SUBJECT_ROOT_OVERRIDES
+    override = SUBJECT_ROOT_OVERRIDES.get((cs, decision_records[0]['decision_name']))
+    root = _pick_subject_root(raw_schema, all_tables, closure_tables, override)
     if root is None:
         return None
     joins = {}
