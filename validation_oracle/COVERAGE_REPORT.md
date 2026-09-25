@@ -19,6 +19,63 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — 4 new OpenMRS rules authored, compiled, and confirmed solvable (Concept Name Uniqueness/Presence)
+
+First of the audit's 14 high-confidence new-rule candidates, greenlit by
+the user this round. Real source (`ConceptValidator.java`, fetched fresh
+from `github.com/openmrs/openmrs-core`) confirmed all 4 rules directly
+against lines 154-158/165-170/178-186/217-220 before authoring anything.
+New `openmrs_dmn/dmn/Concept_Name_Uniqueness_And_Presence.dmn` (4
+decisions, 8 rules) + 12 new `variable_to_schema_mapping.csv` rows, all
+using the now-genuinely-working `derived_aggregate` COUNT mechanism from
+this file's own entry directly below (built ON that fix, not before it —
+authoring was paused specifically to fix that mechanism first). One
+disclosed simplification, same status as this project's own
+Spree `adjustedCreditsCount` precedent: retired-concept exclusion isn't
+modeled (`concept.retired` isn't reachable from this fact's own simple
+self-correlated aggregate shape without a join this project's scope
+doesn't extend to for a first cut).
+
+**Compiled cleanly**: 79/79 OpenMRS records (was 71/71), diffed by
+record_id against the pre-authoring version — exactly these 8 added,
+zero collateral. **Confirmed solvable** via `search.py`'s own
+`solve_branch`, run fresh on each of the 8 new records in isolation:
+all 8 reach real `fitness=0.0`. Rather than a full DynaMOSA re-run
+(tried first — regenerating the shared-population archive shifted
+search-side coverage for 4 unrelated existing `Identifier Format
+Validity` objectives as a side effect, an unacceptable risk to already-
+verified rules for this step — reverted), the 8 new records' own
+independently-solved branches were merged additively into the existing
+saved archive pickle (`OpenMRS__dynamosa_nsga2__budget1x__seed0.pkl`) —
+confirmed byte-for-byte: all 71 original archive entries' own fitness
+values unchanged.
+
+**Result, verified against the REAL, already-committed `openmrs_merged.db`
+fixture (no rebuild, no new data added yet)**: 4 of the 8 new rules
+already verify — each decision's own "no violation" branch (`Rule_2`:
+at most one locale-preferred/fully-specified/short name; at least one
+fully-specified name) is the common case most real concept_name data
+already satisfies, so real matching rows already exist. The 4 adversarial
+"violation" branches (`Rule_1`: 2+ preferred/fully-specified/short names
+in one locale; zero fully-specified names) are confirmed solvable
+(above) but need the search's own constructed violating data merged into
+the fixture to verify for real — not yet done, a separate, later step
+(fixture rebuilds are this project's own highest-risk operation; doing
+one for 4 rules alone wasn't judged worth the blast-radius risk to the
+other 75 objectives sharing the same fixture, right after the archive
+end of this already landed safely).
+
+**OpenMRS: 43 → 47 verified** (raw 71 → 79 distinct rules: 60.6% →
+**59.5%** — a real percentage DECREASE despite more verified rules,
+because the denominator grew faster than confirmed coverage so far;
+`Rule_1` for all 4 decisions is genuinely solvable, just not
+materialized yet). Diffed the full `objective_results.csv` against the
+pre-authoring run: all 71 original rows byte-identical
+(`agreement_class`/`verified_rule_selected`/`search_covered`), only the
+8 new rows added. Spree (17/31)/FLEX2 (37/151)/jBilling (15/42)
+confirmed unaffected by a fresh re-run of all three. Full regression
+suite passes.
+
 ### 2026-09-25 — OpenMRS Preferred Identifier Requirement's COUNT mechanism fixed (found preparing to reuse it for new rules)
 
 Full root-cause writeup in `KNOWN_ISSUES.md`'s matching newest entry —
@@ -458,11 +515,11 @@ table was updated and now.
 
 | Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
 |---|---|---|---|---|
-| OpenMRS | 71 | 71 | 43 | 60.6% |
+| OpenMRS | 79 | 79 | 47 | 59.5% |
 | Spree | 31 | 31 | 17 | 54.8% |
 | FLEX2 | 98 | 55 | 37 | 67.3% |
 | jBilling | 40 | 39 | 15 | 38.5% |
-| **Total** | **240** | **196** | **112** | **57.1%** |
+| **Total** | **248** | **204** | **116** | **56.9%** |
 
 ### Solvable-rules coverage
 
@@ -476,7 +533,7 @@ this table stays numbers-only, per this file's own stated purpose.
 
 | Case study | Distinct rules | Verified | Perm. out-of-scope | Search-limited | Known-bug-fixable | Discarded | Solvable denom | Solvable coverage |
 |---|---|---|---|---|---|---|---|---|
-| OpenMRS | 71 | 43 | 15 | 9 | 4 | 0 | 56 | **76.8%** |
+| OpenMRS | 79 | 47 | 15 | 9 | 8 | 0 | 64 | **73.4%** |
 | Spree | 31 | 17 | 10 | 0 | 4 | 0 | 21 | **81.0%** |
 | FLEX2 | 55 | 37 | 5 | 7 | 5 | 1 | 49 | 75.5% |
 | jBilling | 39 compiled (+6 discarded, +~9 never-compiled unaudited) | 15 | 10 | 12 | 3 | 6 | ~29 (approximate — see note) | ~51.7% (approximate) |
@@ -488,7 +545,17 @@ this table stays numbers-only, per this file's own stated purpose.
   case), but the real cause was two compile-time bugs silently degrading
   this decision's own COUNT mechanism to meaningless raw-column reads
   (see this file's own dated entry above and `KNOWN_ISSUES.md`), not a
-  search-budget gap. Verified 42→43, solvable coverage 75.0%→**76.8%**.
+  search-budget gap. Then 8 new rules landed (Concept Name Uniqueness/
+  Presence, see this file's own newest entry above): distinct rules
+  71→79, permanent-out-of-scope/search-limited unchanged (the 8 new
+  rules are neither), known-bug-fixable 4→8 (the 4 new "violation"
+  branches, `Rule_1` of each decision — confirmed solvable, archived,
+  just need a fixture rebuild to actually verify, a concrete, already-
+  half-done next step, not an open-ended search question). Verified
+  43→47, solvable denom 56→64, solvable coverage 76.8%→**73.4%** (a real
+  DECREASE — the denominator grew faster than confirmed coverage so
+  far, an honest consequence of adding real, unverified-yet rules rather
+  than only rules that already pass).
 - **Spree**: the audit's own "+1 open question" (`Promotion Customer
   Group Eligibility::rule_4`) is now resolved into permanent-out-of-scope
   (9→10) — implemented for real (not just relabeled), see the dated entry

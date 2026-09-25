@@ -1,5 +1,52 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, OpenMRS's 4 new Concept Name rules built — authored, compiled, confirmed solvable; fixture materialization is the next step)
+
+Direct follow-up to the entry below (fixing `Preferred Identifier
+Requirement`'s COUNT mechanism before reusing it). With that mechanism
+now genuinely working, built the OpenMRS's 4 new-rule candidates on it:
+`Concept Locale-Preferred-Name Uniqueness`, `Concept Fully-Specified-Name
+Uniqueness Per Locale`, `Concept Short-Name Uniqueness Per Locale`,
+`Concept Fully-Specified-Name Presence Requirement` — all 4 already
+confirmed against `ConceptValidator.java`'s real source before this
+entry started.
+
+New `openmrs_dmn/dmn/Concept_Name_Uniqueness_And_Presence.dmn` (8 rules)
++ 12 provenance rows, compiled cleanly (79/79 OpenMRS, diffed by
+record_id — exactly these 8 added, zero collateral). Confirmed
+genuinely solvable via `search.py`'s own `solve_branch` on each of the 8
+in isolation (all reach real `fitness=0.0`). Getting this into the
+shared archive without risking the other 75 objectives needed care: a
+full DynaMOSA re-run worked but ALSO silently shifted search-side
+coverage for 4 unrelated existing rules (a real shared-population side
+effect) — reverted, used a narrower additive merge into the existing
+archive instead (only the 8 new keys added, all 71 original entries'
+fitness confirmed byte-for-byte unchanged). Full root-cause/mechanism
+writeup: `KNOWN_ISSUES.md`'s newest entry.
+
+**Result, verified against the real, unmodified `openmrs_merged.db`
+fixture**: 4 of the 8 new rules already verify (each decision's own
+"no violation" branch — the ordinary case most real data already
+satisfies). The 4 adversarial "violation" branches are confirmed
+solvable and sit in the archive, but need the fixture itself rebuilt to
+contain that constructed data before they'll verify — deliberately NOT
+attempted this round (a full fixture rebuild is this project's own
+highest-risk operation, and doing one for 4 rules alone right after the
+archive side already landed safely wasn't worth the blast-radius risk to
+the other 75 objectives sharing that fixture). **OpenMRS: 43 → 47
+verified** (71 → 79 distinct rules), solvable coverage 76.8% → 73.4% (a
+real decrease — the denominator grew faster than confirmed coverage so
+far, an honest cost of adding real rules rather than only pre-passing
+ones). Spree/FLEX2/jBilling confirmed unaffected. Full regression suite
+passes. Exact numbers: `COVERAGE_REPORT.md`'s newest entry.
+
+**Next steps, in order**: (1) rebuild `openmrs_merged.db` to include the
+4 new violating scenarios and re-verify (closes this rule's own loop —
+the concrete, well-understood next action, not an open question); (2)
+continue to Spree's 4 / FLEX2's 2 / jBilling's 2 remaining new-rule
+candidates from the audit's own table, each needing its own real-source
+re-confirmation first, same discipline as this round.
+
 ## Latest continuation — 2026-09-25 (Claude, OpenMRS's flagship COUNT mechanism was never actually working — found and fixed before building on it)
 
 Direct follow-up to the entry below (discard/reclassify decisions),
@@ -685,12 +732,15 @@ file's last recorded values, not a fresh `coverage.py` invocation,
 unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
-provenance, updated 2026-09-25): raw verified coverage OpenMRS **60.6%**,
+provenance, updated 2026-09-25): raw verified coverage OpenMRS **59.5%**
+(79 distinct rules, up from 71 — 4 new rules added this round),
 Spree 54.8%, FLEX2 67.3%, jBilling 38.5%; solvable-rules coverage (the
 finer 4-category classification — permanent out-of-scope / search-
 limited / known-bug-fixable / discarded — see this file's own newest
-entry above) OpenMRS **76.8%**, Spree **81.0%**, FLEX2 75.5%, jBilling
-~51.7% (approximate, ~9 rules still unaudited).
+entry above) OpenMRS **73.4%** (a real decrease from 76.8% — 4 new,
+confirmed-solvable-but-not-yet-fixture-verified rules grew the
+denominator faster than verified coverage so far), Spree **81.0%**,
+FLEX2 75.5%, jBilling ~51.7% (approximate, ~9 rules still unaudited).
 
 ## 6. Recent actions (most recent session)
 

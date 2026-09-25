@@ -5,7 +5,7 @@
    "blocked": 53
   },
   "OpenMRS": {
-   "compiled": 71,
+   "compiled": 79,
    "blocked": 0
   },
   "Spree": {
@@ -17,7 +17,7 @@
    "blocked": 15
   }
  },
- "total_compiled": 240,
+ "total_compiled": 248,
  "total_blocked": 69,
  "blocked_reason_counts": {
   "infeasible": 55,

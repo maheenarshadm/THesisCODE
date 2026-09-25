@@ -27387,20 +27387,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -27573,20 +27573,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -27804,20 +27804,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -28077,20 +28077,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -28368,14 +28368,6 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
@@ -28383,9 +28375,521 @@
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
      }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
     ]
    }
   }
+ },
+ {
+  "record_id": "OpenMRS::Concept Locale-Preferred-Name Uniqueness::Decision_ConceptLocalePreferredNameUniqueness_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Locale-Preferred-Name Uniqueness",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptLocalePreferredNameUniqueness_Rule_1",
+  "source_citation": "ConceptValidator.java L154-158 -- \"should have one preferred name per locale\"; a SECOND unretired, unvoided name in the same (concept, locale) marked locale_preferred=true rejects Concept.error.multipleLocalePreferredNames. Exposed as a real COUNT(...) >= 2, matching this project's own established count-instead-of-EXISTS pattern (Preferred Identifier Requirement precedent).",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "localePreferredNameCount"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 2,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "localePreferredNameValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "Concept.error.multipleLocalePreferredNames",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "localePreferredNameCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND locale_preferred = true AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND locale_preferred = true AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Locale-Preferred-Name Uniqueness::Decision_ConceptLocalePreferredNameUniqueness_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Locale-Preferred-Name Uniqueness",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptLocalePreferredNameUniqueness_Rule_2",
+  "source_citation": "at most one locale-preferred name in this (concept, locale) -- no violation",
+  "condition": {
+   "op": "<=",
+   "left": {
+    "kind": "variable",
+    "ref": "localePreferredNameCount"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "localePreferredNameValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "none",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ConceptLocalePreferredNameUniqueness_Rule_1",
+     "condition": {
+      "op": ">=",
+      "left": {
+       "kind": "variable",
+       "ref": "localePreferredNameCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 2,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "localePreferredNameCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND locale_preferred = true AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND locale_preferred = true AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Fully-Specified-Name Uniqueness Per Locale::Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Fully-Specified-Name Uniqueness Per Locale",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_1",
+  "source_citation": "ConceptValidator.java L161-170 -- \"should not allow multiple fully specified conceptNames in a given locale\"; a SECOND unretired, unvoided name in the same (concept, locale) with concept_name_type=FULLY_SPECIFIED rejects Concept.error.multipleFullySpecifiedNames.",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "fullySpecifiedNameCountInLocale"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 2,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "fullySpecifiedNameValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "Concept.error.multipleFullySpecifiedNames",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "fullySpecifiedNameCountInLocale": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Fully-Specified-Name Uniqueness Per Locale::Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Fully-Specified-Name Uniqueness Per Locale",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_2",
+  "source_citation": "at most one fully-specified name in this (concept, locale) -- no violation",
+  "condition": {
+   "op": "<=",
+   "left": {
+    "kind": "variable",
+    "ref": "fullySpecifiedNameCountInLocale"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "fullySpecifiedNameValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "none",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_1",
+     "condition": {
+      "op": ">=",
+      "left": {
+       "kind": "variable",
+       "ref": "fullySpecifiedNameCountInLocale"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 2,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "fullySpecifiedNameCountInLocale": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Short-Name Uniqueness Per Locale::Decision_ConceptShortNameUniquenessPerLocale_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Short-Name Uniqueness Per Locale",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptShortNameUniquenessPerLocale_Rule_1",
+  "source_citation": "ConceptValidator.java L178-186 -- \"should not allow multiple short names in a given locale\"; a SECOND unretired, unvoided name in the same (concept, locale) with concept_name_type=SHORT rejects Concept.error.multipleShortNames.",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "shortNameCountInLocale"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 2,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "shortNameValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "Concept.error.multipleShortNames",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "shortNameCountInLocale": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND concept_name_type = 'SHORT' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND concept_name_type = 'SHORT' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Short-Name Uniqueness Per Locale::Decision_ConceptShortNameUniquenessPerLocale_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Short-Name Uniqueness Per Locale",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptShortNameUniquenessPerLocale_Rule_2",
+  "source_citation": "at most one short name in this (concept, locale) -- no violation",
+  "condition": {
+   "op": "<=",
+   "left": {
+    "kind": "variable",
+    "ref": "shortNameCountInLocale"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "shortNameValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "none",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ConceptShortNameUniquenessPerLocale_Rule_1",
+     "condition": {
+      "op": ">=",
+      "left": {
+       "kind": "variable",
+       "ref": "shortNameCountInLocale"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 2,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "shortNameCountInLocale": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND locale = :locale AND concept_name_type = 'SHORT' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND locale = :locale AND concept_name_type = 'SHORT' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Fully-Specified-Name Presence Requirement::Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Fully-Specified-Name Presence Requirement",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_1",
+  "source_citation": "ConceptValidator.java L217-220 -- \"should fail if there is no name explicitly marked as fully specified\"; hasFullySpecifiedName is set true the moment ANY locale contributes one, so this is a COUNT across every locale for the concept, not scoped to one -- zero anywhere rejects Concept.error.no.FullySpecifiedName. Exposed as COUNT(...) >= 1, the same \"at least one\" shape as Preferred Identifier Requirement's own Rule_1.",
+  "condition": {
+   "op": ">=",
+   "left": {
+    "kind": "variable",
+    "ref": "fullySpecifiedNameCount"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 1,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "fullySpecifiedNamePresent": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "none",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "fullySpecifiedNameCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Concept Fully-Specified-Name Presence Requirement::Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_Name_Uniqueness_And_Presence.dmn",
+  "decision_name": "Concept Fully-Specified-Name Presence Requirement",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_2",
+  "source_citation": "L217-220 -- zero fully specified names anywhere for this concept",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "fullySpecifiedNameCount"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 0,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "fullySpecifiedNamePresent": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "Concept.error.no.FullySpecifiedName",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_1",
+     "condition": {
+      "op": ">=",
+      "left": {
+       "kind": "variable",
+       "ref": "fullySpecifiedNameCount"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 1,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "fullySpecifiedNameCount": {
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
+    "table": "concept_name",
+    "filter_text": "concept_id = :concept_id AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false",
+    "source_text": "COUNT(*) FROM concept_name WHERE concept_id = :concept_id AND concept_name_type = 'FULLY_SPECIFIED' AND voided = false"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "person",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown"
  },
  {
   "record_id": "OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_1",

@@ -1,5 +1,86 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — 4 new OpenMRS rules built (Concept Name Uniqueness/Presence), on the now-fixed COUNT mechanism (see the entry directly below)
+
+First of the audit's 14 high-confidence new-rule candidates (`HANDOFF.md`'s
+95-97%-coverage-push audit entry), greenlit by the user this round.
+`ConceptValidator.java`'s real source was fetched fresh from
+`github.com/openmrs/openmrs-core` and checked directly against all 4
+proposed rules BEFORE authoring anything — confirmed real: "should not
+allow multiple preferred names in a given locale" (L154-158,
+`Concept.error.multipleLocalePreferredNames`), "...multiple fully
+specified conceptNames..." (L165-170,
+`Concept.error.multipleFullySpecifiedNames`), "...multiple short
+names..." (L178-186, `Concept.error.multipleShortNames`), "fail if there
+is no name explicitly marked as fully specified" (L217-220,
+`Concept.error.no.FullySpecifiedName`).
+
+New `openmrs_dmn/dmn/Concept_Name_Uniqueness_And_Presence.dmn` (4
+decisions, 8 rules total — each a COUNT over `concept_name` self-
+correlated to the subject row's own `concept_id`/`locale` via `:column`
+syntax) + 12 new provenance rows. One disclosed simplification, same
+status as this project's own Spree `adjustedCreditsCount` precedent:
+`ConceptValidator.java` skips RETIRED concepts entirely
+(`conceptToValidate.getRetired()`), but that's a `concept.retired` fact,
+unreachable from `concept_name`'s own simple self-correlated aggregate
+shape without a join this first cut doesn't extend to — disclosed
+directly in each new provenance row's own `notes`, not silently dropped.
+
+**Compiled cleanly**: OpenMRS 71→79/79 (100%), diffed by record_id
+against the pre-authoring corpus — exactly these 8 added, zero
+collateral anywhere else in the 248-record corpus.
+
+**Confirmed genuinely solvable**, not assumed: `search.py`'s own
+`solve_branch`, run fresh on each of the 8 new records in isolation
+(`build_seed_candidate` + `solve_branch`, the same pattern
+`test_decision_subject.py` already establishes) — all 8 reach real
+`fitness=0.0` via mutation alone.
+
+**Getting this into the shared archive/fixture without risking the other
+71 (now 75, after Preferred Identifier Requirement's own fix)
+objectives sharing them needed its own care.** First tried the
+"proper," established way — a full `run_dynamosa` re-run for OpenMRS
+with the new 79-record corpus (matching `run_experiments.py`'s own exact
+invocation: population 30, generations 40, seed 0). It worked (74/79
+search-covered, including all 8 new records) — but comparing archives
+by record_id showed it ALSO shifted search-side coverage for 4 UNRELATED
+existing `Identifier Format Validity` objectives (3 newly covered, 1
+newly uncovered) — an expected consequence of DynaMOSA's own shared
+population across all objectives at once, but an unacceptable, silent
+side effect to leave in a "just add 4 new rules" change. **Reverted**
+(`git checkout` on the archive pickle — it was never committed).
+Used a narrower, additive approach instead: merged the 8 new records'
+own independently-solved `solve_branch` results directly into the
+EXISTING saved archive dict (`archive[new_record_id] = (fitness,
+(candidate, focal, scenario))`), touching no existing key. Verified
+byte-for-byte: all 71 original archive entries' own fitness values
+unchanged after the merge.
+
+**Verified against the REAL, already-committed `openmrs_merged.db`
+fixture — no rebuild, no new data added to it yet**: 4 of the 8 new
+rules already verify. Each decision's own `Rule_2` ("no violation" — at
+most one locale-preferred/fully-specified/short name per locale; at
+least one fully-specified name anywhere) is the ordinary case most real
+`concept_name` rows already satisfy, so real matching data already
+exists in the fixture. The 4 `Rule_1`s (the adversarial "2+ names in one
+locale" / "zero fully-specified names" violations) are confirmed
+solvable (above) and now sit in the archive, but the fixture itself
+hasn't been rebuilt to actually contain that constructed violating data
+yet — deliberately NOT attempted this round: a full fixture rebuild is
+this project's own highest-risk, most-audited class of operation (see
+`generator/README.md`'s own repeated fixture-rebuild-gap history), and
+doing one for 4 rules alone, right after the archive side already landed
+safely, wasn't judged worth the blast-radius risk to the other 75
+objectives sharing the same fixture. Flagged as the concrete, already-
+half-done next step for this decision, not an open question.
+
+Diffed the full `objective_results.csv` against the pre-authoring run:
+all 71 original rows byte-for-byte identical
+(`agreement_class`/`verified_rule_selected`/`search_covered`), only the
+8 new rows added. Spree/FLEX2/jBilling confirmed unaffected by a fresh
+re-run of all three. Full regression suite passes. Exact before/after
+numbers: `COVERAGE_REPORT.md`'s matching newest entry.
+
 ## 2026-09-25 — OpenMRS's own flagship rule wasn't using the mechanism it claimed to (found preparing to reuse it for new rules; fixed)
 
 Preparing to author 4 new OpenMRS "Concept Name Validation" rules (the
