@@ -19,6 +19,34 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — OpenMRS Preferred Identifier Requirement's COUNT mechanism fixed (found preparing to reuse it for new rules)
+
+Full root-cause writeup in `KNOWN_ISSUES.md`'s matching newest entry —
+this entry is numbers-only. Two independent compile-time bugs
+(`_try_extract_aggregate_recipe` had no pattern for the common `COUNT(*)
+FROM table WHERE ...` idiom; `identifierCount`'s own provenance row was
+mislabeled `mapping_type="direct - aggregate"`, skipping aggregate
+extraction entirely) meant this decision's two facts were silently read
+as raw, uncounted column values instead of real per-patient counts —
+found while confirming this "already-proven" mechanism before reusing it
+for 4 new OpenMRS rules the user greenlit this round. Fixed, plus a
+third, deeper `subject_table.py` gap the fix exposed (a decision whose
+inputs are ALL self-contained `derived_aggregate` facts had nothing left
+in `all_tables` to anchor a subject to — new narrowly-scoped fallback,
+never triggered for any decision that already resolves).
+
+**Result: OpenMRS 42 → 43 verified** (`Rule_2` flips `false_positive` →
+confirmed, genuinely now, not coincidentally; `Rule_1`/`Rule_3` still
+verify, now for the real reason). Raw coverage 59.2% → **60.6%**
+(43/71). Solvable coverage 75.0% → **76.8%** (43/56, same denominator —
+this was a verification fix, not a reclassification). Spree (17/31),
+FLEX2 (37/151), jBilling (15/42) confirmed byte-for-byte unchanged via a
+fresh re-run of all 4. Full regression suite passes, including
+`drd_executor.py`'s own OpenMRS acceptance demo (previously crashing
+outright on this decision, now runs and shows the real mechanism
+working: `compiled_constraints.json` diffed by record_id, exactly these
+3 records changed corpus-wide).
+
 ### 2026-09-25 — Discard/out-of-scope decisions from the 95-97% coverage-push audit, user-decided; Spree Rule_4 reclassification implemented and verified
 
 Follows up the planning-only audit entry in `HANDOFF.md` (four-case-study
@@ -430,11 +458,11 @@ table was updated and now.
 
 | Case study | Compiled objectives | Distinct DMN rules | Verified | Raw coverage |
 |---|---|---|---|---|
-| OpenMRS | 71 | 71 | 42 | 59.2% |
+| OpenMRS | 71 | 71 | 43 | 60.6% |
 | Spree | 31 | 31 | 17 | 54.8% |
 | FLEX2 | 98 | 55 | 37 | 67.3% |
 | jBilling | 40 | 39 | 15 | 38.5% |
-| **Total** | **240** | **196** | **111** | **56.6%** |
+| **Total** | **240** | **196** | **112** | **57.1%** |
 
 ### Solvable-rules coverage
 
@@ -448,12 +476,19 @@ this table stays numbers-only, per this file's own stated purpose.
 
 | Case study | Distinct rules | Verified | Perm. out-of-scope | Search-limited | Known-bug-fixable | Discarded | Solvable denom | Solvable coverage |
 |---|---|---|---|---|---|---|---|---|
-| OpenMRS | 71 | 42 | 15 | 10 | 4 | 0 | 56 | 75.0% |
+| OpenMRS | 71 | 43 | 15 | 9 | 4 | 0 | 56 | **76.8%** |
 | Spree | 31 | 17 | 10 | 0 | 4 | 0 | 21 | **81.0%** |
 | FLEX2 | 55 | 37 | 5 | 7 | 5 | 1 | 49 | 75.5% |
 | jBilling | 39 compiled (+6 discarded, +~9 never-compiled unaudited) | 15 | 10 | 12 | 3 | 6 | ~29 (approximate — see note) | ~51.7% (approximate) |
 
 **What changed this round vs. the audit's own working numbers:**
+- **OpenMRS**: `Preferred Identifier Requirement::Rule_2` moves
+  search-limited → verified (9, not the audit's original 10) — the audit
+  had explicitly named it "expected, not an issue" (a legitimate hard
+  case), but the real cause was two compile-time bugs silently degrading
+  this decision's own COUNT mechanism to meaningless raw-column reads
+  (see this file's own dated entry above and `KNOWN_ISSUES.md`), not a
+  search-budget gap. Verified 42→43, solvable coverage 75.0%→**76.8%**.
 - **Spree**: the audit's own "+1 open question" (`Promotion Customer
   Group Eligibility::rule_4`) is now resolved into permanent-out-of-scope
   (9→10) — implemented for real (not just relabeled), see the dated entry

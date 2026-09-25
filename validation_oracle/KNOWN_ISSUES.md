@@ -1,5 +1,126 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — OpenMRS's own flagship rule wasn't using the mechanism it claimed to (found preparing to reuse it for new rules; fixed)
+
+Preparing to author 4 new OpenMRS "Concept Name Validation" rules (the
+95-97%-coverage-push audit's own new-rule candidates, greenlit by the
+user this round), the plan was to reuse `Preferred Identifier
+Requirement`'s own COUNT-based mechanism -- described everywhere in this
+project (this file, `subject_table.py`'s own docstring, the DMN rule's
+own description) as the validator's first real, proven target. Checking
+its actual compiled record before copying the pattern found it was NOT
+using that mechanism at all.
+
+**Root cause, two independent bugs, both real:**
+1. `generator/compile_constraints.py`'s `_try_extract_aggregate_recipe`
+   had no pattern recognizing `COUNT(*) FROM table WHERE ...` -- the
+   single most common real SQL idiom for "count every row" (a bare `*`
+   matches none of `AGGREGATE_RECIPE_RE`/`_REVERSED_RE`/`_DOTTED_RE`,
+   each of which requires a named identifier or `TABLE.COLUMN` inside
+   the parens). `preferredIdentifierCount`'s own ground-truth note reads
+   "COUNT(*) FROM patient_identifier WHERE patient_id=? AND
+   preferred=true" -- confirmed via a direct regex test to match nothing,
+   silently falling through to a plain `schema_column` read of
+   `patient_identifier.preferred` (one arbitrary row's own boolean flag,
+   never actually counted).
+2. `identifierCount`'s own provenance row was labeled `mapping_type =
+   "direct - aggregate"` -- `NORMALIZE_MAPPING_TYPE`'s substring match
+   treats anything containing "direct" as the plain `direct` bucket
+   regardless of the trailing "- aggregate" qualifier, so this fact
+   never even reached `classify_derived()`/the aggregate-recipe parser
+   at all, despite its own note ("COUNT(*) FROM patient_identifier GROUP
+   BY patient_id") unambiguously describing a real aggregate. Resolved
+   instead to a bare `patient_identifier.patient_id` column read (a
+   large sequential ID, not a count) -- confirmed via direct
+   `compiled_constraints.json` inspection.
+
+Both facts landing on `schema_column` reads that happened to look
+plausible is why this went undetected: `preferredIdentifierCount`'s
+boolean-as-0/1 read is a valid (if degenerate, single-row) proxy for
+"is at least one identifier preferred," and `identifierCount != 1`
+(comparing a real patient_id, virtually always far from 1) was almost
+always true, so `Rule_1`/`Rule_3` both verified anyway, by coincidence,
+not because the real business rule was exercised. `Rule_2` (which
+actually needs `identifierCount == 1`) never verified -- exactly the
+symptom a broken "count" would produce, previously unexplained. This is
+the SAME class of bug `KNOWN_ISSUES.md`'s own history already
+documents once for Spree's `priorPromotionUsageCount` (an aggregate-
+shaped ground truth silently degrading to `schema_column` because its
+recipe text matched no recognized pattern) -- confirms this is a real,
+recurring corpus risk, not a one-off.
+
+**Fixed, in `generator/compile_constraints.py`:**
+- New `AGGREGATE_STAR_FROM_RE` (`COUNT(*) FROM table`) and
+  `AGGREGATE_GROUP_BY_RE` (`GROUP BY col`, translated into the SAME
+  `:column` self-reference syntax "for COL" already uses -- no new
+  validator capability needed).
+- A trailing `-- human explanation` SQL-comment strip on the
+  WHERE-extracted `filter_text` (this ground-truth row keeps its recipe
+  and rationale in ONE `notes` cell rather than separate columns, unlike
+  the corpus's own stated convention -- without stripping it, the
+  comparison value would silently absorb the whole trailing sentence).
+  Confirmed via a full corpus grep that no other working
+  `derived_aggregate` filter_text relies on a literal `--`, so this is
+  additive, not breaking.
+- A bare `?` value (`patient_id=?`) translated to `:patient_id`
+  self-reference -- confirmed via a full corpus grep to appear NOWHERE
+  else, and this project's filter-text dialect has no other concept of
+  an external bound parameter, so `?` can only sensibly mean
+  self-correlation here.
+- `identifierCount`'s own provenance row (`openmrs_dmn/provenance/
+  variable_to_schema_mapping.csv`) relabeled `mapping_type`: `"direct -
+  aggregate"` -> `"derived - aggregate"`, with the correction and its
+  reasoning disclosed directly in the row's own `notes`.
+
+**A third, deeper bug surfaced fixing the above** (never hit before
+because it needs EVERY input of a decision to be this self-contained
+aggregate shape, previously unique to this decision once fixed):
+`subject_table.py`'s `_TABLE_EXTRACTORS['derived_aggregate']`
+deliberately excludes a `derived_aggregate` node's OWN table from
+`all_tables` (it's queried directly via subject-row substitution, no
+join PATH needed to reach it -- correct, see that dict's own comments).
+With both of `Preferred Identifier Requirement`'s facts now correctly
+`derived_aggregate`, `all_tables` came back completely EMPTY --
+`subject_table_for_decision` raised `"No table-backed inputs found"` for
+a decision that very obviously has real table-backed inputs, breaking
+`drd_executor.py`'s own OpenMRS acceptance demo. Fixed with a narrowly-
+scoped fallback: only when `all_tables` is otherwise completely empty,
+fall back to each node's own primary table (a new `_own_table_hints`,
+covering `derived_aggregate`/`exists`/`raw_sql_boolean`/
+`derived_join_count`'s self-contained table) -- never triggered for any
+decision that already has a non-self-contained fact to anchor to, so
+zero risk to any currently-working multi-fact decision.
+
+**Verified, not assumed**: full regression suite passes
+(`candidate.py`/`mutation.py`/`fitness.py`/`test_spec_cases.py`/
+`test_drd_chaining_synthetic.py`/`test_serialized_field_roundtrip.py`/
+`drd_executor.py`'s own OpenMRS demo, which now runs AND shows all 3
+rules genuinely selected for real, distinct cases instead of crashing).
+Diffed `compiled_constraints.json` by record_id against the pre-fix
+version: exactly the 3 `Preferred Identifier Requirement` records
+changed, zero collateral anywhere else in a 240-record corpus. Fresh
+`coverage.py` re-run, all 4 case studies: **OpenMRS 42 -> 43 verified**
+(`Rule_2` flips `false_positive` -> confirmed, now genuinely selected
+for real cases where a patient has exactly one identifier and it isn't
+preferred -- not a coincidence anymore); `Rule_1`/`Rule_3` still verify,
+now for the RIGHT reason (real per-patient counts, not an arbitrary
+row's own column). Spree (17/31), FLEX2 (37/151), jBilling (15/42)
+confirmed byte-for-byte unchanged. Full numbers in `COVERAGE_REPORT.md`'s
+matching newest entry.
+
+**Why this matters beyond the one rule**: the audit's own new-rule
+candidates for OpenMRS (`Concept Locale-Preferred-Name Uniqueness`, etc.)
+were proposed specifically because they'd reuse this "already-proven"
+mechanism. It wasn't actually proven -- it was two independent compile-
+time bugs producing a coincidentally-plausible result. Now that the
+mechanism genuinely works, those new rules can be built on a real
+foundation instead of replicating the same silent failure mode 4 more
+times. `ConceptValidator.java`'s own real source (fetched fresh from
+`github.com/openmrs/openmrs-core`, not assumed from memory) was checked
+directly against the audit's 4 proposed rules before any of this --
+confirmed all 4 real (lines 154-158, 165-170, 178-186, 217-220) -- that
+work continues separately.
+
 ## 2026-09-25 — Out-of-scope-rule subject poisoning fixed; discard decisions confirmed (Claude)
 
 Follow-up to the 95-97%-coverage-push planning audit (`HANDOFF.md`'s

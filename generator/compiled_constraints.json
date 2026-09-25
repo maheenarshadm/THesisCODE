@@ -28458,20 +28458,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28490,6 +28476,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -28610,20 +28610,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28642,6 +28628,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -28794,20 +28794,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -28826,6 +28812,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -29022,20 +29022,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -29054,6 +29040,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -29282,20 +29282,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -29314,6 +29300,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -29574,20 +29574,6 @@
     "obs_id"
    ],
    "joins": {
-    "concept": [
-     {
-      "from_table": "obs",
-      "from_column": "location_id",
-      "to_table": "location",
-      "to_column": "location_id"
-     },
-     {
-      "from_table": "location",
-      "from_column": "location_type_concept_id",
-      "to_table": "concept",
-      "to_column": "concept_id"
-     }
-    ],
     "concept_datatype": [
      {
       "from_table": "obs",
@@ -29606,6 +29592,20 @@
       "from_column": "datatype_id",
       "to_table": "concept_datatype",
       "to_column": "concept_datatype_id"
+     }
+    ],
+    "concept": [
+     {
+      "from_table": "obs",
+      "from_column": "location_id",
+      "to_table": "location",
+      "to_column": "location_id"
+     },
+     {
+      "from_table": "location",
+      "from_column": "location_type_concept_id",
+      "to_table": "concept",
+      "to_column": "concept_id"
      }
     ]
    }
@@ -33496,10 +33496,11 @@
   },
   "variable_resolution": {
    "preferredIdentifierCount": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
     "table": "patient_identifier",
-    "column": "preferred",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+    "filter_text": "patient_id = :patient_id AND preferred=true",
+    "source_text": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -33516,14 +33517,7 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown",
-  "decision_subject": {
-   "table": "patient_identifier",
-   "pk_columns": [
-    "patient_identifier_id"
-   ],
-   "joins": {}
-  }
+  "feasibility": "unknown"
  },
  {
   "record_id": "OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_2",
@@ -33595,15 +33589,18 @@
   },
   "variable_resolution": {
    "identifierCount": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
     "table": "patient_identifier",
-    "column": "patient_id"
+    "filter_text": "patient_id = :patient_id",
+    "source_text": "COUNT(*) FROM patient_identifier GROUP BY patient_id (active or all, per patient.voided) -- mapping_type corrected 2026-09-25 from the original 'direct - aggregate' label: NORMALIZE_MAPPING_TYPE's substring match treats any label containing 'direct' as the plain 'direct' bucket regardless of a trailing '- aggregate' qualifier, so this fact was silently read as a bare patient_id column value (never a count at all) despite its own note already unambiguously describing a real GROUP BY aggregate; confirmed via a direct compiled_constraints.json inspection before correcting, not assumed"
    },
    "preferredIdentifierCount": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
     "table": "patient_identifier",
-    "column": "preferred",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+    "filter_text": "patient_id = :patient_id AND preferred=true",
+    "source_text": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -33620,14 +33617,7 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown",
-  "decision_subject": {
-   "table": "patient_identifier",
-   "pk_columns": [
-    "patient_identifier_id"
-   ],
-   "joins": {}
-  }
+  "feasibility": "unknown"
  },
  {
   "record_id": "OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_3",
@@ -33731,15 +33721,18 @@
   },
   "variable_resolution": {
    "identifierCount": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
     "table": "patient_identifier",
-    "column": "patient_id"
+    "filter_text": "patient_id = :patient_id",
+    "source_text": "COUNT(*) FROM patient_identifier GROUP BY patient_id (active or all, per patient.voided) -- mapping_type corrected 2026-09-25 from the original 'direct - aggregate' label: NORMALIZE_MAPPING_TYPE's substring match treats any label containing 'direct' as the plain 'direct' bucket regardless of a trailing '- aggregate' qualifier, so this fact was silently read as a bare patient_id column value (never a count at all) despite its own note already unambiguously describing a real GROUP BY aggregate; confirmed via a direct compiled_constraints.json inspection before correcting, not assumed"
    },
    "preferredIdentifierCount": {
-    "kind": "schema_column",
+    "kind": "derived_aggregate",
+    "aggregate": "COUNT",
     "table": "patient_identifier",
-    "column": "preferred",
-    "notes": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
+    "filter_text": "patient_id = :patient_id AND preferred=true",
+    "source_text": "COUNT(*) FROM patient_identifier WHERE patient_id=? AND preferred=true -- replaces the EXISTS-style anyPreferredFlagged boolean with a count, matching this project's Spree redesign's count-instead-of-EXISTS pattern (redesigned 2026-09-10, boolean-reduction pass: exposed as a real comparison, replacing a pre-collapsed boolean)"
    }
   },
   "fk_closure_tables": [
@@ -33756,14 +33749,7 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown",
-  "decision_subject": {
-   "table": "patient_identifier",
-   "pk_columns": [
-    "patient_identifier_id"
-   ],
-   "joins": {}
-  }
+  "feasibility": "unknown"
  },
  {
   "record_id": "OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_1",

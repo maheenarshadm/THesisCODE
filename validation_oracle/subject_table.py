@@ -142,6 +142,33 @@ _NON_TABLE_KINDS = {
 }
 
 
+_OWN_TABLE_HINTS = {
+    # Each of these kinds queries ITS OWN table directly (subject-row
+    # substitution, no join walk) -- see _TABLE_EXTRACTORS's own comments
+    # for why that table is deliberately left OUT of tables_referenced's
+    # normal result (no join PATH is needed to reach it). This mirrors
+    # kind, used only as subject_table_for_decision's own last-resort
+    # fallback below, when a decision's inputs are EXCLUSIVELY this shape
+    # and there is no other table-bearing fact to anchor a subject to.
+    'derived_aggregate': lambda n: {n['table']},
+    'exists': lambda n: set(n.get('candidate_tables') or []),
+    'raw_sql_boolean': lambda n: set(n.get('tables') or []),
+    'derived_join_count': lambda n: {n['registration_table']},
+}
+
+
+def _own_table_hints(node):
+    kind = node.get('kind')
+    if kind in _OWN_TABLE_HINTS:
+        return _OWN_TABLE_HINTS[kind](node)
+    if kind == 'substituted_decision':
+        tables = set()
+        for sub_node in node.get('free_variable_resolutions', {}).values():
+            tables |= _own_table_hints(sub_node)
+        return tables
+    return set()
+
+
 def tables_referenced(node, case_study=None):
     """Every table one `variable_resolution` node reads directly. Empty
     set for a non-table kind (see `_NON_TABLE_KINDS`) -- NOT an error;
@@ -262,10 +289,29 @@ def subject_table_for_decision(records, case_study):
                            for t in tables_referenced(node, case_study)}
 
     if len(all_tables) == 0:
-        raise ValueError(
-            f"No table-backed inputs found for decision {records[0]['decision_name']!r} -- "
-            f"every input is non-table-backed (literal/upstream/not_persisted); "
-            f"this decision cannot be independently entity-enumerated from the database alone.")
+        # Last-resort fallback, found real 2026-09-25 fixing OpenMRS's own
+        # Preferred Identifier Requirement (this project's first real
+        # validator target): once its two facts correctly compiled as
+        # derived_aggregate (previously a compile-time bug silently
+        # degraded them to schema_column, see compile_constraints.py's
+        # own AGGREGATE_STAR_FROM_RE comments), all_tables came back
+        # EMPTY -- derived_aggregate's own table is deliberately excluded
+        # above (self-contained, no join path needed to reach it), and
+        # every OTHER decision in the corpus has at least one non-
+        # self-contained fact to anchor a subject to, so this gap was
+        # never hit before. When a decision's inputs are EXCLUSIVELY this
+        # self-contained shape, fall back to each node's own primary
+        # table -- if that also comes up empty, still raise, unchanged.
+        own_tables = set()
+        for r in records:
+            for node in r.get('variable_resolution', {}).values():
+                own_tables |= {canonical_table_name(case_study, t) for t in _own_table_hints(node)}
+        if not own_tables:
+            raise ValueError(
+                f"No table-backed inputs found for decision {records[0]['decision_name']!r} -- "
+                f"every input is non-table-backed (literal/upstream/not_persisted); "
+                f"this decision cannot be independently entity-enumerated from the database alone.")
+        all_tables = own_tables
 
     if len(all_tables) == 1:
         subject = next(iter(all_tables))

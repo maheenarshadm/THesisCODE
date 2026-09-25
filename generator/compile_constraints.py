@@ -315,6 +315,36 @@ AGGREGATE_FROM_RE = re.compile(r'\bFROM\s+(.+?)\s+WHERE\b', re.I | re.S)
 # the same sentence is never mistaken for this convention.
 AGGREGATE_FOR_CORRELATION_RE = re.compile(
     r'^\s*for\s+([A-Za-z_][A-Za-z0-9_]*(?:\s*\+\s*[A-Za-z_][A-Za-z0-9_]*)*)', re.I)
+# A fifth shape, found real (2026-09-25) while checking whether OpenMRS's
+# own `Preferred Identifier Requirement` -- the project's first real
+# validator target, cited elsewhere as an already-proven pattern to reuse
+# -- actually compiles the way its own DMN rule descriptions ("exposed as
+# a COUNT(identifiers WHERE preferred=true) >= 1") claim. It does NOT:
+# `COUNT(*)` (a bare star, the single most common real SQL idiom for
+# "count every row") matches NONE of the three patterns above -- each
+# requires an identifier or TABLE.COLUMN inside the parens, never a bare
+# `*` -- so both of this decision's own notes silently fell through to a
+# meaningless `schema_column` read (`patient_identifier.preferred`/
+# `.patient_id` read directly off ONE arbitrary row, never actually
+# counted) instead of a real `derived_aggregate`. Confirmed via a direct
+# regex test against the exact ground-truth text before fixing this,
+# not assumed. `COUNT(*)`'s own table comes from the following `FROM
+# <table>` clause (nothing to extract from inside the parens, unlike the
+# other three shapes), so this is its own dedicated pattern rather than a
+# tweak to AGGREGATE_RECIPE_RE.
+AGGREGATE_STAR_FROM_RE = re.compile(
+    r'\bCOUNT\s*\(\s*\*\s*\)\s*FROM\s+([A-Za-z_][A-Za-z0-9_]*)', re.I)
+# `COUNT(*) FROM table GROUP BY col` is the SAME self-correlation shape
+# "for COL" (above) already handles -- "count this table's own rows,
+# grouped by (i.e. correlated to) col" -- just a different, real SQL verb
+# for saying it (OpenMRS's own `identifierCount`: "COUNT(*) FROM
+# patient_identifier GROUP BY patient_id"). Translated into the identical
+# `:column` self-reference syntax, no new validator capability needed.
+AGGREGATE_GROUP_BY_RE = re.compile(r'\bGROUP\s+BY\s+([A-Za-z_][A-Za-z0-9_]*)', re.I)
+# See the bare-`?` handling in the WHERE-extraction below for why this
+# exists.
+_AGGREGATE_BARE_QUESTION_MARK_RE = re.compile(
+    r'\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\?')
 
 
 def _try_extract_aggregate_recipe(text):
@@ -361,11 +391,43 @@ def _try_extract_aggregate_recipe(text):
             aggregate, table = m.group(1).upper(), m.group(2)
         else:
             m = AGGREGATE_RECIPE_REVERSED_RE.search(text)
-            if not m:
-                return None
-            table, aggregate = m.group(1), m.group(2).upper()
+            if m:
+                table, aggregate = m.group(1), m.group(2).upper()
+            else:
+                m = AGGREGATE_STAR_FROM_RE.search(text)
+                if not m:
+                    return None
+                aggregate, table = 'COUNT', m.group(1)
     where_idx = text.upper().find('WHERE', m.end())
     filter_text = text[where_idx + len('WHERE'):].rstrip(') ').strip() if where_idx != -1 else None
+    if filter_text is not None:
+        # A trailing SQL-style "-- human explanation" comment, real in
+        # this corpus's own convention (ground truth's recipe and its
+        # human rationale sometimes share one `notes` cell rather than
+        # living in separate columns -- confirmed real for OpenMRS's own
+        # preferredIdentifierCount, found fixing this pattern's own
+        # COUNT(*) gap: without this strip, the comparison VALUE
+        # ("true") would silently absorb the entire trailing prose
+        # sentence as part of itself, matching no real row ever).
+        # `--` never appears inside this corpus's own real filter syntax
+        # otherwise (confirmed: no working derived_aggregate filter_text
+        # anywhere in the corpus relies on a literal `--`), so this is a
+        # safe, non-breaking addition.
+        comment_idx = filter_text.find('--')
+        if comment_idx != -1:
+            filter_text = filter_text[:comment_idx].rstrip()
+        # A bare `?` value, another OpenMRS-only convention found the
+        # same day ("patient_id=?"): confirmed via a full corpus grep to
+        # appear NOWHERE else, and this project's own filter-text dialect
+        # has no bound-external-parameter concept at all (only `:column`
+        # self-reference and bare `self` exist, see db_resolver.py's own
+        # `_substitute_self_and_colon`) -- so `?` here can only sensibly
+        # mean "this subject row's own value for the column it's compared
+        # against", i.e. the exact same self-correlation `:column` already
+        # expresses. Translated here rather than left for
+        # `_substitute_self_and_colon` to fail on, since a literal `?`
+        # would otherwise reach real SQL as an invalid token.
+        filter_text = _AGGREGATE_BARE_QUESTION_MARK_RE.sub(r'\1 = :\1', filter_text)
     if filter_text is None:
         for_m = AGGREGATE_FOR_CORRELATION_RE.match(text[m.end():])
         if for_m:
@@ -380,6 +442,15 @@ def _try_extract_aggregate_recipe(text):
             # raises, rather than guessing, when it doesn't.
             columns = [c.strip() for c in for_m.group(1).split('+')]
             filter_text = ' AND '.join(f'{c} = :{c}' for c in columns)
+        else:
+            group_by_m = AGGREGATE_GROUP_BY_RE.search(text, m.end())
+            if group_by_m:
+                # "GROUP BY col" (OpenMRS's own identifierCount: "COUNT(*)
+                # FROM patient_identifier GROUP BY patient_id") -- the same
+                # self-correlation "for COL" already handles, just a
+                # different real SQL verb for saying it.
+                col = group_by_m.group(1)
+                filter_text = f'{col} = :{col}'
     node = {'kind': 'derived_aggregate', 'aggregate': aggregate, 'table': table,
             'filter_text': filter_text, 'source_text': text}
     if value_column:

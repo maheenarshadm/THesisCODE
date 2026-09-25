@@ -1,5 +1,46 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, OpenMRS's flagship COUNT mechanism was never actually working — found and fixed before building on it)
+
+Direct follow-up to the entry below (discard/reclassify decisions),
+picking up "build the new-rule candidates" — starting with OpenMRS since
+its 4 candidates were proposed as reusing `Preferred Identifier
+Requirement`'s own COUNT-based mechanism, described everywhere in this
+project as the validator's first real, proven target.
+
+**Before authoring anything, checked that claim against the actual
+compiled record — it was false.** Two independent, previously-
+undiscovered compile-time bugs (`compile_constraints.py` had no pattern
+for the common `COUNT(*) FROM table WHERE ...` SQL idiom; a provenance
+row was mislabeled `"direct - aggregate"`, skipping aggregate extraction
+entirely) meant both of this decision's own facts were silently read as
+raw, uncounted column values, not real counts — `Rule_1`/`Rule_3`
+"verified" only by coincidence (a boolean read as 0/1, and a raw
+`patient_id` that's almost never `1`), and `Rule_2` (which genuinely
+needs the count) never did. Fixed both, plus a third, deeper
+`subject_table.py` gap the fix exposed (a decision whose every input is
+a self-contained aggregate had nothing left to anchor a subject to).
+Full root-cause writeup: `KNOWN_ISSUES.md`'s newest entry.
+
+**Verified, not assumed**: full regression suite passes, including
+`drd_executor.py`'s own OpenMRS acceptance demo (previously crashing
+outright on this exact decision — now runs, shows the real mechanism
+working). `compiled_constraints.json` diffed by record_id: exactly these
+3 records changed in a 240-record corpus. Fresh `coverage.py` re-run,
+all 4 case studies: **OpenMRS 42 → 43 verified** (`Rule_2` flips
+`false_positive` → confirmed, now for the real reason); Spree/FLEX2/
+jBilling confirmed byte-for-byte unchanged. Full numbers:
+`COVERAGE_REPORT.md`'s newest entry.
+
+This also means the mechanism the audit proposed reusing for OpenMRS's 4
+new rules (`Concept Locale-Preferred-Name Uniqueness`, etc.) now
+genuinely works, instead of building 4 more rules on the same silent
+failure mode. `ConceptValidator.java`'s real source was already fetched
+and confirmed against all 4 proposed rules (lines 154-158, 165-170,
+178-186, 217-220 — see `github.com/openmrs/openmrs-core`) before this
+detour started; authoring those 4 rules is the actual next step, resuming
+from here.
+
 ## Latest continuation — 2026-09-25 (Claude, discard/reclassify decisions implemented; new-rule building starting next)
 
 Direct follow-up to the planning-only audit entry directly below (still
@@ -45,10 +86,15 @@ unchanged, confirmed via fresh re-runs; Spree updated):
 
 | Case study | Total | Verified now | Solvable denom | Current % |
 |---|---:|---:|---:|---:|
-| OpenMRS | 71 | 42 | 56 | 75.0% |
+| OpenMRS | 71 | 43 | 56 | **76.8%** |
 | Spree | 31 | 17 | 21 | **81.0%** |
 | FLEX2 | 55 | 37 | 49 | 75.5% |
 | jBilling | 39 (+6 discarded, +~9 unaudited) | 15 | ~29 | ~51.7% |
+
+(OpenMRS's own 42→43/75.0%→76.8% is the entry directly above this one —
+`Preferred Identifier Requirement::Rule_2`, found and fixed preparing to
+reuse this decision's mechanism for new rules, not part of the discard/
+reclassify decisions this entry covers.)
 
 **Still open, not pursued this round (separate, smaller levers, flagged
 not forgotten):** Spree's `Promotion Temporal Availability::rule_1/2/3`
@@ -639,12 +685,12 @@ file's last recorded values, not a fresh `coverage.py` invocation,
 unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
-provenance, updated 2026-09-25): raw verified coverage OpenMRS 59.2%,
+provenance, updated 2026-09-25): raw verified coverage OpenMRS **60.6%**,
 Spree 54.8%, FLEX2 67.3%, jBilling 38.5%; solvable-rules coverage (the
 finer 4-category classification — permanent out-of-scope / search-
 limited / known-bug-fixable / discarded — see this file's own newest
-entry above) OpenMRS 75.0%, Spree **81.0%**, FLEX2 75.5%, jBilling ~51.7%
-(approximate, ~9 rules still unaudited).
+entry above) OpenMRS **76.8%**, Spree **81.0%**, FLEX2 75.5%, jBilling
+~51.7% (approximate, ~9 rules still unaudited).
 
 ## 6. Recent actions (most recent session)
 
