@@ -174,9 +174,9 @@ unless a re-run is explicitly requested.
 
 Latest recorded snapshot (see that file for the full table and
 provenance): raw verified coverage OpenMRS 59.2%, Spree 58.1%, FLEX2
-56.4%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
+58.2%, jBilling 25.6%; solvable-rules coverage (excluding COLLECT,
 `code_external` facts, and the out-of-scope blob-level rules) OpenMRS
-75.0%, Spree 81.8%, FLEX2 58.5%, jBilling 66.7%.
+75.0%, Spree 81.8%, FLEX2 60.4%, jBilling 66.7%.
 
 ## 6. Recent actions (most recent session)
 
@@ -392,6 +392,36 @@ Chronological detail lives in `validation_oracle/KNOWN_ISSUES.md`'s
     `_fresh_key_value`. Verified: `Rule_4` flips false_positive→confirmed
     (FLEX2 30→31 verified), `Course Replacement Eligibility` now fully
     6/6, zero flips elsewhere across all 4 case studies.
+14. **Investigated FLEX2's remaining 5 "backward-join" refusals, on
+    request — found they were never one category, fixed 2 real bugs.**
+    `Course Registration Eligibility`/`Credit Transfer Exemption` shared
+    a bug in `subject_table.py`'s own `_TABLE_EXTRACTORS
+    ['derived_join_count']`: it unconditionally required both
+    `prereq_table` and `registration_table` reachable, but
+    `prereq_table` is queried via a raw, uncorrelated scan needing no
+    join path at all (same shape `derived_aggregate`/`exists` were
+    already exempted for). Fixed by dropping `prereq_table`. Confirmed
+    corpus-wide, this kind is used only by these two decisions — zero
+    collateral anywhere else. Verified: `Credit Transfer Exemption` now
+    fully resolved and 1/3 verified (FLEX2 31→32); `Course Registration
+    Eligibility` moved past subject-picking into a DIFFERENT, deeper gap
+    (chains to `Course Load Limit`'s composite-PK subject
+    `STUDENT_SEMESTER`, and the cross-decision join builder can't
+    express a composite-PK match via two separate single-column FKs —
+    not yet fixed). Testing the same idea on `raw_sql_boolean`'s own
+    extractor found and fixed a second real bug the same way (used only
+    by `Summer Semester Registration`) — resolves subject-picking to
+    `COURSE`, but only trades one refusal for a more precise one
+    (`<this course offering>` needs `offer_id`, not on `COURSE`); tested
+    a `filter_placeholder_sources.py` override pointing at
+    `COURSE_OFFER`, which surfaces a genuine 3-way root ambiguity
+    instead — reverted, not committed, the extractor fix itself kept.
+    The other 2 of the original 5 are genuinely distinct, not bugs:
+    `Admission Closure Eligibility`'s own `ADM_MERIT_LIST` has no PK/FK
+    declared anywhere in the real DDL at all; `Graduation Eligibility`'s
+    own composite-key correspondence to `BATCH_PROGRAM` needs a
+    multi-column join capability this project's own join builder is
+    deliberately scoped without.
 
 ## 7. Planned / open work
 
@@ -408,11 +438,17 @@ Full, itemized list with root causes and what fixing each would require:
   `Promotion Usage Limit Exceeded::rule_3` itself still doesn't verify
   (no constructed subject reaches `adjustedCreditsCount >= usageLimit`)
   — a distinct, not-yet-investigated issue.
-- FLEX2: 5 multi-table backward-join gaps (same category already solved
-  for Spree/jBilling elsewhere); an audit question on `Attendance
-  Eligibility For Final Exam`. `Course Load Limit` (§6 items 8/9:
-  11/11) and `Course Replacement Eligibility` (§6 items 10-13: 6/6) are
-  now BOTH fully closed.
+- FLEX2: `Course Load Limit` (§6 items 8/9: 11/11) and `Course
+  Replacement Eligibility` (§6 items 10-13: 6/6) are fully closed;
+  `Credit Transfer Exemption` (§6 item 14) is now fully resolved and
+  1/3 verified. The remaining 4 of the original "5 backward-join gaps"
+  are NOT one category (§6 item 14 for the full breakdown): `Course
+  Registration Eligibility` and `Summer Semester Registration` each hit
+  a different, precisely-diagnosed (but still open) gap after the
+  extractor fixes; `Admission Closure Eligibility` has no declared FK
+  relationship at all in the real schema; `Graduation Eligibility` needs
+  a composite-key join capability out of current scope. An audit
+  question remains on `Attendance Eligibility For Final Exam`.
 - jBilling: an audit question on 8 decisions currently marked
   non-table-backed or needing a `not_persisted` override — genuine, or a
   `purchaseQuantity`-style mis-mapping? Not yet checked.

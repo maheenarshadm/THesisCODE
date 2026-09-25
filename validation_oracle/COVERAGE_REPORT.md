@@ -19,11 +19,20 @@ the numbers back in chat.
 
 ## Latest snapshot
 
-**As of the 2026-09-25 subject-hop placeholder correlation fix** — see
-"Run history" below for the full writeup. Tables above already reflect
-this: FLEX2 30→31 verified rules (54.5%→56.4% raw, 56.6%→58.5% solvable)
-— `Course Replacement Eligibility::Rule_4` newly confirmed, closing this
-decision fully at 6/6; zero flips anywhere else in FLEX2 or in
+**As of the 2026-09-25 `subject_table.py` extractor fixes** (`derived_
+join_count`/`raw_sql_boolean`) — see "Run history" below for the full
+writeup. Tables above already reflect this: FLEX2 31→32 verified rules
+(56.4%→58.2% raw, 58.5%→60.4% solvable), decision-table coverage
+4/10→5/10 — `Credit Transfer Exemption` now fully resolved (1/3
+verified). `Course Registration Eligibility` and `Summer Semester
+Registration` each moved past subject-picking into a different, more
+precisely diagnosed but still-open gap; zero flips anywhere else in
+FLEX2 or in OpenMRS/Spree/jBilling.
+
+**As of the 2026-09-25 subject-hop placeholder correlation fix** — FLEX2
+30→31 verified rules (54.5%→56.4% raw, 56.6%→58.5% solvable) — `Course
+Replacement Eligibility::Rule_4` newly confirmed, closing this decision
+fully at 6/6; zero flips anywhere else in FLEX2 or in
 OpenMRS/Spree/jBilling.
 
 **As of the 2026-09-24 cross-table filter_text placeholder fix** —
@@ -110,9 +119,9 @@ not raw compiled objectives; see the note above)
 |---|---|---|---|---|
 | OpenMRS | 71 | 71 | 42 | 59.2% |
 | Spree | 31 | 31 | 18 | 58.1% |
-| FLEX2 | 98 | 55 | 31 | 56.4% |
+| FLEX2 | 98 | 55 | 32 | 58.2% |
 | jBilling | 40 | 39 | 10 | 25.6% |
-| **Total** | **240** | **196** | **101** | **51.5%** |
+| **Total** | **240** | **196** | **102** | **52.0%** |
 
 ### Solvable-rules coverage (excludes rules that are structurally not
 reachable by data generation at all — see category definitions below;
@@ -122,9 +131,9 @@ all counts are DISTINCT DMN rules)
 |---|---|---|---|---|---|---|
 | OpenMRS | 71 | 15 | 0 | 56 | 42 | 75.0% |
 | Spree | 31 | 9 | 0 | 22 | 18 | 81.8% |
-| FLEX2 | 55 | 0 | 2 | 53 | 31 | 58.5% |
+| FLEX2 | 55 | 0 | 2 | 53 | 32 | 60.4% |
 | jBilling | 39 | 3 | 21 | 15 | 10 | 66.7% |
-| **Total** | **196** | **27** | **23** | **146** | **101** | **69.2%** |
+| **Total** | **196** | **27** | **23** | **146** | **102** | **69.9%** |
 
 **Category definitions:**
 - **Not solvable (permanent):** COLLECT hit policy (`rule_evaluator.py`
@@ -270,6 +279,73 @@ history below), jBilling 6/16.
 ---
 
 ## Run history
+
+### 2026-09-25 — subject_table.py extractor fixes (closes `Credit Transfer Exemption` fully; re-diagnoses two more)
+Numbers: FLEX2 31->32 verified rules (56.4%->58.2% raw, 58.5%->60.4%
+solvable), decision-table coverage 4/10->5/10. Investigating FLEX2's
+remaining 5 "backward-join" refusals found they were never one category:
+2 (`Course Registration Eligibility`, `Credit Transfer Exemption`) were a
+real, shared compile-time bug; the other 3 are genuinely distinct gaps.
+
+`subject_table.py`'s own `_TABLE_EXTRACTORS['derived_join_count']`
+unconditionally required BOTH `prereq_table` and `registration_table` to
+be forward-reachable from the subject. But `db_resolver.resolve()`'s own
+`derived_join_count` branch queries `prereq_table` via a raw,
+UNCORRELATED scan (`SELECT COUNT(*) FROM "COURSE_PREREQ" p WHERE NOT
+EXISTS (...)`, no WHERE binding on `p` from the subject at all) -- the
+SAME "self-contained, no join path needed" shape `derived_aggregate`/
+`exists` were already exempted for, never extended to this kind. Fixed
+by dropping `prereq_table`, keeping only `registration_table` (which
+`resolve()`'s own runtime check requires be the subject itself, via
+`registration_roll_column`). Confirmed corpus-wide: `derived_join_count`
+is used only by these two decisions -- zero collateral anywhere else.
+
+Verified: both decisions now resolve to `COURSE_REGISTRATION` via
+`subject_table_for_decision`. `Credit Transfer Exemption` is now fully
+resolved AND verified 1/3 (`Rule_3` flips false_positive->confirmed).
+`Course Registration Eligibility` moved past subject-picking but hit a
+DIFFERENT, deeper gap: it chains to `Course Load Limit` (subject
+`STUDENT_SEMESTER`, composite PK `[SEM_ID, ROLL_NO]`) via
+`literal_via_upstream_branch`, and `DecisionRunner.upstream_subject_
+value`'s own single-continuous-FK-chain join-path builder can't express
+that `COURSE_REGISTRATION` already has BOTH of `STUDENT_SEMESTER`'s own
+composite-PK columns directly (a genuinely unambiguous correspondence,
+just not expressible as one hop chain) -- not yet fixed, needs a real
+new capability, not a one-line extractor change.
+
+Testing the SAME idea against `_TABLE_EXTRACTORS['raw_sql_boolean']`
+(the same over-strict shape, confirmed used only by FLEX2's `Summer
+Semester Registration`) found and fixed a second real bug the same way
+(mirroring `derived_aggregate`'s own extractor). This resolves subject-
+picking to `COURSE`, but running `coverage.py` shows it just trades one
+refusal for a more precise one: a `<this course offering>` placeholder
+needs `offer_id`, not on `COURSE`. Tested a `filter_placeholder_
+sources.py` override pointing it at `COURSE_OFFER` -- this does NOT
+cleanly resolve either: `COURSE_OFFER`, `COURSE_REGISTRATION`, and
+`REPEAT_COURSE` all independently qualify as valid roots once
+`COURSE_OFFER` is required too, a genuine 3-way ambiguity needing a
+domain-informed disambiguation decision. That override was reverted, not
+committed; the `raw_sql_boolean` extractor fix itself was kept (correct
+and independently justified, zero side effects, even though it alone
+doesn't verify anything new for this decision yet).
+
+The other 2 of the original 5 are genuinely distinct, deeper gaps, not
+bugs: `Admission Closure Eligibility`'s own `ADM_MERIT_LIST` has NO
+primary key or foreign key declared anywhere in the real DDL (confirmed
+directly against `schemas/flex2/Flex1.sql`) -- no relationship exists to
+disclose an override for at all. `Graduation Eligibility`'s own
+`STUDENT_PROGRAM.(BATCH_NO, PROG_ID)` jointly correspond exactly to
+`BATCH_PROGRAM`'s own composite PK, but the schema only captured them as
+two separate single-column FKs, and this project's own join-path builder
+is deliberately scoped to single-column hops only -- closing this needs
+a genuinely new composite-join capability.
+
+Verified via a full `subject_table_for_decision` sweep across every
+decision in all 4 case studies (zero collateral) and a full per-objective
+`coverage.py` diff (exactly one flip: `Credit Transfer Exemption::
+Rule_3`). Full regression suite re-run and passing; no fixture rebuild
+needed (`subject_table.py` never touches the generator/search/merge
+pipeline).
 
 ### 2026-09-25 — subject-hop placeholder correlation fix (closes `Course Replacement Eligibility::Rule_4`, decision now 6/6)
 Numbers: FLEX2 30->31 verified rules (54.5%->56.4% raw, 56.6%->58.5%

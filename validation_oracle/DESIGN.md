@@ -338,6 +338,49 @@ studies (Spree's fixture gains one harmless extra row from the same
 consumer's new synthesis behavior, confirmed byte-identical
 `objective_results.csv`). Full regression suite re-run and passing.
 
+**Investigated FLEX2's remaining 5 "backward-join" refusals (2026-09-25)
+and found they were never one category.** 2 (`Course Registration
+Eligibility`, `Credit Transfer Exemption`) shared a real, fixable bug in
+`subject_table.py`'s own `_TABLE_EXTRACTORS`: `derived_join_count`
+unconditionally required BOTH `prereq_table` AND `registration_table` to
+be forward-reachable, but `db_resolver.resolve()`'s own implementation
+queries `prereq_table` via a raw, uncorrelated scan needing NO join path
+at all — the SAME "self-contained" shape `derived_aggregate`/`exists`
+were already exempted for. Fixed by dropping `prereq_table`; both
+decisions now resolve to `COURSE_REGISTRATION`. Confirmed corpus-wide:
+this kind is used only by these two decisions, zero collateral anywhere
+else. Verified: `Credit Transfer Exemption` fully resolved and verified
+1/3 (FLEX2 31→32); `Course Registration Eligibility` moved past
+subject-picking into a DIFFERENT, deeper gap (it chains to `Course Load
+Limit`'s composite-PK subject `STUDENT_SEMESTER` via
+`literal_via_upstream_branch`, and `DecisionRunner.upstream_subject_
+value`'s own single-continuous-FK-chain builder can't express that
+`COURSE_REGISTRATION` already has BOTH composite-PK columns directly —
+a genuinely unambiguous correspondence the mechanism just can't state;
+not yet fixed).
+
+Testing the same idea against `raw_sql_boolean`'s own extractor (same
+shape, confirmed used only by `Summer Semester Registration`) found and
+fixed a second real bug the same way. This resolves subject-picking to
+`COURSE`, but only trades one refusal for a more precise one
+(`<this course offering>` needs `offer_id`, not on `COURSE`) — tested a
+`filter_placeholder_sources.py` override pointing at `COURSE_OFFER`,
+which surfaces a genuine 3-way root ambiguity instead
+(`COURSE_OFFER`/`COURSE_REGISTRATION`/`REPEAT_COURSE` all qualify) —
+reverted, not committed; the extractor fix itself was kept (correct,
+zero side effects, just not sufficient alone).
+
+The remaining 2 are genuinely distinct, not bugs: `Admission Closure
+Eligibility`'s own `ADM_MERIT_LIST` has no PK or FK declared anywhere in
+the real DDL (`schemas/flex2/Flex1.sql`, checked directly) — no
+relationship exists to disclose an override for. `Graduation
+Eligibility`'s own `STUDENT_PROGRAM.(BATCH_NO, PROG_ID)` correspond
+exactly to `BATCH_PROGRAM`'s own composite PK, but the schema only
+captured two separate single-column FKs, and this project's own
+join-path builder is deliberately single-column-hop-only — a genuinely
+new composite-join capability, out of current scope. Full regression
+suite re-run and passing; no fixture rebuild needed.
+
 **Fixed a real bug in this module's own `tables_referenced` while
 building the above (2026-09-24): `substituted_decision` was dead
 code.** It was listed in `_NON_TABLE_KINDS` (checked before the dedicated

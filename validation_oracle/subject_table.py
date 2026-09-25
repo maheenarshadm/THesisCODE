@@ -67,7 +67,23 @@ _TABLE_EXTRACTORS = {
     # filter_placeholder_sources.py) -- that table DOES need a real join
     # path, so it's added here when named.
     'derived_aggregate': lambda n, cs: _placeholder_source_tables(cs, n.get('filter_text')),
-    'derived_join_count': lambda n, cs: {n['prereq_table'], n['registration_table']},
+    # `prereq_table` is queried via a raw, UNCORRELATED scan
+    # (`db_resolver.resolve`'s own derived_join_count branch: `SELECT
+    # COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS (...)`, no WHERE
+    # binding on `p` from the subject at all) -- the SAME "self-contained,
+    # no join path needed" shape derived_aggregate/exists are already
+    # exempted for above, just never extended to this kind (a real bug,
+    # found 2026-09-25 investigating FLEX2's own backward-join gaps:
+    # `Course Registration Eligibility`/`Credit Transfer Exemption` both
+    # only failed root-picking because THIS unconditional requirement
+    # dragged `COURSE_PREREQ` -- reachable from neither decision's real
+    # subject only because it's genuinely one-to-many per course, exactly
+    # the shape this project's own backward-join scope decision already
+    # excludes -- into `all_tables`). `registration_table` still DOES need
+    # to be reachable (in practice, the SUBJECT itself): `resolve()`'s own
+    # runtime check requires `registration_roll_column` directly ON the
+    # subject row, with no join-path fallback of its own.
+    'derived_join_count': lambda n, cs: {n['registration_table']},
     # exists is the SAME story, but only when filter_text is present --
     # then it's a self-contained correlated EXISTS query against its OWN
     # candidate table, identical reasoning to derived_aggregate above
@@ -78,7 +94,20 @@ _TABLE_EXTRACTORS = {
     # path is still required there.
     'exists': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
                               if n.get('filter_text') else set(n['candidate_tables'])),
-    'raw_sql_boolean': lambda n, cs: set(n['tables']),
+    # SAME reasoning as derived_aggregate/exists above, mirrored: the
+    # `sql_template` is executed directly against the live connection
+    # (db_resolver.resolve's own raw_sql_boolean branch never calls
+    # _row_for_table/walks a join path to reach `n['tables']` at all --
+    # only a `<placeholder>` inside the template, if any, gets resolved,
+    # via the SAME subject-row-column-first/filter_placeholder_sources.py
+    # -second priority every other kind already uses). Requiring EVERY
+    # table the raw SQL merely NAMES to be forward-reachable is a real
+    # bug, found and fixed 2026-09-25 testing FLEX2's own remaining
+    # backward-join gaps: confirmed corpus-wide, `raw_sql_boolean` is
+    # used ONLY by FLEX2's `Summer Semester Registration`, whose own two
+    # records name tables (`BATCH_PROGRAM`, `EMPLOYEE`, `D_EMP_TYPE`, ...)
+    # the SQL never actually needs a join path to reach.
+    'raw_sql_boolean': lambda n, cs: _placeholder_source_tables(cs, n.get('sql_template')),
     'any_not_null': lambda n, cs: {c['table'] for c in n['columns']},
     'join_lookup': lambda n, cs: {n['via']['local_table'], n['result_table']},
     'join_null_check': lambda n, cs: {n['via']['local_table'], n['result_table']},
