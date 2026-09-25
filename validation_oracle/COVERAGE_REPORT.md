@@ -19,6 +19,46 @@ the numbers back in chat.
 
 ## Latest snapshot
 
+### 2026-09-25 — generator subject wiring verification (Codex)
+
+Baseline commit: `6a9b80151d277e2958ac90a3146919758b45007d`.
+Same saved `generator/experiment_runs/<CaseStudy>__dynamosa_nsga2__budget1x__seed0.pkl`
+archives before/after; baseline committed fixtures versus rebuilt fixtures using
+`tests/build_fixture_from_generator.py:build`. Coverage invoked with
+`algorithm=dynamosa_nsga2`, `construction_strategy=merged_archive`, archive
+comparison enabled and **no not_persisted overrides in either pass**.
+
+| Case study | Before verified | After verified | Rule-set changes | Schema valid |
+|---|---:|---:|---|---|
+| FLEX2 | 36/55 (65.5%) | 37/55 (67.3%) | Summer Semester Registration Rule_1 added; none removed | Yes |
+| OpenMRS | 42/71 (59.2%) | 42/71 (59.2%) | None | Yes |
+| Spree | 16/31 (51.6%) | 16/31 (51.6%) | None | Yes |
+| jBilling | 10/39 (25.6%) | 10/39 (25.6%) | None | Yes |
+
+FLEX2 rows: 1853 -> 1869; unresolved decisions remain 2; DMN validation valid.
+Summer: 0/5 -> 1/5. FLEX2 solvable-rule coverage under the existing denominator:
+37/53 = 69.8%. Only the FLEX2 rebuilt fixture is committed. Spree's 16 here must
+not be silently compared with historical 18 from differently configured runs;
+this is an explicitly no-override regression comparison, not a correction to
+that older experiment. The latest handoff headline takes precedence over older
+FLEX2 counts below.
+
+Separate diagnostic, not the saved experiment: all five summer objectives
+refreshed with `solve_branch` defaults and `random.Random(0)` per rule, replacing
+only their entries in a scratch copy of the saved archive. Rule fitness values
+were 0, 0.5, 0, 0, 0.5. Rebuilt scratch database: 1709 rows, 36/55 verified,
+96/98 search-covered objectives, 3 unresolved decisions, schema/DMN valid.
+Its verified-rule set exactly matches the 36-rule baseline. Missing EMPLOYEE
+causes the oracle to refuse the whole summer decision, even though Rule_1's
+individual search succeeds. This diagnostic was NOT promoted to the fixture
+or mislabeled as a fresh DynaMOSA experiment. See KNOWN_ISSUES.md.
+
+Reproduce the primary result by rebuilding FLEX2 from the unchanged archive
+with `build_fixture_from_generator.build`, then using the coverage command in
+QUICK_REFERENCE.md with no `--not-persisted-json`. Run
+`python generator/test_decision_subject.py` for the focused regression tests.
+
+
 **As of the 2026-09-25 `Summer Semester Registration` three-part fix**
 (`subject_root_overrides.py` [new] + a `raw_sql_boolean` executor bug fix
 + `derived_aggregate`'s `filter_text: None` now raises `UnresolvableForCase`

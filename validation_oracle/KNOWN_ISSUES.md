@@ -1,5 +1,54 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-25 — generator summer subject wiring (Codex)
+
+Checkpoint: `6a9b80151d277e2958ac90a3146919758b45007d`, also preserved by
+`codex/thesis-fixes`. The user requested changes on `claude/clever-maxwell-dr0vnl`.
+
+**Fixed:** the generator now independently derives Summer Semester Registration's
+`COURSE_REGISTRATION` subject, with real forward-FK links to `COURSE` and
+`COURSE_OFFER`. The compiler treats raw SQL/aggregate query targets separately
+from directly joined input rows, recursively including substituted decisions.
+The existing disclosed registration-granularity decision is mirrored in
+`generator/decision_subject_overrides.py`; an invalid override raises rather
+than inventing reachability. No oracle runtime functions are imported.
+
+Recompiled record IDs and conditions are unchanged (240 total; FLEX2 98).
+Only subject metadata changes: all five summer records and the two Attendance
+Eligibility records. Attendance now resolves to COURSE_OFFER on the generator
+side, matching the oracle's current root; its unresolved student correlation
+remains, and its verified result does not change.
+
+Rebuilding the saved FLEX2 DynaMOSA archive produces a schema-valid fixture
+with **37/55 distinct rules verified (67.3%)**, up from 36/55 (65.5%). The sole
+new verified rule is `Decision_SummerSemesterRegistration_Rule_1`: a generated
+RESEARCH course now has a real registration through which it can be evaluated.
+Summer is **1/5 verified**, not fully solved. Other case studies have identical
+before/after verified-rule sets. The updated FLEX2 fixture is committed; the
+original experiment archives are not overwritten.
+
+**Still unresolved:** rules 3–5 need an established student/semester correlation
+for `repeatCourseCountRequested`; REPEAT_COURSE.USER_ID currently points through
+APPUSER to EMPLOYEE, not a declared student identity. Rule 2 also lacks raw-SQL
+mutation support. In addition, the current `priorRegistrationCount` recipe
+counts the subject registration itself (ROLL_NO + COURSE_ID, with no current-row
+or time exclusion), so a non-null, matching subject cannot have count zero.
+Whether “prior” means earlier semesters or excluding the current request needs
+a domain decision; no business rule or ground-truth mapping was invented here.
+
+A diagnostic refresh of all five summer objectives (solve_branch defaults,
+random.Random(0) per rule) reached fitness 0 for rules 1/3/4, 0.5 for rules 2/5.
+Its merged database omitted EMPLOYEE because unsolved archive entries are not
+materialized; the oracle then refused the entire summer decision. This separate
+fixture-completeness/decision-level exception gap is NOT solved here. That
+experimental archive/database was not substituted for the committed fixture.
+
+Validation: all seven existing regression commands in QUICK_REFERENCE.md pass;
+five new tests in `generator/test_decision_subject.py` pass, including fresh
+search -> merged registration links, nested query dependencies, ambiguous-root
+refusal and stale-override rejection. Python 3.12 + PyYAML 6.0.3 on Windows.
+
+
 A live reference, not a chronological log (that's `DESIGN.md` — every fix
 below links back to it for the full story, root-cause investigation, and
 verification evidence). This file answers one question at a glance: **is
