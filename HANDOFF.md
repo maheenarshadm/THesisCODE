@@ -1,5 +1,214 @@
 # Project handoff
 
+## Latest continuation — 2026-09-25 (Claude, 95-97% coverage-push planning — NO CODE CHANGED, read this first)
+
+**Start here.** This entry is a planning/audit round only — nothing in
+`generator/` or `validation_oracle/` changed after the Currency Exchange
+fix in the entry directly below (still the last real code change,
+commit `95c5421`). The user asked, separately: push verified coverage
+across all 4 case studies toward 95-97%, by curating the DMN rule
+corpus — keep genuinely out-of-scope rules (excluded from the
+denominator, not deleted), keep a SMALL number of genuinely in-scope
+"search hasn't found it yet" hard cases, discard rules whose ground
+truth is unfixably broken, and ADD new rules that are cleanly solvable
+by the search but not by random. Was asked to produce a plan and table
+FIRST, discuss, and make no code changes until the user signs off.
+**That sign-off has NOT happened yet** — the questions at the bottom of
+this entry are still open. A fresh session (this one is being handed
+off to a local machine to save cloud-session cost) should read this
+whole entry, then either get the user's answers to those questions, or
+proceed only with whichever piece the user has already greenlit
+in-chat since this was written.
+
+**How this entry was produced**: four parallel research passes (one
+per case study), each reading that case study's fresh `coverage.py`
+output plus `KNOWN_ISSUES.md`/`COVERAGE_REPORT.md`'s own latest
+entries, classifying every currently-unresolved rule, and mining each
+project's own provenance/schema-mapping data for real, un-modeled
+business logic. The raw `objective_results.csv` files they read lived
+in the CLOUD session's own `/tmp` scratch space and do NOT exist on a
+fresh machine — regenerate them first with (from `validation_oracle/`):
+```
+python3 coverage.py --db tests/fixtures/openmrs_merged.db --case-study OpenMRS --algorithm dynamosa_nsga2 --run-id audit --construction-strategy merged_archive --archive-pickle ../generator/experiment_runs/OpenMRS__dynamosa_nsga2__budget1x__seed0.pkl --out-dir /tmp/cov/OpenMRS
+python3 coverage.py --db tests/fixtures/spree_merged.db --case-study Spree --algorithm dynamosa_nsga2 --run-id audit --construction-strategy merged_archive --archive-pickle ../generator/experiment_runs/Spree__dynamosa_nsga2__budget1x__seed0.pkl --out-dir /tmp/cov/Spree
+python3 coverage.py --db tests/fixtures/flex2_merged.db --case-study FLEX2 --algorithm dynamosa_nsga2 --run-id audit --construction-strategy merged_archive --archive-pickle ../generator/experiment_runs/FLEX2__dynamosa_nsga2__budget1x__seed0.pkl --out-dir /tmp/cov/FLEX2
+python3 coverage.py --db tests/fixtures/jbilling_merged.db --case-study jBilling --algorithm dynamosa_nsga2 --run-id audit --construction-strategy merged_archive --archive-pickle ../generator/experiment_runs/jBilling__dynamosa_nsga2__budget1x__seed0.pkl --not-persisted-json /path/to/{"__today__":20000,"candidateDateProvided":true,"candidateDate":0}.json --out-dir /tmp/cov/jBilling
+```
+
+### Current state (per case study, distinct rules)
+
+| Case study | Total | Verified now | Permanent out-of-scope | Search-limited (real hard case) | Known-bug-fixable | Discard-candidate | Solvable denom | Current % | % after known-bug fixes |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| OpenMRS | 71 | 42 | 15 | 10 | 4 | 0 | 56 | 75.0% | 82.1% (46/56) |
+| Spree | 31 | 16 | 9 (+1 open question) | 0 | 5 | 0 | 22 (or 21) | 72.7% | **95.5%** (21/22), or 100% if the open question resolves out-of-scope |
+| FLEX2 | 55 | 37 | 5 | 7 | 5 | 1 | 49 | 75.5% | 85.7% (42/49) |
+| jBilling | 39 compiled (+~9 never-compiled, unaudited) | 15 | 10 | 12 | 3 | 6 (whole decision) | 29 | 51.7% | 62.1% (18/29) |
+
+**Reality check, worked out in chat, don't skip it**: diluting the
+current search-limited counts down below 5% by ADDING new rules alone
+is not viable — the algebra (`(verified+N)/(denominator+N) >= 0.95`)
+needs roughly **N >= 140-ish new rules** for OpenMRS or FLEX2 alone to
+dilute their current 7-10 stubborn failures that way. Reaching 95-97%
+honestly needs FOUR levers together, not rule-curation alone: (1) fix
+the known bugs below (cheap — mostly a missing `--not-persisted-json`
+flag or an already-diagnosed mapping/parser bug), (2) actually attack
+the search-limited bucket — most of it is "the saved 1x-budget DynaMOSA
+archive never found a satisfying case," which the project's own
+2x/5x-budget experiment infrastructure (`generator/experiment_runs/`,
+`generator/run_experiments.py`) can directly address; some may turn out
+provably permanent on closer look (e.g. FLEX2's Graduation Eligibility
+Rule_4/5 — every real row already matches an earlier FIRST-hit rule)
+and should get RECLASSIFIED to out-of-scope, which also helps the
+percentage, (3) discard genuine dead ends (below), (4) add a modest
+number (not hundreds) of new, clean rules — mainly to strengthen the
+search-vs-random empirical narrative and backfill what's discarded, not
+to dilute failures.
+
+### Discard candidates (recommend removing from the ground-truth corpus)
+
+| Case study | Rule(s) | Why |
+|---|---|---|
+| FLEX2 | `Summer Semester Registration::Rule_3` | `repeatCourseCountRequested`'s own ground truth ("COUNT per USER_ID/semester") has no real schema path to a student at all — `REPEAT_COURSE.USER_ID -> APPUSER -> EMPLOYEE`, nothing reaches `ROLL_NO`. Already logged in KNOWN_ISSUES.md as "a real, unresolved semantic question — no mapping was invented." |
+| jBilling | `Cancellation Fee Eligibility` (whole decision, 0/6 compiled) | Three independent, stacked no-honest-data-source problems: needs BEFORE and AFTER states of the same column (`purchase_order.active_until`/`order_line.quantity`) with no revision/history table to hold both; `eventType` has zero schema backing at all (`code_external`); the output (`processCancellationFee`) is a pure side-effect, never persisted. This diagnosis is this round's own (HANDOFF/KNOWN_ISSUES previously said "not yet investigated") — worth a second look before deleting, but no honest fix path was found. |
+
+**Open question, NOT yet decided**: should `Spree::Promotion Customer
+Group Eligibility::Rule_4` move from "solvable, unverified" to
+*permanent-out-of-scope*, on the same blob-serialization-field
+precedent already used for its sibling `Promotion Item Total
+Eligibility` (its own `matchingCustomerGroupCount` depends on
+`promotionTargetGroupIds`, the identical serialized-YAML-blob fact
+`Promotion Item Total Eligibility` was already carved out for)? If yes,
+Spree's other two rules currently blocked only because Rule_4 poisons
+the whole decision's shared subject-root pick (`Rule_1`/`Rule_2`) very
+plausibly become fixable too, and Spree's known-bug-fix path reaches
+**100%** of its solvable denominator (21/21) instead of 95.5%.
+
+### Known-bug-fixable rules, by case study (the cheap, quick/medium wins)
+
+- **OpenMRS** (4 actionable + 1 already-fixed/cosmetic): `Birthdate
+  Validity::Rule_2`/`Rule_3` — literally just re-run `coverage.py` with
+  `--not-persisted-json '{"evaluationTime":20000}'`, already
+  demonstrated once (KNOWN_ISSUES.md:503-516), no code change at all.
+  `Identifier Format Validity::Rule_1` — suspected `identifierBlank`
+  mapping bug (NOT NULL column means only empty-string should count as
+  blank; matches this codebase's own recurring placeholder-filling bug
+  pattern, unconfirmed, ~30 min trace). `Identifier Uniqueness
+  Check::Rule_4` — suspected same class of `null_check`/negate
+  inversion bug already fixed once for `Identifier Format
+  Validity::Rule_2`, unconfirmed. (`Identifier Format Validity::Rule_4`
+  is already verified — counted as `false_negative`, a cosmetic
+  search-bookkeeping miss only, not an action item.)
+- **Spree** (5): `Promotion Temporal Availability::Rule_1/2/3` — same
+  shape as OpenMRS's Birthdate fix, just needs
+  `--not-persisted-json '{"evaluationTime":...}'`; the DMN tautology and
+  `null_check` polarity bugs behind it are already fixed in code per
+  KNOWN_ISSUES.md. `Promotion Customer Group Eligibility::Rule_1/Rule_2`
+  — see the open question above; likely freed by the same treatment
+  already given to their sibling Rule_3.
+- **FLEX2** (5): `Attendance Eligibility For Final Exam::Rule_1/Rule_2`
+  — confirmed genuinely solvable in isolation (a fresh `solve_branch`
+  hits fitness=0.0 for both) but `dynamosa.py`'s
+  `merge_archive_candidate` doesn't carry `STUDENT_ATTENDANCE`/`LECTURE`
+  into the merged fixture on a from-scratch rebuild — a diagnosed,
+  not-yet-fixed fixture-rebuild gap (see the "Attendance Eligibility"
+  entry in KNOWN_ISSUES.md for full detail, including the un-diagnosed
+  `merge_archive_candidate` bug itself). `Summer Semester
+  Registration::Rule_2` — `raw_sql_boolean` has no mutation support at
+  all (a corpus-wide generator gap, stuck at fitness=0.5, documented).
+  `Summer Semester Registration::Rule_4/Rule_5` — the compiler's own
+  `variable_resolution` wrongly declares a `repeatCourseCountRequested`
+  dependency for these two rules even though neither rule's own
+  condition branches on it — likely fixable independent of discarding
+  Rule_3 above.
+- **jBilling** (3): `Payment Outcome Resolution::Rule_1/Rule_2`,
+  `Payment Balance Assignment::Rule_2` — `compile_constraints.py`'s own
+  `parse_output_value` mis-parses a bare-identifier DMN output cell
+  (`Decision_PaymentOutcomeResolution_Rule_2`'s output text is literally
+  `paymentResultId`, meant as "pass through this input variable," parsed
+  instead as the literal string `"paymentResultId"`) — needs new
+  "output-as-variable-reference" support threaded through
+  `compile_constraints.py`'s grounding logic and `drd_executor.py`, a
+  medium-effort task, not a one-liner. Already flagged in the prior
+  HANDOFF entry, still open.
+
+### Search-limited rules to KEEP as legitimate hard cases (not bugs, not discard)
+
+- **OpenMRS** (10): `Birthdate Validity::Rule_1`; `Numeric Precision
+  Validity::Rule_1`; `Preferred Identifier Requirement::Rule_2` (all
+  three explicitly logged as "expected, not issues"); `Concept
+  Preferred Name Validity::Rule_2/3/4/5`; `Identifier Uniqueness
+  Check::Rule_3`; `Identifier Format Validity::Rule_2/Rule_3`.
+- **FLEX2** (7): `Course Registration Eligibility::Rule_2/3/4`;
+  `Graduation Eligibility::Rule_4/5` (every real row already matches an
+  earlier FIRST-hit rule — candidate for reclassification to
+  out-of-scope after a closer look, see above); `Credit Transfer
+  Exemption::Rule_1/2` (KNOWN_ISSUES.md self-contradicts here — one line
+  claims 3/3 verified, the detailed entry says 1/3; trust the CSV/Run
+  History, 1/3 — needs its own re-investigation, root cause "not yet
+  investigated" per the doc itself).
+- **jBilling** (12): `Currency Exchange Rate Source::Rule_1/2` (this
+  session's own fix landed, but `base_user`'s committed fixture rows
+  have NULL `entity_id`/`currency_id` — needs a fixture rebuild, see the
+  entry below); `Order Period Already Invoiced::Rule_1/3/4` (a single
+  fixed `candidateDate`/`candidateDateProvided` override value can't
+  hit every branch at once — same open methodology question
+  `evaluationTime` already carries); `Tax Calculation Needed::Rule_1-4`
+  (fix landed, `pluggable_task_parameter` never materialized in the
+  fixture); `Ageing Status Change Order Action::Rule_2/3`; `Blacklist
+  Filter Enabled::Rule_1` (no documented bug, ordinary "search hasn't
+  found it").
+- **Spree**: 0 (every open Spree rule is either out-of-scope or a
+  known, fixable bug — notable in itself, flagged by the audit).
+
+**jBilling has an unresolved unknown**: ~9 raw DMN rules that never
+even compiled at all (beyond `Cancellation Fee Eligibility`'s 6,
+recommended for discard above) — NOT yet individually audited this
+round. Investigate these (start from `generator/compile_report.json`'s
+blocked-reason breakdown) before finalizing jBilling's plan; they could
+shift the total/denominator in either direction.
+
+### New-rule candidates (high confidence only — reuses mechanisms already proven in this project, no new schema extraction, no guessed relationships)
+
+| Case study | Propose adding | Real source | Why search-yes/random-no |
+|---|---|---|---|
+| OpenMRS | Concept Locale-Preferred-Name Uniqueness; Concept Fully-Specified-Name Uniqueness Per Locale; Concept Short-Name Uniqueness Per Locale; Concept Fully-Specified-Name Presence Requirement | `ConceptValidator.java` (`openmrs-core`) — previously excluded from this project on "not fixed-arity" grounds that don't actually apply to this COUNT-based shape, the same mechanism already proven for `Preferred Identifier Requirement` | Needs 2+ `concept_name` rows sharing `(concept_id, locale)` both `locale_preferred=true` (or absence of any `FULLY_SPECIFIED` row for a non-retired concept) — a rare correlated combination, not a uniform-random accident |
+| Spree | Promotion Product Eligibility; Promotion User Eligibility; Stock/Backorder Availability; Variant Order-Quantity Validity | `Spree::Promotion::Rules::Product#eligible?`, `::Rules::User#eligible?`, `Spree::Stock::Quantifier#can_supply?`, the `minimum_order_quantity`/`order_multiple` validation — none touch the serialized-YAML-blob field that blocks 4 existing Spree rules | Each needs a specific real FK-correlated match (a whitelisted product/user id, `count_on_hand >= quantity`, or `quantity % order_multiple = 0` — a modulo target is near-impossible by chance) |
+| FLEX2 | Credit Exemption 50% Cap; Course Withdrawal Timing Eligibility | Academic Rules handbook §3.7 (exemptions <=50% of degree credit hours) and §4.20/4.21/4.24 (no drop/withdraw in first 2 semesters, none in summer) | Both reuse the ALREADY-VERIFIED `degreeTotalCredits` aggregate and semester-count/`derived_case` mechanisms this project already has working — just a new proportional threshold or a new correlated 'W'-grade + semester-count check |
+| jBilling | Order Period Deletable; Payment Method Accepted For Entity | `OrderBL.deletePeriod` (`OrderBL.java:1188-1196`), `PaymentBL.isMethodAccepted` (`PaymentBL.java:635-648`) | Plain FK-backed EXISTS checks over real junction tables (`order_period`<->`purchase_order`, `entity_payment_method_map`) — deliberately NOT more Java-reflection/runtime-state dead ends (jBilling already hit 3 of those: `Is Ageing Required`/`Daily Pro-Rate Amount`/`Order Date Range Valid`) |
+
+Medium-confidence backups exist too, one per case study (OpenMRS: Visit
+Date Validity/Visit Overlap Uniqueness; Spree: Tax Rate Applicability;
+FLEX2: FYP-I Registration Eligibility, Fee/Dues Clearance Gate;
+jBilling: User ID Blacklisted, Payment Web-Service Validation) — held
+in reserve, each has a specific named risk (an undisclosed constant, an
+extra unverified join hop, a missing semester-ordinal column) spelled
+out by the audit that made it, not proposed as a first move.
+
+### Open questions — get the user's answer before writing any code
+
+1. Confirm the discard list: `Summer Semester Registration::Rule_3` and
+   the whole `Cancellation Fee Eligibility` decision (6 rules).
+2. The Spree `Promotion Customer Group Eligibility::Rule_4`
+   reclassification (out-of-scope vs. keep open) — this one materially
+   changes whether Spree's known-bug-fix path reaches 95.5% or 100%.
+3. Green-light which new-rule candidates to actually build (the 14
+   high-confidence ones above, a subset, or also the medium-confidence
+   backups) — each is real implementation work (DMN authoring +
+   provenance/schema-mapping CSV entries + compile + get the search to
+   actually solve it, not guaranteed on the first try even for a
+   high-confidence candidate), not a toggle.
+4. Whether to spend compute re-running DynaMOSA at 2x/5x budget
+   (`generator/run_experiments.py`) on the search-limited bucket as
+   part of this push.
+5. Whether to investigate jBilling's ~9 unaudited never-compiled rules
+   first, before committing to a jBilling target number.
+
+Given the scale (four case studies, ~30 rules to individually resolve
+or reclassify, up to 14 new rules to author end-to-end, possibly 2-5
+search re-runs), this is realistically a multi-session effort — after
+the user answers the above, work it one case study at a time (Spree is
+the fastest, cleanest win to start with) rather than all four at once.
+
 ## Latest continuation — 2026-09-25 (Claude, Currency Exchange Rate Source pending decision resolved)
 
 Picked up exactly where the prior entry (directly below) left off: asked
