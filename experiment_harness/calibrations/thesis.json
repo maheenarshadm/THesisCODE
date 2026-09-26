@@ -1,0 +1,118 @@
+{
+  "FLEX2": {
+    "budget_1x": 301532,
+    "population_size": 30,
+    "generations": 40,
+    "seeds": [
+      {
+        "seed": 0,
+        "evaluations": 299832,
+        "runtime_seconds": 276.5,
+        "claimed_records": 76
+      },
+      {
+        "seed": 1,
+        "evaluations": 303738,
+        "runtime_seconds": 301.0,
+        "claimed_records": 76
+      },
+      {
+        "seed": 2,
+        "evaluations": 301532,
+        "runtime_seconds": 255.2,
+        "claimed_records": 76
+      }
+    ],
+    "median_runtime_seconds": 276.5,
+    "compiled_constraints_sha256": "e934ae03debcb2790792c649eac6b741db4e381112feb29eaa0531e2c2154f8c",
+    "git_commit": "5eb8bde186db003e8df58decc680c6b76cd6af7d",
+    "calibrated_at": "2026-09-26T23:32:25"
+  },
+  "OpenMRS": {
+    "budget_1x": 207920,
+    "population_size": 30,
+    "generations": 40,
+    "seeds": [
+      {
+        "seed": 0,
+        "evaluations": 207920,
+        "runtime_seconds": 38.6,
+        "claimed_records": 53
+      },
+      {
+        "seed": 1,
+        "evaluations": 208003,
+        "runtime_seconds": 41.8,
+        "claimed_records": 53
+      },
+      {
+        "seed": 2,
+        "evaluations": 207677,
+        "runtime_seconds": 46.7,
+        "claimed_records": 53
+      }
+    ],
+    "median_runtime_seconds": 41.8,
+    "compiled_constraints_sha256": "e934ae03debcb2790792c649eac6b741db4e381112feb29eaa0531e2c2154f8c",
+    "git_commit": "5eb8bde186db003e8df58decc680c6b76cd6af7d",
+    "calibrated_at": "2026-09-26T23:34:32"
+  },
+  "Spree": {
+    "budget_1x": 86297,
+    "population_size": 30,
+    "generations": 40,
+    "seeds": [
+      {
+        "seed": 0,
+        "evaluations": 86319,
+        "runtime_seconds": 13.2,
+        "claimed_records": 21
+      },
+      {
+        "seed": 1,
+        "evaluations": 85943,
+        "runtime_seconds": 12.7,
+        "claimed_records": 21
+      },
+      {
+        "seed": 2,
+        "evaluations": 86297,
+        "runtime_seconds": 14.4,
+        "claimed_records": 21
+      }
+    ],
+    "median_runtime_seconds": 13.2,
+    "compiled_constraints_sha256": "e934ae03debcb2790792c649eac6b741db4e381112feb29eaa0531e2c2154f8c",
+    "git_commit": "5eb8bde186db003e8df58decc680c6b76cd6af7d",
+    "calibrated_at": "2026-09-26T23:35:13"
+  },
+  "jBilling": {
+    "budget_1x": 78970,
+    "population_size": 30,
+    "generations": 40,
+    "seeds": [
+      {
+        "seed": 0,
+        "evaluations": 78970,
+        "runtime_seconds": 12.1,
+        "claimed_records": 18
+      },
+      {
+        "seed": 1,
+        "evaluations": 79177,
+        "runtime_seconds": 12.7,
+        "claimed_records": 19
+      },
+      {
+        "seed": 2,
+        "evaluations": 78701,
+        "runtime_seconds": 11.8,
+        "claimed_records": 19
+      }
+    ],
+    "median_runtime_seconds": 12.1,
+    "compiled_constraints_sha256": "e934ae03debcb2790792c649eac6b741db4e381112feb29eaa0531e2c2154f8c",
+    "git_commit": "5eb8bde186db003e8df58decc680c6b76cd6af7d",
+    "calibrated_at": "2026-09-26T23:35:49"
+  }
+}

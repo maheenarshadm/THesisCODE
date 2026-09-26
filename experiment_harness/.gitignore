@@ -1,2 +1,17 @@
-out/
 __pycache__/
+
+# Experiment results under out/ ARE tracked, so every machine can push its
+# own part folder (out/<name>__from_repNN/, never shared between machines)
+# to the same repo without collisions: per_rule.csv, per_record.csv,
+# trace.csv, meta.json, claims.json, verification.csv, matrix.csv,
+# minimization.json, minimal_suite/*.pkl (the minimized test suites, a
+# few KB each), log.txt, and the part's summary/stats files.
+#
+# NOT tracked -- too large for git (about 0.6 GB per 10 repetitions,
+# mostly FLEX2): the full archive / final-population individuals, and the
+# SQLite databases built during validation. Move those between machines
+# by USB or cloud folder if a run ever needs re-validating.
+out/**/archive/individuals.pkl
+out/**/final/individuals.pkl
+out/**/dbs/
+out/**/*.db

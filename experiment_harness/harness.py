@@ -32,7 +32,8 @@ Everything is resumable: a finished step leaves a marker file and is skipped
 next time. Each job runs in its own process (PYTHONHASHSEED=0, seeded rng)
 so every run is reproducible from its seed.
 
-Output: experiment_harness/out/<name>/
+Output: experiment_harness/out/<name>__from_repNN/  (one folder per run command,
+named after its first repetition; merge.py combines several)
   calibration.json, config.json, summary.csv, runs.csv
   <CaseStudy>/<setup>/b<k>x/rep_<ii>/
       archive/individuals.pkl   {'archive': {record_id: (fitness, individual)}}
@@ -74,8 +75,14 @@ for _p in (ORACLE_TESTS_DIR, ORACLE_DIR, GENERATOR_DIR):
 
 COMPILED_PATH = os.path.join(GENERATOR_DIR, 'compiled_constraints.json')
 OUT_ROOT = os.path.join(HERE, 'out')
+# Tracked in git (unlike out/), so every machine running a share of an
+# experiment uses the SAME budget B.
+CALIB_DIR = os.path.join(HERE, 'calibrations')
 
-CASE_STUDIES = ('FLEX2', 'OpenMRS', 'Spree', 'jBilling')
+# Smallest first (by compiled records: jBilling 20, Spree 22, OpenMRS 55,
+# FLEX2 77) -- the job queue is ordered by this, so the quick case studies'
+# results are complete (and summarizable) long before FLEX2's are.
+CASE_STUDIES = ('jBilling', 'Spree', 'OpenMRS', 'FLEX2')
 SETUPS = ('dynamosa', 'random_walk', 'random_sample')
 BUDGETS = (1, 5, 10)
 POPULATION_SIZE = 30          # this project's established convention (run_experiments.py)
@@ -123,6 +130,14 @@ def _git_commit():
 
 def _exp_dir(name):
     return os.path.join(OUT_ROOT, name)
+
+
+def part_name(name, first_rep):
+    """Every `run` writes into its own folder named after its FIRST
+    repetition, so machines running different repetition ranges never share
+    a folder; merge.py combines the parts. Named by start only (not range)
+    so extending a part with a larger --reps resumes the same folder."""
+    return f"{name}__from_rep{first_rep:02d}"
 
 
 def _run_dir(name, cs, setup, k, rep):
@@ -321,16 +336,196 @@ def _verify_set(case_study, individuals, dbs_dir, label):
     return verified, errors
 
 
-def job_validate(run_dir, case_study, keep_dbs):
-    records = _load_records(case_study)
-    by_rule, out_of_scope = _scope(case_study, records)
-    with open(os.path.join(run_dir, 'meta.json'), encoding='utf-8') as f:
-        meta = json.load(f)
-    with open(os.path.join(run_dir, 'claims.json'), encoding='utf-8') as f:
-        claims = json.load(f)
-    dbs_dir = os.path.join(run_dir, 'dbs')
-    t0 = time.time()
+def _content_key(individual):
+    return hashlib.sha1(pickle.dumps(individual, protocol=4)).hexdigest()
 
+
+def _verify_matrix(case_study, pool, dbs_dir):
+    """FULL validation: every individual in `pool` against EVERY decision,
+    under every override file (rules verified = union over the files).
+    Same materialization + `_verify_decision_subset` as `_verify_set`, just
+    never skipping a decision. Returns ([set of rule_ids per individual],
+    errors)."""
+    import per_individual_archive_coverage as pia
+    from mutation import _schema_for, repair_candidate
+    from phase1_utility import records_by_decision
+
+    schema = _schema_for(case_study)
+    records = _load_records(case_study)
+    records_index = {r['record_id']: i for i, r in enumerate(records)}
+    records_by_id = {r['record_id']: r for r in records}
+    decisions_by_name = records_by_decision(case_study)
+    all_decisions = set(decisions_by_name)
+    overrides_by_file = {}
+    for override_file in NOT_PERSISTED_FILES[case_study]:
+        with open(os.path.join(ORACLE_TESTS_DIR, override_file), encoding='utf-8') as f:
+            overrides_by_file[override_file] = json.load(f)
+    os.makedirs(dbs_dir, exist_ok=True)
+    matrix, errors = [], []
+    for idx, individual in enumerate(pool):
+        rules = set()
+        try:
+            work_c, work_fm, work_sm = pia._deep_copy_individual(individual)
+            pia._offset_rows_by_owner(work_c, schema, records_index, case_study)
+            pia._apply_cross_table_placeholder_correlations_for_individual(
+                work_c, work_fm, work_sm, records_by_id, records_index, schema)
+            pia._build_decision_subject_rows_for_individual(work_c, work_fm, records_by_id, schema)
+            repair_candidate(work_c, case_study)
+            db_path = os.path.join(dbs_dir, f'individual_{idx:03d}.db')
+            pia._materialize(work_c, case_study, db_path)
+            for override_file, overrides in overrides_by_file.items():
+                conn = sqlite3.connect(db_path)
+                try:
+                    result = pia._verify_decision_subset(conn, case_study, decisions_by_name,
+                                                         all_decisions, overrides)
+                finally:
+                    conn.close()
+                rules |= {rid for rid, ok in result.items() if ok}
+        except Exception as e:  # noqa: BLE001 -- one bad individual must not abort the run
+            errors.append(f'individual {idx}: {type(e).__name__}: {e}')
+            traceback.print_exc()
+        matrix.append(rules)
+        print(f"  individual {idx + 1}/{len(pool)}: {len(rules)} rule(s)", flush=True)
+    return matrix, errors
+
+
+def greedy_cover(universe, sets):
+    """Classic greedy set cover: repeatedly take the individual covering the
+    most still-uncovered rules (ties -> lowest index)."""
+    uncovered, chosen = set(universe), []
+    while uncovered:
+        best = max(sets, key=lambda i: (len(sets[i] & uncovered), -i), default=None)
+        if best is None or not sets[best] & uncovered:
+            break
+        chosen.append(best)
+        uncovered -= sets[best]
+    return sorted(chosen)
+
+
+def minimum_cover(universe, sets, time_limit=120.0):
+    """Exact minimum set cover by branch and bound, greedy as the starting
+    upper bound. Before searching: every set is restricted to `universe`,
+    duplicates are dropped (lowest index kept), and so is any set strictly
+    contained in another -- neither is ever needed for SOME minimum cover.
+    Branches on the uncovered rule with the fewest covering sets; bound =
+    chosen + ceil(uncovered / largest remaining gain). Returns (greedy,
+    minimum, optimal); optimal=False only if the time limit stopped the
+    search, and then `minimum` is the best cover found (never worse than
+    greedy)."""
+    greedy = greedy_cover(universe, sets)
+    universe = frozenset(universe)
+    if not universe:
+        return greedy, [], True
+    first_of = {}
+    for i in sorted(sets):
+        s = frozenset(sets[i] & universe)
+        if s:
+            first_of.setdefault(s, i)
+    items = [(s, i) for s, i in first_of.items() if not any(s < t for t in first_of)]
+    covering = {r: [(s, i) for s, i in items if r in s] for r in universe}
+    best = [list(greedy)]
+    deadline = time.time() + time_limit
+    timed_out = [False]
+
+    def search(uncovered, chosen):
+        if timed_out[0] or time.time() > deadline:
+            timed_out[0] = True
+            return
+        if not uncovered:
+            if len(chosen) < len(best[0]):
+                best[0] = list(chosen)
+            return
+        gain = max(len(s & uncovered) for s, _ in items)
+        if len(chosen) + -(-len(uncovered) // gain) >= len(best[0]):
+            return
+        r = min(uncovered, key=lambda x: len(covering[x]))
+        for s, i in sorted(covering[r], key=lambda si: -len(si[0] & uncovered)):
+            chosen.append(i)
+            search(uncovered - s, chosen)
+            chosen.pop()
+
+    search(universe, [])
+    return greedy, sorted(best[0]), not timed_out[0]
+
+
+def _validate_full(run_dir, case_study, by_rule, dbs_dir):
+    """Archive + final individuals pooled and de-duplicated by CONTENT (an
+    individual in both, or identical final-population copies, is validated
+    once), each validated against every rule. Archive / final / union
+    coverage and the minimum suites are all read off that one
+    individual x rule table (matrix.csv)."""
+    with open(os.path.join(run_dir, 'archive', 'individuals.pkl'), 'rb') as f:
+        archive = pickle.load(f)['archive']
+    pool, where, key_index = [], [], {}
+
+    def add(ind, source, tag):
+        key = _content_key(ind)
+        if key not in key_index:
+            key_index[key] = len(pool)
+            pool.append(ind)
+            where.append({'archive': [], 'final': []})
+        where[key_index[key]][source].append(tag)
+
+    for rid, (_fit, ind) in archive.items():
+        add(ind, 'archive', rid)
+    has_final = os.path.exists(os.path.join(run_dir, 'final', 'individuals.pkl'))
+    if has_final:
+        with open(os.path.join(run_dir, 'final', 'individuals.pkl'), 'rb') as f:
+            population = pickle.load(f)['final_population']
+        for pos, ind in enumerate(population):
+            add(ind, 'final', pos)
+    print(f"full validation: {len(pool)} distinct individuals "
+          f"({sum(1 for w in where if w['archive'])} in archive, {sum(1 for w in where if w['final'])} in final)",
+          flush=True)
+    matrix, errs = _verify_matrix(case_study, pool, dbs_dir)
+
+    rule_of = {r['record_id']: rule for rule, recs in by_rule.items() for r in recs}
+    members = {'archive': [i for i, w in enumerate(where) if w['archive']],
+               'final': [i for i, w in enumerate(where) if w['final']] if has_final else None,
+               'union': list(range(len(pool)))}
+    verified = {v: set().union(*(matrix[i] for i in m)) for v, m in members.items() if m is not None}
+
+    _write_csv(os.path.join(run_dir, 'matrix.csv'),
+               ['pool_index', 'in_archive', 'in_final', 'archived_for_rules', 'final_positions',
+                'num_rules_verified', 'rules_verified'],
+               [{'pool_index': i, 'in_archive': bool(w['archive']), 'in_final': bool(w['final']),
+                 'archived_for_rules': '; '.join(sorted({rule_of.get(r, r) for r in w['archive']})),
+                 'final_positions': ' '.join(map(str, w['final'])),
+                 'num_rules_verified': len(matrix[i]), 'rules_verified': '; '.join(sorted(matrix[i]))}
+                for i, w in enumerate(where)])
+    for v in ('archive', 'final'):
+        if members[v] is None:
+            continue
+        _write_csv(os.path.join(run_dir, v, 'verification.csv'),
+                   ['rule_id', 'verified', 'num_individuals_verifying', 'first_individual'],
+                   [{'rule_id': rid, 'verified': rid in verified[v],
+                     'num_individuals_verifying': sum(1 for i in members[v] if rid in matrix[i]),
+                     'first_individual': next((i for i in members[v] if rid in matrix[i]), '')}
+                    for rid in sorted(by_rule)])
+
+    suite = {}
+    os.makedirs(os.path.join(run_dir, 'minimal_suite'), exist_ok=True)
+    for v, m in members.items():
+        if m is None:
+            continue
+        greedy, minimum, optimal = minimum_cover(verified[v], {i: matrix[i] for i in m})
+        covered = set().union(*(matrix[i] for i in minimum))
+        assert covered >= verified[v], (v, verified[v] - covered)
+        suite[v] = {'pool': len(m), 'greedy': len(greedy), 'min': len(minimum), 'optimal': optimal,
+                    'min_members': minimum, 'greedy_members': greedy}
+        with open(os.path.join(run_dir, 'minimal_suite', f'{v}.pkl'), 'wb') as f:
+            pickle.dump({'pool_indices': minimum, 'individuals': [pool[i] for i in minimum],
+                         'rules_covered': sorted(verified[v])}, f)
+    with open(os.path.join(run_dir, 'minimization.json'), 'w', encoding='utf-8') as f:
+        json.dump(suite, f, indent=2)
+    counts = {'distinct_individuals_validated': len(pool),
+              'archive_individuals_validated': len(members['archive']),
+              'final_individuals_validated': len(members['final']) if has_final else None}
+    short = {v: {k: x[k] for k in ('pool', 'greedy', 'min', 'optimal')} for v, x in suite.items()}
+    return verified['archive'], verified.get('final', set()), has_final, errs, short, counts
+
+
+def _validate_optimized(run_dir, case_study, by_rule, dbs_dir):
     with open(os.path.join(run_dir, 'archive', 'individuals.pkl'), 'rb') as f:
         archive = pickle.load(f)['archive']
     archive_inds = _distinct(ind for _fit, ind in archive.values())
@@ -356,6 +551,30 @@ def job_validate(run_dir, case_study, keep_dbs):
                    [{'rule_id': rid, 'verified': rid in v_final,
                      'first_individual': v_final.get(rid, ('', ''))[0],
                      'override_file': v_final.get(rid, ('', ''))[1]} for rid in sorted(by_rule)])
+    # First-fit suite size (free, no extra validation): the individuals that
+    # verified at least one rule first -- a valid cover, NOT a minimum.
+    ff_archive = {v[0] for v in v_archive.values()}
+    ff_final_extra = {v_final[r][0] for r in v_final if r not in v_archive}
+    suite = {'archive': {'firstfit': len(ff_archive)},
+             'union': {'firstfit': len(ff_archive) + len(ff_final_extra)}}
+    if has_final:
+        suite['final'] = {'firstfit': len({v[0] for v in v_final.values()})}
+    counts = {'archive_individuals_validated': len(archive_inds),
+              'final_individuals_validated': final_count if has_final else None}
+    return set(v_archive), set(v_final), has_final, errs, suite, counts
+
+
+def job_validate(run_dir, case_study, mode, keep_dbs):
+    records = _load_records(case_study)
+    by_rule, out_of_scope = _scope(case_study, records)
+    with open(os.path.join(run_dir, 'meta.json'), encoding='utf-8') as f:
+        meta = json.load(f)
+    with open(os.path.join(run_dir, 'claims.json'), encoding='utf-8') as f:
+        claims = json.load(f)
+    dbs_dir = os.path.join(run_dir, 'dbs')
+    t0 = time.time()
+    fn = _validate_full if mode == 'full' else _validate_optimized
+    v_archive, v_final, has_final, errs, suite, counts = fn(run_dir, case_study, by_rule, dbs_dir)
     if not keep_dbs:
         shutil.rmtree(dbs_dir, ignore_errors=True)
 
@@ -404,19 +623,17 @@ def job_validate(run_dir, case_study, keep_dbs):
         })
     _write_csv(os.path.join(run_dir, 'per_rule.csv'), list(per_rule[0]), per_rule)
 
-    meta.update({
-        'archive_individuals_validated': len(archive_inds),
-        'final_individuals_validated': final_count if has_final else None,
-        'validation_errors': errs, 'validation_seconds': round(time.time() - t0, 1),
-    })
+    meta.update(counts)
+    meta.update({'validation_mode': mode, 'suite_size': suite,
+                 'validation_errors': errs, 'validation_seconds': round(time.time() - t0, 1)})
     with open(os.path.join(run_dir, 'meta.json'), 'w', encoding='utf-8') as f:
         json.dump(meta, f, indent=2)
     open(os.path.join(run_dir, 'VALIDATED'), 'w').close()
     in_scope = [p for p in per_rule if p['in_scope'] == 'True']
     print(f"validated: archive {sum(p['verified_archive'] == 'True' for p in in_scope)}, "
           f"final {sum(p['verified_final'] == 'True' for p in in_scope) if has_final else '-'}, "
-          f"union {sum(p['verified_union'] == 'True' for p in in_scope)} of {len(in_scope)} in-scope rules "
-          f"({len(errs)} errors, {time.time() - t0:.1f}s)")
+          f"union {sum(p['verified_union'] == 'True' for p in in_scope)} of {len(in_scope)} in-scope rules; "
+          f"suite size {suite} ({len(errs)} errors, {time.time() - t0:.1f}s)")
 
 
 # ---------------------------------------------------------------------------
@@ -433,20 +650,34 @@ def _spawn(args, log_path):
     return proc.returncode
 
 
+def _calibration_path(name):
+    return os.path.join(CALIB_DIR, f'{name}.json')
+
+
 def _load_calibration(name):
-    path = os.path.join(_exp_dir(name), 'calibration.json')
-    if not os.path.exists(path):
-        sys.exit(f"No calibration for '{name}' -- run: harness.py calibrate --name {name}")
-    with open(path, encoding='utf-8') as f:
-        return json.load(f)
+    """`name` may be an experiment (calibrations/<name>.json) or an output
+    folder -- a part or a merge -- which carries its own copy."""
+    for path in (os.path.join(_exp_dir(name), 'calibration.json'), _calibration_path(name)):
+        if os.path.exists(path):
+            with open(path, encoding='utf-8') as f:
+                return json.load(f)
+    sys.exit(f"No calibration for '{name}' -- run: harness.py calibrate --name {name}")
+
+
+def _require_output_folder(name):
+    if os.path.isdir(_exp_dir(name)):
+        return
+    parts = sorted(d for d in os.listdir(OUT_ROOT) if d.startswith(name + '__from_rep'))         if os.path.isdir(OUT_ROOT) else []
+    hint = (f" Output folders for '{name}': {', '.join(parts)} -- pass one of those as --name, or "
+            f"combine them with merge.py.") if parts else ''
+    sys.exit(f"No output folder experiment_harness/out/{name}.{hint}")
 
 
 def cmd_calibrate(a):
-    exp = _exp_dir(a.name)
-    os.makedirs(exp, exist_ok=True)
+    os.makedirs(CALIB_DIR, exist_ok=True)
     import dynamosa
     from fitness import reset_evaluation_counter, evaluations_used
-    path = os.path.join(exp, 'calibration.json')
+    path = _calibration_path(a.name)
     calib = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
     if os.environ.get('PYTHONHASHSEED') != '0':
         # re-exec so calibration is exactly as reproducible as every run
@@ -484,10 +715,14 @@ def cmd_calibrate(a):
     print(f"\nWrote {path}")
 
 
+def _by_size(case_studies):
+    return sorted(case_studies, key=CASE_STUDIES.index)
+
+
 def _jobs(a, calib):
     jobs = []
-    for rep in range(a.reps):
-        for cs in a.case_studies:
+    for cs in _by_size(a.case_studies):
+        for rep in range(a.first_rep, a.first_rep + a.reps):
             for setup in a.setups:
                 for k in a.budgets:
                     jobs.append((cs, setup, k, rep, _seed_for(k, rep), k * calib[cs]['budget_1x']))
@@ -495,8 +730,11 @@ def _jobs(a, calib):
 
 
 def _write_config(a, calib):
-    path = os.path.join(_exp_dir(a.name), 'config.json')
-    config = {'reps': a.reps, 'case_studies': a.case_studies, 'setups': a.setups, 'budgets': a.budgets,
+    os.makedirs(_exp_dir(a.out_name), exist_ok=True)
+    path = os.path.join(_exp_dir(a.out_name), 'config.json')
+    with open(os.path.join(_exp_dir(a.out_name), 'calibration.json'), 'w', encoding='utf-8') as f:
+        json.dump(calib, f, indent=2)
+    config = {'experiment': a.name, 'output_folder': a.out_name, 'reps': a.reps, 'first_rep': a.first_rep, 'case_studies': a.case_studies, 'setups': a.setups, 'budgets': a.budgets,
               'population_size': POPULATION_SIZE, 'seed_rule': 'seed = 1000 * budget_multiplier + rep',
               'budget_1x': {cs: calib[cs]['budget_1x'] for cs in a.case_studies},
               'not_persisted_files': {cs: NOT_PERSISTED_FILES[cs] for cs in a.case_studies},
@@ -543,11 +781,14 @@ def cmd_run(a):
     missing = [cs for cs in a.case_studies if cs not in calib]
     if missing:
         sys.exit(f"Not calibrated: {missing} -- run calibrate first")
+    a.out_name = part_name(a.name, a.first_rep)
     _write_config(a, calib)
+    print(f"Output folder: experiment_harness/out/{a.out_name}  "
+          f"(repetitions {a.first_rep}-{a.first_rep + a.reps - 1})")
     todo = []
     for job in _jobs(a, calib):
         cs, setup, k, rep, seed, budget = job
-        d = _run_dir(a.name, cs, setup, k, rep)
+        d = _run_dir(a.out_name, cs, setup, k, rep)
         need_search = not os.path.exists(os.path.join(d, 'SEARCH_DONE'))
         need_val = not a.no_validate and not os.path.exists(os.path.join(d, 'VALIDATED'))
         if need_search or need_val:
@@ -567,7 +808,7 @@ def cmd_run(a):
             if rc != 0:
                 return rc
         if need_val:
-            return _spawn(['_validate', d, cs] + (['--keep-dbs'] if a.keep_dbs else []), log)
+            return _spawn(['_validate', d, cs, a.validation] + (['--keep-dbs'] if a.keep_dbs else []), log)
         return 0
 
     _execute(todo, a.workers, fn, lambda item: f"{item[0][0]} {item[0][1]} b{item[0][2]}x rep_{item[0][3]:02d}")
@@ -575,7 +816,8 @@ def cmd_run(a):
 
 def _all_run_dirs(name):
     exp = _exp_dir(name)
-    for cs in sorted(os.listdir(exp)) if os.path.isdir(exp) else []:
+    present = [cs for cs in CASE_STUDIES if os.path.isdir(os.path.join(exp, cs))]
+    for cs in present:
         for setup in SETUPS:
             base = os.path.join(exp, cs, setup)
             if not os.path.isdir(base):
@@ -586,12 +828,14 @@ def _all_run_dirs(name):
 
 
 def cmd_validate(a):
+    _require_output_folder(a.name)
     todo = [(cs, d) for cs, _s, _k, _r, d in _all_run_dirs(a.name)
-            if os.path.exists(os.path.join(d, 'SEARCH_DONE'))
+            if cs in a.case_studies and os.path.exists(os.path.join(d, 'SEARCH_DONE'))
             and (a.force or not os.path.exists(os.path.join(d, 'VALIDATED')))]
     print(f"{len(todo)} run(s) to validate, {a.workers} worker(s)\n")
     _execute(todo, a.workers,
-             lambda item: _spawn(['_validate', item[1], item[0]] + (['--keep-dbs'] if a.keep_dbs else []),
+             lambda item: _spawn(['_validate', item[1], item[0], a.validation]
+                                 + (['--keep-dbs'] if a.keep_dbs else []),
                                  os.path.join(item[1], 'log.txt')),
              lambda item: os.path.relpath(item[1], _exp_dir(a.name)))
 
@@ -617,6 +861,7 @@ def _auc(events, in_scope_rules, rule_of, horizon):
 
 
 def cmd_summarize(a):
+    _require_output_folder(a.name)
     exp = _exp_dir(a.name)
     calib = _load_calibration(a.name)
     runs, long_rows = [], []
@@ -644,6 +889,7 @@ def cmd_summarize(a):
                     continue
                 counts[v] = (sum(p[f'claimed_{v}'] == 'True' for p in per_rule),
                              sum(p[f'verified_{v}'] == 'True' for p in per_rule))
+        suite = meta.get('suite_size', {}) if validated else {}
         base = {'case_study': cs, 'setup': setup, 'budget_multiplier': k, 'rep': rep, 'seed': meta['seed'],
                 'budget_evaluations': meta['budget_evaluations'], 'evaluations_used': meta['evaluations_used'],
                 'iterations': meta['iterations'], 'runtime_seconds': meta['runtime_seconds'],
@@ -655,9 +901,14 @@ def cmd_summarize(a):
             run_row[f'claimed_{v}'] = '' if c is None else c[0]
             run_row[f'verified_{v}'] = '' if c is None else c[1]
             if c is not None:
+                ss = suite.get(v, {})
                 long_rows.append(dict(base, variant=v, claimed=c[0], verified=c[1],
                                       verified_pct_in_scope=round(100 * c[1] / len(in_scope_rules), 3)
-                                      if in_scope_rules else 0.0))
+                                      if in_scope_rules else 0.0,
+                                      validation_mode=meta.get('validation_mode', 'optimized'),
+                                      suite_size_min=ss.get('min', ''), suite_size_greedy=ss.get('greedy', ''),
+                                      suite_min_optimal=ss.get('optimal', ''),
+                                      suite_size_firstfit=ss.get('firstfit', '')))
         runs.append(run_row)
     if not runs:
         sys.exit('Nothing finished yet.')
@@ -678,12 +929,13 @@ def cmd_summarize(a):
 
 
 def cmd_status(a):
+    _require_output_folder(a.name)
     calib = _load_calibration(a.name)
     cfg_path = os.path.join(_exp_dir(a.name), 'config.json')
     if os.path.exists(cfg_path):
         with open(cfg_path, encoding='utf-8') as f:
             cfg = json.load(f)
-        print(f"reps={cfg['reps']} setups={cfg['setups']} budgets={cfg['budgets']} B={cfg['budget_1x']}")
+        print(f"first_rep={cfg.get('first_rep', 0)} reps={cfg['reps']} setups={cfg['setups']} budgets={cfg['budgets']} B={cfg['budget_1x']}")
     counts = {}
     for cs, setup, k, _rep, d in _all_run_dirs(a.name):
         c = counts.setdefault((cs, setup, k), [0, 0, 0])
@@ -702,10 +954,14 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
 
     def common(p, runs=False):
-        p.add_argument('--name', required=True, help='experiment name (folder under experiment_harness/out/)')
+        p.add_argument('--name', required=True, help='calibrate/run: the experiment name (e.g. thesis). validate/summarize/status: an output folder under experiment_harness/out/ (e.g. thesis__from_rep00, or a merged folder)')
         p.add_argument('--case-studies', nargs='+', default=list(CASE_STUDIES), choices=CASE_STUDIES)
         if runs:
             p.add_argument('--workers', type=int, default=4, help='parallel processes (default 4)')
+            p.add_argument('--validation', choices=['optimized', 'full'], default='optimized',
+                           help="optimized (default): each rule checked until one individual verifies it -- "
+                                "fastest. full: EVERY individual checked against EVERY rule, which also "
+                                "gives the minimum number of individuals needed (exact set cover)")
             p.add_argument('--keep-dbs', action='store_true',
                            help='keep every validated individual\'s SQLite DB (large); default: delete after validating')
 
@@ -717,7 +973,11 @@ def main():
 
     p = sub.add_parser('run')
     common(p, runs=True)
-    p.add_argument('--reps', type=int, default=30)
+    p.add_argument('--reps', type=int, default=30, help='how many repetitions to run')
+    p.add_argument('--first-rep', type=int, default=0,
+                   help='index of the first repetition (default 0). To split work across machines, '
+                        'give each a different range, e.g. --reps 10 --first-rep 0 on one and '
+                        '--reps 10 --first-rep 10 on the other, then copy the rep folders together')
     p.add_argument('--setups', nargs='+', default=list(SETUPS), choices=SETUPS)
     p.add_argument('--budgets', nargs='+', type=int, default=list(BUDGETS))
     p.add_argument('--no-validate', action='store_true', help='search only; validate later with `validate`')
@@ -746,6 +1006,6 @@ if __name__ == '__main__':
         d, cs, setup, k, rep, seed, budget = sys.argv[2:9]
         job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
     elif len(sys.argv) > 1 and sys.argv[1] == '_validate':
-        job_validate(sys.argv[2], sys.argv[3], '--keep-dbs' in sys.argv)
+        job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
     else:
         main()

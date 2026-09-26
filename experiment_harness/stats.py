@@ -26,9 +26,13 @@ Writes experiment_harness/out/<name>/stats/:
                         within each comparison.
 
 Metrics: verified (default headline: in-scope rules the independent
-validator confirmed), claimed (fitness 0 in the search), and
+validator confirmed), claimed (fitness 0 in the search),
 auc_claimed_first_1x (how fast claimed coverage grows over the first B
-evaluations -- archive curve, the same horizon for every budget).
+evaluations -- archive curve, the same horizon for every budget), and the
+suite sizes (how many individuals are needed for that verified coverage:
+suite_size_min / _greedy with `--validation full`, suite_size_firstfit
+otherwise). For suite sizes LOWER is better, so A12 > 0.5 means DynaMOSA
+needs MORE individuals.
 
 A12 magnitude thresholds (Vargha & Delaney 2000): |A12-0.5| < 0.06
 negligible, < 0.14 small, < 0.21 medium, else large.
@@ -42,7 +46,12 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_ROOT = os.path.join(HERE, 'out')
-METRICS = ('verified', 'claimed', 'auc_claimed_first_1x')
+# suite_size_* = number of individuals (databases) needed to reach the run's
+# verified coverage: `_min` / `_greedy` need `run --validation full`;
+# `_firstfit` (an upper bound) comes from the default optimized validation.
+# LOWER is better for these -- A12 > 0.5 then means DynaMOSA needs MORE.
+METRICS = ('verified', 'claimed', 'auc_claimed_first_1x',
+           'suite_size_min', 'suite_size_greedy', 'suite_size_firstfit')
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +201,8 @@ def main():
     values = {}
     for r in rows:
         for m in METRICS:
+            if r.get(m, '') == '':
+                continue
             values.setdefault((r['case_study'], r['setup'], int(r['budget_multiplier']), r['variant'], m),
                               {})[int(r['rep'])] = float(r[m])
     case_studies = sorted({k[0] for k in values})

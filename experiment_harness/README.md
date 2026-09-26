@@ -1,5 +1,7 @@
 # Experiment harness
 
+The design and the reasons behind each choice are in [EXPERIMENT_DESIGN.md](EXPERIMENT_DESIGN.md).
+
 Repeated, equal-budget comparison of DynaMOSA against two random baselines, with every run checked by the independent validator. Built 2026-09-26.
 
 ## What is compared
@@ -32,23 +34,70 @@ Repeated, equal-budget comparison of DynaMOSA against two random baselines, with
 ## Commands (PowerShell, from the repo root)
 
 ```powershell
-& ".venv/Scripts/python.exe" experiment_harness/harness.py calibrate --name thesis30
-& ".venv/Scripts/python.exe" experiment_harness/harness.py run --name thesis30 --reps 30 --workers 6
-& ".venv/Scripts/python.exe" experiment_harness/harness.py status --name thesis30
-& ".venv/Scripts/python.exe" experiment_harness/harness.py summarize --name thesis30
-& ".venv/Scripts/python.exe" experiment_harness/stats.py --name thesis30
+& ".venv/Scripts/python.exe" experiment_harness/harness.py calibrate --name thesis
+& ".venv/Scripts/python.exe" experiment_harness/harness.py run --name thesis --reps 10 --workers 8 --validation full
+& ".venv/Scripts/python.exe" experiment_harness/harness.py status --name thesis__from_rep00
+& ".venv/Scripts/python.exe" experiment_harness/harness.py summarize --name thesis__from_rep00
+& ".venv/Scripts/python.exe" experiment_harness/stats.py --name thesis__from_rep00
 ```
 
-- **Resumable:** stop any time with Ctrl+C and run the same `run` command again. Finished runs are skipped because they carry `SEARCH_DONE` / `VALIDATED` marker files.
+**Calibration** is written to `experiment_harness/calibrations/<name>.json`. That folder is tracked in git, so every machine uses the same budget B.
+
+**Each `run` writes into its own folder,** named after its first repetition: `out/<name>__from_repNN/`. `status`, `summarize`, `validate` and `stats.py` take that folder name, or a merged one, as `--name`.
+
+- **Resumable:** stop any time with Ctrl+C and run the same `run` command again. Finished runs are skipped because they carry `SEARCH_DONE` / `VALIDATED` marker files. Extending the same part (same `--first-rep`, larger `--reps`) resumes the same folder.
 - **Split the work:** `--case-studies FLEX2`, `--setups dynamosa random_walk`, `--budgets 1`.
-- **Search now, validate later:** `run ... --no-validate`, then `validate --name thesis30`.
+- **Search now, validate later:** `run ... --no-validate`, then `validate --name thesis__from_rep00`.
+- **Order:** jobs run smallest case study first (jBilling, Spree, OpenMRS, FLEX2), in one shared worker pool.
+- **Full validation:** `--validation full` (on `run` or `validate`) checks every individual against every rule. It writes `matrix.csv`, `minimization.json` and `minimal_suite/`, and gives the exact minimum number of individuals. It is slower (about 20 min per FLEX2 run). The default `optimized` mode gives the same coverage and only a first-fit suite size.
 - **Keep the databases:** `--keep-dbs` keeps every validated SQLite database. By default they are deleted to save disk space.
 
-## Output: `experiment_harness/out/<name>/`
+### Several machines
+
+1. **Get the same code and calibration.** Pull the same commit on every machine; `calibrations/thesis.json` comes with it. Don't re-calibrate on the other machines.
+2. **Give each machine a different range of repetitions:**
+   ```powershell
+   # machine A: repetitions 0-9  -> out/thesis__from_rep00
+   & ".venv/Scripts/python.exe" experiment_harness/harness.py run --name thesis --reps 10 --first-rep 0 --workers 8 --validation full
+   # machine B: repetitions 10-19 -> out/thesis__from_rep10
+   & ".venv/Scripts/python.exe" experiment_harness/harness.py run --name thesis --reps 10 --first-rep 10 --workers 8 --validation full
+   ```
+   Each run's seed is `1000·k + rep`, so different ranges never share a seed, and repetition 13 gives the same result on any machine.
+3. **Merge.** Copy the part folders (USB drive, cloud folder, etc.) into one machine's `experiment_harness/out/`, then:
+   ```powershell
+   & ".venv/Scripts/python.exe" experiment_harness/merge.py --name thesis
+   & ".venv/Scripts/python.exe" experiment_harness/harness.py summarize --name thesis_merged
+   & ".venv/Scripts/python.exe" experiment_harness/stats.py --name thesis_merged
+   ```
+   `merge.py`:
+   - Takes every `thesis__from_rep*` folder by default, or the ones listed with `--parts`.
+   - **Refuses** to merge parts with a different budget B or a different `compiled_constraints.json`. It only warns if the git commits differ.
+   - Merges a repetition present in two parts only once, and reports it.
+   - Skips unfinished runs.
+   - Can be re-run as more parts arrive; runs already merged are not copied again.
+   - `--skip-pickles` leaves out the large individuals files (enough for `summarize` / `stats.py`).
+
+### Pushing results to git
+
+**What git tracks:** every run's result files (CSV, JSON, `log.txt`) and the minimized suites (`minimal_suite/*.pkl`, a few KB each).
+
+**What git ignores:** the full `archive/individuals.pkl` / `final/individuals.pkl` and the validation databases. They come to about 0.6 GB per 10 repetitions, too large for git.
+
+Each machine pushes only its own `thesis__from_repNN` folder, so machines never touch the same file. Before pushing, pull first:
+```powershell
+git pull --rebase
+git add experiment_harness/out/thesis__from_rep10
+git commit -m "Results: thesis repetitions 10-19"
+git push
+```
+After pulling on one machine, `merge.py` works from the pushed files, because it only needs what git tracks. Without the individuals files, a merged run can't be re-validated, but `summarize` and `stats.py` work fully.
+
+## Output: `experiment_harness/out/<name>__from_repNN/` (or a merged folder)
 
 ```
-calibration.json   B per case study, with calibration seeds, git commit and corpus hash
-config.json        this experiment's settings (and the history of earlier `run` invocations)
+calibration.json   B per case study (a copy of calibrations/<name>.json)
+config.json        this folder's settings: repetitions, seeds, git commit, corpus hash (merged: which parts)
+merge_manifest.json  merged folders only: what was merged when, duplicates and unfinished runs skipped
 runs.csv           one row per run: evaluations, runtime, claimed/verified for archive/final/union, AUC
 summary.csv        one row per run × output variant, in long format (what stats.py reads)
 stats/             descriptive.csv, search_vs_random.csv, search_variants.csv, budget_effect.csv, per_rule.csv
