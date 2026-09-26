@@ -1146,13 +1146,33 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
     self_row = focal.get(self_table.upper()) if focal else None
     predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
     n = int(round(value)) - int(round(current or 0))
+    value_table, value_col = (node['value_column'].split('.') if node.get('value_column') else (None, None))
+    joined_value_table = value_table and value_table.upper() != table.upper()
     if n > 0:
         touched = []
         for _ in range(n):
             row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
                                               candidate, focal, self_table, table=table)
-            if node.get('value_column'):
-                row[node['value_column'].split('.')[1]] = 1
+            if value_table and not joined_value_table:
+                row[value_col] = 1
+            elif joined_value_table:
+                # value_column lives on a DIFFERENT, joined-in table
+                # (FLEX2's `degreeTotalCredits`: `SUM(COURSE.CREDIT_HRS)
+                # FROM PROGRAM_COURSE, COURSE`) -- build a real joinable
+                # pair, mirroring candidate.py's own seeding branch
+                # (same `<TABLE>_ID` join convention derive_value reads).
+                # Writing `CREDIT_HRS` onto the PROGRAM_COURSE row itself
+                # was the `table PROGRAM_COURSE has no column named
+                # CREDIT_HRS` materialization crash (2026-09-26): seeding
+                # had been fixed, this mutation-time copy never was.
+                join_col = f'{value_table.upper()}_ID'
+                join_val = _fresh_key_value(candidate, value_table, join_col)
+                row[join_col] = join_val
+                vrow = {join_col: join_val, value_col: 1}
+                if owner_id is not None:
+                    vrow[_OWNER_KEY] = owner_id
+                candidate.add_row(value_table, vrow)
+                touched.append((value_table, vrow))
             candidate.add_row(table, row)
             touched.append((table, row))
         return touched

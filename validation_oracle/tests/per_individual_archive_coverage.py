@@ -582,9 +582,18 @@ def _verify_decision_subset(conn, case_study, decisions_by_name, decision_names,
     worth re-checking. Returns {rule_id: verified_bool} for every rule in
     every one of `decision_names`."""
     subset = {d: decisions_by_name[d] for d in decision_names if d in decisions_by_name}
+    # The runner and subject tables are built from EVERY in-scope
+    # decision, not just `subset` -- a real bug (2026-09-26): once an
+    # UPSTREAM decision (e.g. FLEX2's `Academic Warning Status`, all 6
+    # rules verified early) dropped out of `subset`, every chained
+    # downstream variant (`literal_via_upstream_branch` on it) hit a
+    # KeyError looking it up, swallowed below as "not verified" for the
+    # WHOLE downstream decision -- `Course Registration Eligibility::
+    # Rule_1`/`Rule_4` verify under the full-corpus runner but silently
+    # didn't here. Only WHICH decisions get checked is scoped to `subset`.
     in_scope_by_name = {
         name: [r for r in records if not is_out_of_scope(case_study, r['rule_id'])]
-        for name, records in subset.items()
+        for name, records in decisions_by_name.items()
     }
     resolved, unresolved = build_subject_tables(case_study, in_scope_by_name)
     runner = DecisionRunner(conn, case_study, in_scope_by_name, resolved,

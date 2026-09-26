@@ -1,5 +1,150 @@
 # Validation oracle — known issues tracker
 
+## RESOLVED, confirmed via re-run (2026-09-26, late) — `--mode optimized` silently dropped chained (DRD) verifications once their UPSTREAM decision was fully verified
+
+**User re-run of all four validators with the fixed tool (no search
+re-runs)**: FLEX2 `46/50 (92.0%)` -- exactly matching Claude's own check
+below; Spree `18/21 in-scope`, unchanged; jBilling `17` (default
+override) + `16` (`_rule1` override), UNION `18/20`, unchanged (still
+`Ageing Step Config Validation::Rule_2` claimed-unverified, `Rule_5`
+unclaimed); OpenMRS `47/55` -- DOWN from the last recorded 51; all 6
+claimed-but-unverified OpenMRS rules are `Numeric Absolute Range
+Validity::Rule_1`/`Rule_2` and `Numeric Interpretation Classification::
+Rule_1`-`Rule_4` (not chained decisions, so not this fix's effect).
+**Investigated: NOT a regression.** Running commit `20d8fc2`'s code (15:30,
+when 51 was recorded) against the SAME current OpenMRS archive, in a
+temporary worktree, gives the identical `47` -- the exact same verified
+set. The committed archive itself was replaced in `20d8fc2`; the 51 came
+from the archive before it (the session's own recorded "OpenMRS
+51->47->51 jitter"). Root of the jitter, confirmed in the raw archive
+(`Numeric Absolute Range Validity::Rule_1`'s individual): the search
+wrote `obs.concept_id = 1` but `concept_numeric.concept_id = 2`, so no
+`obs` reaches its numeric concept -- and nothing repairs that link, since
+`_build_decision_subject_row` deliberately skips any multi-hop subject
+join (`obs -> concept -> concept_numeric` is 2 hops). Whether these 6
+rules verify therefore depends on the search happening to write matching
+ids. Not fixed: would need multi-hop subject-row wiring (a disclosed
+scope limit of that function).
+
+**Context**: the user's re-run after the `derived_join_count` and
+`CREDIT_HRS` fixes below printed `Validated 41` (unchanged). `CREDIT_HRS`
+confirmed gone (0 errors across 77 individuals), and `Course
+Registration Eligibility::Rule_2`/`Credit Transfer Exemption::Rule_2`
+were gained -- but `Course Registration Eligibility::Rule_1`/`Rule_4`
+and `Course Load Limit::Rule_1` were LOST, even though `run_decision`
+itself (with a runner over every decision) verified all of them against
+the SAME 77 fresh DBs. (Also found: 7 stale `dbs/individual_077`-`083`
+files from an older, larger run sit in the same out-dir -- the tool
+ignores them, but any hand-written glob over `dbs/*.db` doesn't.)
+
+**Root cause (tool, not validator logic)**: `_verify_decision_subset`
+built its `DecisionRunner` and `build_subject_tables` from ONLY the
+decisions still holding an unverified rule. `Academic Warning Status`
+(all 6 rules verified by the first few individuals) then dropped out of
+the runner, so every later chained variant (`literal_via_upstream_branch`
+on it) raised `KeyError` on lookup -- caught by the function's own
+`except (sqlite3.OperationalError, KeyError): pass` as "not verified"
+for the WHOLE downstream decision. Chained/side-effect rules only ever
+verified if an individual processed BEFORE their upstream finished
+happened to satisfy them -- very likely the source of the run-to-run
+"variance" seen on `Course Load Limit`/`Course Registration Eligibility`
+all session. `--mode full` (`run_coverage`, whole corpus) was never
+affected.
+
+**Fixed**: runner/subject tables are built from every in-scope decision;
+only the set of decisions CHECKED stays scoped to the pending subset.
+Slower per individual (subject tables for every decision), same answers
+as the full-corpus runner.
+
+**Checked by Claude (NOT the user's confirmation)**: the fixed tool run
+against the user's current archive into a scratch out-dir: `Total 50 /
+Claimed 49 / Validated 46 (92.0%)`, 0 errors. Unverified: `Course
+Registration Eligibility::Rule_3` (known, below) and `Summer Semester
+Registration::Rule_2`/`Rule_3`/`Rule_5` (`Rule_5` also not claimed).
+Validator-only change: OpenMRS/jBilling/Spree numbers may have been
+UNDER-reported by the same bug and need a validator re-run each (no
+search re-run).
+
+## RESOLVED, confirmed via re-run (2026-09-26, late: 0 errors across 77 FLEX2 individuals) — `table PROGRAM_COURSE has no column named CREDIT_HRS` (3 FLEX2 individuals): mutation's row-adding copy wrote a joined table's value column onto the wrong table
+
+The long-flagged `CREDIT_HRS` materialization crash (3 individuals every
+FLEX2 run, e.g. `AcademicWarningStatus_Rule_3`/`CourseReplacement
+Eligibility_Rule_5`/`GradePointsAndInterpretation_Rule_4` origins).
+`degreeTotalCredits` is `SUM(COURSE.CREDIT_HRS) FROM PROGRAM_COURSE,
+COURSE WHERE PROGRAM_COURSE.COURSE_ID = COURSE.COURSE_ID AND ...` --
+`value_column` lives on the JOINED-in table (`COURSE`), not `tables[0]`.
+
+**Root cause**: `candidate.py`'s seeding branch already handled this
+(builds a real joinable `PROGRAM_COURSE`/`COURSE` pair via the
+`<TABLE>_ID` convention, "a real bug found the same way" comment), but
+`mutation.py`'s `_apply_row_count_mutation` -- the mutation-time copy of
+the same construction -- still did `row[value_column.split('.')[1]] = 1`
+on the `tables[0]` row, stamping `CREDIT_HRS` onto `PROGRAM_COURSE`. Only
+individuals where mutation grew this aggregate hit it, hence 3, not all.
+The two parallel copies had drifted (this project's own "keep candidate.
+py/mutation.py construction identical" convention).
+
+**Fixed**: `_apply_row_count_mutation` now mirrors the seeding branch --
+same-table `value_column` unchanged; a joined `value_column` gets its own
+`COURSE` row (`COURSE_ID` from `_fresh_key_value`, so no PK collision;
+owner-tagged; added to `touched` for repair) and the `PROGRAM_COURSE`
+row carries the matching `COURSE_ID`. Corpus: only 2 aggregate
+`value_column`s exist -- `COURSE.CREDIT_HRS` (joined) and jBilling's
+`ageing_entity_step.days` (same-table, confirmed unchanged).
+
+Verified directly: seed + mutate `degreeTotalCredits` 30 -> 32 (derive_
+value reads 32 back), 0 `CREDIT_HRS` keys on `PROGRAM_COURSE` rows, and
+`materialize.validate_with_sqlite` on the mutated candidate returns
+`(True, [])`. Regression suite passing (172/174 evaluable, unchanged).
+Mutation-time fix: needs a fresh FLEX2 SEARCH re-run (the current
+archive's 3 individuals still carry the bad rows).
+
+## RESOLVED, confirmed via re-run (2026-09-26, late: `Course Registration Eligibility::Rule_2` and `Credit Transfer Exemption::Rule_2` both newly verified in the user's run; `Rule_1`/`Rule_4` were masked by the separate optimized-mode bug above) — validator's `derived_join_count` counted EVERY prerequisite in the database, not this course's: `Rule_1` won all 13,641 FLEX2 `Course Registration Eligibility` cases
+
+Traced `Course Registration Eligibility::Rule_2`-`Rule_4` (claimed, not
+verified) by re-running `run_decision` with traces across all 81 current
+FLEX2 DBs: EVERY real case selected `Rule_1` (`unmetPrerequisiteCount >
+0`), although `Rule_2`/`Rule_4` matched 8,452/7,273 cases -- FIRST hit
+policy gave all of them to `Rule_1`.
+
+**Root cause (validator)**: `db_resolver.resolve`'s `derived_join_count`
+SQL (`SELECT COUNT(*) FROM COURSE_PREREQ p WHERE NOT EXISTS (...)`) never
+restricted `p` to the subject row's own course -- despite its own comment
+("How many PREREQ_TABLE rows for this course ..."). It counted every
+prerequisite in the whole merged DB the student hadn't passed. The search
+side (`candidate.py`'s `derive_value`) was already correctly scoped
+(`p.COURSE_ID == this row's COURSE_ID`), so search and validator
+genuinely disagreed. **Fixed**: added `p."prereq_course_column" =
+<subject row's own value>` (raises `NotImplementedError`, like the roll
+column, if the subject row lacks it). No join path is needed (the course
+column is on the subject row itself), so `subject_table.py`'s
+`derived_join_count` extractor is unchanged (comment corrected). The only
+other node of this kind, `Credit Transfer Exemption::unmetPrerequisite
+AlsoPassedCount`, had the identical bug.
+
+Verified against the EXISTING FLEX2 DBs (validator-only fix, no search
+re-run needed): `Course Registration Eligibility` now verifies `Rule_1`/
+`Rule_2`/`Rule_4` (was `Rule_1` only; `Rule_1` now wins 15 cases, not
+13,641); `Credit Transfer Exemption` now verifies all 3 (`Rule_2` new).
+Expected FLEX2 gain: +3. Regression suite passing.
+
+**`Course Registration Eligibility::Rule_3` -- NOT fixed, root-caused**:
+all 11 of its variants chain through `Course Load Limit` (`maxCourses
+Allowed`), whose subject is `STUDENT_SEMESTER` (`SEM_ID`, `ROLL_NO`).
+149,820 of 150,051 variant attempts stop at `UngroundedForCase: "no
+corresponding 'Course Load Limit' row"` -- the validator's own cross-
+decision path (`COURSE_REGISTRATION -> STUDENT_SEMESTER`, composite
+`(SEM_ID, ROLL_NO)`) is fine, but no generated DB has ANY `COURSE_
+REGISTRATION` row with a matching `STUDENT_SEMESTER` row (checked 8 DBs:
+0 matches each). The chained record inlines `Course Load Limit`'s
+conditions and satisfies them through `SEMESTER`/`STUDENT_PROGRAM`, but
+nothing builds the linking `STUDENT_SEMESTER` junction row, since no
+input reads it directly. Closing this needs the generator to build an
+upstream decision's subject row correlated to the downstream subject --
+and that hop is composite-key, the same `_build_subject_join_path`
+limitation noted for `Graduation Eligibility`'s `decision_subject`. Not
+attempted.
+
 ## RESOLVED, confirmed via re-run for both FLEX2 and Spree (2026-09-26, late) — FLEX2 `Graduation Eligibility` (all 5 rules claimed, 0 verified): the validator could not pick a subject at all, and `yearsElapsed` compared a raw DATE against 7
 
 **Re-run result (2026-09-26, user-run: fresh FLEX2 search + validator

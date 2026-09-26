@@ -104,10 +104,12 @@ _TABLE_EXTRACTORS = {
     'derived_aggregate': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
                                          | ({n.get('self_table') or n['table']}
                                             if _needs_self_table(n.get('filter_text')) else set())),
-    # `prereq_table` is queried via a raw, UNCORRELATED scan
-    # (`db_resolver.resolve`'s own derived_join_count branch: `SELECT
-    # COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS (...)`, no WHERE
-    # binding on `p` from the subject at all) -- the SAME "self-contained,
+    # `prereq_table` is queried directly, bound only by the SUBJECT row's
+    # own course/roll columns (`db_resolver.resolve`'s own
+    # derived_join_count branch: `SELECT COUNT(*) FROM "prereq_table" p
+    # WHERE p.COURSE_ID = <subject's> AND NOT EXISTS (...)` -- the course
+    # binding added 2026-09-26; before it, `p` was entirely unbound), never
+    # via a join path -- the SAME "self-contained,
     # no join path needed" shape derived_aggregate/exists are already
     # exempted for above, just never extended to this kind (a real bug,
     # found 2026-09-25 investigating FLEX2's own backward-join gaps:

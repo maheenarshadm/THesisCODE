@@ -551,10 +551,25 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
                 f"derived_join_count needs {student_col!r} on the subject row "
                 f"({sorted(subject_cols)}) to bind the student -- not present")
         student_val = subject_row[student_col]
+        # "for THIS course": `p` must be restricted to the subject row's
+        # own course (found 2026-09-26 -- without it, every COURSE_PREREQ
+        # row in the whole database counted, so FLEX2's `unmetPrerequisite
+        # Count > 0` held for all 13,641 real `Course Registration
+        # Eligibility` cases and `Rule_1` won every one under FIRST).
+        # Same scope candidate.py's own derive_value independently uses
+        # (`prereq_course_column` read off the row carrying the roll
+        # column too).
+        course_col = node['prereq_course_column'].lower()
+        if course_col not in subject_cols:
+            raise NotImplementedError(
+                f"derived_join_count needs {course_col!r} on the subject row "
+                f"({sorted(subject_cols)}) to bind the course -- not present")
+        course_val = subject_row[course_col]
         fail_grades = ', '.join(_sql_literal(g) for g in node['fail_grades'])
         sql = (
             f'SELECT COUNT(*) FROM "{node["prereq_table"]}" p '
-            f'WHERE NOT EXISTS ('
+            f'WHERE p."{node["prereq_course_column"]}" = {_sql_literal(course_val)} '
+            f'  AND NOT EXISTS ('
             f'  SELECT 1 FROM "{node["registration_table"]}" r '
             f'  WHERE r."{node["registration_course_column"]}" = p."{node["prereq_target_column"]}" '
             f'    AND r."{node["registration_roll_column"]}" = {_sql_literal(student_val)} '
