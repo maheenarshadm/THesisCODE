@@ -32,6 +32,22 @@ _FILTER_TEXT_OVERRIDES = {
         "ROLL_NO = <student> AND ATTEND_FLAG = 'Y' "
         "AND LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)"
     ),
+    # FLEX2's `repeatCourseCountRequested` (Summer Semester Registration
+    # ::Rule_3, `> 2`), 2026-09-26 -- RESEARCHER ASSUMPTION, chosen by the
+    # user: the curated text is "REPEAT_COURSE (COUNT per USER_ID/
+    # semester)", which had no filter at all (a whole-table count the
+    # validator correctly refused). Per-student is not expressible in this
+    # schema: REPEAT_COURSE.USER_ID FKs to APPUSER.USERID, and APPUSER
+    # links only to EMPLOYEE (staff accounts) -- no student table
+    # references it. Reinterpreted as the number of repeat-course
+    # offerings in THIS registration's semester (REPEAT_COURSE.OFFER_ID ->
+    # COURSE_OFFER.SEM_ID). `<semester>` binds to the subject row's own
+    # SEM_ID on the validator side (same-named column first) and via
+    # compile_constraints.py's decision-scoped placeholder source on the
+    # generator side.
+    ('FLEX2', 'repeatCourseCountRequested'): (
+        "OFFER_ID IN (SELECT OFFER_ID FROM COURSE_OFFER WHERE SEM_ID = <semester>)"
+    ),
 }
 
 

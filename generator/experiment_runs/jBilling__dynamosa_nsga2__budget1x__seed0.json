@@ -6,8 +6,8 @@
   "population_size": 30,
   "generations": 40,
   "total_objectives": 20,
-  "final_covered": 19,
-  "runtime_seconds": 6.734089612960815,
+  "final_covered": 18,
+  "runtime_seconds": 9.315393924713135,
   "coverage_history": [
     14,
     15,
@@ -48,7 +48,7 @@
     18,
     18,
     18,
-    19
+    18
   ],
   "raw_output_file": "jBilling__dynamosa_nsga2__budget1x__seed0.pkl"
 }

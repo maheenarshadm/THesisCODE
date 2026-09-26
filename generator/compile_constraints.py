@@ -1459,6 +1459,10 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     # use this placeholder name anywhere in the current corpus at all).
     ('FLEX2', 'Attendance Eligibility For Final Exam', 'this course offering'): 'COURSE_OFFER',
     ('FLEX2', 'Summer Semester Registration', 'this course offering'): 'COURSE_OFFER',
+    # `repeatCourseCountRequested`'s disclosed filter (aggregate_filter_
+    # overrides.py, 2026-09-26): `<semester>` is the registration's own
+    # SEM_ID -- the validator binds it off the subject row directly.
+    ('FLEX2', 'Summer Semester Registration', 'semester'): 'COURSE_REGISTRATION',
     # FLEX2's `Attendance Eligibility For Final Exam::lecturesAttended`
     # (hand-corrected in `aggregate_filter_overrides.py`) -- see
     # validation_oracle/filter_placeholder_sources.py's own matching

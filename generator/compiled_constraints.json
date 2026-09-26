@@ -1301,20 +1301,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -1526,20 +1526,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -1783,20 +1783,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -2105,20 +2105,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -2491,20 +2491,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -2759,20 +2759,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -3064,20 +3064,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -3401,20 +3401,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -3770,20 +3770,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -4171,20 +4171,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -4604,20 +4604,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "STUDENT_SEMESTER",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "STUDENT_SEMESTER",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "STUDENT_SEMESTER",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -4716,20 +4716,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -5104,20 +5104,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -5485,20 +5485,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -5940,20 +5940,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -6459,20 +6459,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -7079,20 +7079,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -7795,20 +7795,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -8260,20 +8260,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -8799,20 +8799,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -9402,20 +9402,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -10069,20 +10069,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -10800,20 +10800,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -11595,20 +11595,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -11984,20 +11984,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -12457,20 +12457,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -12920,20 +12920,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -13467,20 +13467,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -13994,20 +13994,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -14605,20 +14605,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -15233,20 +15233,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -15908,20 +15908,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -16632,20 +16632,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -17371,20 +17371,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -18174,20 +18174,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ],
     "STUDENT_SEMESTER": [
@@ -18265,20 +18265,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -18387,20 +18387,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -18547,20 +18547,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -18743,20 +18743,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -18959,20 +18959,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -19183,20 +19183,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -23545,20 +23545,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -23677,13 +23677,13 @@
    },
    "isNeededToGraduateThisSummer": {
     "kind": "raw_sql_boolean",
-    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp WHERE sp.ROLL_NO = <student>) + (SELECT c.CREDIT_HRS FROM COURSE c WHERE c.COURSE_ID = <course>) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp JOIN STUDENT_PROGRAM sp2 ON bp.BATCH_NO = sp2.BATCH_NO AND bp.PROG_ID = sp2.PROG_ID WHERE sp2.ROLL_NO = <student>)",
     "tables": [
      "STUDENT_PROGRAM",
      "COURSE",
      "BATCH_PROGRAM"
     ],
-    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted. [CORRELATED 2026-09-26, chosen by the user: the original LIMIT 1 subqueries read an arbitrary first row of each whole table, not this case -- they resolved to NULL for all 13,148 real FLEX2 cases. Now bound to THIS registration's own student (<student> -> ROLL_NO), course (<course> -> COURSE_ID) and that student's own batch program; the credit-hour interpretation itself is unchanged and still ASSUMED.]"
    },
    "priorRegistrationCount": {
     "kind": "derived_aggregate",
@@ -23731,20 +23731,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -23890,9 +23890,15 @@
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "REPEAT_COURSE",
-    "filter_text": null,
+    "filter_text": "OFFER_ID IN (SELECT OFFER_ID FROM COURSE_OFFER WHERE SEM_ID = <semester>)",
     "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
-    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+    "cross_table_placeholders": {
+     "semester": {
+      "table": "COURSE_REGISTRATION",
+      "column": "SEM_ID"
+     }
+    }
    },
    "priorRegistrationCount": {
     "kind": "derived_aggregate",
@@ -23913,13 +23919,13 @@
    },
    "isNeededToGraduateThisSummer": {
     "kind": "raw_sql_boolean",
-    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp WHERE sp.ROLL_NO = <student>) + (SELECT c.CREDIT_HRS FROM COURSE c WHERE c.COURSE_ID = <course>) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp JOIN STUDENT_PROGRAM sp2 ON bp.BATCH_NO = sp2.BATCH_NO AND bp.PROG_ID = sp2.PROG_ID WHERE sp2.ROLL_NO = <student>)",
     "tables": [
      "STUDENT_PROGRAM",
      "COURSE",
      "BATCH_PROGRAM"
     ],
-    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted. [CORRELATED 2026-09-26, chosen by the user: the original LIMIT 1 subqueries read an arbitrary first row of each whole table, not this case -- they resolved to NULL for all 13,148 real FLEX2 cases. Now bound to THIS registration's own student (<student> -> ROLL_NO), course (<course> -> COURSE_ID) and that student's own batch program; the credit-hour interpretation itself is unchanged and still ASSUMED.]"
    }
   },
   "fk_closure_tables": [
@@ -23962,20 +23968,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -24178,21 +24184,27 @@
    },
    "isNeededToGraduateThisSummer": {
     "kind": "raw_sql_boolean",
-    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp WHERE sp.ROLL_NO = <student>) + (SELECT c.CREDIT_HRS FROM COURSE c WHERE c.COURSE_ID = <course>) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp JOIN STUDENT_PROGRAM sp2 ON bp.BATCH_NO = sp2.BATCH_NO AND bp.PROG_ID = sp2.PROG_ID WHERE sp2.ROLL_NO = <student>)",
     "tables": [
      "STUDENT_PROGRAM",
      "COURSE",
      "BATCH_PROGRAM"
     ],
-    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted. [CORRELATED 2026-09-26, chosen by the user: the original LIMIT 1 subqueries read an arbitrary first row of each whole table, not this case -- they resolved to NULL for all 13,148 real FLEX2 cases. Now bound to THIS registration's own student (<student> -> ROLL_NO), course (<course> -> COURSE_ID) and that student's own batch program; the credit-hour interpretation itself is unchanged and still ASSUMED.]"
    },
    "repeatCourseCountRequested": {
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "REPEAT_COURSE",
-    "filter_text": null,
+    "filter_text": "OFFER_ID IN (SELECT OFFER_ID FROM COURSE_OFFER WHERE SEM_ID = <semester>)",
     "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
-    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+    "cross_table_placeholders": {
+     "semester": {
+      "table": "COURSE_REGISTRATION",
+      "column": "SEM_ID"
+     }
+    }
    }
   },
   "fk_closure_tables": [
@@ -24235,20 +24247,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }
@@ -24462,21 +24474,27 @@
    },
    "isNeededToGraduateThisSummer": {
     "kind": "raw_sql_boolean",
-    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp LIMIT 1) + (SELECT c.CREDIT_HRS FROM COURSE c LIMIT 1) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp LIMIT 1)",
+    "sql_template": "(SELECT sp.CREDITS_EARNED FROM STUDENT_PROGRAM sp WHERE sp.ROLL_NO = <student>) + (SELECT c.CREDIT_HRS FROM COURSE c WHERE c.COURSE_ID = <course>) >= (SELECT bp.MIN_CR_HRS FROM BATCH_PROGRAM bp JOIN STUDENT_PROGRAM sp2 ON bp.BATCH_NO = sp2.BATCH_NO AND bp.PROG_ID = sp2.PROG_ID WHERE sp2.ROLL_NO = <student>)",
     "tables": [
      "STUDENT_PROGRAM",
      "COURSE",
      "BATCH_PROGRAM"
     ],
-    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted."
+    "notes": "[ASSUMED -- no source documentation available; researcher interpretation, not verified against the real FLEX2 system, 2026-09-22] The ground truth's own note pointed at a real, existing decision, 'Graduation Eligibility' (creditHoursEarned >= degreeMinimumCreditHours, CGPA >= 2.00, semestersElapsed >= 8) -- this is not a guess made from nothing, but this variable was never wired as a DRD dependency onto it. Approximated here as only the credit-hour condition (this course's own credit hours would close the student's remaining gap to the program minimum), omitting the CGPA/duration conditions on the judgment that those are typically already settled earlier in a student's program, not decided by one course. Expressed via RAW_SQL because no existing structured leaf kind returns a genuine boolean from a numeric threshold comparison; this leaf kind has no automatic mutation support (mutation.py's own documented, pre-existing limitation), so its value is fixed at whatever the seed produces for the whole run, never search-adjusted. [CORRELATED 2026-09-26, chosen by the user: the original LIMIT 1 subqueries read an arbitrary first row of each whole table, not this case -- they resolved to NULL for all 13,148 real FLEX2 cases. Now bound to THIS registration's own student (<student> -> ROLL_NO), course (<course> -> COURSE_ID) and that student's own batch program; the credit-hour interpretation itself is unchanged and still ASSUMED.]"
    },
    "repeatCourseCountRequested": {
     "kind": "derived_aggregate",
     "aggregate": "COUNT",
     "table": "REPEAT_COURSE",
-    "filter_text": null,
+    "filter_text": "OFFER_ID IN (SELECT OFFER_ID FROM COURSE_OFFER WHERE SEM_ID = <semester>)",
     "source_text": "REPEAT_COURSE (COUNT per USER_ID/semester)",
-    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+    "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+    "cross_table_placeholders": {
+     "semester": {
+      "table": "COURSE_REGISTRATION",
+      "column": "SEM_ID"
+     }
+    }
    },
    "enrolledStudentCount": {
     "kind": "derived_aggregate",
@@ -24526,20 +24544,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "COURSE_ID",
-      "to_table": "COURSE",
-      "to_column": "COURSE_ID"
-     }
-    ],
     "COURSE_OFFER": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "OFFER_ID",
       "to_table": "COURSE_OFFER",
       "to_column": "OFFER_ID"
+     }
+    ],
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
      }
     ]
    }

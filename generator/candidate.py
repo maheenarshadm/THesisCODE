@@ -53,6 +53,13 @@ def _real_columns_of(case_study, table):
     return {c.upper() for c in (info.get('columns') or {})}
 
 
+def _pk_columns_of(case_study, table):
+    schema = _schema_for_seeding(case_study)
+    info = schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+    pk = info.get('pk')
+    return [c.upper() for c in (pk if isinstance(pk, list) else ([pk] if pk else []))]
+
+
 class Candidate:
     """A proposed row-set: {table_name: [row_dict, ...]}. Deliberately
     thin -- no schema awareness, no validation -- those are `derive_genome`
@@ -429,17 +436,21 @@ def _conjunct_value_bindings(where_text, scenario, self_value=None):
     return bindings
 
 
-def _fresh_id_value(candidate, table):
-    """A numeric `id` value guaranteed not to collide with any existing
-    `id` already on a row of `table` in this candidate -- the same
-    guarantee `mutation.py`'s own `_fresh_key_value` provides for a
-    declared PK/UNIQUE column repair, duplicated here in miniature
-    (scoped to the literal column name `id`, which every table this
-    mechanism targets actually uses) rather than imported, since
-    candidate.py has no dependency on mutation.py."""
-    existing = {r.get('id', r.get('ID')) for r in candidate.rows(table)
-                if isinstance(r.get('id', r.get('ID')), (int, float))
-                and not isinstance(r.get('id', r.get('ID')), bool)}
+def _fresh_id_value(candidate, table, column='id'):
+    """A numeric `column` value (default `id`) guaranteed not to collide
+    with any existing value of it on a row of `table` in this candidate --
+    the same guarantee `mutation.py`'s own `_fresh_key_value` provides for
+    a declared PK/UNIQUE column repair, duplicated here in miniature
+    rather than imported, since candidate.py has no dependency on
+    mutation.py. Matched case-insensitively. `column` added 2026-09-26:
+    `_construct_subquery_parent` used the default `id` even for a named
+    key (FLEX2 `COURSE_OFFER.OFFER_ID`), so every "fresh" parent got 1 --
+    3 REPEAT_COURSE rows for `repeatCourseCountRequested` all landed on
+    `OFFER_ID = 1`, a UNIQUE failure at materialization."""
+    def value(r):
+        return next((v for k, v in r.items() if k.upper() == column.upper()), None)
+    existing = {value(r) for r in candidate.rows(table)
+                if isinstance(value(r), (int, float)) and not isinstance(value(r), bool)}
     return (max(existing) + 1) if existing else 1
 
 
@@ -515,7 +526,7 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table, ow
     # PK like FLEX2's own LECTURE_ID -- a constructed row would carry a
     # key ('id') the real schema doesn't have at all, and the read-side
     # match (looking for the REAL key) would then never find it either.
-    inner_row[select_col] = _fresh_id_value(candidate, inner_table)
+    inner_row[select_col] = _fresh_id_value(candidate, inner_table, select_col)
     if owner_id is not None:
         inner_row[_OWNER_KEY] = owner_id
     candidate.add_row(inner_table, inner_row)
@@ -1459,7 +1470,30 @@ def build_seed_candidate(record, today=20000):
             for t in node['tables']:
                 real_cols = _real_columns_of(record['case_study'], t)
                 cols = {c for c in all_cols if c.upper() in real_cols} if real_cols else set()
-                candidate.add_row(t, {col: 1 for col in cols} or {'X': 1})
+                new_row = {col: 1 for col in cols} or {'X': 1}
+                # A row already holding this seed row's FULL primary key
+                # is merged into rather than duplicated (2026-09-26): once
+                # the SQL names key columns (FLEX2 `isElective...`'s
+                # `CO.OFFER_ID`; the correlated `isNeededToGraduate
+                # ThisSummer`'s `sp.ROLL_NO`/`c.COURSE_ID`), every seed
+                # value of 1 collided with an existing row's key -- e.g.
+                # the first `repeatCourseCountRequested` COURSE_OFFER
+                # parent, a real `UNIQUE constraint failed` at
+                # materialization. Missing columns are filled in; existing
+                # values are never overwritten.
+                pk = _pk_columns_of(record['case_study'], t)
+                key = {c: new_row[c] for c in new_row if c.upper() in pk}
+                same = None
+                if pk and len(key) == len(pk):
+                    same = next((r for r in candidate.rows(t)
+                                 if all(next((v for k, v in r.items() if k.upper() == c.upper()), None) == val
+                                        for c, val in key.items())), None)
+                if same is not None:
+                    for c, val in new_row.items():
+                        if not any(k.upper() == c.upper() for k in same):
+                            same[c] = val
+                else:
+                    candidate.add_row(t, new_row)
         elif kind == 'derived_case':
             ensure_row(node['table'], node['column'], node['cases'][0][0])
         elif kind == 'derived_join_count':

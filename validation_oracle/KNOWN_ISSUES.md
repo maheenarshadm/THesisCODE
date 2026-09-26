@@ -1,5 +1,107 @@
 # Validation oracle — known issues tracker
 
+## RESOLVED for `Rule_3`/`Rule_5`; `Rule_2` STILL OPEN (2026-09-26, late) — FLEX2 `Summer Semester Registration`: `Rule_5` masked by a flat suppression gradient; `Rule_2`/`Rule_3` blocked by modeling gaps
+
+**Confirmed by the user's re-run (2026-09-26, 22:30-22:41, all 4 case
+studies re-searched with the new `fitness.py`, then validated):** FLEX2
+49/50 (was 47/50) -- `Rule_3` and `Rule_5` now verified; only `Rule_2`
+unverified, exactly as predicted below. No regression elsewhere: OpenMRS
+53/55 (unchanged), Spree 21/21 in scope (unchanged), jBilling 18/20 union
+of the two override runs (unchanged; single-run 17 and the `_rule1` run
+each miss different `Order Period Already Invoiced` rules, as before).
+Still-unverified: FLEX2 `Summer Semester Registration::Rule_2`; OpenMRS
+`Identifier Format And Check Digit Validity::Rule_1`, `Identifier
+Uniqueness Check::Rule_2`; jBilling `Ageing Step Config Validation::
+Rule_2`/`Rule_5`.
+
+Traced all three unverified rules with `run_decision` across the current
+FLEX2 DBs (13,148 real cases):
+
+**`Rule_5` (`not RESEARCH`, never claimed; best archived fitness 0.5) --
+FIXED (search side)**. Validator side was fine: `Rule_5` matched all
+13,147 non-research cases, but `Rule_4` (`not RESEARCH AND enrolled <
+10`) always won under FIRST, since no offering ever had >= 10
+registrations. The search couldn't get there: the best `Rule_5`
+individual had `enrolledStudentCount=4`, and `branch_fitness` was FLAT
+at 0.5 for every count 4..9, dropping to 0 only at 10 -- `distance_to_
+false(AND)` is a min over clauses, and `Rule_4`'s `not RESEARCH` clause
+(identical to `Rule_5`'s own condition) always won that min with a
+constant distance, masking the enrolled-count gradient.
+**Fixed** in `fitness.py` `branch_fitness`: an earlier row's top-level
+conjuncts that are ALSO top-level conjuncts of this record's own
+condition are dropped from its suppression term (`_without_shared_
+conjuncts`) -- sound, since such a conjunct is true whenever own is, so
+given own true `not (shared AND rest)` is exactly `not rest`; an earlier
+row whose EVERY conjunct is shared is left unchanged. Now `0.875 ->
+0.857 -> 0.8 -> 0.667 -> 0` for 4/5/7/9/10, and `best_value_for` jumps
+straight to 11 (fitness 0). Affects 36 records' gradients across all 4
+case studies. **Soundness check**: every archived genome in all four
+archives (9,591 genome evaluations) gets the identical "fitness == 0"
+verdict under the old and new function -- only guidance changes, never
+what counts as claimed. Regression suite passing. Search-side: needs a
+fresh FLEX2 search re-run.
+
+**User decisions (2026-09-26)**: `Rule_3` -> count per semester instead;
+`Rule_2` -> correlate `isNeededToGraduateThisSummer` to this student.
+Implemented:
+
+- `Rule_3`: disclosed filter in `aggregate_filter_overrides.py` --
+  `OFFER_ID IN (SELECT OFFER_ID FROM COURSE_OFFER WHERE SEM_ID =
+  <semester>)` (RESEARCHER ASSUMPTION: repeat-course offerings in this
+  registration's semester, since per-student is not expressible); plus
+  `('FLEX2', 'Summer Semester Registration', 'semester') ->
+  COURSE_REGISTRATION` in `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` so the
+  search correlates `<semester>` to the registration's SEM_ID (the
+  validator binds it off the subject row's own SEM_ID).
+- `Rule_2`: `isNeededToGraduateThisSummer`'s RAW_SQL in the curated
+  `variable_to_schema_mapping.csv` now reads THIS registration's student
+  (`<student>`), course (`<course>`) and that student's batch program
+  instead of `LIMIT 1` over whole tables; `[ASSUMED]` note kept, a
+  `[CORRELATED 2026-09-26]` note added.
+- Two construction bugs this exposed, both fixed in `candidate.py`:
+  (a) `_fresh_id_value` only ever looked at a literal `id` column, so
+  every subquery parent keyed on a named PK (`COURSE_OFFER.OFFER_ID`) got
+  1 -- 3 REPEAT_COURSE rows on the same OFFER_ID, a UNIQUE failure; it
+  now takes the key column. (b) `raw_sql_boolean` seeding added a fresh
+  row per named table with every referenced column = 1, colliding with
+  existing rows once the SQL names key columns; it now merges into a row
+  already holding the same FULL primary key (filling only missing
+  columns).
+
+Semantic diff: exactly Summer Semester `Rule_2`-`Rule_5` changed (the
+records carrying these variables). Checks by Claude: all 174 records
+seed + repair + insert into real SQLite with 0 failures; seeded `Rule_3`
+mutated to 5 repeat offerings and `Rule_5` to 11 enrollments both
+materialize cleanly; with the pipeline's placeholder correlation
+applied, the validator verifies `Rule_3` (and `Rule_5`) on those
+constructed databases. Existing DBs: `repeatCourseCountRequested` now
+resolves for all 13,148 cases (was refused). Regression suite passing.
+
+**`Rule_2` still expected NOT to verify**: even correlated,
+`isNeededToGraduateThisSummer` is NULL in every current DB --
+`BATCH_PROGRAM.MIN_CR_HRS` is never populated and `CREDITS_EARNED`
+rarely -- because the search cannot build or mutate a `raw_sql_boolean`
+fact at all. Making it steerable would need a structured redesign
+(numeric leaves the search can mutate), not done.
+
+**Original `Rule_3` analysis (`repeatCourseCountRequested > 2`) --
+schema gap**: compiled as `COUNT(REPEAT_COURSE)` with NO
+`filter_text` (curated: "COUNT per USER_ID/semester"); the validator
+correctly refuses (`UngroundedForCase: ... no filter_text -- its own
+correlation isn't understood`). Can't be correlated per student as
+written: `REPEAT_COURSE.USER_ID` FKs to `APPUSER.USERID`, and `APPUSER`
+links only to `EMPLOYEE` (staff accounts) -- no student table references
+it, so there is no student -> USER_ID path in this schema.
+
+**`Rule_2` -- NOT fixed, decision needed**: needs `isNeededToGraduate
+ThisSummer = false`, but it resolved to NULL for all 13,148 cases -- its
+`raw_sql_boolean` (already flagged `[ASSUMED]` in its own notes) is
+`LIMIT 1` over whole STUDENT_PROGRAM/COURSE/BATCH_PROGRAM, uncorrelated
+to the case, and `raw_sql_boolean` has no mutation support, so the
+search can't steer it either. `isElectiveTaughtByVisitingScholar
+UnavailableOtherwise` (the other raw SQL fact) is also NULL for 12,455
+of 13,148 cases.
+
 ## RESOLVED, confirmed via re-run (2026-09-26, late: user's Spree validator run `21/21 in scope (100.0%)`, matching Claude's check) — Spree `One-Use-Per-User Promotion Eligibility` (all 3 claimed, 0 verified): `self` in `priorPromotionUsageCount` bound to the wrong table
 
 Traced with `run_decision` errors visible: every one of the 22 current

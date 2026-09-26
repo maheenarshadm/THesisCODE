@@ -406,14 +406,55 @@ def branch_fitness(record, genome):
     `genome` is {free_variable_name: value}."""
     resolution_map = record.get('variable_resolution', {})
     own = distance_to_true(record['condition'], resolution_map, genome)
+    own_conjuncts = {_canonical(c) for c in _top_level_conjuncts(record['condition'])}
     # §6.3: "squash each into [0,1) before summing" -- normalized per
     # earlier-row term, not the raw sum of all of them, so one very
     # distant earlier row can't swamp the others' own gradients.
     suppression = sum(
-        normalize(distance_to_false(row['condition'], resolution_map, genome))
+        normalize(distance_to_false(_without_shared_conjuncts(row['condition'], own_conjuncts),
+                                    resolution_map, genome))
         for row in record.get('hit_policy_context', {}).get('earlier_rows', [])
     )
     return normalize(own) + suppression
+
+
+def _top_level_conjuncts(node):
+    """`node`'s clauses under any nesting of top-level `and`s (a non-`and`
+    node is its own single conjunct)."""
+    if isinstance(node, dict) and node.get('op') == 'and':
+        out = []
+        for c in node['clauses']:
+            out.extend(_top_level_conjuncts(c))
+        return out
+    return [node]
+
+
+def _canonical(node):
+    import json
+    return json.dumps(node, sort_keys=True)
+
+
+def _without_shared_conjuncts(earlier_condition, own_conjuncts):
+    """An earlier row's condition with every top-level conjunct that is
+    ALSO a top-level conjunct of this record's own condition removed.
+
+    Sound: such a conjunct is necessarily true whenever this record's own
+    condition is, so it can never be the one that makes the earlier row
+    false -- given `own` true, `not (shared AND rest)` is exactly `not
+    rest`. Fitness 0.0 therefore still means precisely "own true, every
+    earlier row false". Found 2026-09-26 (FLEX2 `Summer Semester
+    Registration::Rule_5`, `not RESEARCH`, never claimed): its earlier
+    `Rule_4` is `not RESEARCH AND enrolled < 10`; `distance_to_false`'s
+    AND = min over clauses always picked the shared `not RESEARCH`
+    clause's constant distance, so fitness sat flat at 0.5 for every
+    enrolled count 4..9 and the search never climbed to 10. If EVERY
+    conjunct is shared, the earlier row can't be suppressed while own
+    holds -- returned unchanged, so its real (non-zero) distance stays."""
+    conjuncts = _top_level_conjuncts(earlier_condition)
+    rest = [c for c in conjuncts if _canonical(c) not in own_conjuncts]
+    if len(rest) == len(conjuncts) or not rest:
+        return earlier_condition
+    return rest[0] if len(rest) == 1 else {'op': 'and', 'clauses': rest}
 
 
 # ---------------------------------------------------------------------------
