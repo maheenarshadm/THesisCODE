@@ -263,6 +263,17 @@ def resolve(conn, node, subject_table, subject_pk_cols, subject_pk_vals,
         table = node['table']
         row = row_for(table)
         value = row[node['column'].lower()] if row is not None else None
+        # Mirrors generator/candidate.py's own matching fix (2026-09-26,
+        # jBilling's `newStatusIsDeleted`): a `schema_column` fact can be
+        # a BOOLEAN comparison against a hardcoded constant in disguise
+        # (`compared_to_named_constant`, compile-time metadata previously
+        # never consulted anywhere) -- converting the raw value into that
+        # real boolean here too, so independent verification checks the
+        # SAME real condition the DMN table actually expresses, not the
+        # raw column value.
+        constant = node.get('compared_to_named_constant')
+        if constant is not None:
+            value = value == constant['value']
         return ResolvedValue(value, 'schema_column', table, f'{table}.{node["column"]}', row)
 
     if kind == 'derived_case':

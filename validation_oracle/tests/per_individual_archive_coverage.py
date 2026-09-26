@@ -98,7 +98,8 @@ from materialize import to_sql_inserts, topological_table_order, create_table_dd
 from mutation import _schema_for, repair_candidate  # noqa: E402
 from dynamosa import (_key_columns_for, _own_solo_unique_columns_for,  # noqa: E402
                        _dedup_composite_keys, _SEED_KEY_OFFSET_UNIT,
-                       _deep_copy_individual, _build_decision_subject_row)
+                       _deep_copy_individual, _build_decision_subject_row,
+                       _apply_cross_table_placeholder_correlations, _scenario_keys_needing_offset)
 from coverage import run_coverage, build_subject_tables  # noqa: E402
 from phase1_utility import records_by_decision  # noqa: E402
 from summarize_coverage import _mechanical_out_of_scope  # noqa: E402
@@ -131,6 +132,48 @@ def _build_decision_subject_rows_for_individual(candidate, focal_maps, records_b
         r = records_by_id.get(rid)
         if r is not None:
             _build_decision_subject_row(candidate, rec_focal, r, rid)
+
+
+def _apply_cross_table_placeholder_correlations_for_individual(candidate, focal_maps, scenario_maps,
+                                                                 records_by_id, records_index, schema):
+    """Calls `dynamosa._apply_cross_table_placeholder_correlations` once
+    per record this individual has its own focal rows for -- the SAME
+    correlation `merge_archive_candidate` already applies
+    (compile_constraints.py's own `cross_table_placeholders` field),
+    ported here 2026-09-26 after a real gap was found tracing jBilling's
+    `Currency Exchange Rate Source`: this file's own no-merge pipeline
+    never called `merge_archive_candidate` at all, so a placeholder like
+    `<entity_id>` never got copied onto its correlated `base_user` row
+    here either, even after the compile-time `cross_table_placeholders`
+    fix -- same shape as `_build_decision_subject_rows_for_individual`'s
+    own gap, fixed the same way. Must run in the SAME relative position
+    `merge_archive_candidate` uses -- AFTER `_offset_rows_by_owner` (so a
+    freshly-synthesized row's own key values land in the same offset
+    range as everything else this individual owns), and BEFORE
+    `_build_decision_subject_rows_for_individual` (for the same reason
+    `_merge_archive_candidate_impl` orders them that way: the correlated
+    table can be the SAME one a subject hop reads FROM to wire the
+    subject row itself).
+
+    `scenario_maps` is this individual's OWN (un-offset, straight from
+    the archive pickle) `{record_id: {placeholder: value}}` -- each
+    record's own offsettable keys are bumped by that record's own
+    `records_index`-based offset here, mirroring `_merge_archive_
+    candidate_impl`'s identical `i * _SEED_KEY_OFFSET_UNIT` formula
+    (`_offset_rows_by_owner`'s own docstring explains why the SAME
+    formula, keyed the SAME way, applies within one individual)."""
+    for rid, rec_focal in focal_maps.items():
+        r = records_by_id.get(rid)
+        if r is None:
+            continue
+        raw_scenario = scenario_maps.get(rid, {})
+        offset = records_index.get(rid, 0) * _SEED_KEY_OFFSET_UNIT
+        offsettable_keys = _scenario_keys_needing_offset(r) if offset else set()
+        rec_scenario = {
+            k: (v + offset if k in offsettable_keys and isinstance(v, (int, float)) and not isinstance(v, bool) else v)
+            for k, v in raw_scenario.items()
+        }
+        _apply_cross_table_placeholder_correlations(candidate, rec_focal, rec_scenario, r, rid, schema)
 
 
 def _offset_rows_by_owner(candidate, schema, records_index, case_study):
@@ -423,8 +466,10 @@ def run(case_study, archive_pickle_path, out_dir, algorithm='dynamosa_nsga2',
         print(f"[{idx + 1}/{len(items)}] {tag} (archived for {len(origin_record_ids)} "
               f"record_id(s), own best fitness {own_best_fitness}) ...", end=' ', flush=True)
         try:
-            work_candidate, work_focal_maps, _work_scenario_maps = _deep_copy_individual(individual)
+            work_candidate, work_focal_maps, work_scenario_maps = _deep_copy_individual(individual)
             _offset_rows_by_owner(work_candidate, schema, records_index, case_study)
+            _apply_cross_table_placeholder_correlations_for_individual(
+                work_candidate, work_focal_maps, work_scenario_maps, records_by_id, records_index, schema)
             _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id)
             repair_candidate(work_candidate, case_study)
 
@@ -550,6 +595,7 @@ def run_optimized(case_study, archive_pickle_path, out_dir, algorithm='dynamosa_
                    not_persisted_overrides=None, limit=None):
     """The SAME per-individual materialization as `run`, above (identical
     _deep_copy_individual / _offset_rows_by_owner /
+    _apply_cross_table_placeholder_correlations_for_individual /
     _build_decision_subject_rows_for_individual / repair_candidate /
     _materialize pipeline -- nothing about HOW an individual becomes a
     database changes here). What's different: `run` re-verifies the
@@ -630,8 +676,10 @@ def run_optimized(case_study, archive_pickle_path, out_dir, algorithm='dynamosa_
               f"checking {len(decisions_to_check)}/{len(rule_ids_by_decision)} decisions still "
               f"holding {len(remaining)} unverified rule(s)) ...", end=' ', flush=True)
         try:
-            work_candidate, work_focal_maps, _work_scenario_maps = _deep_copy_individual(individual)
+            work_candidate, work_focal_maps, work_scenario_maps = _deep_copy_individual(individual)
             _offset_rows_by_owner(work_candidate, schema, records_index, case_study)
+            _apply_cross_table_placeholder_correlations_for_individual(
+                work_candidate, work_focal_maps, work_scenario_maps, records_by_id, records_index, schema)
             _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id)
             repair_candidate(work_candidate, case_study)
 

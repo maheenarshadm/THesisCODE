@@ -1,4 +1,4 @@
-# Pending-investigation rules (21) — NOT confirmed permanent
+# Pending-investigation rules (30) — NOT confirmed permanent
 
 Removed from `generator/compiled_constraints.json` on 2026-09-26, on the
 user's own explicit request, same mechanism as `../permanent/`. **The
@@ -8,11 +8,11 @@ one fails today for a concrete, previously-fixed-elsewhere category of gap
 tooling limitation like COLLECT/code_external. Read this file before ruling
 any of them out for good.
 
-**`records.json`** holds the full compiled record for all 21 rules (38
+**`records.json`** holds the full compiled record for all 30 rules (47
 records counting DRD fan-out variants), unchanged from what was in
 `compiled_constraints.json` before removal.
 
-## The 21, grouped by why they're currently unresolvable
+## The 30, grouped by why they're currently unresolvable
 
 ### 1. Join-path/schema-reachability gap (9 rules) — the same category this project has fixed before, repeatedly
 
@@ -94,6 +94,56 @@ in the search's own representation, not real calendar dates, so "years
 between them" only has a principled meaning under a disclosed day-count
 convention (this project already has precedent for such conventions
 elsewhere, e.g. `__today__`) -- not yet confirmed one way or the other.
+
+### 4. jBilling rules the search claimed but couldn't independently verify, on the user's own explicit request (9 rules) — kept active elsewhere this session; moved out here specifically so they stop competing for search/validator time while `Ageing Step Config Validation` stays under active investigation
+
+Unlike categories 1-3 above (each traced to ONE specific, common root
+cause across several rules), these 9 are the LEFTOVER, still-unresolved
+jBilling gaps from this session's own rule-by-rule tracing (2026-09-26)
+after cat A/B/C's own fixes -- each individually diagnosed already (see
+`validation_oracle/KNOWN_ISSUES.md`'s matching entries for the full
+writeup of each), just not yet actually fixed, and moved out on request
+rather than left cluttering the active search/validation runs. Removed
+together as a single user decision, not because they share one root cause:
+
+- **`Ageing Status Change Order Action::Rule_1`/`Rule_2`/`Rule_3`** --
+  `newStatusIsDeleted`'s own `compared_to_named_constant` fix (this
+  session) is confirmed correct, but the search hasn't independently
+  claimed a genuinely satisfying individual for these 3 specific rules
+  (only `Rule_4` has, so far).
+- **`Currency Exchange Rate Source::Rule_1`** -- needs
+  `hasEntitySpecificExchange=True`; the `base_user` correlation fix (this
+  session) is confirmed correct and DID unlock `Rule_2`, but `Rule_1`'s
+  own reachability wasn't separately investigated.
+- **`Order Period Already Invoiced::Rule_3`** -- needs `candidateDate`
+  fixed to something `>= 1` (its own real `next_billable_day`), a THIRD
+  distinct `not_persisted` override assumption that would break `Rule_2`/
+  `Rule_4`'s own already-working confirmation under `candidateDate=0` in
+  the same run -- see `KNOWN_ISSUES.md`'s catB entry for the full
+  writeup.
+- **`Blacklist Filter Enabled::Rule_2`** -- `blacklistPluginId`'s own
+  `compared_to_named_constant` (`PREFERENCE_USE_BLACKLIST=43`) is
+  recorded correctly, but no individual has been confirmed to actually
+  read the RIGHT `preference` row (`type_id=43`) rather than an arbitrary
+  one -- not separately traced this session.
+- **`Tax Calculation Needed::Rule_1`/`Rule_3`/`Rule_4`** -- the
+  GLOBAL-`exists`-fact fitness fix (this session, catA) is confirmed
+  correct (no longer FALSELY claims coverage), but the search hasn't yet
+  found a genuinely clean individual within the tried population/
+  generation budget -- a search-coverage/budget question, not a further
+  code gap; see `KNOWN_ISSUES.md`'s catA entry.
+
+`Ageing Step Config Validation::Rule_2`/`Rule_5` are DELIBERATELY NOT
+included here, on the user's own explicit instruction -- kept in the
+active corpus for continued investigation, even though they share the
+identical "search hasn't claimed this branch yet" shape as several rules
+above.
+
+**Precedent for closing these**: each one's own `KNOWN_ISSUES.md` entry
+already names the specific next step (a longer/bigger search re-run for
+the coverage-budget cases; a third override run for `Rule_3`; tracing the
+real subject row for `Blacklist Filter Enabled`) -- nothing here needs a
+NEW investigation, just doing the already-identified next step.
 
 ## If this ever needs to change
 

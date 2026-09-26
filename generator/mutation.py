@@ -185,6 +185,22 @@ def _domain_escape_value(literals, current):
     of these" fact (a NOT IN / negated =) actually needs to try, since
     swapping among the avoided values themselves can never help."""
     sample = next(iter(literals)) if literals else current
+    if isinstance(sample, bool) or isinstance(current, bool):
+        # A real bug found tracing jBilling's own `newStatusIsDeleted`
+        # (2026-09-26, right after fixing `schema_column`'s own
+        # `compared_to_named_constant` handling to return a genuine
+        # boolean): this fact's domain is now strictly `{True, False}`,
+        # not an open-ended numeric/string range -- there is no THIRD
+        # value to "escape" to. The string-escape fallback below,
+        # designed for a genuinely unbounded domain, produced literal
+        # strings like `'False_'`, which then got written straight into
+        # a real column (`_apply_field_mutation`'s own `compared_to_
+        # named_constant` branch only recognizes a real Python `bool`,
+        # so a string slips through untouched) -- a real `datatype
+        # mismatch`/corrupted value, confirmed directly via the actual
+        # archived individual. The only meaningful "escape" from a
+        # boolean domain is the OTHER boolean value.
+        return not bool(sample)
     if isinstance(sample, (int, float)) and not isinstance(sample, bool):
         numeric = [v for v in literals if isinstance(v, (int, float)) and not isinstance(v, bool)]
         return (max(numeric) if numeric else 0) + 1
@@ -676,7 +692,32 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
         row = focal.setdefault(table.upper(), {})
         if table.upper() not in {t for t in candidate.as_dict()} or row not in candidate.rows(table):
             candidate.add_row(table, row)
-        row[column] = value
+        constant = node.get('compared_to_named_constant')
+        if constant is not None and isinstance(value, bool):
+            # Mirrors `derived_case`'s own "never write the derived
+            # category itself, invert to a real value" discipline just
+            # below -- `value` here is the BOOLEAN the condition tree
+            # wants (`newStatusIsDeleted=True`), never the real column's
+            # own domain (found real, not hypothetical: writing the
+            # literal `True` straight into `generic_status`'s own PRIMARY
+            # KEY corrupted it -- two unrelated rules' own rows both
+            # landed on the identical value, a real `UNIQUE constraint
+            # failed`). `True` writes the real constant
+            # (`compared_to_named_constant['value']`); `False` writes any
+            # OTHER real value, via the same fresh-key mechanism already
+            # used for every other "just needs to be genuinely different"
+            # repair case -- guarded against the vanishingly unlikely
+            # case that the fresh value coincidentally equals the
+            # constant itself.
+            if value:
+                row[column] = constant['value']
+            else:
+                fresh = _fresh_key_value(candidate, table, column)
+                while fresh == constant['value']:
+                    fresh += 1
+                row[column] = fresh
+        else:
+            row[column] = value
         touched.append((table, row))
     elif kind == 'serialized_field':
         # Writes into a NESTED dict on the row, one level deeper than a

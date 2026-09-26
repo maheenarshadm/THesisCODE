@@ -1779,5 +1779,917 @@
   "fk_closure_tables": [],
   "cross_variable_reference": false,
   "feasibility": "unknown"
+ },
+ {
+  "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_1",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Obs Group Value Exclusivity",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ObsGroupValueExclusivity_Rule_1",
+  "source_citation": "L117-150",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isObsGroup"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "anyValueFieldSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "obsStructureValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "error.not.null (group carries a value field)",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "anyValueFieldSet": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
+   },
+   "isObsGroup": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_2",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Obs Group Value Exclusivity",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ObsGroupValueExclusivity_Rule_2",
+  "source_citation": "L117-150 all value-field checks pass",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isObsGroup"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "anyValueFieldSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "obsStructureValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "validGroup",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "anyValueFieldSet": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
+   },
+   "isObsGroup": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_3",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Obs Group Value Exclusivity",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ObsGroupValueExclusivity_Rule_3",
+  "source_citation": "L151-157",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isObsGroup"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "anyValueFieldSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "obsStructureValid": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "error.noValue",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "anyValueFieldSet": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
+   },
+   "isObsGroup": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Obs Group Value Exclusivity::Decision_ObsGroupValueExclusivity_Rule_4",
+  "case_study": "OpenMRS",
+  "dmn_file": "Concept_and_Observation_Validation.dmn",
+  "decision_name": "Obs Group Value Exclusivity",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_ObsGroupValueExclusivity_Rule_4",
+  "source_citation": "at least one value present",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "isObsGroup"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "anyValueFieldSet"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "obsStructureValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "validLeafObs",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_1",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_ObsGroupValueExclusivity_Rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "isObsGroup"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "anyValueFieldSet"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "anyValueFieldSet": {
+    "kind": "any_not_null",
+    "columns": [
+     {
+      "table": "obs",
+      "column": "value_coded"
+     },
+     {
+      "table": "obs",
+      "column": "value_complex"
+     },
+     {
+      "table": "obs",
+      "column": "value_datetime"
+     },
+     {
+      "table": "obs",
+      "column": "value_drug"
+     },
+     {
+      "table": "obs",
+      "column": "value_modifier"
+     },
+     {
+      "table": "obs",
+      "column": "value_numeric"
+     },
+     {
+      "table": "obs",
+      "column": "value_text"
+     }
+    ],
+    "notes": "OR of IS NOT NULL across all value_* columns; NOTE: there is no obs.value_boolean column -- boolean answers are stored via value_coded pointing at the TRUE/FALSE concept"
+   },
+   "isObsGroup": {
+    "kind": "schema_column",
+    "table": "obs",
+    "column": "obs_group_id",
+    "notes": "same as above"
+   }
+  },
+  "fk_closure_tables": [
+   "care_setting",
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "concept_name",
+   "drug",
+   "encounter",
+   "encounter_type",
+   "form",
+   "location",
+   "obs",
+   "order_group",
+   "order_set",
+   "order_type",
+   "orders",
+   "patient",
+   "person",
+   "privilege",
+   "provider",
+   "provider_role",
+   "users",
+   "visit",
+   "visit_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "obs",
+   "pk_columns": [
+    "obs_id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_4",
+  "case_study": "OpenMRS",
+  "dmn_file": "Patient_Identifier_Validation.dmn",
+  "decision_name": "Identifier Uniqueness Check",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_IdentifierUniquenessCheck_Rule_4",
+  "source_citation": "no matching identifier found",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "inUseByAnotherPatient"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "duplicateWithinSamePatient"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "identifierUniquenessValid": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   },
+   "reasonCode": {
+    "kind": "literal",
+    "value": "unique",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_IdentifierUniquenessCheck_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "uniquenessBehavior"
+      },
+      "right": {
+       "kind": "literal",
+       "value": "NON_UNIQUE",
+       "type": "string"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_IdentifierUniquenessCheck_Rule_2",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "inUseByAnotherPatient"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_IdentifierUniquenessCheck_Rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "inUseByAnotherPatient"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "duplicateWithinSamePatient"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "duplicateWithinSamePatient": {
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "location_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_identifier_id"
+     }
+    ],
+    "notes": "self-join over the same patient_id per PatientIdentifierValidator L112-130 (globally-unique type, or same/null location match)"
+   },
+   "inUseByAnotherPatient": {
+    "kind": "exists",
+    "candidate_tables": [
+     "patient_identifier"
+    ],
+    "candidate_columns": [
+     {
+      "table": "patient_identifier",
+      "column": "identifier"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "identifier_type"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "patient_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "voided"
+     }
+    ],
+    "filter_text": "identifier = :identifier AND identifier_type = :identifier_type AND patient_id != :patient_id AND voided = false",
+    "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
+   },
+   "uniquenessBehavior": {
+    "kind": "schema_column",
+    "table": "patient_identifier_type",
+    "column": "uniqueness_behavior"
+   }
+  },
+  "fk_closure_tables": [
+   "concept",
+   "concept_class",
+   "concept_datatype",
+   "location",
+   "patient",
+   "patient_identifier",
+   "patient_identifier_type",
+   "patient_program",
+   "person",
+   "program",
+   "users"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "patient_identifier",
+   "pk_columns": [
+    "patient_identifier_id"
+   ],
+   "joins": {
+    "patient_identifier_type": [
+     {
+      "from_table": "patient_identifier",
+      "from_column": "identifier_type",
+      "to_table": "patient_identifier_type",
+      "to_column": "patient_identifier_type_id"
+     }
+    ]
+   }
+  }
  }
 ]

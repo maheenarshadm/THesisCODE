@@ -1,5 +1,96 @@
 # Project handoff
 
+## Latest continuation — 2026-09-26 (Claude, systematic claimed-vs-verified gap-closing across OpenMRS and jBilling — 9 real fixes, one deliberate scope trim, both case studies re-run and re-confirmed)
+
+Continuation of the running "why does the search claim coverage the
+validator won't confirm" investigation. Traced and fixed real bugs one
+at a time, each verified via a fresh search re-run + validator pass
+before moving to the next — full root-cause writeups for every item below
+are in `KNOWN_ISSUES.md`'s own entries (search for the case-study name).
+
+**OpenMRS: 42 → 51 validated (70.0% → 85.0%)**, three real fixes:
+1. `compute_decision_subject`'s forward-FK-only root-picking couldn't
+   find a subject needing a backward hop (e.g. `obs -> concept <-
+   concept_numeric`) -- ported `functional_backward_edges`, a join-
+   disambiguation override, and a 4th, independently-found bug
+   (`also_valid_in` alternates wrongly forced into subject reachability).
+2. `classify_derived()` dropped two real ground-truth facts
+   (`isIndexTerm`/`isShortName` literal-equality, `isObsGroup`
+   self-join EXISTS) -- both compiled as the wrong bare `schema_column`
+   before this.
+3. A genuinely NEW validator-side bug, found chasing fix #2's own
+   regression: a `:column`/`self` filter_text reference resolves
+   EXCLUSIVELY off the subject row, with no join-path fallback the way a
+   `<placeholder>` has -- `subject_table.py`'s own table-extractor never
+   drew that distinction, silently assuming every self-join's own table
+   would already be the subject. Fixed in the validator itself, not just
+   the generator.
+
+**jBilling: 17/29 (58.6%) at session start → 18/20 (90%, combined across
+two disclosed `not_persisted` override runs) on a deliberately-trimmed
+20-rule active corpus**, four real fixes plus one scope decision:
+1. A GLOBAL (subject-independent) `exists` fact was scoped to the
+   search's own per-owner rows during fitness evaluation, letting
+   sibling objectives needing CONTRADICTORY values of the same global
+   fact both falsely claim `fitness=0.0` (`Tax Calculation Needed`'s own
+   `customContactFieldConfigured`). Fixed the read side to check the
+   whole candidate table for a genuinely global fact, matching the
+   validator's own real-SQL semantics.
+2. `entity_id`/`currency_id`/`status_id` never correlated onto a real
+   `base_user` row -- the mechanism to do this already existed
+   (`compute_cross_table_placeholder_correlations`) but its own
+   placeholder-source dict wasn't decision-scoped, so adding jBilling's
+   entry risked a real cross-decision collision. Widened the key,
+   corrected a real mistake found mid-fix (assumed placeholder names
+   were decision-unique when 2 FLEX2 ones weren't), and ported the whole
+   mechanism into the no-merge per-individual tool (it only ever ran in
+   the merge path before).
+3. A boolean fact compiled as a bare `schema_column`
+   (`newStatusIsDeleted`, `currentStatusIsActive`) had its literal
+   `True`/`False` written straight into a PRIMARY KEY column, corrupting
+   it (`UNIQUE constraint failed`). Taught both `_CONSTANT_RE` (dotted
+   constant names) and a new cross-reference resolver about
+   `compared_to_named_constant`, then made BOTH the read side
+   (`candidate.py`/`db_resolver.py`) and write side (`mutation.py`)
+   actually consult it -- previously write-only, dead metadata. Also
+   fixed a second bug this one exposed: `mutation.py`'s own
+   `_domain_escape_value` didn't know a boolean domain has no third
+   "escape" value.
+4. `Order Period Already Invoiced::Rule_1` needs the OPPOSITE
+   `not_persisted` assumption from its own siblings -- confirmed this is
+   NOT a bug (`coverage.py`'s own docstring already explains why
+   `not_persisted_overrides` is deliberately never read from the
+   search's own `scenario_maps`, to avoid a circular, self-confirming
+   validator) -- closed with a second, disclosed override file
+   (`jbilling_not_persisted_rule1.json`) and a second validator run,
+   same precedent as OpenMRS's own `evaluationTime` pick.
+5. **Scope decision, on the user's own explicit request**: 9 of
+   jBilling's remaining unvalidated rules moved to `validation_oracle/
+   out_of_scope/pending_investigation/` (category 4 there has the full
+   list + each one's own already-known next step) -- physically removed
+   from `compiled_constraints.json` and excluded from future search/
+   validation runs. `Ageing Step Config Validation::Rule_2`/`Rule_5`
+   deliberately KEPT active for continued investigation (currently: `Rule_
+   2` sits at `fitness=0.5`, never independently verified; `Rule_5`
+   isn't even claimed by search at all despite a `literal: true`
+   fallback condition -- not yet explained, a real open question).
+
+All fixes verified via full regression suite (`candidate.py`/
+`mutation.py` self-tests, `test_spec_cases.py`, `test_drd_chaining_
+synthetic.py`, `test_serialized_field_roundtrip.py`) plus a semantic,
+record-id-keyed diff of `compiled_constraints.json` before every patch
+(never raw `git diff`, which is misleading once record counts change).
+New `generator/rerun_jbilling_only.py` (mirrors `rerun_openmrs_only.py`'s
+own convention) for scoped re-runs without touching Spree/FLEX2.
+
+**Next steps**: `Ageing Step Config Validation::Rule_5`'s own
+never-claimed status (why doesn't a `FIRST`-hit-policy fallback rule ever
+get claimed?) is the most concrete open thread. `Order Period Already
+Invoiced::Rule_3` and the 9 rules moved to `pending_investigation/` each
+have their own already-diagnosed next step recorded there, just not
+attempted yet. Spree and FLEX2 have not had this same rule-by-rule
+tracing treatment this session.
+
 ## Latest continuation — 2026-09-25 (Claude, OpenMRS's 4 new Concept Name rules built — authored, compiled, confirmed solvable; fixture materialization is the next step)
 
 Direct follow-up to the entry below (fixing `Preferred Identifier

@@ -27,6 +27,28 @@ upstream decision's real output," not as a table reference.
 import re
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
+# A `:column`/bare `self` reference in filter_text (db_resolver.py's own
+# `_substitute_self_and_colon`) resolves EXCLUSIVELY off the SUBJECT
+# row's own dict -- no join-path fallback exists for it at all (unlike a
+# `<placeholder>`, which _resolve_placeholders CAN reach via join_paths
+# through filter_placeholder_sources.py). Found real, not hypothetical
+# (2026-09-26, OpenMRS's own `isObsGroup`: "obs_group_id = :obs_id"):
+# this decision's own subject resolved to `concept` alone (isObsGroup's
+# candidate table, `obs`, correctly needs no JOIN PATH to be reached, so
+# the exists/derived_aggregate exemption below is right about that) --
+# but resolve() still crashed with `NotImplementedError`, because
+# `:obs_id` has no matching column on a `concept` subject row at all.
+# The missing piece: a colon/self reference needs its own table to BE (or
+# be safely mergeable into) the subject row, a DIFFERENT requirement than
+# "does the candidate table need a join path" -- so it must still be
+# added to all_tables, forcing subject root-picking to consider it,
+# exactly like `derived_join_count`'s own `registration_table` already is
+# for the identical reason (see that entry's own comment just below).
+_COLON_OR_SELF_REF_RE = re.compile(r'(?<!:):(?!:)[A-Za-z_][A-Za-z0-9_]*|\bself\b')
+
+
+def _needs_self_table(filter_text):
+    return bool(filter_text) and bool(_COLON_OR_SELF_REF_RE.search(filter_text))
 
 
 def _placeholder_source_tables(case_study, filter_text):
@@ -57,16 +79,22 @@ _TABLE_EXTRACTORS = {
     'serialized_field': lambda n, cs: {n['table']},
     'null_check': lambda n, cs: {n['table']},
     'derived_case': lambda n, cs: {n['table']},
-    # derived_aggregate is ALWAYS self-contained for its OWN target table:
-    # db_resolver.resolve queries n['table'] directly via a raw SQL WHERE
-    # built entirely from substituting the SUBJECT row's own columns
-    # (self/colon/<bracket> placeholders) -- it never calls
-    # _row_for_table/walks a join path to reach n['table'] itself. But a
-    # filter_text placeholder can ALSO need a value from a DIFFERENT
-    # table when it's not on the subject row (see
-    # filter_placeholder_sources.py) -- that table DOES need a real join
-    # path, so it's added here when named.
-    'derived_aggregate': lambda n, cs: _placeholder_source_tables(cs, n.get('filter_text')),
+    # derived_aggregate is self-contained for its OWN target table only
+    # when nothing in filter_text needs the SUBJECT row to literally BE
+    # (or merge in) that table: db_resolver.resolve queries n['table']
+    # directly via a raw SQL WHERE built from substituting the subject
+    # row's own columns (self/colon/<bracket> placeholders) -- it never
+    # calls _row_for_table/walks a join path to reach n['table'] itself,
+    # so ordinarily no join path is needed. But a `:column`/bare `self`
+    # reference (see `_needs_self_table`'s own docstring) resolves ONLY
+    # off the subject row's own dict, with NO join-path fallback the way
+    # a `<placeholder>` has -- so when one is present, n['table'] must
+    # still be added, forcing it to BE (or be safely reachable as) the
+    # subject. A `<placeholder>` naming a DIFFERENT table when it's not on
+    # the subject row (see filter_placeholder_sources.py) also still needs
+    # a real join path, added here when named, independent of the above.
+    'derived_aggregate': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
+                                         | ({n['table']} if _needs_self_table(n.get('filter_text')) else set())),
     # `prereq_table` is queried via a raw, UNCORRELATED scan
     # (`db_resolver.resolve`'s own derived_join_count branch: `SELECT
     # COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS (...)`, no WHERE
@@ -87,13 +115,16 @@ _TABLE_EXTRACTORS = {
     # exists is the SAME story, but only when filter_text is present --
     # then it's a self-contained correlated EXISTS query against its OWN
     # candidate table, identical reasoning to derived_aggregate above
-    # (including the same filter_placeholder_sources addition). With NO
-    # filter_text (the OpenMRS-style "does the subject's OWN row have a
-    # non-null value" pattern, or a genuinely bare "(existence)" with no
-    # filter at all), db_resolver DOES call _row_for_table, so a join
-    # path is still required there.
-    'exists': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
-                              if n.get('filter_text') else set(n['candidate_tables'])),
+    # (including the same filter_placeholder_sources addition AND the
+    # same `:column`/`self` exception -- see that entry's own comment).
+    # With NO filter_text (the OpenMRS-style "does the subject's OWN row
+    # have a non-null value" pattern, or a genuinely bare "(existence)"
+    # with no filter at all), db_resolver DOES call _row_for_table, so a
+    # join path is still required there.
+    'exists': lambda n, cs: (
+        (_placeholder_source_tables(cs, n.get('filter_text'))
+         | (set(n['candidate_tables']) if _needs_self_table(n.get('filter_text')) else set()))
+        if n.get('filter_text') else set(n['candidate_tables'])),
     # SAME reasoning as derived_aggregate/exists above, mirrored: the
     # `sql_template` is executed directly against the live connection
     # (db_resolver.resolve's own raw_sql_boolean branch never calls

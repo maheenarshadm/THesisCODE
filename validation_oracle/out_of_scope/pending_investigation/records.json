@@ -7379,5 +7379,1059 @@
    ],
    "joins": {}
   }
+ },
+ {
+  "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Ageing_and_Dunning.dmn",
+  "decision_name": "Ageing Status Change Order Action",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_1",
+  "source_citation": "L336-340: new status == STATUS_DELETED -> new UserBL(user.getId()).delete(executorId); return (terminal, orders untouched here)",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "newStatusIsDeleted"
+   },
+   "right": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "orderAction": {
+    "kind": "literal",
+    "value": "DELETE_USER",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "newStatusIsDeleted": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "compared_to_named_constant": {
+     "name": "UserDTOEx.STATUS_DELETED",
+     "value": 8
+    },
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
+   }
+  },
+  "fk_closure_tables": [
+   "generic_status",
+   "generic_status_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Ageing_and_Dunning.dmn",
+  "decision_name": "Ageing Status Change Order Action",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_2",
+  "source_citation": "L344-353: couldLogin (old status canLogin==1) transitions to newStatus.canLogin==0 -> every ACTIVE order for the user is set to ORDER_STATUS_SUSPENDED_AGEING",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newStatusIsDeleted"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "oldStatusCanLogin"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newStatusCanLogin"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "orderAction": {
+    "kind": "literal",
+    "value": "SUSPEND_ACTIVE_ORDERS",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newStatusIsDeleted"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
+   },
+   "newStatusIsDeleted": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "compared_to_named_constant": {
+     "name": "UserDTOEx.STATUS_DELETED",
+     "value": 8
+    },
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
+   },
+   "oldStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
+   }
+  },
+  "fk_closure_tables": [
+   "generic_status",
+   "generic_status_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_3",
+  "case_study": "jBilling",
+  "dmn_file": "Ageing_and_Dunning.dmn",
+  "decision_name": "Ageing Status Change Order Action",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_3",
+  "source_citation": "L357-366: !couldLogin transitions to newStatus.canLogin==1 -> every order in ORDER_STATUS_SUSPENDED_AGEING is set back to ORDER_STATUS_ACTIVE",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newStatusIsDeleted"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "oldStatusCanLogin"
+     },
+     "right": {
+      "kind": "literal",
+      "value": false,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "newStatusCanLogin"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "orderAction": {
+    "kind": "literal",
+    "value": "REACTIVATE_SUSPENDED_ORDERS",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "newStatusIsDeleted"
+      },
+      "right": {
+       "kind": "literal",
+       "value": true,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_AgeingStatusChangeOrderAction_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "newStatusIsDeleted"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "oldStatusCanLogin"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "newStatusCanLogin"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "newStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
+   },
+   "newStatusIsDeleted": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "id",
+    "compared_to_named_constant": {
+     "name": "UserDTOEx.STATUS_DELETED",
+     "value": 8
+    },
+    "notes": "generic_status.id (the new UserStatusDTO row) compared against the hardcoded constant UserDTOEx.STATUS_DELETED=8."
+   },
+   "oldStatusCanLogin": {
+    "kind": "schema_column",
+    "table": "generic_status",
+    "column": "can_login"
+   }
+  },
+  "fk_closure_tables": [
+   "generic_status",
+   "generic_status_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "generic_status",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Currency_Exchange_Rules.dmn",
+  "decision_name": "Currency Exchange Rate Source",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_CurrencyExchangeRateSource_Rule_1",
+  "source_citation": "CurrencyBL.java L325-326: a currency_exchange row scoped to this entity exists -> use it",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "hasEntitySpecificExchange"
+   },
+   "right": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "exchangeRateSource": {
+    "kind": "literal",
+    "value": "ENTITY_SPECIFIC",
+    "type": "string"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "hasEntitySpecificExchange": {
+    "kind": "exists",
+    "candidate_tables": [
+     "currency_exchange"
+    ],
+    "candidate_columns": [
+     {
+      "table": "currency_exchange",
+      "column": "entity_id"
+     },
+     {
+      "table": "currency_exchange",
+      "column": "currency_id"
+     }
+    ],
+    "filter_text": "entity_id = <entity_id> AND currency_id = <currency_id>",
+    "notes": "Boolean derived from existence of a currency_exchange row keyed by the real entity_id and currency_id.",
+    "raw_schema_field": "currency_exchange (entity_id, currency_id)",
+    "cross_table_placeholders": {
+     "entity_id": {
+      "table": "base_user",
+      "column": "entity_id"
+     },
+     "currency_id": {
+      "table": "base_user",
+      "column": "currency_id"
+     }
+    }
+   }
+  },
+  "fk_closure_tables": [
+   "currency",
+   "currency_exchange"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "base_user",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_3",
+  "case_study": "jBilling",
+  "dmn_file": "Order_Cancellation_and_Validity.dmn",
+  "decision_name": "Order Period Already Invoiced",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_OrderPeriodAlreadyInvoiced_Rule_3",
+  "source_citation": "L1107: candidate date is not before the next billable day -- exposed as a real cross-variable date comparison, replacing candidateDateBeforeNextBillableDay (redesigned 2026-09-10)",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "candidateDateProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "nextBillableDayProvided"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": ">=",
+     "left": {
+      "kind": "variable",
+      "ref": "candidateDate"
+     },
+     "right": {
+      "kind": "variable",
+      "ref": "nextBillableDay"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "periodAlreadyInvoiced": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_OrderPeriodAlreadyInvoiced_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "candidateDateProvided"
+      },
+      "right": {
+       "kind": "literal",
+       "value": false,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_OrderPeriodAlreadyInvoiced_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "candidateDateProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "nextBillableDayProvided"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "candidateDate": {
+    "kind": "not_persisted"
+   },
+   "candidateDateProvided": {
+    "kind": "not_persisted"
+   },
+   "nextBillableDay": {
+    "kind": "schema_column",
+    "table": "purchase_order",
+    "column": "next_billable_day"
+   },
+   "nextBillableDayProvided": {
+    "kind": "null_check",
+    "table": "purchase_order",
+    "column": "next_billable_day",
+    "notes": "Null-check on purchase_order.next_billable_day (nullable date column)."
+   }
+  },
+  "fk_closure_tables": [
+   "base_user",
+   "currency",
+   "entity",
+   "language",
+   "order_billing_type",
+   "order_period",
+   "period_unit",
+   "purchase_order"
+  ],
+  "cross_variable_reference": true,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "purchase_order",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_2",
+  "case_study": "jBilling",
+  "dmn_file": "Payment_Authorization_and_Blacklist.dmn",
+  "decision_name": "Blacklist Filter Enabled",
+  "hit_policy": "UNIQUE",
+  "rule_id": "Decision_BlacklistFilterEnabled_Rule_2",
+  "source_citation": "BlacklistBL.java L129-131: any non-zero plug-in id (a real row found via PluggableTaskDAS) means the blacklist/payment filter plug-in is active for the entity",
+  "condition": {
+   "op": "!=",
+   "left": {
+    "kind": "variable",
+    "ref": "blacklistPluginId"
+   },
+   "right": {
+    "kind": "literal",
+    "value": 0,
+    "type": "number"
+   }
+  },
+  "outputs": {
+   "blacklistEnabled": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_BlacklistFilterEnabled_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "blacklistPluginId"
+      },
+      "right": {
+       "kind": "literal",
+       "value": 0,
+       "type": "number"
+      }
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "blacklistPluginId": {
+    "kind": "schema_column",
+    "table": "preference",
+    "column": "value",
+    "compared_to_named_constant": {
+     "name": "PREFERENCE_USE_BLACKLIST",
+     "value": 43
+    },
+    "notes": "Reads the generic preference(type_id, table_id, foreign_id, value) table (type_id=PREFERENCE_USE_BLACKLIST=43), not a dedicated blacklist-config column."
+   }
+  },
+  "fk_closure_tables": [
+   "jbilling_table",
+   "preference",
+   "preference_type"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "preference",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {}
+  }
+ },
+ {
+  "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_1",
+  "case_study": "jBilling",
+  "dmn_file": "Proration_and_Tax.dmn",
+  "decision_name": "Tax Calculation Needed",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_TaxCalculationNeeded_Rule_1",
+  "source_citation": "SimpleTaxCompositionTask.java L161-163: no custom_contact_field_id plugin parameter configured -> tax is always calculated (no exemption mechanism active)",
+  "condition": {
+   "op": "=",
+   "left": {
+    "kind": "variable",
+    "ref": "customContactFieldConfigured"
+   },
+   "right": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "outputs": {
+   "taxCalculationNeeded": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": []
+  },
+  "variable_resolution": {
+   "customContactFieldConfigured": {
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
+   }
+  },
+  "fk_closure_tables": [
+   "currency",
+   "entity",
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_3",
+  "case_study": "jBilling",
+  "dmn_file": "Proration_and_Tax.dmn",
+  "decision_name": "Tax Calculation Needed",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_TaxCalculationNeeded_Rule_3",
+  "source_citation": "L169-174: a contact field of the configured type has content case-insensitively equal to \"yes\"/\"true\" -> customer is tax-exempt",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "customContactFieldConfigured"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "primaryContactFound"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "matchingFieldValue"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "EXEMPT_VALUE",
+      "type": "string"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "taxCalculationNeeded": {
+    "kind": "literal",
+    "value": false,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_TaxCalculationNeeded_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "customContactFieldConfigured"
+      },
+      "right": {
+       "kind": "literal",
+       "value": false,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_TaxCalculationNeeded_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "customContactFieldConfigured"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "primaryContactFound"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "customContactFieldConfigured": {
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
+   },
+   "matchingFieldValue": {
+    "kind": "schema_column",
+    "table": "contact_field",
+    "column": "content"
+   },
+   "primaryContactFound": {
+    "kind": "exists",
+    "candidate_tables": [
+     "contact"
+    ],
+    "candidate_columns": [],
+    "notes": "Boolean derived from whether a primary contact row exists for the customer.",
+    "raw_schema_field": "contact (existence)"
+   }
+  },
+  "fk_closure_tables": [
+   "contact",
+   "contact_field",
+   "contact_field_type",
+   "currency",
+   "entity",
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
+ },
+ {
+  "record_id": "jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_4",
+  "case_study": "jBilling",
+  "dmn_file": "Proration_and_Tax.dmn",
+  "decision_name": "Tax Calculation Needed",
+  "hit_policy": "FIRST",
+  "rule_id": "Decision_TaxCalculationNeeded_Rule_4",
+  "source_citation": "L169-178: no matching exempt-value contact field found -> falls through to the default 'true' at L178",
+  "condition": {
+   "op": "and",
+   "clauses": [
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "customContactFieldConfigured"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "primaryContactFound"
+     },
+     "right": {
+      "kind": "literal",
+      "value": true,
+      "type": "boolean"
+     }
+    },
+    {
+     "op": "=",
+     "left": {
+      "kind": "variable",
+      "ref": "matchingFieldValue"
+     },
+     "right": {
+      "kind": "literal",
+      "value": "OTHER",
+      "type": "string"
+     }
+    }
+   ]
+  },
+  "outputs": {
+   "taxCalculationNeeded": {
+    "kind": "literal",
+    "value": true,
+    "type": "boolean"
+   }
+  },
+  "hit_policy_context": {
+   "earlier_rows": [
+    {
+     "rule_id": "Decision_TaxCalculationNeeded_Rule_1",
+     "condition": {
+      "op": "=",
+      "left": {
+       "kind": "variable",
+       "ref": "customContactFieldConfigured"
+      },
+      "right": {
+       "kind": "literal",
+       "value": false,
+       "type": "boolean"
+      }
+     }
+    },
+    {
+     "rule_id": "Decision_TaxCalculationNeeded_Rule_2",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "customContactFieldConfigured"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "primaryContactFound"
+        },
+        "right": {
+         "kind": "literal",
+         "value": false,
+         "type": "boolean"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "rule_id": "Decision_TaxCalculationNeeded_Rule_3",
+     "condition": {
+      "op": "and",
+      "clauses": [
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "customContactFieldConfigured"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "primaryContactFound"
+        },
+        "right": {
+         "kind": "literal",
+         "value": true,
+         "type": "boolean"
+        }
+       },
+       {
+        "op": "=",
+        "left": {
+         "kind": "variable",
+         "ref": "matchingFieldValue"
+        },
+        "right": {
+         "kind": "literal",
+         "value": "EXEMPT_VALUE",
+         "type": "string"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "variable_resolution": {
+   "customContactFieldConfigured": {
+    "kind": "exists",
+    "candidate_tables": [
+     "pluggable_task_parameter"
+    ],
+    "candidate_columns": [],
+    "filter_text": "name = 'custom_contact_field_id'",
+    "notes": "ground truth labeled this 'not-persisted' ('A pluggable_task_parameter configuration value, not a row in a business table'), but pluggable_task_parameter is a real table in jBilling's own schema; reclassified as a global exists-check, see not_persisted_reclassification.py for the full disclosure"
+   },
+   "matchingFieldValue": {
+    "kind": "schema_column",
+    "table": "contact_field",
+    "column": "content"
+   },
+   "primaryContactFound": {
+    "kind": "exists",
+    "candidate_tables": [
+     "contact"
+    ],
+    "candidate_columns": [],
+    "notes": "Boolean derived from whether a primary contact row exists for the customer.",
+    "raw_schema_field": "contact (existence)"
+   }
+  },
+  "fk_closure_tables": [
+   "contact",
+   "contact_field",
+   "contact_field_type",
+   "currency",
+   "entity",
+   "language",
+   "pluggable_task",
+   "pluggable_task_parameter",
+   "pluggable_task_type",
+   "pluggable_task_type_category"
+  ],
+  "cross_variable_reference": false,
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "contact_field",
+   "pk_columns": [
+    "id"
+   ],
+   "joins": {
+    "contact": [
+     {
+      "from_table": "contact_field",
+      "from_column": "contact_id",
+      "to_table": "contact",
+      "to_column": "id"
+     }
+    ]
+   }
+  }
  }
 ]

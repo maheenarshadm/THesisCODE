@@ -821,6 +821,75 @@ def _mutations_per_child(active, population_size, mutations_per_child):
     return mutations_per_child
 
 
+def _apply_cross_table_placeholder_correlations(candidate, rec_focal, rec_scenario, r, rid, schema):
+    """Filter_text placeholder correlations (2026-09-24/25, extracted into
+    a shared function 2026-09-26 -- the SAME gap `_build_decision_subject_
+    row` was extracted to close the day before, found the same way:
+    tracing jBilling's `Currency Exchange Rate Source`, this only ever ran
+    inside `_merge_archive_candidate_impl`, so `validation_oracle/tests/
+    per_individual_archive_coverage.py`'s own no-merge pipeline never
+    applied it either, even after `compile_constraints.py`'s own
+    `cross_table_placeholders` compile-time fix. Extracted here, called
+    from BOTH places now, so they can never drift apart on this again.
+
+    `compile_constraints.py`'s own `cross_table_placeholders` field
+    (computed alongside `decision_subject`, same file, same
+    generator-owned-mirror rationale), fed by two distinct compile-time
+    sources sharing one field/consumer:
+
+      (a) a placeholder `filter_placeholder_sources.py` declares a
+          source table for (e.g. `<program>` -> `STUDENT_PROGRAM`);
+      (b) a placeholder whose own conjunct COLUMN matches the decision's
+          own subject row's real FK column (e.g. `<COURSE_ID>`, via
+          `COURSE_REGISTRATION.COURSE_ID` -> `COURSE.COURSE_ID`) -- the
+          validator resolves this kind directly off the subject row
+          itself, its own FIRST priority, never even reaching
+          `filter_placeholder_sources.py`.
+
+    Both share the same underlying bug shape: a `derived_aggregate`/
+    `exists` node's own filter_text binds a placeholder (e.g. `<program>`,
+    `<COURSE_ID>`) to a column search treats as an ordinary,
+    independently-tunable `scenario` scalar -- but the SAME real-world
+    fact also needs to equal this SAME record's own value on a DIFFERENT
+    table. Nothing in `candidate.py`'s own seeding/mutation or
+    `fitness.py`'s own evaluation ever makes that connection.
+
+    Copying the record's own (already-offset) scenario value onto the
+    correlated table's own column HERE, before `_build_decision_subject_
+    row` runs, means that function's own subject-junction wiring sees the
+    corrected value rather than locking in its own fresh key first.
+    Synthesizes a fresh row for the correlated table if this record has
+    not built one yet. If the correlated column is a genuine PK/UNIQUE key
+    for its table and the value now collides with a DIFFERENT row this
+    same candidate already holds, that OTHER row (never the
+    semantically-required correlated one) is bumped to a fresh,
+    collision-safe value, the same way `mutation.py`'s own
+    `_fresh_key_value` already resolves every other such clash.
+
+    `candidate`/`rec_focal`/`rid` follow the exact same convention as
+    `_build_decision_subject_row`'s own (see that function's docstring).
+    `rec_scenario` is this record's own (already offset, where
+    applicable) scenario dict. Mutates `candidate` (via `add_row`) and
+    `rec_focal` in place; returns nothing."""
+    for node in r.get('variable_resolution', {}).values():
+        if not isinstance(node, dict):
+            continue
+        for placeholder, source in (node.get('cross_table_placeholders') or {}).items():
+            value = rec_scenario.get(placeholder)
+            if value is None:
+                continue
+            target_focal = rec_focal.get(source['table']) or next(
+                (v for k, v in rec_focal.items() if k.upper() == source['table'].upper()), None)
+            if target_focal is None:
+                target_focal = candidate.add_row(source['table'], {_OWNER_KEY: rid})
+                rec_focal[source['table']] = target_focal
+            target_focal[source['column']] = value
+            if source['column'].upper() in _own_solo_unique_columns_for(schema, source['table']):
+                for other_row in candidate.rows(source['table']):
+                    if other_row is not target_focal and other_row.get(source['column']) == value:
+                        other_row[source['column']] = _fresh_key_value(candidate, source['table'], source['column'])
+
+
 def _build_decision_subject_row(candidate, rec_focal, r, rid):
     """The decision's own real DMN subject row (2026-09-24, extracted into
     a shared function 2026-09-26) -- `compile_constraints.py`'s own
@@ -1765,101 +1834,15 @@ def _merge_archive_candidate_impl(archive, records, case_study, include_all_rows
         if merged_rec_focal:
             merged_focal_maps[rid] = merged_rec_focal
 
-        # (3) Filter_text placeholder correlations (2026-09-24/25) --
-        # `compile_constraints.py`'s own `cross_table_placeholders` field
-        # (computed alongside `decision_subject`, same file, same
-        # generator-owned-mirror rationale), fed by two distinct
-        # compile-time sources sharing one field/consumer:
-        #
-        #   (a) a placeholder `filter_placeholder_sources.py` declares a
-        #       source table for (e.g. `<program>` -> `STUDENT_PROGRAM`);
-        #   (b) a placeholder whose own conjunct COLUMN matches the
-        #       decision's own subject row's real FK column (e.g.
-        #       `<COURSE_ID>`, via `COURSE_REGISTRATION.COURSE_ID` ->
-        #       `COURSE.COURSE_ID`) -- the validator resolves this kind
-        #       directly off the subject row itself, its own FIRST
-        #       priority, never even reaching `filter_placeholder_
-        #       sources.py`.
-        #
-        # Both share the same underlying bug shape: a `derived_aggregate`/
-        # `exists` node's own filter_text binds a placeholder (e.g.
-        # `<program>`, `<COURSE_ID>`) to a column search treats as an
-        # ordinary, independently-tunable `scenario` scalar -- but the
-        # SAME real-world fact also needs to equal this SAME record's own
-        # value on a DIFFERENT table. Nothing in `candidate.py`'s own
-        # seeding/mutation or `fitness.py`'s own evaluation ever makes
-        # that connection -- confirmed real for BOTH: FLEX2's `Course
-        # Replacement Eligibility::degreeTotalCredits` correctly keeps
-        # `PROGRAM_COURSE.PROG_ID` equal to `scenario['program']`
-        # throughout search (both shift together under the SAME offset),
-        # while `STUDENT_PROGRAM.PROG_ID` -- never independently set by
-        # any leaf -- ends up a plain, generic NOT-NULL repair
-        # placeholder instead; `Rule_4`'s own
-        # `courseOfferedInFollowingSemesters` correctly keeps
-        # `COURSE_OFFER.COURSE_ID` equal to `scenario['COURSE_ID']` the
-        # same way, while `COURSE.COURSE_ID` -- never independently set
-        # by any leaf either, since `courseTypeId`'s own `course_type_id`
-        # read needs no placeholder at all -- only ever gets a value from
-        # a GLOBAL fresh-key repair, unrelated to either.
-        #
-        # Copying the record's own (already-offset) scenario value onto
-        # the correlated table's own column HERE, before `repair_
-        # candidate` runs below, means that later generic fallback never
-        # fires for it (its own guard already skips any column that
-        # already has a real value) -- a post-search correction, not a
-        # search-loop, fitness, or mutation-operator change. Deliberately
-        # placed BEFORE (4)'s own subject-junction wiring below, not
-        # after: for the (b) shape, the correlated table (`COURSE`) is
-        # often the SAME table a subject hop reads FROM to wire the
-        # subject row itself -- running this first means (4) sees the
-        # corrected value and correctly propagates it onto the subject
-        # row too, rather than locking in its own fresh key first and
-        # leaving this step to fix a value nothing downstream still
-        # reads. Synthesizes a fresh row for the correlated table the
-        # same way (4) does for a missing hop target, for the same
-        # reason: nothing else in this record may have built one yet
-        # (confirmed real for the (b) shape specifically: a record using
-        # ONLY the `exists` leaf and no other leaf on that table).
-        #
-        # A real collision found testing the (b) shape (2026-09-25):
-        # when the correlated column is the target table's own PK/UNIQUE
-        # key (e.g. `COURSE.COURSE_ID`), writing `scenario[placeholder]`
-        # onto it can coincidentally equal a value some OTHER row this
-        # SAME record independently owns on that SAME table already
-        # holds -- confirmed real for `Course Replacement Eligibility`'s
-        # own `Rule_4`/`Rule_5`/`Rule_6`: `degreeTotalCredits`'s own
-        # `derived_aggregate` seeding (candidate.py's `joined_value_table`
-        # branch) builds 3 of its OWN separate `COURSE` rows for the SAME
-        # record, numbered `1, 2, 3` pre-offset -- the SAME starting
-        # point `<COURSE_ID>`'s own scenario default uses, so after the
-        # SAME per-record offset, the FIRST of those 3 rows and the
-        # correlated focal row can land on the identical `COURSE_ID`,
-        # a real `UNIQUE constraint failed` `_fill_missing_surrogate_
-        # keys`/materialize.py would only catch much later. Detected and
-        # resolved here instead, immediately: if `column` is a genuine
-        # PK/UNIQUE key for `table` and the value now collides with a
-        # DIFFERENT row already in `merged`, that OTHER row (never the
-        # semantically-required correlated one) is bumped to a fresh,
-        # collision-safe value the same way `mutation.py`'s own
-        # `_fresh_key_value` already resolves every other such clash.
-        for node in r.get('variable_resolution', {}).values():
-            if not isinstance(node, dict):
-                continue
-            for placeholder, source in (node.get('cross_table_placeholders') or {}).items():
-                value = rec_scenario.get(placeholder)
-                if value is None:
-                    continue
-                target_focal = merged_rec_focal.get(source['table']) or next(
-                    (v for k, v in merged_rec_focal.items() if k.upper() == source['table'].upper()), None)
-                if target_focal is None:
-                    target_focal = merged.add_row(source['table'], {_OWNER_KEY: rid})
-                    merged_rec_focal[source['table']] = target_focal
-                    merged_focal_maps[rid] = merged_rec_focal
-                target_focal[source['column']] = value
-                if source['column'].upper() in _own_solo_unique_columns_for(schema, source['table']):
-                    for other_row in merged.rows(source['table']):
-                        if other_row is not target_focal and other_row.get(source['column']) == value:
-                            other_row[source['column']] = _fresh_key_value(merged, source['table'], source['column'])
+        # (3) Filter_text placeholder correlations -- extracted 2026-09-26
+        # into the shared `_apply_cross_table_placeholder_correlations`
+        # (see its own docstring for the full writeup), called from BOTH
+        # here and the per-individual tool now. Deliberately still placed
+        # BEFORE (4)'s own subject-junction wiring below -- see that
+        # function's own docstring for why.
+        _apply_cross_table_placeholder_correlations(merged, merged_rec_focal, rec_scenario, r, rid, schema)
+        if merged_rec_focal:
+            merged_focal_maps[rid] = merged_rec_focal
 
         # (4) The decision's own real DMN subject row (2026-09-24) --
         # `compile_constraints.py`'s own `decision_subject` field (a

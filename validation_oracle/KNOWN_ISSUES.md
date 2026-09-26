@@ -1,5 +1,436 @@
 # Validation oracle — known issues tracker
 
+## SCOPE CHANGE, on the user's own explicit request (2026-09-26) — 9 of jBilling's remaining unvalidated rules moved to `pending_investigation/`, `Ageing Step Config Validation::Rule_2`/`Rule_5` deliberately kept active
+
+After this session's own catA/catB/catC fixes, jBilling's real combined
+coverage stood at 18/29 validated (62.1%), leaving 11 genuinely
+unvalidated rules. The user asked to keep `Ageing Step Config
+Validation::Rule_2`/`Rule_5` under continued active investigation, and
+move the other 9 out of the active corpus (out of both future search runs
+and validation) into `validation_oracle/out_of_scope/pending_
+investigation/` -- category 4 there has the full per-rule breakdown and
+each one's own already-known next step (nothing newly investigated here,
+just relocated): `Ageing Status Change Order Action::Rule_1`/`Rule_2`/
+`Rule_3`, `Currency Exchange Rate Source::Rule_1`, `Order Period Already
+Invoiced::Rule_3`, `Blacklist Filter Enabled::Rule_2`, `Tax Calculation
+Needed::Rule_1`/`Rule_3`/`Rule_4`.
+
+Removed from `generator/compiled_constraints.json` (183 -> 174 records;
+jBilling 29 -> 20 distinct rule_ids), archived in `pending_investigation/
+records.json` (30 rules / 47 records total there now, up from 21/38).
+Full regression suite passing. Needs a fresh jBilling search re-run (the
+current archive still targets the old, larger objective set) before the
+trimmed corpus's own real coverage can be seen.
+
+## RESOLVED (PARTIALLY), confirmed via a second override run, NOT A CODE BUG (2026-09-26) — catB: jBilling's `Order Period Already Invoiced::Rule_1`/`Rule_3` can't both verify under the SAME single fixed `not_persisted` override
+
+`Order Period Already Invoiced::Rule_1` needs `candidateDateProvided=
+False`; `Rule_2`/`Rule_3`/`Rule_4` need it `True`. The current
+`jbilling_not_persisted.json` (`{"candidateDateProvided": true,
+"candidateDate": 0}`) structurally forbids `Rule_1` from ever verifying,
+and `Rule_3` (needs `candidateDate(=0) >= nextBillableDay`, but its own
+real `next_billable_day=1`) can't verify under `candidateDate=0` either.
+
+**Confirmed this is NOT a bug, by design**: `coverage.py`'s own docstring
+already explains why -- `not_persisted_overrides` is deliberately an
+EXPLICIT, EXTERNALLY-DISCLOSED value, never read from the search's own
+archived `scenario_maps`, specifically so independent verification can
+never "rubber-stamp" whatever value the search itself happened to pick
+for its own claim (a circular, self-confirming check that would prove
+nothing). Confirmed directly: the archive's own `scenario_maps` for this
+decision ALREADY holds the exactly-correct, per-rule values (`Rule_1:
+candidateDateProvided=False`; `Rule_2: True`; `Rule_3: candidateDate=
+16000001`; `Rule_4: candidateDate=17000001`) -- reading those directly
+would trivially "verify" everything, which is exactly the failure mode
+this project's own design already guards against. A single fixed
+override can only ever test ONE "slice" of reality per run; a rule
+needing the OPPOSITE assumption is inherently untestable within that
+same run, by design, not by omission.
+
+**Fixed the tractable part with NO code change**: `Rule_1` doesn't read
+`candidateDate` at all, only the boolean `candidateDateProvided` -- a
+SECOND, still-fixed, still-disclosed override file (`validation_oracle/
+tests/jbilling_not_persisted_rule1.json`, `{"candidateDateProvided":
+false}`) lets a SEPARATE validator run legitimately confirm `Rule_1`,
+the same precedent already used for OpenMRS's own `evaluationTime` pick.
+`Rule_3` is NOT similarly rescued -- it would need `candidateDate` fixed
+to something `>= 1` (its own real `next_billable_day`), a THIRD distinct
+assumption, and doing so would break `Rule_2`/`Rule_4`'s own already-
+working confirmation under `candidateDate=0` in the SAME run -- left
+open, genuinely harder, not attempted this round.
+
+**First attempt failed with a real, since-fixed gap**: the override file
+only declared `candidateDateProvided`, not `candidateDate` -- but
+`drd_executor.py`'s own decision runner resolves EVERY variable the
+decision references anywhere (across all 4 rules), before hit-policy
+selection even runs, so the missing `candidateDate` (needed by `Rule_2`/
+`Rule_3`/`Rule_4`, never by `Rule_1` itself) raised `NotImplementedError`
+and marked the WHOLE decision unresolved -- all 4 rules showed
+`not_verified`, not just `Rule_1`, with no error surfaced in the coverage
+summary (`run_coverage` catches `NotImplementedError` per-decision and
+records it as `unresolved_decisions`, not a crash). Fixed by adding
+`"candidateDate": 0` to the override file too -- its actual value is
+functionally irrelevant once `candidateDateProvided=False` (whatever
+picks `Rule_1` via `FIRST` hit policy never reaches the rules that read
+`candidateDate` at all), it just needs to resolve to SOMETHING.
+
+**Confirmed working directly** (`drd_executor.run_decision` against the
+actual archived individual's own materialized database): all 6 of its
+`purchase_order` rows now correctly select `Rule_1`
+(`periodAlreadyInvoiced: False`).
+
+**Re-run result (2026-09-26), confirmed via the full tool**:
+`Decision_OrderPeriodAlreadyInvoiced_Rule_1` verifies (via `InvoiceOverdue
+::Rule_1`'s own individual, which also happens to carry a satisfying
+`purchase_order` row). Run 2 (this override) validated 16/29 on its own;
+UNION with run 1 (the default override, 17/29) is **18/29 (62.1%)** --
+`Rule_1` is the one genuinely NEW addition the union picks up, exactly as
+predicted, closing this catB fix as resolved for the tractable half
+(`Rule_3` remains the separately-flagged, harder, not-attempted gap
+above).
+
+## RESOLVED (PARTIALLY) / REMAINING GAP UNRESOLVED, confirmed via re-run (2026-09-26) — closing catC: jBilling's `entity_id`/`currency_id`/`status_id` never correlate onto a real `base_user` row, because the ONLY mechanism that could do it was scoped too coarsely to add without a namespace collision
+
+Closes the catC gap logged for jBilling (`Currency Exchange Rate Source::
+Rule_1`/`Rule_2`, `Ageing Step Config Validation::Rule_2`): `<entity_id>`/
+`<currency_id>` (and `Ageing Step Config Validation`'s own `<status_id>`)
+are meant to correlate off a real `base_user` row (a genuine researcher
+judgment call, already fully disclosed in `validation_oracle/filter_
+placeholder_sources.py`), but no `base_user` row the generator ever built
+got real, non-null values for those columns -- confirmed directly against
+`decision_trace.json`/the actual archived individuals.
+
+**Root cause**: the infrastructure to do this correctly already existed
+and was proven working elsewhere (`compute_cross_table_placeholder_
+correlations` + `dynamosa.py`'s own merge-time wiring, first built for
+FLEX2's `degreeTotalCredits`) -- but `_DECISION_SUBJECT_PLACEHOLDER_
+SOURCES`'s key shape, `(case_study, placeholder_name)` with NO
+decision-scoping, meant adding `('jBilling', 'entity_id') -> 'base_user'`
+would ALSO fire for `Ageing Step Advancement`/`Ageing Step Config
+Validation`'s own, completely unrelated `<entity_id>` placeholder
+(`entity_id = <entity_id> AND status_id = <status_id>` on
+`ageing_entity_step`) -- confirmed previously (2026-09-25) via a full
+compiled_constraints.json diff to inject a spurious, undisclosed
+correlation onto those two decisions. Left unmirrored at the time,
+explicitly flagged as "a larger, separate refactor."
+
+**Fixed**: widened `_DECISION_SUBJECT_PLACEHOLDER_SOURCES`'s key to
+`(case_study, decision_name, placeholder_name)`, and its two consumers
+(`_decision_subject_tables_referenced`, `compute_cross_table_placeholder_
+correlations`) to look up by decision too -- `Currency Exchange Rate
+Source`'s own entry is now consulted ONLY for that decision's own nodes,
+zero risk of the same collision. Added `('jBilling', 'Currency Exchange
+Rate Source', 'entity_id'/'currency_id') -> 'base_user'`.
+
+**A real mistake found and fixed while doing this**: the first attempt at
+widening wrongly assumed every EXISTING entry's own placeholder name was
+already unique to one decision -- a full corpus placeholder-usage survey
+(done because of, not before, the mistake: FLEX2's `Attendance
+Eligibility For Final Exam`/`Course Registration Eligibility`/`Summer
+Semester Registration` all changed unexpectedly on the first recompile)
+found `student` is shared by `Attendance Eligibility For Final Exam` AND
+`Course Registration Eligibility`, and `this course offering` is shared
+by `Attendance Eligibility For Final Exam` AND `Summer Semester
+Registration` -- NEITHER by `Course Replacement Eligibility`, which the
+original (pre-widening) entry had wrongly assumed owned it (that
+decision does not use this placeholder name anywhere in the current
+corpus at all). Corrected by adding an entry per ACTUAL decision found by
+the survey, not by decision proximity in the file. Re-diffed after the
+correction: FLEX2 fully back to zero changes, only jBilling's 3
+`Currency Exchange Rate Source` records changed.
+
+**A second real gap found closing this out**: `compute_cross_table_
+placeholder_correlations`'s own runtime wiring only ever ran inside
+`dynamosa.py`'s `_merge_archive_candidate_impl` -- `validation_oracle/
+tests/per_individual_archive_coverage.py`'s own no-merge pipeline (the
+tool this whole project's re-runs actually use) never called it, the
+EXACT same shape of gap `_build_decision_subject_row` was extracted to
+close the day before. Extracted the inline block into a shared
+`_apply_cross_table_placeholder_correlations(candidate, rec_focal,
+rec_scenario, r, rid, schema)`, called from both `_merge_archive_
+candidate_impl` and a new `_apply_cross_table_placeholder_correlations_
+for_individual` in `per_individual_archive_coverage.py` (which also
+had to start keeping `scenario_maps` -- previously discarded entirely in
+both `run`/`run_optimized`, since nothing needed it before this -- and
+replicate `_merge_archive_candidate_impl`'s own per-record scenario
+offset formula, `i * _SEED_KEY_OFFSET_UNIT` via `_scenario_keys_needing_
+offset`, matching `_offset_rows_by_owner`'s own already-established row
+offsetting exactly).
+
+Verified directly against the actual (stale) archived individual for
+`Currency Exchange Rate Source::Rule_1`: a fresh `base_user` row is now
+synthesized, owned by that record, carrying its own real (offset)
+`entity_id`/`currency_id` scenario values -- the other, unrelated `Ageing
+Step` decisions' own `base_user` rows confirmed untouched (still `entity_
+id`/`currency_id` = None, as before). Full regression suite passing
+(`candidate.py`/`mutation.py` self-tests, `test_spec_cases.py`, `test_
+drd_chaining_synthetic.py`). A 15-individual smoke run of the full
+`run_optimized` pipeline completed without crashing from this change (the
+one crash it hit is the ALREADY-LOGGED, unrelated `GENERIC_STATUS.id`
+bug) -- `Currency Exchange Rate Source::Rule_1`/`Rule_2` still didn't
+verify in that small, un-re-run subset, which was expected given the
+STALE archive's own individuals were never built with the corrected
+`cross_table_placeholders` driving construction from generation 0.
+
+**Re-run result (2026-09-26)**: `Rule_2` now verifies (jBilling Validated
+17 -> 18, 58.6% -> 62.1%) -- the correlation mechanism worked exactly as
+designed. `Rule_1` (needs `hasEntitySpecificExchange=True`) still doesn't
+-- not investigated further this round (a real, separate reachability
+question: does the search happen to also correlate `Rule_1`'s own
+`entity_id`/`currency_id` scenario pair onto a base_user row with the
+right VALUES, or does something else block it specifically). `Ageing Step
+Config Validation::Rule_2` (the `status_id`-correlation sibling gap) also
+still doesn't verify -- that decision's own `<status_id>` placeholder was
+never added to `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` at all in this
+round (only `Currency Exchange Rate Source`'s `entity_id`/`currency_id`
+were), so it was never expected to move; marking catC "partially" rather
+than fully resolved.
+
+**Follow-up fix (2026-09-26, later same day)**: closes the remaining
+`status_id` gap -- added `('jBilling', 'Ageing Step Config Validation',
+'entity_id'/'status_id') -> 'base_user'` (decision-scoped, same as the
+`Currency Exchange Rate Source` entries above; `status_id` needs no
+matching entry in the validator's own `filter_placeholder_sources.py` --
+that file's own docstring already confirms it resolves correctly via
+`_resolve_placeholders`'s priority-1 subject-row check, since `base_user`
+has a real `status_id` column of its own -- only the generator-side
+wiring to populate a real value there was ever missing). Verified via a
+fresh full recompile, diffed record-by-record (183 records, semantic
+diff confirmed surgical -- only the 3 targeted `Ageing Step Config
+Validation::Rule_1`/`Rule_2`/`Rule_5` records' `variable_resolution`
+changed, `Ageing Step Advancement`'s own unrelated `entity_id`/`status_id`
+facts confirmed untouched). Full regression suite passing.
+
+**Re-run result (2026-09-26): UNRESOLVED, still 17/29** --
+`Ageing Step Config Validation::Rule_2` still doesn't verify, but for a
+DIFFERENT reason than a wiring gap: its own archived individual has
+`fitness=0.5`, not `0.0` -- the search has never actually CLAIMED this
+branch at all (`statusIsDeleted=False AND inUse=True AND
+welcomeMessagePresent=False`, a 3-way AND the search hasn't converged on
+within this run's population/generation budget). Confirmed directly:
+that individual's own `base_user.status_id` is still an un-correlated `1`
+(not the record's own scenario value, `9000001`), because `_apply_
+cross_table_placeholder_correlations` only ever runs for an ARCHIVED,
+CLAIMED (`fitness=0.0`) individual -- it never got the chance to run
+here at all. The correlation fix itself is confirmed correctly built
+(see the earlier verification above) and will apply the moment the
+search claims this branch -- but reaching that point is a search-
+coverage/budget question, a different category of problem than every fix
+in this file so far, and NOT re-attempted this round. Left as an open,
+unresolved gap rather than re-diagnosed as a fresh bug.
+
+## FIX CONFIRMED CORRECT VIA RE-RUN, coverage not yet won (2026-09-26) — a GLOBAL (subject-independent) `exists` fact was scoped to the search's own per-owner rows during fitness evaluation, letting sibling objectives needing contradictory values both falsely claim coverage
+
+Found tracing jBilling's `Tax Calculation Needed::Rule_1` (claimed,
+`fitness=0.0`, never independently verified). `customContactFieldConfigured`
+is a genuinely GLOBAL, subject-independent fact (`EXISTS pluggable_task_
+parameter WHERE name = 'custom_contact_field_id'`, no per-case correlation
+at all -- confirmed against the DMN's own description: "no plugin
+parameter configured -> tax always calculated", a system-wide setting,
+not per-customer). `Rule_1` needs it `False`; `Rule_2`/`Rule_3`/`Rule_4`
+(the same decision's other rules) need it `True`.
+
+**The bug**: `candidate.py`'s `derive_value` scoped this exists check to
+`_owned_rows(candidate, table, owner_id)` -- ONLY the current objective's
+own tagged rows -- for every `exists`-kind fact uniformly, correlated or
+not. DynaMOSA runs one shared population; the archive's own "best
+individual" for `Rule_1` also carried `pluggable_task_parameter` rows
+OWNED BY `Rule_2`/`Rule_3`/`Rule_4` (confirmed directly, via the actual
+archived individual) -- but the owner-scoped read only checked `Rule_1`'s
+OWN rows (correctly empty), so it claimed `fitness=0.0` regardless. In
+the REAL, materialized database `db_resolver.py`'s independent
+verification queries -- which has no "owner" concept at all, since that's
+a purely in-memory search bookkeeping construct -- those sibling rows are
+just as real, and the check correctly (and honestly) evaluates `True`,
+never confirming `Rule_1`.
+
+**Fixed**: when an `exists` node's `filter_text` has NO correlation to
+any specific case at all (no `<placeholder>`, no `:col` self-reference --
+every conjunct a fixed literal), `derive_value` now checks ALL of the
+table's rows in this candidate, any owner -- matching `db_resolver.py`'s
+own real, un-scoped semantics exactly. A per-case fact (the overwhelming
+majority, correlated via a placeholder or a `:col` self-reference) is
+UNCHANGED, still correctly scoped to `_owned_rows`. Surveyed the whole
+corpus for other instances of this exact shape (a fully-literal
+`filter_text`, no placeholder/colon anywhere): only one other,
+`Ageing Step Config Validation::welcomeMessagePresent` -- but that fact
+has no OTHER objective anywhere in the corpus needing the opposite value,
+so it was never actually contaminated the same way (its own remaining gap
+is the separate, already-documented `base_user` NULL-correlation issue
+below, not this one).
+
+`mutation.py` imports `derive_value` directly from `candidate.py` (no
+duplicate copy to mirror this fix into) -- confirmed via `mutation.py`'s
+own self-test, still passing. `candidate.py`'s own self-test also still
+passing (181/183 evaluable, unchanged). Verified directly against the
+STALE archived individual: re-evaluating `customContactFieldConfigured`
+with the fix now honestly reads `True` for all of `Rule_1`-`Rule_4`'s own
+archived individuals (previously silently read as the "right" answer for
+each, owner-scoped) -- confirms the fix changes the answer exactly where
+expected. Needs a fresh jBilling search re-run for the corrected fitness
+function to actually find a genuinely clean individual for `Rule_1` (one
+that never accumulated a sibling's own `pluggable_task_parameter` row).
+
+**Re-run result (2026-09-26)**: confirmed working exactly as intended --
+`Decision_TaxCalculationNeeded_Rule_1` dropped OUT of the claimed
+(`fitness=0.0`) set entirely (26 claimed -> 25), i.e. the search stopped
+dishonestly claiming it. Real coverage not yet won, though: this run's
+population never happened to produce a genuinely clean individual (one
+with zero `Rule_2`/`Rule_3`/`Rule_4`-owned rows) within 40 generations, so
+`Validated` didn't move (still 17/29). This is expected -- the fix
+corrects the SIGNAL, it doesn't guarantee the search finds a satisfying
+individual in a fixed budget, especially when three sibling objectives
+are constantly pulling the shared population toward carrying the
+contaminating row. Worth revisiting with a longer run/larger population if
+`Rule_1` coverage specifically is wanted; not attempted this round.
+
+## RESOLVED, confirmed via re-run (2026-09-26) — a boolean fact compiled as a bare `schema_column` gets its literal `True`/`False` written directly into a table's own PRIMARY KEY column, corrupting it and colliding with other rows
+
+Found as a side effect of re-running jBilling for the `Tax Calculation
+Needed` fix above: `Ageing Step Config Validation::Rule_2`'s own archived
+individual now fails to materialize at all --
+`IntegrityError: UNIQUE constraint failed: GENERIC_STATUS.id` (`db_rows:
+0`, blocking verification of every one of the 8 decisions that individual
+was checking, not just this one).
+
+**Root cause**: a COMPLETELY DIFFERENT decision, `Ageing Status Change
+Order Action`'s own `newStatusIsDeleted` (all 4 rules), is a boolean fact
+("is the new status the DELETED status, i.e. `generic_status.id == 8`?"
+-- its own notes literally say so: "`generic_status.id` (the new
+UserStatusDTO row) compared against the hardcoded constant `UserDTOEx.
+STATUS_DELETED=8`") but is compiled as a bare `schema_column: generic_
+status.id` with NO `compared_to_named_constant` recorded at all (unlike
+`Blacklist Filter Enabled::blacklistPluginId`, a similarly-shaped fact
+that at least gets that metadata, via `_CONSTANT_RE` -- but doesn't match
+here because the constant name contains a dot, `UserDTOEx.STATUS_
+DELETED`, which `_CONSTANT_RE`'s own identifier group doesn't allow).
+Confirmed directly, via the actual archived individual: TWO different
+rules' own rows (`Rule_1`'s and `Rule_4`'s) both have the literal Python
+value `True` as their `GENERIC_STATUS.id` -- construction/mutation, with
+no comparison-to-constant awareness at all, wrote the boolean target
+value straight into the PK column it thinks it's "the" column for this
+fact. SQLite stores `True` as integer `1`, so two independently-built
+rows both landing on the identical, un-offset `id=1` collide outright at
+materialization time -- not merely a wrong VALUE (silently unfixable
+before this), but now a hard crash, since nothing in the normal per-owner
+key-offsetting machinery treats a boolean-typed "key" as a real integer
+key needing its own unique offset.
+
+Even setting the crash aside, this fact was ALREADY semantically wrong
+before this: reading the raw `generic_status.id` PK value and comparing
+it against a DMN condition's own `true`/`false` literal can only
+coincidentally be right (only if `id` happens to literally equal `1`/`0`
+for whichever row is read) -- the REAL semantics need `id == 8`, never
+mechanically enforced anywhere.
+
+**Fixed, in three parts, closing this together with `blacklistPluginId`'s
+own already-noted, identically-shaped gap** (confirmed via a full-corpus
+`compared_to_named_constant` survey to be the ONLY two instances of this
+shape, plus a THIRD found only once the fix below was in place --
+`Ageing Step Advancement::currentStatusIsActive`, `base_user.status_id`
+vs. `UserDTOEx.STATUS_ACTIVE=1`, same dotted-constant-name gap):
+
+1. **`compile_constraints.py`'s own `_CONSTANT_RE`** never matched
+   `newStatusIsDeleted`'s own notes at all (`compared_to_named_constant`
+   was simply absent) -- the constant's name contains a dot
+   (`UserDTOEx.STATUS_DELETED`), which the regex's identifier group
+   didn't allow. Widened to accept dots in the name; re-verified this
+   doesn't change `blacklistPluginId`'s own already-correct match (its
+   own constant name has no dot).
+2. **The READ side** (`candidate.py`'s `derive_value`, mirrored in
+   `db_resolver.py`'s `resolve`) previously returned the schema column's
+   RAW value unconditionally for every `schema_column` kind --
+   `compared_to_named_constant` was write-only metadata, consulted
+   nowhere. Now, when present, the raw value is compared against the
+   constant and the REAL boolean is returned instead -- matching what
+   the DMN condition tree actually expects, on both the search's own
+   fitness side and the validator's independent side identically.
+3. **The WRITE side** (`mutation.py`'s `_apply_field_mutation`) wrote the
+   boolean TARGET value literally into the real column -- the actual
+   crash's root cause, since that column is often a PRIMARY KEY. Now,
+   when `compared_to_named_constant` is present and the target is a
+   boolean, `True` writes the real constant and `False` writes a fresh,
+   guaranteed-different value (`mutation.py`'s own `_fresh_key_value`,
+   the same "just needs to be genuinely different" mechanism already used
+   for every other such repair case) -- mirrors `derived_case`'s own
+   "never write the derived category itself, invert to a real value"
+   discipline, just for a single-constant comparison instead of a full
+   case map.
+
+Verified via a fresh full recompile, diffed record-by-record (183
+records, semantic diff confirmed surgical -- 6 records' `variable_
+resolution` changed: `Ageing Status Change Order Action::Rule_1`-`Rule_4`
+and, as a genuine bonus catch from the same regex widening, `Ageing Step
+Advancement::Rule_1`/`Rule_2`'s own `currentStatusIsActive`, nothing
+else). Full regression suite (`candidate.py`/`mutation.py` self-tests,
+`test_spec_cases.py`, `test_drd_chaining_synthetic.py`, `test_serialized_
+field_roundtrip.py`) passing after the patch.
+
+Needs a fresh jBilling search re-run to actually take effect -- the
+STALE archive's own already-built individuals still carry the literal
+`True`/`False` baked into `GENERIC_STATUS.id`/`BASE_USER.status_id` from
+before this fix (mutation only writes correctly going forward, it can't
+retroactively repair already-archived rows), so the materialization
+crash will persist against the CURRENT archive regardless; only a fresh
+re-run, building new individuals with the corrected mutation operator
+from generation 0, actually resolves it.
+
+**Re-run result (2026-09-26)**: the ORIGINAL `UNIQUE constraint failed:
+GENERIC_STATUS.id` crash is gone, confirming the write-side fix works --
+but the SAME individual immediately hit a SECOND, different crash,
+`IntegrityError: datatype mismatch`, tracing to two more real bugs this
+fix's own re-run exposed:
+
+1. **`statusIsDeleted` (the SAME decision's sibling fact, comparing
+   `base_user.status_id`/`generic_status.id` against the identical
+   `STATUS_DELETED=8` constant) never got `compared_to_named_constant`
+   attached at all** -- its own notes are a bare cross-reference ("Same
+   loop index compared to the STATUS_DELETED constant"), no `NAME=VALUE`
+   literal for `_CONSTANT_RE` to match, AND (a second, independent gap)
+   even where a constant WAS found, `classify_derived`'s `len(pairs) >= 2`
+   fallback branch (the one this exact fact's own docstring comment
+   already used as its motivating example) never tried either constant
+   extractor at all -- only the `len(pairs) == 1` branch did. Fixed: a
+   new `_CROSS_REF_CONSTANT_RE` + a small, disclosed `_KNOWN_NAMED_
+   CONSTANTS` dict (`{('jBilling', 'STATUS_DELETED'): 8}` -- the SAME
+   real value already confirmed from `newStatusIsDeleted`'s own notes
+   elsewhere in this corpus, never a guess), consulted as a fallback when
+   `_CONSTANT_RE` finds nothing; wired into BOTH the `len(pairs) == 1`
+   AND `len(pairs) >= 2` branches.
+2. **A genuinely new bug, introduced by fixing #1 of the ORIGINAL entry
+   above**: once `schema_column`+`compared_to_named_constant` correctly
+   became a boolean-valued fact, `mutation.py`'s own `_domain_escape_
+   value` (used for an "avoid this value" `!=`/`NOT IN` mutation) broke --
+   it's designed for an open-ended numeric/string domain, and its string
+   fallback (`base + '_'`) produced literal strings like `'False_'` for a
+   boolean domain, which then slipped straight past the new `compared_to_
+   named_constant` write-side branch (it only recognizes a real Python
+   `bool`) and got written as-is -- confirmed directly via the actual
+   archived individual (`GENERIC_STATUS.id: 'False_'`, a string, in a
+   PRIMARY KEY column). Fixed: `_domain_escape_value` now special-cases a
+   boolean sample/current value, returning the OTHER boolean (there is no
+   third value to "escape" to in a strictly two-valued domain).
+
+Verified via a fresh full recompile, diffed record-by-record (183
+records, semantic diff confirmed surgical -- only the 2 targeted
+`Ageing Step Config Validation::Rule_2`/`Rule_5` records' `variable_
+resolution` changed) and a direct unit check of the fixed `_domain_
+escape_value` (`{True} -> False`, `{False} -> True`). Full regression
+suite passing.
+
+**Re-run result (2026-09-26)**: confirmed -- zero materialization errors
+this run (previously `UNIQUE constraint failed: GENERIC_STATUS.id`, then
+`datatype mismatch`, both gone). `Validated` stayed at 17/29 (58.6%), not
+a regression: `Ageing Step Config Validation::Rule_2`/`Rule_5` still don't
+verify, but for a DIFFERENT, already-known reason -- `status_id` (needed
+alongside `entity_id`/`currency_id` for `base_user` correlation) was
+never added to `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` in the catC fix
+above (only `Currency Exchange Rate Source`'s own `entity_id`/
+`currency_id` were) -- exactly the gap already flagged as a follow-up
+there. This entry's own fix (the crash) is fully confirmed working;
+closing the remaining `status_id` correlation is a separate, small,
+already-scoped follow-up, not attempted this round.
+
 ## 2026-09-26 — full-pass classification of every OpenMRS rule still unverified after today's 5 fixes
 
 Systematic, one-by-one trace of all 28 rules left unverified in OpenMRS
@@ -16,16 +447,23 @@ below): `Concept Fully-Specified-Name Presence Requirement::Rule_1`,
 Locale-Preferred-Name Uniqueness::Rule_1`, `Concept Short-Name Uniqueness
 Per Locale::Rule_1`, `Preferred Identifier Requirement::Rule_1`.
 
-**cat2 -- `compute_decision_subject`'s forward-FK-only limitation** (6
-rules, see this file's own dedicated OPEN entry below): `Numeric Absolute
-Range Validity::Rule_1`/`Rule_2`, `Numeric Interpretation
-Classification::Rule_1`-`Rule_4`.
+**cat2 -- RESOLVED, confirmed via re-run (later the same day) --
+`compute_decision_subject`'s forward-FK-only limitation** (6 rules, see
+this file's own dedicated entry below): `Numeric Absolute Range
+Validity::Rule_1`-`Rule_3`, `Numeric Interpretation Classification::
+Rule_1`-`Rule_3` (some rule numbers differ slightly from the original
+count above -- the fix itself, and a second bug it surfaced in the same
+code path, are logged in full in that entry). Re-run confirmed: OpenMRS
+Validated 42 -> 47 (70.0% -> 78.3%).
 
-**cat3 -- `classify_derived()` silently drops a real ground-truth
-formula** (9 rules, see this file's own dedicated OPEN entry above):
-`Concept Preferred Name Validity::Rule_2`-`Rule_5` (`isIndexTerm`/
-`isShortName`), `Obs Value Required By Datatype::Rule_2`-`Rule_6`
-(`isObsGroup`).
+**cat3 -- RESOLVED, confirmed via re-run -- `classify_derived()` silently
+drops a real ground-truth formula** (9 rules, see this file's own
+dedicated entry above): `Concept Preferred Name Validity::Rule_2`-`Rule_5`
+(`isIndexTerm`/`isShortName`), `Obs Value Required By Datatype::Rule_2`-
+`Rule_6` (`isObsGroup`). This fix also surfaced and led to fixing a
+separate, pre-existing validator-side bug (see the dedicated entry on
+`:column`/`self` filter_text references) -- together, OpenMRS Validated
+went 42 -> 51 across both re-runs.
 
 **cat4 -- PARTIALLY RESOLVED (later the same day): `exists`-kind fact with
 NO `filter_text` at all, collapsing a real correlated condition into a
@@ -56,10 +494,8 @@ values, with no `this.column` self-reference support at all, so a bare
 `EXISTS(...this.identifier...)` would fail as real SQL there (no table
 literally named `this`). Patched into `compiled_constraints.json` (3
 records: `Rule_2`/`Rule_3`/`Rule_4`, semantic diff confirmed surgical --
-only `variable_resolution` changed). Full regression suite passing. Needs
-a fresh search re-run to take effect (changes what row-construction the
-search itself needs to satisfy this fact) -- not yet re-run/re-verified
-against real data as of this entry.
+only `variable_resolution` changed). Full regression suite passing.
+Re-run confirmed (see the cat4 entry below): `Rule_3` now verifies.
 
 **`duplicateWithinSamePatient` NOT fixed** -- its own ground-truth notes
 are genuinely vague prose ("self-join over the same patient_id per
@@ -68,11 +504,32 @@ location match)"), not a literal SQL statement, and the real condition
 depends conditionally on a THIRD variable (`uniquenessBehavior`'s own
 value) -- not safely auto-extractable without guessing which behavior
 applies when. Left exactly as before (bare "any row exists" check),
-matching this project's own "never guess" discipline. `Rule_3`'s own
-condition needs BOTH facts (`inUseByAnotherPatient=False AND
-duplicateWithinSamePatient=True`), so it may still not verify correctly
-even with the other half fixed -- `Rule_4` only needs `inUseByAnotherPatient
-=False`, unaffected by this gap.
+matching this project's own "never guess" discipline. Both `Rule_3` and
+`Rule_4` need BOTH facts -- `Rule_3` needs `inUseByAnotherPatient=False AND
+duplicateWithinSamePatient=True`, `Rule_4` needs `inUseByAnotherPatient=False
+AND duplicateWithinSamePatient=False`.
+
+Re-run result (2026-09-26, after the `inUseByAnotherPatient` fix):
+`Rule_3` verified, `Rule_4` still does not. This is NOT full resolution and
+`Rule_3`'s "verified" result deserves a caveat: the still-crude
+`duplicateWithinSamePatient` "any row exists" check is heavily biased
+toward reading `True` for almost any real subject (a self-referencing
+`patient_identifier` row trivially "exists" against itself once IN-clause/
+NULL-handling quirks are considered), which happens to be exactly what
+`Rule_3` needs (`=True`) -- so `Rule_3` verifying is partly an artifact of
+the bias aligning with what it needs, not full confirmation that the real
+correlated condition is being tested. `Rule_4` needs the opposite
+(`=False`), which the same bias makes structurally unreachable regardless
+of the `inUseByAnotherPatient` fix -- this is why cat4 is only PARTIALLY
+resolved: one of its two underlying facts had a complete, literal SQL
+statement safely extractable by machine; the other has vague, conditional
+prose that would require reading `PatientIdentifierValidator.java` lines
+112-130 directly (same discipline used for the OpenMRS Concept rules
+earlier this session) to compile correctly, and even then the
+`uniquenessBehavior`-dependent branching doesn't fit the current
+`exists`+`filter_text` node shape (flat AND-of-conjuncts only) -- it would
+need a new conditional/branching resolution kind, closer in shape to cat3's
+gap than cat4's own fix. Deferred, not attempted without guessing.
 
 **cat5 -- RESOLVED (later the same day): `_build_decision_subject_row`'s
 own "never overwrite an existing value" rule left a genuine cross-table
@@ -132,7 +589,7 @@ current `decision_subject` against `compute_decision_subject` recomputed
 fresh) found only this one instance today, but the check itself is cheap
 and worth repeating after any future `compiled_constraints.json` edit.
 
-## OPEN — `classify_derived()`'s pattern coverage gap, two more confirmed instances (found 2026-09-26, NOT YET FIXED)
+## RESOLVED, confirmed via re-run (2026-09-26, later same day) — `classify_derived()`'s pattern coverage gap, two more confirmed instances
 
 Same root cause already documented in `validation_oracle/out_of_scope/
 pending_investigation/README.md`'s own category 3 (`yearsSinceBirthdate`/
@@ -158,12 +615,137 @@ moved or fixed:
   EXISTS check (do OTHER obs rows point back at this one?), not a read of
   this row's OWN `obs_group_id`.
 
-Neither has been moved to `pending_investigation/` yet (unlike the first
-two instances) -- holding here until the user decides whether to move
-these too or fix `classify_derived()` properly now that it's 4 confirmed
-instances, not 2.
+**Fixed, both reusing existing tested machinery rather than a new
+resolution kind:**
 
-## OPEN — `compute_decision_subject`'s forward-FK-only algorithm can't wire two sibling tables that both point INTO a shared third table (found 2026-09-26, NOT YET FIXED)
+- **`isIndexTerm`/`isShortName`** -- new `_try_extract_enum_equality`
+  extractor recognizing the `<column> = '<LITERAL>'` shape, compiling to
+  the SAME `derived_case` node `_try_extract_case_map`'s `CASE_MAP:`
+  syntax already produces (already-tested read side in db_resolver.py/
+  candidate.py, write side in mutation.py) -- just reached via a second,
+  simpler trigger. Needs an actual EXHAUSTIVE domain of every real value
+  the column can take (`derived_case`'s own "never silently default"
+  contract) -- `_KNOWN_ENUM_DOMAINS`, a small disclosed dict (same
+  disclosure precedent as `_DECISION_SUBJECT_JOIN_DISAMBIGUATION`), gives
+  OpenMRS's own `concept_name.concept_name_type` its real 4-value domain
+  (`FULLY_SPECIFIED`/`SHORT`/`INDEX_TERM`/`NULL` -- `org.openmrs.
+  ConceptNameType`'s only 3 enum values plus the null/plain-synonym case,
+  already treated as real domain knowledge elsewhere in this same
+  decision family via `fullySpecifiedNameCount`'s own filter_text). Only
+  fires for a (table, column) with a disclosed domain -- never guesses one.
+- **`isObsGroup`** -- new `_try_extract_self_join_exists_prose_recipe`,
+  a second, PROSE-shaped trigger (`EXISTS child <table> rows with <col> =
+  this.<col2>`) for the exact same `exists`+`filter_text` node
+  `_try_extract_self_join_exists_recipe` already produces from literal
+  SQL (cat4's `inUseByAnotherPatient` fix) -- reuses the identical,
+  already-tested `:col` self-reference machinery end to end, including
+  the same-table self-correlation fix already proven correct for
+  `fullySpecifiedNameCount` and friends (this is also a same-table
+  self-join, `obs` against `obs`).
+
+Verified via a fresh full recompile, diffed record-by-record against the
+existing `compiled_constraints.json` (188 records, semantic diff
+confirmed surgical -- 10 records' `variable_resolution` changed, exactly
+the targeted `isIndexTerm`/`isShortName`/`isObsGroup` facts, nothing
+else). This ALSO cascaded a correct `decision_subject` narrowing for
+`Obs Value Required By Datatype` (all 6 rules: `obs` dropped from the
+decision's own subject-reachability requirement, since `isObsGroup`'s new
+`exists`+`filter_text` shape is self-contained and no longer needs a join
+path the way the old, wrong bare `schema_column` did) -- confirmed to
+exactly match `subject_table_for_decision`'s own independent answer
+(`('concept', ['concept_id'], {})`). Full regression suite
+(`test_spec_cases.py`, `test_drd_chaining_synthetic.py`, `test_
+serialized_field_roundtrip.py`) passing after the patch.
+
+`Obs Group Value Exclusivity`'s own `isObsGroup` (notes: `"same as
+above"`, cross-referencing the fixed fact rather than restating it) is
+DELIBERATELY left unfixed -- outside today's original target list, and
+fixing it would mean resolving a cross-row textual reference, a different
+(and easy to get wrong) shape from the two patterns above; flagged here,
+not silently extended to.
+
+**Re-run result (2026-09-26): OpenMRS 47 -> 45 (a DROP, not an
+increase)**, despite `Concept Preferred Name Validity::Rule_1`-`Rule_5`
+all verifying cleanly (the `isIndexTerm`/`isShortName` half of this fix
+working exactly as intended). Investigated rather than just reported --
+see the next entry for the real cause found and fixed (a genuine,
+pre-existing validator-side bug the `isObsGroup` fix newly exposed, not a
+flaw in the fix itself). `Obs Value Required By Datatype` needs ANOTHER
+re-run before this whole cat3 fix's own net effect can be judged.
+
+## RESOLVED (2026-09-26, later same day) — a `:column`/bare `self` filter_text reference forces its own table into the decision subject too, not just a reachability requirement (found chasing cat3's own regression)
+
+Tracing why `Obs Value Required By Datatype` went from 58 claimed to
+ZERO verified after the `isObsGroup` fix (all 6 rules, including
+`Rule_1`, the origin objective of its own individual) found a real bug --
+in the VALIDATOR, not the fix just made. `isObsGroup`'s new `exists`+
+`filter_text` (`obs_group_id = :obs_id`) correctly needs no JOIN PATH
+from the subject to reach its own candidate table (`obs`) -- but this
+decision's OTHER fact (`conceptDatatype`) pulled the chosen subject to
+`concept` alone, and `:obs_id` has NO matching column on a `concept`
+subject row at all. `db_resolver.py`'s own `_substitute_self_and_colon`
+resolves a `:column`/bare `self` reference EXCLUSIVELY off the literal
+subject row dict, with NO join-path fallback (unlike a `<placeholder>`,
+which `_resolve_placeholders` CAN reach through `filter_placeholder_
+sources.py` + `join_paths`) -- confirmed by reading it directly: it
+`raise`s `NotImplementedError` when the column isn't on `subject_row`,
+caught somewhere up the call stack in a way that quietly marks the rule
+unverified rather than crashing the whole run (explains the silent
+zero, not a visible error).
+
+**Root cause is in `validation_oracle/subject_table.py` itself**, not
+`compile_constraints.py`: its own `_TABLE_EXTRACTORS['exists'/
+'derived_aggregate']` already correctly treats a `<placeholder>`-only
+filter_text as fully self-contained (needing no join path), but never
+distinguished a `:column`/`self` reference from a `<placeholder>` --
+both were treated the SAME "self-contained" way, silently assuming every
+colon self-reference's own table would already be (or trivially become)
+the subject. That assumption happened to hold for every self-join fact
+fixed earlier today (`inUseByAnotherPatient`: self-table IS the subject,
+`patient_identifier`) purely by coincidence, not by any real guarantee --
+`isObsGroup` is the first confirmed case where it doesn't.
+
+**Fixed in the validator itself** (`subject_table.py`'s own
+`_needs_self_table`, a small regex mirroring `db_resolver.py`'s own
+`_COLON_RE`/`_SELF_RE`): `exists`/`derived_aggregate`'s own table is now
+ALSO added to `all_tables` whenever filter_text/sql_template contains a
+`:column`/bare `self` reference, forcing root-picking to require it,
+exactly like `derived_join_count`'s own pre-existing `registration_table`
+requirement for the identical reason. Mirrored in `compile_constraints.py`
+(`_COLON_OR_SELF_REF_RE`) for `derived_aggregate`/`exists` only --
+`raw_sql_boolean` deliberately NOT extended the same way, since no
+confirmed real instance in the corpus uses a colon/self reference there
+(both current templates use only `<placeholder>` syntax) -- scoped to
+what's actually confirmed, not guessed ahead of time.
+
+Verified via a fresh full recompile, diffed record-by-record (188
+records, semantic diff confirmed surgical -- only `decision_subject`
+changed, 24 records across OpenMRS AND Spree): every changed decision's
+new `decision_subject` confirmed to EXACTLY match `subject_table_for_
+decision`'s own (now-fixed) independent answer -- `Obs Value Required By
+Datatype` correctly back to `obs -> concept` (restoring `obs_id`
+reachability for `isObsGroup`'s own self-reference), PLUS 4 more OpenMRS
+decisions that were ALSO silently missing their self-table before today
+(`Concept Fully-Specified-Name Presence Requirement`, `-Uniqueness Per
+Locale`, `Concept Locale-Preferred-Name Uniqueness`, `Concept Short-Name
+Uniqueness Per Locale`, `Preferred Identifier Requirement` -- all had
+`decision_subject: None` before, now correctly resolve to their own
+aggregate table), PLUS 2 Spree decisions (`One-Use-Per-User Promotion
+Eligibility`, `Promotion Usage Limit Exceeded` -- both gained a real join
+they were missing). Full regression suite passing after the patch,
+including `test_spec_cases.py`'s own acceptance test against real
+`Preferred Identifier Requirement::Rule_2` data (one of the newly-changed
+decisions). Confirmed via a fresh OpenMRS search re-run: `Obs Value
+Required By Datatype`'s own `Rule_1`-`Rule_6` (all 6) now verify cleanly,
+along with `Preferred Identifier Requirement::Rule_1`-`Rule_3`, `Concept
+Fully-Specified-Name Presence Requirement::Rule_1`/`Rule_2`, `Concept
+Fully-Specified-Name Uniqueness Per Locale::Rule_1`/`Rule_2`, `Concept
+Locale-Preferred-Name Uniqueness::Rule_1`/`Rule_2`, `Concept Short-Name
+Uniqueness Per Locale::Rule_1`/`Rule_2`. OpenMRS Validated 45 -> 51 (75.0%
+-> 85.0%, net +6, and a full recovery from the 47 -> 45 drop this same
+bug caused plus 4 more on top).
+
+## RESOLVED, confirmed via re-run (2026-09-26, later same day) — `compute_decision_subject`'s forward-FK-only algorithm can't wire two sibling tables that both point INTO a shared third table
 
 Found tracing OpenMRS's `Numeric Absolute Range Validity::Rule_1` (still
 unverified). Confirmed real, not hypothetical: the raw archived
@@ -190,14 +772,80 @@ this record's own `decision_subject` field is `null`.
 
 **Not a new bug, a previously-disclosed limitation finally being hit
 concretely** -- the docstring names exactly this shape as excluded before
-today, just without a confirmed real instance until now. Fixing it means
-extending `compute_decision_subject`'s own root-finding to walk a FK
-edge backward when a forward-only search finds no root (mirroring
-`schema_utility.functional_backward_edges`, already proven correct on the
-validator side) -- a real, scoped port, not a guess, but not attempted
-this round. Likely affects other decisions with the same "two siblings,
-shared forward-FK parent, no direct edge between them" shape -- not yet
-surveyed for how widespread.
+today, just without a confirmed real instance until now.
+
+**Fixed, in three parts, each checked statically against the validator's
+own independent resolution (`subject_table_for_decision`), not guessed,
+and now confirmed against a real fresh search re-run (OpenMRS Validated
+42 -> 47, 70.0% -> 78.3%, a net +5):**
+
+1. **Backward-edge traversal** -- `_functional_backward_edges_for`
+   (`compile_constraints.py`), a direct port of `schema_utility.
+   functional_backward_edges`: tables with a FK pointing AT the current
+   table whose own PK IS EXACTLY that FK column (shared-PK subtype, e.g.
+   `concept_numeric`'s PK `concept_id` is also its FK to `concept.
+   concept_id`) -- safe to traverse backward, never a real one-to-many
+   ambiguity. Wired into `_build_subject_join_path`'s own edge list
+   alongside the existing forward `_fk_edges_for`.
+
+2. **Ambiguous-reroute refusal** -- adding backward edges alone
+   surfaced a SECOND real bug testing this against `obs`/`concept`:
+   `obs` has two distinct FK columns to `concept` (`concept_id`, the
+   concept an observation measures, and `value_coded`, an unrelated coded
+   answer value), a genuine ambiguity this BFS already correctly skips --
+   but skipping let it silently REROUTE via `obs -> location ->
+   concept` instead, a technically-reachable but semantically nonsensical
+   path. Ported `schema_utility.build_join_path`'s own two-part fix for
+   the identical bug: track every skipped ambiguous edge, and refuse a
+   "successful" path if it routes around one connecting two of the path's
+   own members, rather than silently accepting the reroute.
+
+3. **A single, disclosed join-disambiguation override** --
+   `_DECISION_SUBJECT_JOIN_DISAMBIGUATION`, mirroring `validation_oracle/
+   join_disambiguation.py`'s own one entry (`('OpenMRS', 'obs',
+   'concept') -> 'concept_id'`, a researcher domain-knowledge call, not a
+   guess made here) -- ported as declarative override DATA only, same
+   precedent as `_DECISION_SUBJECT_PLACEHOLDER_SOURCES`, not the
+   validator's general override MECHANISM. Without it, `obs -> concept`
+   is unresolvable ambiguity (per point 2) and every decision needing
+   this exact hop stays without a `decision_subject`.
+
+4. **A separate, independently-found bug in the SAME area** --
+   `_decision_subject_tables_referenced` was reusing `collect_tables_
+   from_resolution` for `schema_column`/`null_check` nodes, which (unlike
+   the validator's own `_TABLE_EXTRACTORS['schema_column'/'null_check']`,
+   both bare `{n['table']}`) also adds every `also_valid_in` alternate
+   table. Confirmed real via `Numeric Absolute Range Validity`: an
+   `also_valid_in` entry pointing at `concept_reference_range` (an
+   ordinary one-to-many table, genuinely unreachable from `obs`) was
+   being treated as a MANDATORY join target for the decision's subject,
+   a requirement the validator's own resolution never imposes -- even
+   with fixes 1-3 in place, this alone still produced `None`. Fixed by
+   special-casing `schema_column`/`null_check` in `_decision_subject_
+   tables_referenced`'s own `visit()` to add only `node['table']`,
+   matching the validator's extractor exactly.
+
+Verified via a fresh full recompile, diffed record-by-record against the
+existing `compiled_constraints.json` (188 records, semantic diff
+confirmed surgical -- 39 records changed, every change ONLY to
+`decision_subject`, nothing else) -- 6 target OpenMRS rules now resolve
+(`Numeric Absolute Range Validity::Rule_1`-`Rule_3`, `Numeric
+Interpretation Classification::Rule_1`-`Rule_5`, one rule fewer/more
+than originally counted since `Rule_5` was also confirmed affected),
+PLUS 33 more rules across other case studies/decisions this fix also
+happened to correct (`FLEX2::Academic Warning Status::Rule_1`-`Rule_6`,
+`FLEX2::Grade Points and Interpretation::Rule_1`-`Rule_15`, `OpenMRS::
+Numeric Precision Validity::Rule_1`, `OpenMRS::Obs Value Required By
+Datatype::Rule_1`-`Rule_6`, `jBilling::Ageing Step Config
+Validation::Rule_1`/`Rule_2`/`Rule_5`) -- every single changed record's
+new `decision_subject` confirmed to EXACTLY match
+`subject_table_for_decision`'s own independent answer for that same
+decision, not just "a" resolution. Full regression suite
+(`test_spec_cases.py`, `test_drd_chaining_synthetic.py`, `test_
+serialized_field_roundtrip.py`) passing after the patch. Confirmed via a
+fresh OpenMRS search re-run: Validated 42 -> 47 (70.0% -> 78.3%, net +5;
+FLEX2/Spree/jBilling not yet re-run for this fix's own effect on their
+own affected decisions).
 
 ## RESOLVED (2026-09-26, later same day) — self-correlated `derived_aggregate`/`exists` over the SAME table its own subject lives on never gets its own correlating column set
 

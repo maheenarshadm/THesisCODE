@@ -262,6 +262,11 @@ _COLON_SELF_REF_RE = re.compile(r'^:([A-Za-z_]\w*)$')
 # ever recognizes `=`, so this needs its own check, same self-reference
 # resolution as the `=` case above -- just negated.
 _NEQ_COLON_SELF_REF_RE = re.compile(r'^\s*(?:[\w]+\.)?(\w+)\s*!=\s*:([A-Za-z_]\w*)\s*$')
+# A `:col` self-reference ANYWHERE in a filter_text string (not anchored
+# to a whole conjunct, unlike `_COLON_SELF_REF_RE`/`_NEQ_COLON_SELF_REF_RE`
+# above) -- used only to detect whether a filter_text correlates to any
+# specific case AT ALL, mirroring db_resolver.py's own `_COLON_RE`.
+_COLON_SELF_REF_ANYWHERE_RE = re.compile(r'(?<!:):(?!:)[A-Za-z_]\w*')
 
 
 def _self_row_value(self_row, column):
@@ -881,7 +886,29 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
     warnings = warnings if warnings is not None else []
     kind = node.get('kind')
     if kind == 'schema_column':
-        return _lookup(focal, node['table'], node['column'])
+        real = _lookup(focal, node['table'], node['column'])
+        # A real bug found tracing jBilling's own `newStatusIsDeleted`
+        # (2026-09-26): a `schema_column` fact whose real meaning is a
+        # BOOLEAN comparison against a hardcoded constant (e.g.
+        # `generic_status.id == UserDTOEx.STATUS_DELETED (8)`) was
+        # returning the RAW column value unconditionally -- `8 == True`
+        # is `False` in Python, so this could only coincidentally ever
+        # read as the DMN condition's own intended boolean, and
+        # mutation.py's own write side (see its matching fix) had no
+        # comparison to invert either, so it wrote the literal boolean
+        # target straight into the real column (here, corrupting a
+        # PRIMARY KEY -- two different rules' own rows both landing on
+        # the literal Python value `True`, a real `UNIQUE constraint
+        # failed` once both existed in the same materialized database).
+        # `compared_to_named_constant` (compile_constraints.py's own
+        # `_CONSTANT_RE`) already recorded the real comparison for
+        # exactly this shape -- previously write-only metadata, never
+        # actually consulted anywhere. Consulting it here converts the
+        # raw value into the real boolean the condition tree expects.
+        constant = node.get('compared_to_named_constant')
+        if constant is not None:
+            return real == constant['value']
+        return real
     if kind == 'serialized_field':
         # The blob column's own value is still just an in-memory nested
         # dict at this point -- real YAML serialization only happens in
@@ -994,6 +1021,36 @@ def derive_value(var_name, node, candidate, focal, scenario, warnings=None, owne
         table = (node.get('candidate_tables') or [None])[0]
         if table is None:
             return False
+        # A real bug found tracing jBilling's own `customContactField
+        # Configured` (2026-09-26): a filter_text with NO correlation to
+        # any specific case at all (no `<placeholder>`, no `:col` self-
+        # reference -- every conjunct a fixed literal, e.g. "name =
+        # 'custom_contact_field_id'") describes a genuinely GLOBAL,
+        # subject-independent fact (confirmed against this decision's own
+        # DMN description: "no plugin parameter configured -> tax always
+        # calculated", a system-wide setting, not per-customer) --
+        # `db_resolver.py`'s own independent verification queries the
+        # WHOLE real table with no owner concept at all (SQL has none).
+        # Scoping this SAME check to `_owned_rows` during search-time
+        # fitness evaluation was dishonest: a `Rule_1` needing this fact
+        # `False` could claim fitness=0.0 purely because ITS OWN owned
+        # rows didn't include a match, while a DIFFERENT objective
+        # (`Rule_2`/`Rule_3`/`Rule_4`, needing it `True`) sharing the SAME
+        # individual had ALREADY inserted a real matching row -- a row
+        # `db_resolver.resolve`'s own real, un-scoped SQL query would find
+        # regardless of which objective "owns" it. Confirmed real, not
+        # hypothetical: the archived individual for `Rule_1` carried
+        # `pluggable_task_parameter` rows owned by `Rule_2`/`Rule_3`/
+        # `Rule_4` too, and independent verification (correctly) never
+        # confirmed `Rule_1`. A globally-scoped fact checks ALL of the
+        # table's rows in this candidate, any owner, matching the
+        # validator's own real semantics -- a per-case fact (the
+        # overwhelming majority, correlated via a placeholder or `:col`
+        # self-reference) is UNCHANGED, still scoped to `_owned_rows`.
+        if node.get('filter_text') and not _PLACEHOLDER_RE.search(node['filter_text']) \
+                and not _COLON_SELF_REF_ANYWHERE_RE.search(node['filter_text']):
+            predicate, _skipped = _mechanical_filter_predicate(node['filter_text'], scenario, candidate, None)
+            return any(predicate(r) for r in candidate.rows(table))
         # A real fix (2026-09-13, the "known exists-kind filter gap"):
         # `_mechanical_filter_predicate` already degrades to "match
         # everything" when `filter_text` is None/absent, so this reduces

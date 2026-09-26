@@ -505,7 +505,24 @@ _EXISTS_ROW_WORDS = re.compile(
 # than guessing (see classify_derived's own comment on this).
 _EXISTS_FILTER_TOKEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)(?:\s*=\s*(?:(-?\d+)|'([^']*)'))?$")
 _JOINED_VIA_RE = re.compile(r'joined via ([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)', re.I)
-_CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+)')
+_CONSTANT_RE = re.compile(r'(?:constant|=)\s*([A-Za-z_][A-Za-z0-9_.]*)\s*=\s*(-?\d+)')
+# A cross-reference to a named constant whose real numeric value is given
+# ELSEWHERE in the corpus, not in this fact's own notes (found 2026-09-26,
+# jBilling's own `statusIsDeleted`: "Same loop index compared to the
+# STATUS_DELETED constant" -- no `=value` anywhere in this text at all,
+# unlike `newStatusIsDeleted`'s own notes, which literally say
+# `UserDTOEx.STATUS_DELETED=8` for the SAME real constant). Resolved via
+# `_KNOWN_NAMED_CONSTANTS`, a small, disclosed dict of values this project
+# has ALREADY confirmed from another fact's own notes in the SAME corpus
+# -- never a guess, just not re-derivable from this fact's own text alone.
+_CROSS_REF_CONSTANT_RE = re.compile(r'compared (?:to )?the ([A-Za-z_][A-Za-z0-9_.]*) constant', re.I)
+_KNOWN_NAMED_CONSTANTS = {
+    # jBilling's own `UserDTOEx.STATUS_DELETED`, confirmed via
+    # `newStatusIsDeleted`'s own notes elsewhere in this same corpus
+    # ("generic_status.id ... compared against the hardcoded constant
+    # UserDTOEx.STATUS_DELETED=8").
+    ('jBilling', 'STATUS_DELETED'): 8,
+}
 # An escape hatch for a genuinely bespoke boolean fact that doesn't fit any
 # of the structured shapes above -- added for FLEX2's
 # isElectiveTaughtByVisitingScholarUnavailableOtherwise (2026-09-11), a
@@ -593,6 +610,102 @@ def _try_extract_self_join_exists_recipe(text):
     return {'kind': 'exists', 'candidate_tables': [table],
             'candidate_columns': [{'table': table, 'column': c} for c in columns],
             'filter_text': ' AND '.join(filter_parts)}
+
+
+# A second, PROSE (not literal SQL) shape for the identical self-join
+# EXISTS `_try_extract_self_join_exists_recipe` above already handles --
+# found 2026-09-26, part of cat3's fix (see validation_oracle/
+# KNOWN_ISSUES.md): OpenMRS's own `isObsGroup` ("EXISTS child obs rows
+# with obs_group_id = this.obs_id (self-referencing FK)") was previously
+# compiled as a bare `schema_column` reading `obs.obs_group_id` directly
+# (the raw FK int, not a boolean at all) since this project's ONLY
+# self-join extractor required literal `EXISTS(SELECT 1 FROM ...)` SQL --
+# this fact's own ground truth never wrote that, only an English
+# description of the exact same shape (a child row of the SAME table,
+# correlated back to "this" row by one column). Compiles to the SAME
+# `exists`+`filter_text` node, reusing the identical, already-tested
+# `:col` self-reference machinery (including the same-table
+# self-correlation fix already proven correct for `fullySpecifiedNameCount`
+# and friends) -- not a new mechanism, a second way to reach the same,
+# already-tested node shape.
+_EXISTS_CHILD_ROW_PROSE_RE = re.compile(
+    r'EXISTS\s+child\s+([A-Za-z_][A-Za-z0-9_]*)\s+rows?\s+with\s+(.+?)\s*(?:\([^)]*\))?\s*$',
+    re.I)
+_EXISTS_CHILD_ROW_CONJUNCT_RE = re.compile(
+    r'^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(<>|!=|=)\s*this\.([A-Za-z_][A-Za-z0-9_]*)\s*$', re.I)
+
+
+def _try_extract_self_join_exists_prose_recipe(text):
+    if not text:
+        return None
+    m = _EXISTS_CHILD_ROW_PROSE_RE.search(text)
+    if not m:
+        return None
+    table, where = m.group(1), m.group(2)
+    filter_parts = []
+    columns = []
+    for conjunct in re.split(r'\bAND\b', where, flags=re.I):
+        cm = _EXISTS_CHILD_ROW_CONJUNCT_RE.match(conjunct.strip())
+        if not cm:
+            return None  # a conjunct shape this extractor doesn't recognize -- abort, never half-build
+        col, op, this_col = cm.groups()
+        columns.append(col)
+        norm_op = '!=' if op in ('<>', '!=') else '='
+        filter_parts.append(f'{col} {norm_op} :{this_col}')
+    return {'kind': 'exists', 'candidate_tables': [table],
+            'candidate_columns': [{'table': table, 'column': c} for c in columns],
+            'filter_text': ' AND '.join(filter_parts)}
+
+
+# A THIRD escape hatch, also part of cat3's fix (2026-09-26): a plain
+# equality between an already-resolved schema column and a single string
+# literal (`concept_name_type = 'INDEX_TERM'`, `= 'SHORT'` -- OpenMRS's
+# own `isIndexTerm`/`isShortName`), previously compiled as a bare
+# `schema_column` returning the RAW enum string (never a boolean at all,
+# so comparing it against the DMN condition's own `true`/`false` literal
+# could never genuinely match). Reuses `derived_case`'s existing,
+# already-tested CASE_MAP machinery (both read side, db_resolver.py/
+# candidate.py, and write side, mutation.py's own CASE_MAP inversion) --
+# not a new resolution kind -- but needs an actual EXHAUSTIVE enumeration
+# of every real value the column can take, per that machinery's own
+# documented "never silently default" contract, so a bare regex match
+# alone isn't enough: `_KNOWN_ENUM_DOMAINS` below is a small, disclosed
+# dict of real column domains (same disclosure precedent as
+# `_DECISION_SUBJECT_JOIN_DISAMBIGUATION` -- a researcher fact, not a
+# guess), consulted only for a (table, column) this project already has
+# real, verified domain knowledge for; every other column is left
+# unmatched (falls through to the old behavior, no worse than before).
+_ENUM_EQUALITY_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*'([^']+)'\s*$")
+
+_KNOWN_ENUM_DOMAINS = {
+    # OpenMRS's own `org.openmrs.ConceptNameType` Java enum:
+    # FULLY_SPECIFIED / SHORT / INDEX_TERM are its only 3 values; a plain
+    # synonym name has `concept_name_type IS NULL` (the 4th, non-enum
+    # case) -- already treated as real domain knowledge elsewhere in this
+    # same decision family (`fullySpecifiedNameCount`'s own filter_text
+    # already compares this identical column against 'FULLY_SPECIFIED').
+    # [ASSUMED by researcher domain knowledge of OpenMRS's own enum -- no
+    # ground-truth source citation beyond this decision's own sibling
+    # facts using the same literal.]
+    ('concept_name', 'concept_name_type'): ['FULLY_SPECIFIED', 'SHORT', 'INDEX_TERM', None],
+}
+
+
+def _try_extract_enum_equality(text, pairs):
+    if not text or len(pairs) != 1:
+        return None
+    m = _ENUM_EQUALITY_RE.match(text.strip())
+    if not m:
+        return None
+    column, literal = m.group(1), m.group(2)
+    table, pair_column = pairs[0]
+    if pair_column.lower() != column.lower():
+        return None  # names a DIFFERENT column than the one ground truth resolved -- not this shape
+    domain = _KNOWN_ENUM_DOMAINS.get((table.lower(), column.lower()))
+    if domain is None:
+        return None  # no disclosed, verified domain for this column -- never guess one
+    return {'kind': 'derived_case', 'table': table, 'column': column,
+            'cases': [[v, v == literal] for v in domain]}
 
 
 # A second escape hatch, found necessary while building mutation.py
@@ -687,7 +800,7 @@ def _try_extract_prereq_gap_count(text):
     }
 
 
-def classify_derived(row):
+def classify_derived(row, cs=None):
     """The general classifier for a 'derived'-bucketed ground-truth row --
     replaces a narrow aggregate-only check with pattern rules covering
     every shape a direct survey of all 83 program-wide 'derived' facts
@@ -720,6 +833,11 @@ def classify_derived(row):
         case_map['notes'] = notes
         return case_map
 
+    enum_eq = _try_extract_enum_equality(notes, pairs) or _try_extract_enum_equality(raw, pairs)
+    if enum_eq:
+        enum_eq['notes'] = notes
+        return enum_eq
+
     raw_sql = _try_extract_raw_sql_boolean(notes) or _try_extract_raw_sql_boolean(raw)
     if raw_sql:
         raw_sql['notes'] = notes
@@ -729,6 +847,12 @@ def classify_derived(row):
     if self_join:
         self_join['notes'] = notes
         return self_join
+
+    self_join_prose = (_try_extract_self_join_exists_prose_recipe(notes)
+                        or _try_extract_self_join_exists_prose_recipe(raw))
+    if self_join_prose:
+        self_join_prose['notes'] = notes
+        return self_join_prose
 
     # "joined via X.Y" is checked before the plain existence check below,
     # not after -- several facts' notes contain both ("joined via
@@ -789,6 +913,12 @@ def classify_derived(row):
         node = {'kind': 'schema_column', 'table': table, 'column': column}
         if m:
             node['compared_to_named_constant'] = {'name': m.group(1), 'value': int(m.group(2))}
+        else:
+            cross_ref = _CROSS_REF_CONSTANT_RE.search(notes)
+            if cross_ref:
+                known_value = _KNOWN_NAMED_CONSTANTS.get((cs, cross_ref.group(1)))
+                if known_value is not None:
+                    node['compared_to_named_constant'] = {'name': cross_ref.group(1), 'value': known_value}
         node['notes'] = notes
         return node
 
@@ -806,8 +936,24 @@ def classify_derived(row):
         # primary, same graceful-degradation convention as above, beats
         # leaving a row with real column names attached fully unresolved.
         table, column = pairs[0]
-        return {'kind': 'schema_column', 'table': table, 'column': column,
-                'also_valid_in': pairs[1:], 'notes': notes}
+        node = {'kind': 'schema_column', 'table': table, 'column': column, 'also_valid_in': pairs[1:]}
+        # Same `compared_to_named_constant` resolution as the len(pairs)==1
+        # case just above -- found necessary for the SAME real fact family
+        # this comment already names as its own motivating example
+        # (jBilling's own `statusIsDeleted`, 2026-09-26): a multi-pair
+        # comparison-against-constant fact was falling through to this
+        # branch WITHOUT ever trying either constant extractor.
+        m = _CONSTANT_RE.search(notes)
+        if m:
+            node['compared_to_named_constant'] = {'name': m.group(1), 'value': int(m.group(2))}
+        else:
+            cross_ref = _CROSS_REF_CONSTANT_RE.search(notes)
+            if cross_ref:
+                known_value = _KNOWN_NAMED_CONSTANTS.get((cs, cross_ref.group(1)))
+                if known_value is not None:
+                    node['compared_to_named_constant'] = {'name': cross_ref.group(1), 'value': known_value}
+        node['notes'] = notes
+        return node
 
     if _EXISTS_ROW_WORDS.search(notes) or _EXISTS_ROW_WORDS.search(raw):
         # A table named (often via "(existence)") but no clean column --
@@ -1000,7 +1146,7 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
         return {'kind': 'unresolved', 'reason': "labeled 'direct' but no table.column parsed from its schema field",
                 'raw_schema_field': row['raw_schema_field']}
     if bucket == 'derived':
-        classified = classify_derived(row)
+        classified = classify_derived(row, cs)
         if classified:
             return _apply_aggregate_overrides(cs, var_name, classified)
         return {'kind': 'derived', 'notes': row['notes'], 'table_hints': row['schema_pairs']}
@@ -1196,10 +1342,17 @@ def fk_closure(seed_tables, fk_graph, all_tables, max_tables=300):
 #
 # Deliberately NARROWER scope than validation_oracle/subject_table.py's
 # own algorithm, disclosed rather than silently assumed equivalent:
-# - Forward FK edges only (schema's own `fk_columns`) -- no port of
-#   `schema_utility.functional_backward_edges`'s shared-PK-subtype
-#   backward traversal. A decision needing that to find a unique root
-#   simply gets no `decision_subject` here (same as today, no worse).
+# - Forward FK edges, PLUS functional (shared-PK-subtype) backward edges
+#   -- `_functional_backward_edges_for`, a 2026-09-26 port of
+#   `schema_utility.functional_backward_edges`, closing the cat2 gap
+#   logged in validation_oracle/KNOWN_ISSUES.md (OpenMRS's own `obs`/
+#   `concept_numeric`, both needing a hop through `concept` that only a
+#   backward traversal from `concept` to `concept_numeric` can find). An
+#   ORDINARY one-to-many backward join (not a shared-PK subtype) is still
+#   never attempted -- matches `schema_utility.build_join_path`'s own
+#   documented restriction, not a further gap introduced here. Composite-
+#   key backward traversal (`schema_utility.composite_backward_edges`) is
+#   NOT ported -- no confirmed real instance needs it here yet.
 # - A genuinely ambiguous edge (more than one distinct FK column between
 #   the same two tables) is skipped, never resolved via a
 #   `join_disambiguation.py`-style override -- no override data is
@@ -1231,58 +1384,88 @@ _DECISION_SUBJECT_PLACEHOLDER_SOURCES = {
     # duplicated, not imported, per this section's own docstring. Kept
     # in sync by hand; if the validator's own copy ever changes, this
     # one needs the same edit.
-    ('Spree', 'promotion_id'): 'spree_order_promotions',
+    #
+    # Keyed by (case_study, decision_name, placeholder_name) -- widened
+    # 2026-09-26 (was (case_study, placeholder_name) alone) specifically
+    # to add the jBilling entries below without a namespace collision;
+    # every pre-existing entry just gained its own decision_name, no
+    # behavior change for any of them (each placeholder name below was
+    # already unique to its one decision).
+    ('Spree', 'Promotion Customer Group Eligibility', 'promotion_id'): 'spree_order_promotions',
     # FLEX2's `Course Replacement Eligibility::degreeTotalCredits` --
     # see validation_oracle/filter_placeholder_sources.py's own matching
-    # entries for the full writeup (2026-09-24).
-    ('FLEX2', 'program'): 'STUDENT_PROGRAM',
-    ('FLEX2', 'batch'): 'STUDENT_PROGRAM',
-    # Existing disclosed offering reference, also used in raw SQL facts.
-    ('FLEX2', 'this course offering'): 'COURSE_OFFER',
+    # entries for the full writeup (2026-09-24). Confirmed via a full
+    # corpus placeholder-usage survey (2026-09-26, done BECAUSE the first
+    # attempt at widening this dict's key wrongly assumed every
+    # placeholder name below was unique to one decision, which broke 3
+    # unrelated FLEX2 decisions -- see the two entries just below):
+    # `program`/`batch` really are unique to this one decision.
+    ('FLEX2', 'Course Replacement Eligibility', 'program'): 'STUDENT_PROGRAM',
+    ('FLEX2', 'Course Replacement Eligibility', 'batch'): 'STUDENT_PROGRAM',
+    # `this course offering` is used by TWO decisions, not one --
+    # `Attendance Eligibility For Final Exam` AND `Summer Semester
+    # Registration` both reference it, confirmed via the same corpus
+    # survey (NOT `Course Replacement Eligibility`, wrongly assumed
+    # during this dict's first widening attempt -- that decision does not
+    # use this placeholder name anywhere in the current corpus at all).
+    ('FLEX2', 'Attendance Eligibility For Final Exam', 'this course offering'): 'COURSE_OFFER',
+    ('FLEX2', 'Summer Semester Registration', 'this course offering'): 'COURSE_OFFER',
     # FLEX2's `Attendance Eligibility For Final Exam::lecturesAttended`
     # (hand-corrected in `aggregate_filter_overrides.py`) -- see
     # validation_oracle/filter_placeholder_sources.py's own matching
-    # entry for the full writeup (2026-09-25).
-    ('FLEX2', 'student'): 'COURSE_REGISTRATION',
-    # NOT mirroring `('jBilling', 'entity_id') -> 'base_user'` /
-    # `('jBilling', 'currency_id') -> 'base_user'` here, unlike every
-    # entry above -- deliberately, not an oversight (2026-09-25). Checked
-    # first: this dict is keyed by (case_study, placeholder_name) alone,
-    # with no decision-scoping, and `entity_id` is NOT a unique placeholder
-    # name in jBilling -- `Ageing Step Advancement`/`Ageing Step Config
-    # Validation` ALSO have a `<entity_id>` placeholder in their own
-    # `exists` filter_text (`entity_id = <entity_id> AND status_id =
-    # <status_id>` on `ageing_entity_step`), a completely unrelated fact.
-    # On the VALIDATOR side this is harmless -- confirmed via
-    # `subject_table_for_decision`, `db_resolver._resolve_placeholders`
-    # always tries the subject row first, and those two decisions'
-    # subject is ALREADY `base_user` (unchanged by this override, checked
-    # both ways), which has a real `entity_id` column of its own, so the
-    # override is never even consulted for them. But THIS generator-side
-    # mirror has no such guard: `_decision_subject_tables_referenced`'s
-    # `exists` branch and `compute_cross_table_placeholder_correlations`
-    # both consult `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` unconditionally
-    # for every placeholder name found, regardless of decision -- adding
-    # this entry here was confirmed (via a full compiled_constraints.json
-    # diff) to also inject a spurious `cross_table_placeholders: {'entity_id':
-    # {'table': 'base_user', ...}}` onto those two UNRELATED decisions'
-    # own nodes, which `dynamosa.py`'s `merge_archive_candidate` would
-    # then use to copy their own `ageing_entity_step`-scoped `entity_id`
-    # scenario value onto `base_user.entity_id` at merge time -- a fake,
-    # undisclosed correlation this project's own discipline exists to
-    # prevent. Left unmirrored rather than widening this dict's own key
-    # shape to be decision-scoped (a larger, separate refactor, out of
-    # scope for this single-decision fix). Net effect: `Currency Exchange
-    # Rate Source` gets no `decision_subject`/`cross_table_placeholders`
-    # on the generator side, so a FRESH search run over it still can't
-    # independently construct a correlated `base_user` row -- only the
-    # validator's own independent re-derivation (this file's real
-    # purpose) sees the fix. See validation_oracle/filter_placeholder_
-    # sources.py's own matching entry for the full subject-choice writeup.
+    # entry for the full writeup (2026-09-25). ALSO used by `Course
+    # Registration Eligibility` (confirmed via the same corpus survey) --
+    # both need the identical entry, not just the one it was first found in.
+    ('FLEX2', 'Attendance Eligibility For Final Exam', 'student'): 'COURSE_REGISTRATION',
+    ('FLEX2', 'Course Registration Eligibility', 'student'): 'COURSE_REGISTRATION',
+    # jBilling's `Currency Exchange Rate Source::hasEntitySpecificExchange`
+    # /`hasSystemDefaultExchange` (2026-09-26, closing catC in
+    # validation_oracle/KNOWN_ISSUES.md): mirrors validation_oracle/
+    # filter_placeholder_sources.py's own long-standing entry for the
+    # SAME real fact (`base_user`'s own real `entity_id`/`currency_id`
+    # columns, a genuine researcher judgment call already made and
+    # disclosed there in full -- see that file's own comment for the
+    # "why base_user" reasoning). Previously NOT mirrored here at all
+    # (see git history) because this dict's OLD key shape, (case_study,
+    # placeholder_name) with no decision-scoping, would have collided
+    # with jBilling's UNRELATED `<entity_id>` placeholder on `Ageing Step
+    # Advancement`/`Ageing Step Config Validation` (a completely
+    # different fact, `entity_id = <entity_id> AND status_id =
+    # <status_id>` on `ageing_entity_step`) -- confirmed via a full
+    # compiled_constraints.json diff that adding it unscoped injected a
+    # spurious `cross_table_placeholders` onto those two unrelated
+    # decisions' own nodes. Decision-scoping the key removes that risk
+    # entirely: this entry is now consulted ONLY for `Currency Exchange
+    # Rate Source`'s own nodes.
+    ('jBilling', 'Currency Exchange Rate Source', 'entity_id'): 'base_user',
+    ('jBilling', 'Currency Exchange Rate Source', 'currency_id'): 'base_user',
+    # jBilling's `Ageing Step Config Validation::inUse` (2026-09-26,
+    # closing the follow-up flagged in validation_oracle/KNOWN_ISSUES.md's
+    # own catC entry): the SAME real correlation shape as `Currency
+    # Exchange Rate Source` just above (`base_user`'s own real `entity_id`
+    # column), plus `status_id` -- another real `base_user` column (see
+    # `validation_oracle/filter_placeholder_sources.py`'s own docstring:
+    # `status_id` already resolves correctly on the VALIDATOR side via
+    # `_resolve_placeholders`'s priority-1 subject-row check, needing no
+    # override there either -- only the GENERATOR side ever lacked the
+    # wiring to populate a real value onto `base_user` in the first
+    # place). Decision-scoped exactly like the entry above, for the
+    # identical reason: `entity_id` is NOT unique to this decision either
+    # (also used, unrelated in spirit but identical in real value, by
+    # `Ageing Step Advancement`) -- scoping to `Ageing Step Config
+    # Validation` alone risks zero collision with that or any other
+    # decision.
+    ('jBilling', 'Ageing Step Config Validation', 'entity_id'): 'base_user',
+    ('jBilling', 'Ageing Step Config Validation', 'status_id'): 'base_user',
 }
 
 _PLACEHOLDER_NAME_RE = re.compile(r'<([A-Za-z_][A-Za-z0-9_ ]*)>')
 _PLACEHOLDER_CONJUNCT_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*<([A-Za-z_][A-Za-z0-9_ ]*)>')
+# Mirrors validation_oracle/db_resolver.py's own `_COLON_RE`/`_SELF_RE` --
+# a `:column`/bare `self` reference in filter_text/sql_template resolves
+# EXCLUSIVELY off the subject row (`_substitute_self_and_colon`), unlike
+# a `<placeholder>`, which CAN reach a different table via join_paths.
+_COLON_OR_SELF_REF_RE = re.compile(r'(?<!:):(?!:)[A-Za-z_][A-Za-z0-9_]*|\bself\b')
 
 
 def _load_raw_schema(cs):
@@ -1352,9 +1535,52 @@ def _decision_subject_tables_referenced(cs, record):
         if kind in ('derived_aggregate', 'raw_sql_boolean') or (kind == 'exists' and filter_text):
             text = node.get('sql_template') if kind == 'raw_sql_boolean' else filter_text
             for placeholder in _PLACEHOLDER_NAME_RE.findall(text or ''):
-                extra = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, placeholder))
+                extra = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, record['decision_name'], placeholder))
                 if extra:
                     tables.add(extra)
+            # A `:column`/bare `self` reference (db_resolver.py's own
+            # `_substitute_self_and_colon`) resolves EXCLUSIVELY off the
+            # SUBJECT row's own dict, with no join-path fallback the way a
+            # `<placeholder>` has -- so when filter_text/sql_template uses
+            # one, this node's own table must still be added, forcing it
+            # to BE (or be safely reachable as) the subject. Mirrors
+            # validation_oracle/subject_table.py's own identical fix
+            # (`_needs_self_table`) -- found real, not hypothetical
+            # (2026-09-26, OpenMRS's own `isObsGroup`: "obs_group_id =
+            # :obs_id" resolved this decision's subject to `concept` alone
+            # -- correctly, `obs` needs no JOIN PATH to be reached -- but
+            # `resolve()` still crashed at verification time, since
+            # `:obs_id` has no matching column on a `concept` subject
+            # row). `raw_sql_boolean` is deliberately NOT extended the
+            # same way here -- no confirmed real instance in the corpus
+            # uses a colon/self reference (both current templates use
+            # only `<placeholder>` syntax), so this stays scoped to the
+            # kinds it's actually needed for, not guessed ahead of time.
+            if kind != 'raw_sql_boolean' and text and _COLON_OR_SELF_REF_RE.search(text):
+                if kind == 'derived_aggregate':
+                    tables.add(node['table'])
+                else:
+                    tables.update(node.get('candidate_tables') or [])
+            return
+        if kind in ('schema_column', 'null_check'):
+            # Mirrors validation_oracle/subject_table.py's own
+            # `_TABLE_EXTRACTORS['schema_column'/'null_check']` exactly
+            # (`{n['table']}`, nothing more) -- found 2026-09-26 tracing
+            # why `Numeric Absolute Range Validity` still got no
+            # `decision_subject` even after the cat2 backward-edge fix:
+            # `collect_tables_from_resolution`'s OWN `also_valid_in`
+            # handling (needed for `fk_closure_tables`, a broader,
+            # deliberately-inclusive set of every table db_resolver might
+            # ever try) was being reused here too, wrongly treating an
+            # ALTERNATE resolution path (`concept_reference_range`, an
+            # ordinary one-to-many table with no join path FROM `obs`) as
+            # a MANDATORY join target for the decision's subject -- a
+            # requirement the validator's own subject resolution never
+            # imposes (confirmed directly: `subject_table_for_decision`
+            # resolves this decision fine, to `obs`/`concept_numeric`
+            # only, `concept_reference_range` never entering its own
+            # `all_tables` at all).
+            tables.add(node['table'])
             return
         collect_tables_from_resolution(node, tables)
 
@@ -1363,7 +1589,7 @@ def _decision_subject_tables_referenced(cs, record):
     return tables
 
 
-def compute_cross_table_placeholder_correlations(cs, node):
+def compute_cross_table_placeholder_correlations(cs, decision_name, node):
     """For a `derived_aggregate`/`exists` node's own `filter_text`, which
     of its `<placeholder>` conjuncts (`COLUMN = <placeholder>`) name a
     placeholder `_DECISION_SUBJECT_PLACEHOLDER_SOURCES` resolves to a
@@ -1403,7 +1629,7 @@ def compute_cross_table_placeholder_correlations(cs, node):
     if node.get('kind') not in ('exists', 'derived_aggregate') or not filter_text:
         return correlations
     for column, placeholder in _PLACEHOLDER_CONJUNCT_RE.findall(filter_text):
-        source_table = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, placeholder))
+        source_table = _DECISION_SUBJECT_PLACEHOLDER_SOURCES.get((cs, decision_name, placeholder))
         if source_table:
             correlations[placeholder] = {'table': source_table, 'column': column}
     return correlations
@@ -1464,13 +1690,69 @@ def compute_subject_hop_placeholder_correlations(subject, node):
     return correlations
 
 
-def _build_subject_join_path(raw_schema, root, target, allowed_tables):
-    """Forward-FK-only BFS from `root` to `target`, restricted to
-    `allowed_tables` -- see this section's own docstring for the
-    disclosed narrower scope (no functional-backward-edge traversal, no
-    disambiguation-override support) relative to
-    `schema_utility.build_join_path`. Returns a hop list, or None if
-    unreachable/ambiguous within scope."""
+def _functional_backward_edges_for(raw_schema, table):
+    """Port of `validation_oracle/schema_utility.py`'s own
+    `functional_backward_edges` -- duplicated, not imported, per this
+    section's own docstring (2026-09-26, closing the cat2 gap logged in
+    `validation_oracle/KNOWN_ISSUES.md`: `compute_decision_subject`
+    previously found NO root for OpenMRS's `Numeric Absolute Range
+    Validity`/`Numeric Interpretation Classification`, both needing
+    `obs.concept_id -> concept.concept_id <- concept_numeric.concept_id`,
+    because neither `obs` nor `concept_numeric` has a FORWARD edge to the
+    other -- only the validator's own build_join_path could walk the
+    `concept` -> `concept_numeric` hop backward).
+
+    Tables with a FK pointing AT `table` whose own PRIMARY KEY *is
+    exactly* that FK column (a shared-PK subtype -- e.g. `concept_numeric`'s
+    PK `concept_id` is ALSO its FK to `concept.concept_id`). Safe to
+    traverse backward: because the referencing table's PK equals the FK
+    column, at most one such row can exist per `table` row -- never the
+    real one-to-many ambiguity an ordinary backward FK would have, which
+    this module still never attempts (matches
+    `schema_utility.build_join_path`'s own documented restriction)."""
+    target = _canonical_table_name(raw_schema, table)
+    found = []
+    for other_name, info in raw_schema.items():
+        other_pk = info.get('pk')
+        other_pk_list = other_pk if isinstance(other_pk, list) else ([other_pk] if other_pk else [])
+        for fk in info.get('fk_columns') or []:
+            if (_canonical_table_name(raw_schema, fk['ref_table']) == target
+                    and other_pk_list == [fk['column']]):
+                found.append({'column': fk['ref_column'],
+                              'ref_table': _canonical_table_name(raw_schema, other_name),
+                              'ref_column': fk['column']})
+    return found
+
+
+_DECISION_SUBJECT_JOIN_DISAMBIGUATION = {
+    # Mirrors validation_oracle/join_disambiguation.py's own disclosed
+    # override for the SAME real ambiguity -- duplicated, not imported,
+    # per this section's own docstring (2026-09-26, closing the cat2 gap:
+    # obs has two distinct FK columns to concept, concept_id (the concept
+    # this OBSERVATION measures) and value_coded (an unrelated coded
+    # ANSWER value); without this override the edge is a genuine
+    # ambiguity that must be skipped, which makes `Numeric Absolute Range
+    # Validity`/`Numeric Interpretation Classification`'s own subject
+    # unreachable (both need obs -> concept -> concept_numeric). Same
+    # researcher domain-knowledge call as the validator's own copy --
+    # [ASSUMED by researcher domain knowledge of OpenMRS's EAV schema, no
+    # ground-truth source citation available for this specific join].
+    ('OpenMRS', 'obs', 'concept'): 'concept_id',
+}
+
+
+def _build_subject_join_path(cs, raw_schema, root, target, allowed_tables):
+    """FK BFS from `root` to `target`, restricted to `allowed_tables`.
+    Follows forward FK edges plus FUNCTIONAL backward edges
+    (`_functional_backward_edges_for`, a shared-PK subtype, provably
+    at-most-one-row -- ported 2026-09-26, see that function's own
+    docstring), and consults `_DECISION_SUBJECT_JOIN_DISAMBIGUATION`
+    (a small, disclosed port of validation_oracle/join_disambiguation.py's
+    own override data -- not its general mechanism) before treating a
+    multi-column edge as unresolvable -- see this section's own module
+    docstring for the remaining disclosed narrower scope (no composite-key
+    backward traversal) relative to `schema_utility.build_join_path`.
+    Returns a hop list, or None if unreachable/ambiguous within scope."""
     root = _canonical_table_name(raw_schema, root)
     target = _canonical_table_name(raw_schema, target)
     if root == target:
@@ -1479,33 +1761,56 @@ def _build_subject_join_path(raw_schema, root, target, allowed_tables):
     allowed = {_canonical_table_name(raw_schema, t) for t in allowed_tables} | {root, target}
     visited = {root}
     queue = [(root, [])]
+    skipped_ambiguous = []
     while queue:
         current, path = queue.pop(0)
         by_target = {}
-        for edge in _fk_edges_for(raw_schema, current):
+        for edge in _fk_edges_for(raw_schema, current) + _functional_backward_edges_for(raw_schema, current):
             nxt = edge['ref_table']
             if nxt in allowed and nxt not in visited:
                 by_target.setdefault(nxt, []).append(edge)
         for nxt, candidate_edges in by_target.items():
             distinct_columns = {e['column'] for e in candidate_edges}
             if len(distinct_columns) > 1:
-                continue  # genuine ambiguity, no override data here -- skip, never guess
+                override_col = _DECISION_SUBJECT_JOIN_DISAMBIGUATION.get((cs, current, nxt))
+                matching = [e for e in candidate_edges if e['column'] == override_col] if override_col else None
+                if not matching:
+                    # Genuine ambiguity, no override data here -- skip,
+                    # never guess. Recorded so a later "successful" path
+                    # is refused if it only worked by silently routing
+                    # AROUND this exact ambiguity (see the check below
+                    # this loop) -- mirrors schema_utility.build_join_
+                    # path's own two-part fix, found necessary here the
+                    # same way: skipping OpenMRS's own ambiguous obs->
+                    # concept edge (two distinct FK columns, `concept_id`
+                    # and `value_coded`) otherwise let this BFS silently
+                    # reroute via obs->location->concept instead, a
+                    # technically-reachable but semantically nonsensical
+                    # path (2026-09-26, found testing the cat2 backward-
+                    # edge fix against `Numeric Absolute Range Validity`).
+                    skipped_ambiguous.append((current, nxt))
+                    continue
+                candidate_edges = matching
             edge = candidate_edges[0]
             hop = {'from_table': current, 'from_column': edge['column'],
                    'to_table': nxt, 'to_column': edge['ref_column']}
             new_path = path + [hop]
             if nxt == target:
+                path_nodes = {root} | {h['to_table'] for h in new_path}
+                for amb_from, amb_to in skipped_ambiguous:
+                    if amb_from in path_nodes and amb_to in path_nodes:
+                        return None
                 return new_path
             visited.add(nxt)
             queue.append((nxt, new_path))
     return None
 
 
-def _pick_subject_root(raw_schema, all_tables, closure_tables, override=None):
+def _pick_subject_root(cs, raw_schema, all_tables, closure_tables, override=None):
     candidate_pool = closure_tables | all_tables
     candidates = [
         root for root in candidate_pool
-        if all(_build_subject_join_path(raw_schema, root, t, closure_tables) is not None
+        if all(_build_subject_join_path(cs, raw_schema, root, t, closure_tables) is not None
                for t in all_tables - {root})
     ]
     if override is not None:
@@ -1538,14 +1843,14 @@ def compute_decision_subject(cs, decision_records, raw_schema):
 
     from decision_subject_overrides import SUBJECT_ROOT_OVERRIDES
     override = SUBJECT_ROOT_OVERRIDES.get((cs, decision_records[0]['decision_name']))
-    root = _pick_subject_root(raw_schema, all_tables, closure_tables, override)
+    root = _pick_subject_root(cs, raw_schema, all_tables, closure_tables, override)
     if root is None:
         return None
     joins = {}
     for t in all_tables:
         if t == root:
             continue
-        path = _build_subject_join_path(raw_schema, root, t, closure_tables)
+        path = _build_subject_join_path(cs, raw_schema, root, t, closure_tables)
         if path is None:
             return None
         joins[t] = path
@@ -2268,7 +2573,7 @@ def compile_case_study(cs, mapping_source='ground_truth'):
             for node in r.get('variable_resolution', {}).values():
                 if not isinstance(node, dict):
                     continue
-                correlations = compute_cross_table_placeholder_correlations(cs, node)
+                correlations = compute_cross_table_placeholder_correlations(cs, r['decision_name'], node)
                 correlations.update({
                     k: v for k, v in compute_subject_hop_placeholder_correlations(subject, node).items()
                     if k not in correlations

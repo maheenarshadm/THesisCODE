@@ -56,6 +56,18 @@ OUT_OF_SCOPE_RULES = {
     # `validation_oracle/out_of_scope/pending_investigation/` with that
     # caveat stated explicitly. See that folder's own README before ruling
     # either group in or out for good.
+    #
+    # 2026-09-26 (later, same day): 5 more moved to `permanent/`, same
+    # convention (physically removed from compiled_constraints.json, no
+    # registry entry needed here) -- `Identifier Uniqueness Check::Rule_4`
+    # (needs `duplicateWithinSamePatient`, whose real logic genuinely
+    # branches on a 3rd variable, `uniquenessBehavior` -- see
+    # KNOWN_ISSUES.md's cat4 entry) and all 4 rules of `Obs Group Value
+    # Exclusivity` (its own `isObsGroup` ground truth is just "same as
+    # above," a cross-row reference to `Obs Value Required By Datatype`'s
+    # own fixed fact, deliberately left unresolved when that fix was made
+    # -- a different, easy-to-get-wrong shape from the two patterns fixed
+    # there). On the user's own explicit request.
 }
 
 
