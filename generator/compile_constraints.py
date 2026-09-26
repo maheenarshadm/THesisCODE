@@ -800,6 +800,52 @@ def _try_extract_prereq_gap_count(text):
     }
 
 
+_ELAPSED_VS_TODAY_RE = re.compile(
+    r'derived from ([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*) vs current date', re.I)
+_DAYS_PER_YEAR = 365
+
+
+def _try_extract_elapsed_years_since(var_name, row):
+    """"derived from TABLE.COLUMN vs current date" for a YEARS-named
+    variable -> `(today() - TABLE.COLUMN) / 365`, as a `substituted_
+    decision` expression over one `schema_column` free variable.
+
+    Found 2026-09-26 (FLEX2's `Graduation Eligibility::yearsElapsed`,
+    `Rule_4`: `yearsElapsed > 7`): with exactly one table.column pair in
+    the text, `classify_derived` fell through to a bare `schema_column`
+    and silently dropped the "vs current date" half -- the raw
+    `created_date` itself was compared against 7. `today()` reads the
+    same scenario-level `__today__` both sides already support (search:
+    `build_seed_candidate`'s fixed `today`; validator: the disclosed
+    `not_persisted_overrides['__today__']`), in the same day-number unit
+    every generated date column already uses. Scoped to a variable whose
+    OWN name says "years" -- the text itself names no unit, so a
+    days/months-named variable with this phrasing is deliberately left to
+    the existing path rather than guessed at."""
+    if 'year' not in var_name.lower():
+        return None
+    for text in (row['raw_schema_field'] or '', row['notes'] or ''):
+        m = _ELAPSED_VS_TODAY_RE.search(text)
+        if m:
+            table, column = m.group(1).lower(), m.group(2).lower()
+            date_var = f'{var_name}__{column}'
+            return {
+                'kind': 'substituted_decision',
+                'substituted_from': f'elapsed years since {table}.{column} (vs today())',
+                'expression': {
+                    'op': '/',
+                    'left': {'op': '-', 'left': {'kind': 'call', 'name': 'today', 'args': []},
+                             'right': {'kind': 'variable', 'ref': date_var}},
+                    'right': {'kind': 'literal', 'value': _DAYS_PER_YEAR, 'type': 'number'},
+                },
+                'free_variable_resolutions': {
+                    date_var: {'kind': 'schema_column', 'table': table, 'column': column},
+                },
+                'notes': text,
+            }
+    return None
+
+
 def classify_derived(row, cs=None):
     """The general classifier for a 'derived'-bucketed ground-truth row --
     replaces a narrow aggregate-only check with pattern rules covering
@@ -1146,6 +1192,9 @@ def resolve_variable(cs, gt, decision_name, var_name, io='input'):
         return {'kind': 'unresolved', 'reason': "labeled 'direct' but no table.column parsed from its schema field",
                 'raw_schema_field': row['raw_schema_field']}
     if bucket == 'derived':
+        elapsed = _try_extract_elapsed_years_since(var_name, row)
+        if elapsed:
+            return elapsed
         classified = classify_derived(row, cs)
         if classified:
             return _apply_aggregate_overrides(cs, var_name, classified)
@@ -1558,7 +1607,10 @@ def _decision_subject_tables_referenced(cs, record):
             # kinds it's actually needed for, not guessed ahead of time.
             if kind != 'raw_sql_boolean' and text and _COLON_OR_SELF_REF_RE.search(text):
                 if kind == 'derived_aggregate':
-                    tables.add(node['table'])
+                    # `self_table` (when set) is what `:column` binds to,
+                    # not the counted table -- mirrors subject_table.py's
+                    # own 2026-09-26 fix (`semestersElapsed`).
+                    tables.add(node.get('self_table') or node['table'])
                 else:
                     tables.update(node.get('candidate_tables') or [])
             return

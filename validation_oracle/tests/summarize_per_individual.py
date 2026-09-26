@@ -66,7 +66,7 @@ def _validated_union(case_dir):
         f"per_individual_coverage_long.csv) -- run that script for this case study first.")
 
 
-def _claimed_fulfilled(archive_pickle_path, out_of_scope):
+def _claimed_fulfilled(archive_pickle_path, out_of_scope, records):
     """`out_of_scope` is the SAME `_mechanical_out_of_scope` result
     `summarize`'s own `in_scope`/`out_of_scope` columns already use --
     excluded here too. A real bug found running this against Spree
@@ -81,12 +81,17 @@ def _claimed_fulfilled(archive_pickle_path, out_of_scope):
     (`rule_evaluator.py` doesn't support COLLECT) -- filtering here just
     makes this table's own columns consistent with each other, using the
     SAME scope definition for both. Same fix already applied to
-    `per_individual_archive_coverage.py`'s own `_print_summary_line`."""
+    `per_individual_archive_coverage.py`'s own `_print_summary_line`.
+    The rule_id is looked up via `records` (record_id -> rule_id), never
+    `rid.split('::')[-1]` -- a DRD variant's record_id ends in its
+    UPSTREAM rule (`...::via::Upstream Decision::Upstream_Rule`), not its
+    own."""
+    rule_of = {r['record_id']: r['rule_id'] for r in records}
     with open(archive_pickle_path, 'rb') as f:
         top = pickle.load(f)
     archive = top['archive']
     return sum(1 for rid, (fitness, _ind) in archive.items()
-               if fitness == 0.0 and rid.split('::')[-1] not in out_of_scope), len(archive)
+               if fitness == 0.0 and rule_of.get(rid, rid.split('::')[-1]) not in out_of_scope), len(archive)
 
 
 def summarize(base_dir):
@@ -105,7 +110,7 @@ def summarize(base_dir):
 
         archive_pickle = os.path.join(
             GENERATOR_DIR, 'experiment_runs', f'{cs}__dynamosa_nsga2__budget1x__seed0.pkl')
-        claimed, archive_total = _claimed_fulfilled(archive_pickle, out_of_scope)
+        claimed, archive_total = _claimed_fulfilled(archive_pickle, out_of_scope, records)
 
         case_dir = os.path.join(base_dir, cs)
         validated = len(_validated_union(case_dir))

@@ -93,8 +93,17 @@ _TABLE_EXTRACTORS = {
     # subject. A `<placeholder>` naming a DIFFERENT table when it's not on
     # the subject row (see filter_placeholder_sources.py) also still needs
     # a real join path, added here when named, independent of the above.
+    # The table a `:column` binds to is `self_table` when the node has
+    # one, NOT n['table'] (found 2026-09-26, FLEX2's `semestersElapsed`:
+    # `COUNT(STUDENT_SEMESTER) WHERE ROLL_NO = :ROLL_NO`, `self_table=
+    # STUDENT_PROGRAM` -- requiring STUDENT_SEMESTER itself left
+    # `Graduation Eligibility` with ZERO qualifying subject roots, so the
+    # whole decision was skipped as unresolved, even its catch-all
+    # `Rule_5`). Same latent `self_table == table` assumption fixed on
+    # the generator's construction side the same day.
     'derived_aggregate': lambda n, cs: (_placeholder_source_tables(cs, n.get('filter_text'))
-                                         | ({n['table']} if _needs_self_table(n.get('filter_text')) else set())),
+                                         | ({n.get('self_table') or n['table']}
+                                            if _needs_self_table(n.get('filter_text')) else set())),
     # `prereq_table` is queried via a raw, UNCORRELATED scan
     # (`db_resolver.resolve`'s own derived_join_count branch: `SELECT
     # COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS (...)`, no WHERE

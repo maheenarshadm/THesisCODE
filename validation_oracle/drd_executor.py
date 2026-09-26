@@ -263,6 +263,13 @@ def _resolve_one(conn, case_study, var, node, subject_table, subject_pk_cols, su
             free_values[free_var] = _resolve_one(
                 conn, case_study, free_var, free_node, subject_table, subject_pk_cols,
                 subject_pk_vals, join_paths, runner, decision_name, trace, not_persisted_overrides)
+        # A `today()` call inside the expression itself (FLEX2's
+        # `yearsElapsed`: `(today() - created_date) / 365`) reads the SAME
+        # disclosed `__today__` override a condition-level `today()`
+        # already does (see run_decision's own `base_values`) -- never
+        # from search state. Absent -> rule_evaluator raises, as before.
+        if not_persisted_overrides and '__today__' in not_persisted_overrides:
+            free_values = {**free_values, '__today__': not_persisted_overrides['__today__']}
         value = evaluate_expression(node['expression'], free_values)
         if trace is not None:
             trace[var] = {'value': value, 'resolution_type': 'substituted_decision',

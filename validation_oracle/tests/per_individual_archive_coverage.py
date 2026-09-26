@@ -424,7 +424,16 @@ def _print_summary_line(case_study, records, archive, validated_rule_ids):
     # `validated` all count once per distinct RULE. A rule is "claimed"
     # if ANY of its variants reached fitness=0.0, not once per variant
     # that did.
-    claimed = len({rid.split('::')[-1] for rid, (fitness, _ind) in archive.items()
+    # A third bug, in that fix itself (2026-09-26): the "trailing rule_id"
+    # was taken as `rid.split('::')[-1]`, but a DRD variant's record_id is
+    # `CS::Decision::Rule::via::Upstream Decision::Upstream_Rule`, so its
+    # LAST segment is the UPSTREAM rule, not its own -- FLEX2's own 7
+    # variant-only rules (`Course Load Limit::Rule_1`/`2`/`4`, `Course
+    # Registration Eligibility::Rule_2`-`4`, ...) were silently dropped
+    # (43 shown, 50 real). Look the rule_id up from the record itself
+    # instead of parsing the string at all.
+    rule_of = {r['record_id']: r['rule_id'] for r in records}
+    claimed = len({rule_of.get(rid, rid.split('::')[-1]) for rid, (fitness, _ind) in archive.items()
                    if fitness == 0.0} - out_of_scope)
     validated = len(validated_rule_ids)
     pct_all = (validated / total_rules * 100) if total_rules else 0.0

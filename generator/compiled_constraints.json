@@ -4716,20 +4716,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -5090,20 +5090,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -5457,20 +5457,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -5898,20 +5898,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -6403,20 +6403,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -7009,20 +7009,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -7711,20 +7711,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -8162,20 +8162,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -8687,20 +8687,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -9276,20 +9276,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -9929,20 +9929,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -10646,20 +10646,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -11427,20 +11427,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -11802,20 +11802,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -12261,20 +12261,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -12710,20 +12710,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -13243,20 +13243,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -13756,20 +13756,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -14353,20 +14353,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -14967,20 +14967,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -15628,20 +15628,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -16338,20 +16338,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -17063,20 +17063,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -17852,20 +17852,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "SEMESTER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "SEM_ID",
-      "to_table": "SEMESTER",
-      "to_column": "SEM_ID"
-     }
-    ],
     "STUDENT_PROGRAM": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "ROLL_NO",
       "to_table": "STUDENT_PROGRAM",
       "to_column": "ROLL_NO"
+     }
+    ],
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
      }
     ]
    }
@@ -22799,10 +22799,36 @@
   },
   "variable_resolution": {
    "yearsElapsed": {
-    "kind": "schema_column",
-    "table": "student_program",
-    "column": "created_date",
-    "notes": ""
+    "kind": "substituted_decision",
+    "substituted_from": "elapsed years since student_program.created_date (vs today())",
+    "expression": {
+     "op": "/",
+     "left": {
+      "op": "-",
+      "left": {
+       "kind": "call",
+       "name": "today",
+       "args": []
+      },
+      "right": {
+       "kind": "variable",
+       "ref": "yearsElapsed__created_date"
+      }
+     },
+     "right": {
+      "kind": "literal",
+      "value": 365,
+      "type": "number"
+     }
+    },
+    "free_variable_resolutions": {
+     "yearsElapsed__created_date": {
+      "kind": "schema_column",
+      "table": "student_program",
+      "column": "created_date"
+     }
+    },
+    "notes": "derived from STUDENT_PROGRAM.CREATED_DATE vs current date"
    },
    "creditHoursEarned": {
     "kind": "schema_column",
@@ -22962,10 +22988,36 @@
     "self_table": "STUDENT_PROGRAM"
    },
    "yearsElapsed": {
-    "kind": "schema_column",
-    "table": "student_program",
-    "column": "created_date",
-    "notes": ""
+    "kind": "substituted_decision",
+    "substituted_from": "elapsed years since student_program.created_date (vs today())",
+    "expression": {
+     "op": "/",
+     "left": {
+      "op": "-",
+      "left": {
+       "kind": "call",
+       "name": "today",
+       "args": []
+      },
+      "right": {
+       "kind": "variable",
+       "ref": "yearsElapsed__created_date"
+      }
+     },
+     "right": {
+      "kind": "literal",
+      "value": 365,
+      "type": "number"
+     }
+    },
+    "free_variable_resolutions": {
+     "yearsElapsed__created_date": {
+      "kind": "schema_column",
+      "table": "student_program",
+      "column": "created_date"
+     }
+    },
+    "notes": "derived from STUDENT_PROGRAM.CREATED_DATE vs current date"
    }
   },
   "fk_closure_tables": [
@@ -23047,20 +23099,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE_OFFER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "OFFER_ID",
-      "to_table": "COURSE_OFFER",
-      "to_column": "OFFER_ID"
-     }
-    ],
     "COURSE": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "COURSE_ID",
       "to_table": "COURSE",
       "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
      }
     ]
    }
@@ -23233,20 +23285,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE_OFFER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "OFFER_ID",
-      "to_table": "COURSE_OFFER",
-      "to_column": "OFFER_ID"
-     }
-    ],
     "COURSE": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "COURSE_ID",
       "to_table": "COURSE",
       "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
      }
     ]
    }
@@ -23464,20 +23516,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE_OFFER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "OFFER_ID",
-      "to_table": "COURSE_OFFER",
-      "to_column": "OFFER_ID"
-     }
-    ],
     "COURSE": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "COURSE_ID",
       "to_table": "COURSE",
       "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
      }
     ]
    }
@@ -23737,20 +23789,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE_OFFER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "OFFER_ID",
-      "to_table": "COURSE_OFFER",
-      "to_column": "OFFER_ID"
-     }
-    ],
     "COURSE": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "COURSE_ID",
       "to_table": "COURSE",
       "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
      }
     ]
    }
@@ -24028,20 +24080,20 @@
     "ROLL_NO"
    ],
    "joins": {
-    "COURSE_OFFER": [
-     {
-      "from_table": "COURSE_REGISTRATION",
-      "from_column": "OFFER_ID",
-      "to_table": "COURSE_OFFER",
-      "to_column": "OFFER_ID"
-     }
-    ],
     "COURSE": [
      {
       "from_table": "COURSE_REGISTRATION",
       "from_column": "COURSE_ID",
       "to_table": "COURSE",
       "to_column": "COURSE_ID"
+     }
+    ],
+    "COURSE_OFFER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "OFFER_ID",
+      "to_table": "COURSE_OFFER",
+      "to_column": "OFFER_ID"
      }
     ]
    }
@@ -32675,20 +32727,11 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "spree_discounts",
+   "table": "spree_promotions",
    "pk_columns": [
     "id"
    ],
-   "joins": {
-    "spree_promotions": [
-     {
-      "from_table": "spree_discounts",
-      "from_column": "promotion_id",
-      "to_table": "spree_promotions",
-      "to_column": "id"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {
@@ -32773,20 +32816,11 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "spree_discounts",
+   "table": "spree_promotions",
    "pk_columns": [
     "id"
    ],
-   "joins": {
-    "spree_promotions": [
-     {
-      "from_table": "spree_discounts",
-      "from_column": "promotion_id",
-      "to_table": "spree_promotions",
-      "to_column": "id"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {
@@ -32923,20 +32957,11 @@
   "cross_variable_reference": true,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "spree_discounts",
+   "table": "spree_promotions",
    "pk_columns": [
     "id"
    ],
-   "joins": {
-    "spree_promotions": [
-     {
-      "from_table": "spree_discounts",
-      "from_column": "promotion_id",
-      "to_table": "spree_promotions",
-      "to_column": "id"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {
@@ -33081,20 +33106,11 @@
   "cross_variable_reference": false,
   "feasibility": "unknown",
   "decision_subject": {
-   "table": "spree_discounts",
+   "table": "spree_promotions",
    "pk_columns": [
     "id"
    ],
-   "joins": {
-    "spree_promotions": [
-     {
-      "from_table": "spree_discounts",
-      "from_column": "promotion_id",
-      "to_table": "spree_promotions",
-      "to_column": "id"
-     }
-    ]
-   }
+   "joins": {}
   }
  },
  {

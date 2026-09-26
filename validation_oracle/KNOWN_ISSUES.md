@@ -1,6 +1,158 @@
 # Validation oracle — known issues tracker
 
-## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — the cat1 self-correlation fix's own "register this row as the self-table's own anchor" fallback wrongly assumed self_table always equals the row's own destination table -- a THIRD, latent bug surfaced by the fixes above (`table STUDENT_PROGRAM has no column named SEM_ID`)
+## RESOLVED, confirmed via re-run for both FLEX2 and Spree (2026-09-26, late) — FLEX2 `Graduation Eligibility` (all 5 rules claimed, 0 verified): the validator could not pick a subject at all, and `yearsElapsed` compared a raw DATE against 7
+
+**Re-run result (2026-09-26, user-run: fresh FLEX2 search + validator
+with `--not-persisted-json validation_oracle/tests/flex2_not_persisted.
+json`)**: `Total 50 / Claimed 49 / Validated 41 (82.0%)`, up from 36.
+ALL FIVE `Graduation Eligibility::Rule_1`-`Rule_5` now verify. Also
+gained `Course Load Limit::Rule_1` (side-effect only, as before). Lost
+`Summer Semester Registration::Rule_5` -- NOT claimed this run (best
+archived fitness 0.5, was claimed and verified last run); no new error
+type, so most likely shared-population variance from `Rule_4`/`Rule_5`'s
+changed objectives, not traced. `Claimed: 49` also confirms the corrected
+Claimed count (the 1 missing is exactly that rule). Only remaining errors:
+the 3 known `CREDIT_HRS` individuals. Remaining FLEX2 claimed-but-
+unverified (8): `Course Load Limit::Rule_2`/`Rule_4`, `Course Registration
+Eligibility::Rule_2`-`Rule_4`, `Credit Transfer Exemption::Rule_2`,
+`Summer Semester Registration::Rule_2`/`Rule_3`.
+
+**Spree re-run (user-run, validator only, existing archive, `spree_not_
+persisted.json`)**: `Total 22 / Claimed 21 / In scope 21 / Validated 18
+(85.7% in-scope)`, up from the last recorded 17/21 (81.0%, `HANDOFF.md`),
+zero errors. All 4 `Promotion Usage Limit Exceeded` rules verify --
+including `rule_3` (`adjustedCreditsCount >= usageLimit`), which
+`HANDOFF.md` had recorded as never verifying ("no constructed subject
+reaches ..."): with `self` now bound to the PROMOTION row, the count is
+per-promotion, matching what `usage_limit` is compared against. Remaining
+Spree in-scope gap: `One-Use-Per-User Promotion Eligibility::rule_1`-
+`rule_3` (claimed, not verified, not traced).
+
+Traced by re-running `run_decision` directly (errors visible -- the
+per-individual tool's `_verify_decision_subset` swallows them) against
+the materialized DB of the `Rule_5` individual.
+
+**Root cause 1 (validator, blocking the WHOLE decision)**: `build_subject_
+tables` returned `unresolved`: *"Cannot pick a unique root reaching
+['BATCH_PROGRAM', 'STUDENT_PROGRAM', 'STUDENT_SEMESTER'] ... 0
+candidate(s) qualify"*. `semestersElapsed` is `COUNT(STUDENT_SEMESTER)
+WHERE ROLL_NO = :ROLL_NO` with an explicit `self_table: STUDENT_PROGRAM`,
+but `subject_table.py`'s `derived_aggregate` extractor (the `:column`
+requirement added for OpenMRS's `isObsGroup`) always required the
+COUNTED table (`STUDENT_SEMESTER`) to be the subject -- the same latent
+"`self_table` == counted table" assumption fixed on the generator's
+construction side earlier the same day. `db_resolver` binds `:ROLL_NO`
+straight off whatever subject row it gets, so the right requirement is
+`self_table` when present. This is why even the catch-all `Rule_5`
+(`literal true`) never verified: the decision was skipped as unresolved.
+**Fixed** in `subject_table.py` and mirrored in `compile_constraints.
+py`'s `_decision_subject_tables_referenced`. Corpus survey: only 2 nodes
+have a `:col`/`self` filter with a `self_table` differing from the
+counted table -- this one and Spree's `Promotion Usage Limit Exceeded::
+adjustedCreditsCount` (`promotion_id = self`, `self_table=
+spree_promotions`): its subject changes `spree_discounts` ->
+`spree_promotions` on BOTH sides. That is also a correctness fix (`self`
+previously resolved to a DISCOUNT id, not a promotion id), but it may
+move Spree's numbers.
+
+**Root cause 2 (compile)**: `yearsElapsed` (`Rule_4`: `> 7`) is curated
+as *"derived from STUDENT_PROGRAM.CREATED_DATE vs current date"*, but with
+exactly one table.column pair `classify_derived` fell through to a bare
+`schema_column` -- the raw `created_date` was compared against 7.
+**Fixed**: new `_try_extract_elapsed_years_since` (`compile_constraints.
+py`, checked before `classify_derived`, only for a variable whose own
+name says "year" -- the text names no unit) compiles it to a
+`substituted_decision`: `(today() - student_program.created_date) / 365`.
+Search side already supported `today()` inside an expression
+(`fitness.evaluate_expression` -> `genome['__today__']`, fixed at 20000 by
+`build_seed_candidate`, never mutated/offset). Validator side:
+`drd_executor._resolve_one`'s `substituted_decision` branch now passes
+the disclosed `not_persisted_overrides['__today__']` into the expression
+values (previously only a condition-level `today()` got it). **New,
+disclosed override file**: `validation_oracle/tests/flex2_not_persisted.
+json` = `{"__today__": 20000}` (same value as the search and as both
+jBilling override files). Without it the decision raises
+`NotImplementedError` and is marked unresolved -- never silently covered.
+The same curated phrasing also appears for `Admission Closure
+Eligibility::yearsSinceProgramStart`, currently in `out_of_scope/
+pending_investigation/` -- it will pick this fix up if moved back.
+
+**Not fixed, disclosed**: the GENERATOR's own `decision_subject` for this
+decision is still `None` -- `_build_subject_join_path` doesn't support
+composite-key FKs (`STUDENT_PROGRAM -> BATCH_PROGRAM` is `(BATCH_NO,
+PROG_ID)`), an already-documented narrower scope than the validator's
+`schema_utility.build_join_path`. Not needed for verification (see below);
+widening it would change the hop format several construction functions
+consume.
+
+Verified: fresh recompile, record-id-keyed semantic diff -- exactly 6
+records changed (`Graduation Eligibility::Rule_4`/`Rule_5`'s `yearsElapsed`,
+`Promotion Usage Limit Exceeded::rule_1`-`rule_4`'s `decision_subject`);
+the raw compile's 74 extra records are exactly the `out_of_scope/`
+records and were NOT written back. Full regression suite passing
+(172/174 evaluable, unchanged). Against the EXISTING (stale) FLEX2 DBs:
+with the override, `Rule_1`-`Rule_4` verify (`Rule_4` never had before);
+`Rule_5` does not, because the stale archive wrote `created_date=1`
+(=~54 years elapsed, so those students now correctly select `Rule_4`).
+Needs a fresh FLEX2 SEARCH re-run (`Rule_4`/`Rule_5`'s fitness changed),
+then the validator WITH `--not-persisted-json validation_oracle/tests/
+flex2_not_persisted.json`. Spree needs a validator run only.
+
+## 2026-09-26 (evening) — FLEX2 re-run after the three fixes below: 36/50 validated, crashes gone; also found the `Claimed` count fix was itself wrong
+
+Fresh FLEX2 search (`rerun_flex2_only.py`, archive written 19:17) plus a
+validator run (`--mode optimized`), both run by the user. Summary line as
+printed: `Total 50 / Claimed 43 / Validated 36 (72.0%)`.
+
+**Crashes**: the `STUDENT_PROGRAM has no column named SEM_ID` (8
+individuals) and `UNIQUE constraint failed: STUDENT_PROGRAM.ROLL_NO` (74
+individuals) crashes are both GONE -- zero occurrences across 77
+individuals. The only remaining errors are the 3 already-flagged, not-yet-
+fixed `PROGRAM_COURSE has no column named CREDIT_HRS` individuals
+(`AcademicWarningStatus_Rule_3`/`CourseReplacementEligibility_Rule_5`/
+`GradePointsAndInterpretation_Rule_4` origins), unchanged.
+
+**Coverage vs. the previous 38/50 run** (net -2): GAINED `Credit Transfer
+Exemption::Rule_1` (the `derived_join_count` fix's own target, now
+verifying via individual 14). LOST `Course Load Limit::Rule_1`/`Rule_2`/
+`Rule_4` -- these were only ever verified as a SIDE EFFECT of other
+individuals (never via their own dedicated one, see the `Claimed` entry
+further down), so they are exposed to the shared population's run-to-run
+variance. No new crash/error type appeared, so this is most likely
+variance, not a regression -- NOT yet traced to confirm either way.
+
+**The `Claimed: 43` figure was itself wrong** -- a bug in THIS session's
+own earlier fix for the `Claimed: 77` count (see the `Claimed` part of the
+`_build_decision_subject_row` hop-target entry below). That fix
+deduplicated by `rid.split('::')[-1]`, but a DRD variant's record_id is
+`FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic
+Warning Status::Decision_AcademicWarningStatus_Rule_3` -- its LAST segment
+is the UPSTREAM rule, not the rule being claimed. Every FLEX2 rule that
+only exists in the archive via `::via::` variants (`Course Load Limit::
+Rule_1`/`2`/`4`, `Course Registration Eligibility::Rule_2`/`3`/`4`, ...)
+was silently dropped from the count. The earlier entry's "confirmed
+correct, 43 matches distinct rule_ids" was WRONG -- 43 happened to look
+plausible (below Total), so it was never cross-checked. Real FLEX2 claimed
+count: **50/50** (every rule has at least one `fitness=0.0` archive entry).
+
+**Fixed**: `_print_summary_line` (`per_individual_archive_coverage.py`) now
+maps each archive key to its rule via `records`' own exact
+`record_id -> rule_id` pair, no string parsing. `summarize_per_individual.
+py`'s `_claimed_fulfilled` had the same `split('::')[-1]` in its
+out-of-scope filter -- fixed the same way (its count stays per-OBJECTIVE,
+matching its own `objectives` column; only the scope lookup changed).
+Checked against all four current archives: FLEX2 43 -> 50; OpenMRS (53),
+jBilling (19), Spree (21) unchanged -- FLEX2 is the only case study with
+`::via::` variants. Pure reporting change: no effect on search or
+verification. Not yet seen in a real user-run summary line.
+
+**So the real FLEX2 picture is 50 claimed, 36 validated, 14 claimed-but-
+unverified**: `Course Load Limit::Rule_1`/`2`/`4`, `Course Registration
+Eligibility::Rule_2`/`3`/`4`, `Credit Transfer Exemption::Rule_2`,
+`Graduation Eligibility::Rule_1`-`Rule_5`, `Summer Semester Registration::
+Rule_2`/`Rule_3`. None individually traced yet.
+
+## RESOLVED, confirmed via re-run (2026-09-26) — the cat1 self-correlation fix's own "register this row as the self-table's own anchor" fallback wrongly assumed self_table always equals the row's own destination table -- a THIRD, latent bug surfaced by the fixes above (`table STUDENT_PROGRAM has no column named SEM_ID`)
 
 Re-running the validator after the collision-bump fix just below dropped
 the universal crash from 74 individuals to 8, all a NEW, different error:
@@ -45,7 +197,7 @@ fresh FLEX2 search re-run building new individuals from generation 0 with
 the corrected operator, not by re-running the validator against the
 existing (still-stale) archive. Not yet re-run as of this entry.
 
-## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — `_build_decision_subject_row` had no collision check at all (unlike its sibling function), so newly enabling `decision_subject` for `Course Registration Eligibility`/`Academic Warning Status` (the fix just below) caused a UNIVERSAL FLEX2 crash (74/77 individuals, 0% validated)
+## RESOLVED, confirmed via re-run (2026-09-26) — `_build_decision_subject_row` had no collision check at all (unlike its sibling function), so newly enabling `decision_subject` for `Course Registration Eligibility`/`Academic Warning Status` (the fix just below) caused a UNIVERSAL FLEX2 crash (74/77 individuals, 0% validated)
 
 Re-running the validator right after the `derived_join_count` fix below
 (expected to be a pure, safe compile-time change) instead produced a
@@ -100,7 +252,7 @@ later.
 
 Not yet re-run as of this entry.
 
-## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — `_decision_subject_tables_referenced` required a join path to `derived_join_count`'s own `prereq_table` too, but that table is queried via a raw, uncorrelated scan needing no join at all -- `Credit Transfer Exemption::Rule_1`/`Rule_2` (plus a bonus fix for `Course Registration Eligibility`, 26 more records)
+## RESOLVED (PARTIALLY), confirmed via re-run (2026-09-26) — `_decision_subject_tables_referenced` required a join path to `derived_join_count`'s own `prereq_table` too, but that table is queried via a raw, uncorrelated scan needing no join at all -- `Credit Transfer Exemption::Rule_1`/`Rule_2` (plus a bonus fix for `Course Registration Eligibility`, 26 more records)
 
 Traced FLEX2's own `Credit Transfer Exemption::Rule_1` (claimed, never
 independently verified). Its `decision_subject` was `None` at compile
@@ -207,6 +359,9 @@ existing archive.
 **Re-run result (2026-09-26), confirmed correct on BOTH counts**: the
 `Claimed` print bug fix (logged separately below) is confirmed correct
 too -- `Claimed: 43`, not `77`, matching distinct rule_ids exactly.
+**[CORRECTION, later 2026-09-26: this was wrong -- the dedup key was the
+UPSTREAM rule for `::via::` variants; the real count is 50. See the
+evening re-run entry at the top of this file.]**
 `Attendance Eligibility For Final Exam::Rule_1` now verifies via its own
 dedicated individual; `Rule_2` verifies via a DIFFERENT individual's own
 materialized database (`Academic Warning Status::Rule_3`'s own, which
