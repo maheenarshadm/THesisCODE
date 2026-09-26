@@ -47,6 +47,39 @@ class FitnessEvaluationError(Exception):
     an unsupported case."""
 
 
+class EvaluationBudgetExhausted(Exception):
+    """Raised by `branch_fitness` once a limit set via
+    `reset_evaluation_counter(limit)` is used up. Deliberately NOT a
+    subclass of FitnessEvaluationError, so no "not evaluable yet" guard
+    anywhere in the search swallows it -- it always propagates to the
+    algorithm's own loop, which stops there."""
+
+
+# Fitness-evaluation budget (2026-09-26, experiment_harness/): one
+# evaluation = one `branch_fitness` call, i.e. one record scored against
+# one genome -- counted identically for every algorithm (DynaMOSA's own
+# archive updates, NSGA-II ranking, and every hypothetical value
+# `best_value_for` tries; the random baselines' archive updates), so an
+# "equal budget" comparison is equal by construction. Process-global:
+# the harness runs every search in its own process.
+_EVALUATIONS = {'count': 0, 'limit': None}
+
+
+def reset_evaluation_counter(limit=None):
+    _EVALUATIONS['count'] = 0
+    _EVALUATIONS['limit'] = limit
+
+
+def clear_evaluation_limit():
+    """Lifts the limit but keeps the count, so a caller can still read
+    `evaluations_used()` after a budgeted run returns."""
+    _EVALUATIONS['limit'] = None
+
+
+def evaluations_used():
+    return _EVALUATIONS['count']
+
+
 # ---------------------------------------------------------------------------
 # 1. Resolving a free variable's *current value* from the genome, walking
 #    the same variable_resolution structure compile_constraints.py built
@@ -404,6 +437,9 @@ def branch_fitness(record, genome):
     earlier row's condition false); positive otherwise, with a gradient
     AVM/GA can climb. `record` is one entry of compiled_constraints.json;
     `genome` is {free_variable_name: value}."""
+    if _EVALUATIONS['limit'] is not None and _EVALUATIONS['count'] >= _EVALUATIONS['limit']:
+        raise EvaluationBudgetExhausted(_EVALUATIONS['limit'])
+    _EVALUATIONS['count'] += 1
     resolution_map = record.get('variable_resolution', {})
     own = distance_to_true(record['condition'], resolution_map, genome)
     own_conjuncts = {_canonical(c) for c in _top_level_conjuncts(record['condition'])}

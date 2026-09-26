@@ -174,7 +174,9 @@ sys.path.insert(0, HERE)
 from candidate import (Candidate, derive_genome, build_seed_candidate,  # noqa: E402
                         _OWNER_KEY, known_constant, _PLACEHOLDER_RE,
                         _SIMPLE_EQ_CONJUNCT_RE, _BARE_TABLE_DOT_COLUMN_RE)
-from fitness import branch_fitness, FitnessEvaluationError, _unique_key_sets  # noqa: E402
+from fitness import (branch_fitness, FitnessEvaluationError, _unique_key_sets,  # noqa: E402
+                     EvaluationBudgetExhausted, reset_evaluation_counter, clear_evaluation_limit,
+                     evaluations_used)
 from mutation import (repair_candidate, best_value_for, apply_mutation,  # noqa: E402
                        _leaf_variables, _schema_for, candidate_values, _fresh_key_value)
 from crossover import crossover  # noqa: E402
@@ -1215,7 +1217,7 @@ def _deep_copy_individual(individual):
 
 def run_dynamosa(records, case_study, population_size=20, generations=50, rng=None,
                   mutations_per_child='auto', kick_probability=_KICK_PROBABILITY, dynamic_gating=True,
-                  use_local_burst=True):
+                  use_local_burst=True, max_evaluations=None, trace=None):
     """Runs the population loop over `records` (compiled branches from
     ONE case study -- mixing case studies makes no sense, since a shared
     candidate's tables are case-study-specific). Returns
@@ -1323,7 +1325,53 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     (whether unsatisfiable-dependency objectives are allowed to compete
     for selection pressure before they're even reachable) rather than
     comparing against a separately-implemented algorithm with its own,
-    potentially unfair, tuning and bugs."""
+    potentially unfair, tuning and bugs.
+
+    `max_evaluations` (None by default -- exactly the prior, generation-
+    count-only behavior): experiment_harness/'s fixed fitness-evaluation
+    budget (see fitness.py's `reset_evaluation_counter`). When set, the
+    run stops the moment that many `branch_fitness` calls have been made
+    (or every objective is covered), wherever in a generation that falls,
+    and `generations` may be None for "no generation cap". The archive is
+    always consistent at that point (each entry is replaced atomically);
+    the returned population is the last one NSGA-II selection produced.
+    `trace`, if a list, receives one `(evaluations_used, record_id)`
+    entry the first time each record reaches fitness 0.0."""
+    if generations is None and max_evaluations is None:
+        raise ValueError('run_dynamosa needs a generation cap, an evaluation budget, or both')
+    if max_evaluations is not None:
+        reset_evaluation_counter(max_evaluations)
+    try:
+        return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                                  mutations_per_child, kick_probability, dynamic_gating,
+                                  use_local_burst, trace, max_evaluations is not None)
+    finally:
+        if max_evaluations is not None:
+            clear_evaluation_limit()
+
+
+def _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                       mutations_per_child, kick_probability, dynamic_gating, use_local_burst, trace,
+                       stop_when_all_covered):
+    # Stopping once everything is covered only applies under a budget --
+    # without one, the prior behavior (always run every generation) stands.
+    state = {'stop_when_all_covered': stop_when_all_covered}
+    try:
+        _dynamosa_generations(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, state)
+    except EvaluationBudgetExhausted:
+        pass
+    return state['archive'], state['coverage_history'], state['population']
+
+
+def _dynamosa_generations(records, case_study, population_size, generations, rng,
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          use_local_burst, trace, state):
+    """`run_dynamosa`'s own body, writing its live archive / coverage
+    history / population into `state` as it goes so a budget stop
+    (EvaluationBudgetExhausted, raised from inside any fitness call)
+    still leaves the caller the run's real current state."""
     rng = rng or random.Random(0)
     table_cache = {}
     population = _seed_shared_population(records, case_study, population_size)
@@ -1337,6 +1385,8 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
     # didn't defensively .get() the archive crashed. An honest "never
     # covered, inf" entry is the correct initial state, not an absent key.
     archive = {r['record_id']: (float('inf'), population[0]) for r in records}
+    coverage_history = []
+    state.update(archive=archive, coverage_history=coverage_history, population=population)
 
     def update_archive(individual):
         candidate, focal_maps, scenario_maps = individual
@@ -1344,13 +1394,18 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
             rid = r['record_id']
             f = evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache)
             if f < archive[rid][0]:
+                if f == 0.0 and trace is not None:
+                    trace.append((evaluations_used(), rid))
                 archive[rid] = (f, _deep_copy_individual(individual))
 
     for ind in population:
         update_archive(ind)
 
-    coverage_history = []
-    for _gen in range(generations):
+    gen = 0
+    while generations is None or gen < generations:
+        gen += 1
+        if state['stop_when_all_covered'] and all(archive[r['record_id']][0] == 0.0 for r in records):
+            break
         covered_keys = {_branch_key(r) for r in records
                          if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0}
         active = records if not dynamic_gating else [r for r in records if is_active(r, covered_keys)]
@@ -1415,12 +1470,11 @@ def run_dynamosa(records, case_study, population_size=20, generations=50, rng=No
                 new_population.extend(combined[i] for i in front_sorted[:population_size - len(new_population)])
                 break
         population = new_population or population  # never leave the population empty
+        state['population'] = population
 
         covered_count = sum(1 for r in records
                              if archive.get(r['record_id'], (float('inf'), None))[0] == 0.0)
         coverage_history.append(covered_count)
-
-    return archive, coverage_history, population
 
 
 # ---------------------------------------------------------------------------
