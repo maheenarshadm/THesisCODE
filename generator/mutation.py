@@ -883,7 +883,8 @@ def _apply_field_mutation(node, value, candidate, focal, case_study=None):
     return touched
 
 
-def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=None, focal=None, self_table=None):
+def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=None, focal=None, self_table=None,
+                                table=None):
     """mutation.py's own independent construction mirror of candidate.py's
     identically-named function -- kept separate, not imported, per that
     function's own docstring ("the parsing rules must stay identical, so
@@ -917,7 +918,7 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
         c_stripped = conjunct.strip()
         m_sub = _IN_SUBQUERY_RE.match(c_stripped)
         if m_sub:
-            outer_val = _construct_subquery_parent(m_sub, candidate, focal, scenario, self_table)
+            outer_val = _construct_subquery_parent(m_sub, candidate, focal, scenario, self_table, owner_id=owner_id)
             if outer_val is not None:
                 row[m_sub.group(1)] = outer_val
             continue
@@ -955,10 +956,28 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
                 row[col] = fresh
                 if self_row is not None:
                     self_row[colon_m.group(1)] = fresh
-                else:
+                elif table is not None and self_table.upper() == table.upper():
+                    # `row` only doubles as `self_table`'s own anchor when
+                    # they're genuinely the SAME table -- see candidate.py's
+                    # own mirror fix (2026-09-26, FLEX2's own
+                    # `semestersElapsed`: `self_table='STUDENT_PROGRAM'`
+                    # while this row is a `STUDENT_SEMESTER` row) for the
+                    # full writeup. Without `table` (a caller that hasn't
+                    # threaded it through), this aliasing is skipped
+                    # entirely -- safer than guessing whether it's the
+                    # same table.
                     row[colon_m.group(1)] = fresh
                     focal[self_table.upper()] = row
                     self_row = row
+                else:
+                    # `self_table` names a DIFFERENT table this call has no
+                    # row for yet -- write into a genuine, dedicated row
+                    # for THAT table instead, registered so later rows
+                    # this SAME objective builds find and reuse it.
+                    self_row = focal.setdefault(self_table.upper(), {})
+                    if candidate is not None and self_row not in candidate.rows(self_table):
+                        candidate.add_row(self_table, self_row)
+                    self_row[colon_m.group(1)] = fresh
             continue
         ph = re.fullmatch(r'<([^>]+)>', raw_val)
         if ph:
@@ -1042,7 +1061,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         owned = _owned_rows(candidate, table, owner_id)
         if value and not any(predicate(r) for r in owned):
             row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
-                                              candidate, focal, self_table)
+                                              candidate, focal, self_table, table=table)
             row = candidate.add_row(table, row)
             return [(table, row)]
         elif not value:
@@ -1131,7 +1150,7 @@ def _apply_row_count_mutation(node, value, candidate, scenario, current, focal=N
         touched = []
         for _ in range(n):
             row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
-                                              candidate, focal, self_table)
+                                              candidate, focal, self_table, table=table)
             if node.get('value_column'):
                 row[node['value_column'].split('.')[1]] = 1
             candidate.add_row(table, row)

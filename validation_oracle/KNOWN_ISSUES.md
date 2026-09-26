@@ -1,5 +1,356 @@
 # Validation oracle — known issues tracker
 
+## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — the cat1 self-correlation fix's own "register this row as the self-table's own anchor" fallback wrongly assumed self_table always equals the row's own destination table -- a THIRD, latent bug surfaced by the fixes above (`table STUDENT_PROGRAM has no column named SEM_ID`)
+
+Re-running the validator after the collision-bump fix just below dropped
+the universal crash from 74 individuals to 8, all a NEW, different error:
+`OperationalError: table STUDENT_PROGRAM has no column named SEM_ID` (and
+`CREDIT_HRS`, the already-flagged separate bug). Traced the SEM_ID one.
+
+**Root cause**: `semestersElapsed` (FLEX2's `Graduation Eligibility`) is a
+`derived_aggregate` (`COUNT(STUDENT_SEMESTER) WHERE ROLL_NO = :ROLL_NO`)
+with an EXPLICIT `self_table` override, `STUDENT_PROGRAM` -- genuinely a
+DIFFERENT table than the one being counted (`STUDENT_SEMESTER`). The cat1
+self-correlation fix (this session, earlier today, OpenMRS's own `Concept
+Fully-Specified-Name Presence Requirement`) added a fallback for when the
+self-referenced column isn't resolvable yet: allocate a fresh value, and
+if no row for `self_table` exists at all, register the CURRENT row being
+built as `self_table`'s own new anchor. That fallback's ENTIRE premise
+(the original, motivating case) was `self_table == the row's own table`
+-- a fact self-correlating against ITSELF. It silently kept firing even
+when `self_table` names a genuinely DIFFERENT table, registering a
+`STUDENT_SEMESTER`-shaped row (columns `SEM_ID`/`ROLL_NO`) as `STUDENT_
+PROGRAM`'s own focal entry -- which `_build_decision_subject_row`/
+materialize.py then tried to INSERT into `STUDENT_PROGRAM` under `STUDENT_
+SEMESTER`'s own column names.
+
+**Fixed**: `_row_from_filter_conjuncts` (both `candidate.py`'s and
+`mutation.py`'s independent copies, per this project's own "parsing rules
+must stay identical" convention) now take an explicit `table` parameter
+(the row's own real destination, threaded through from both callers in
+each file) and only take the "alias this row as self_table's own anchor"
+shortcut when `self_table.upper() == table.upper()`. When they genuinely
+differ, a SEPARATE, dedicated row is built for `self_table` instead (via
+`focal.setdefault`/`candidate.add_row`), registered the same way, so
+later rows this SAME objective builds still correctly find and reuse it
+through the ordinary self-reference path.
+
+Full regression suite passing (`candidate.py`/`mutation.py` self-tests --
+including the OpenMRS acceptance test exercising the SAME self-correlation
+code path, confirming no regression there -- `test_spec_cases.py`, `test_
+drd_chaining_synthetic.py`, `test_serialized_field_roundtrip.py`). Unlike
+the two fixes above (pure compile-time/per-individual-tool changes), this
+is a genuine SEARCH-TIME construction fix -- it can only take effect via a
+fresh FLEX2 search re-run building new individuals from generation 0 with
+the corrected operator, not by re-running the validator against the
+existing (still-stale) archive. Not yet re-run as of this entry.
+
+## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — `_build_decision_subject_row` had no collision check at all (unlike its sibling function), so newly enabling `decision_subject` for `Course Registration Eligibility`/`Academic Warning Status` (the fix just below) caused a UNIVERSAL FLEX2 crash (74/77 individuals, 0% validated)
+
+Re-running the validator right after the `derived_join_count` fix below
+(expected to be a pure, safe compile-time change) instead produced a
+UNIVERSAL crash: `IntegrityError: UNIQUE constraint failed: STUDENT_
+PROGRAM.ROLL_NO` on 74 of 77 individuals.
+
+**Root cause**: DRD chaining deliberately reuses an upstream decision's
+own already-solved case (its real, already-offset scenario values) when
+building a chained record (e.g. `Course Registration Eligibility::Rule_3
+::via::...+Academic Warning Status::Rule_1+...` legitimately shares
+`Academic Warning Status::Rule_1`'s own `COURSE_REGISTRATION.ROLL_NO`
+value) -- correct and intentional. But now that BOTH decisions have a
+real `decision_subject` needing a `STUDENT_PROGRAM` hop (the fix below),
+EACH of the two DIFFERENT records independently builds its OWN,
+separately-owned `STUDENT_PROGRAM` row via `_build_decision_subject_row`
+-- and both land on the IDENTICAL `ROLL_NO` value, since that's exactly
+the (correct, shared) input they both started from. `_build_decision_
+subject_row` had NO collision check at all for this -- unlike its own
+sibling function, `_apply_cross_table_placeholder_correlations`, which
+already bumps a colliding OTHER row when this exact shape occurs.
+
+**Fixed**: extracted the collision-bump logic BOTH functions now need
+into a shared `_bump_colliding_rows(candidate, schema, table, column,
+value, keep_row)` (folding `_apply_cross_table_placeholder_correlations`'s
+own existing inline version into it too, not just adding a second, forked
+copy) -- called after both places `_build_decision_subject_row` can write
+a hop's own `to_column` value (the "subject already had a value, target
+now conforms to it" branch AND the "fresh `pk_value` assigned" branch).
+Threaded a new `schema` parameter through `_build_decision_subject_row`
+and `_build_decision_subject_rows_for_individual` (both call sites
+already had `schema` available).
+
+Verified directly against the actual archived individual: the `STUDENT_
+PROGRAM.ROLL_NO` collision is gone (0 duplicates across 144 rows,
+post-repair). Full regression suite passing (`candidate.py`/`mutation.py`
+self-tests, `test_spec_cases.py`, `test_drd_chaining_synthetic.py`,
+`test_serialized_field_roundtrip.py`).
+
+**A second, SEPARATE, pre-existing bug found in the same re-run** (3
+individuals, `Course Replacement Eligibility::Rule_5`/`Academic Warning
+Status::Rule_3`/`Grade Points and Interpretation::Rule_4`):
+`OperationalError: table PROGRAM_COURSE has no column named CREDIT_HRS`.
+Confirmed against the real schema: `PROGRAM_COURSE` genuinely has no
+`CREDIT_HRS` column (`BATCH_NO`/`PROG_ID`/`COURSE_ID`/`RELATOIN_ID`/
+`CREATED_BY`/`CREATED_DATE` only) -- `degreeTotalCredits`'s own `SUM`
+aggregate over the joined `PROGRAM_COURSE, COURSE` FROM-list (see this
+fact's own earlier writeup in this file) is putting `CREDIT_HRS` onto the
+WRONG side of that join somewhere in its seed/mutation construction; it
+belongs on `COURSE`. Unrelated to the fix above (different decision, only
+3 individuals) -- NOT investigated or fixed this round, flagged here for
+later.
+
+Not yet re-run as of this entry.
+
+## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — `_decision_subject_tables_referenced` required a join path to `derived_join_count`'s own `prereq_table` too, but that table is queried via a raw, uncorrelated scan needing no join at all -- `Credit Transfer Exemption::Rule_1`/`Rule_2` (plus a bonus fix for `Course Registration Eligibility`, 26 more records)
+
+Traced FLEX2's own `Credit Transfer Exemption::Rule_1` (claimed, never
+independently verified). Its `decision_subject` was `None` at compile
+time -- but `subject_table_for_decision`'s own LIVE recomputation at
+validation time resolves it fine, to `COURSE_REGISTRATION -> COURSE`. The
+usual consequence of this exact mismatch (seen many times already this
+session): the generator never builds a correlated `COURSE_REGISTRATION`
+row, so independent verification enumerates every REAL `COURSE_
+REGISTRATION` row in the database, joins each to ITS OWN `COURSE`, and
+never finds one pointing at the specific `COURSE` row (`credit_hrs=64`)
+this record's own construction built in isolation.
+
+**Root cause**: `_decision_subject_tables_referenced`'s generic `collect_
+tables_from_resolution` fallback adds BOTH `prereq_table` AND
+`registration_table` for a `derived_join_count` fact (`unmetPrerequisite
+AlsoPassedCount`, needed by `Rule_2`/`Rule_3` -- confirmed present on
+`Rule_1` too, via a sibling fact resolving the same way) -- but `prereq_
+table` (`COURSE_PREREQ`) is queried via a raw, UNCORRELATED scan
+(`db_resolver.resolve`'s own `derived_join_count` branch: `SELECT
+COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS (...)`, no WHERE binding
+on `p` from the subject at all) -- the SAME "self-contained, no join path
+needed" shape `derived_aggregate`/`exists` are already exempted for, just
+never extended to this kind. `COURSE_PREREQ` is also genuinely one-to-many
+per course, so requiring it left root-picking with ZERO qualifying
+candidates (confirmed: `_pick_subject_root` returned no candidates at all
+for this decision), not just a wrong one.
+
+**Fixed**: special-cased `derived_join_count` in `_decision_subject_
+tables_referenced` to add only `registration_table`, mirroring `subject_
+table.py`'s own `_TABLE_EXTRACTORS['derived_join_count']` exactly
+(`{n['registration_table']}`, already correct on the validator side).
+
+**A genuine bonus found in the same fix**: `Course Registration
+Eligibility` uses the SAME `derived_join_count` shape (`unmetPrerequisite
+Count`) and had the IDENTICAL gap -- `decision_subject: None` for every
+one of its own records (27 total, including its many DRD-chained `::via::`
+variants), now correctly resolving to `COURSE_REGISTRATION -> SEMESTER`/
+`STUDENT_PROGRAM`. This also legitimately enabled one further,
+correctly-scoped correlation (`compute_subject_hop_placeholder_
+correlations` firing for `projectedTotalCoursesThisRegistration`'s own
+`semester` placeholder, previously unable to fire with no subject to hop
+from) -- confirmed via a full diff, not a stray/unwanted side effect.
+
+Verified via a fresh full recompile, diffed record-by-record (174
+records) -- every one of the 27 changed records' new `decision_subject`
+confirmed to EXACTLY match `subject_table_for_decision`'s own independent
+answer for that same decision. Full regression suite passing (`candidate
+.py`/`mutation.py` self-tests, `test_spec_cases.py`, `test_drd_chaining_
+synthetic.py`, `test_serialized_field_roundtrip.py`). This is a pure
+compile-time `decision_subject`/`cross_table_placeholders` fix -- no
+change to search-time construction -- so it only needs a fresh VALIDATOR
+run against the EXISTING archive, not a new search re-run. Not yet
+re-run as of this entry.
+
+## RESOLVED, confirmed via re-run (2026-09-26) — `_construct_subquery_parent` never tagged the row it creates with `_OWNER_KEY`, leaving it permanently un-offset once built during MUTATION (not just seeding) -- second, deeper root cause behind `Attendance Eligibility For Final Exam::Rule_1`/`Rule_2`
+
+Direct continuation of the fix just below (the `cross_table_placeholders`
+recursion gap): fixing that alone raised FLEX2's overall count by 1, but
+`Attendance Eligibility For Final Exam::Rule_1`/`Rule_2` STILL didn't
+verify after the re-run. Traced further and confirmed the recursion fix
+was real and necessary, just not sufficient -- a SECOND, independent bug
+in the same area.
+
+**Root cause**: `lecturesHeldForOffering`'s own filter_text (`OFFER_ID =
+<this course offering>`) is a plain conjunct, correctly correlated onto
+the subject `COURSE_OFFER` row by the fix above -- but `lecturesAttended`'s
+own filter_text ALSO has a nested subquery conjunct (`LECTURE_ID IN
+(SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)`)
+that constructs its OWN, SEPARATE `LECTURE` parent row via `candidate.py`'s
+`_construct_subquery_parent` -- and that function NEVER tagged the row it
+built with `_OWNER_KEY`, regardless of caller. Confirmed directly: the
+archived individual had 30 untagged `LECTURE` rows, all landing on the
+identical `LECTURE_ID` (no owner tag also means no solo-unique-column
+dedup ever ran on them). Harmless at SEED time (`_seed_shared_population`'s
+own post-processing loop unconditionally re-tags every row `build_seed_
+candidate` returns, whatever this function itself left on it) but a REAL
+gap at MUTATION time (`mutation.py`'s own `_apply_row_count_mutation`,
+which calls the SAME shared `_construct_subquery_parent`, has no later
+re-tagging step for an individual already split off from the shared
+base) -- once genuinely untagged, `_offset_rows_by_owner`'s own per-owner
+offsetting correctly (per its own "genuine shared data" rule) leaves it
+alone, so it stays at its original, un-offset value the moment the
+CORRELATED subject row it was meant to match gets offset instead --
+exactly the mismatch that made `lecturesHeldForOffering` read back as `0`
+against the real, materialized database.
+
+**Fixed**: `_construct_subquery_parent` now takes `owner_id` and tags the
+row it creates when given one; `mutation.py`'s own `_row_from_filter_
+conjuncts` (which already had `owner_id` in scope, just never passed it
+through) now does. `candidate.py`'s own seeding-time copy is left passing
+no `owner_id` (unnecessary -- `_seed_shared_population`'s own later
+re-tagging already covers it).
+
+Verified directly: a fresh, targeted call (`owner_id='TEST_RID'`)
+confirms the created `LECTURE` row is now correctly tagged. Full
+regression suite passing (`candidate.py`/`mutation.py` self-tests, `test_
+spec_cases.py`, `test_drd_chaining_synthetic.py`, `test_serialized_field_
+roundtrip.py`). Unlike the recursion fix above (a pure compile-time
+patch), this is a genuine SEARCH-TIME construction fix -- it can only take
+effect via a fresh FLEX2 search re-run building new individuals from
+generation 0 with the corrected mutation operator, not by patching the
+existing archive.
+
+**Re-run result (2026-09-26), confirmed correct on BOTH counts**: the
+`Claimed` print bug fix (logged separately below) is confirmed correct
+too -- `Claimed: 43`, not `77`, matching distinct rule_ids exactly.
+`Attendance Eligibility For Final Exam::Rule_1` now verifies via its own
+dedicated individual; `Rule_2` verifies via a DIFFERENT individual's own
+materialized database (`Academic Warning Status::Rule_3`'s own, which
+also happens to satisfy it) rather than its own dedicated one -- still a
+genuine, real confirmation, the same benign cross-individual pattern
+already seen elsewhere this session (e.g. jBilling's `Tax Calculation
+Needed::Rule_2`). FLEX2 total: `36 -> 37 -> 38` validated across the
+crash fix, the recursion fix, and this owner-tagging fix in sequence
+(64.0% -> 74.0% -> 76.0%).
+
+Traced FLEX2's own `Attendance Eligibility For Final Exam::Rule_1`
+(claimed, never independently verified). `attendancePercentage` is a
+`substituted_decision` (`lecturesAttended / lecturesHeldForOffering *
+100`), and its two free variables each have real `<student>`/`<this
+course offering>` placeholders needing correlation onto `COURSE_
+REGISTRATION`/`COURSE_OFFER` (this decision's own real subject, per
+`_DECISION_SUBJECT_PLACEHOLDER_SOURCES`'s already-existing entries).
+
+**First ruled out a wrong hypothesis**: initially suspected the nested
+subquery filter (`LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE
+OFFER_ID = <this course offering>)`) was the problem -- but direct
+tracing confirmed `_mechanical_filter_predicate`'s own `_IN_SUBQUERY_RE`
+mechanism (already built 2026-09-25, for this exact fact) computes the
+real, correct aggregate values (`lecturesAttended=31`, `lecturesHeldFor
+Offering=30`, `attendancePercentage≈103%` -- genuinely `>=80`, matching
+`Rule_1`'s own real condition). Not the bug.
+
+**Actual root cause**: the compile-time pass that attaches `cross_table_
+placeholders` (`compile_case_study`'s own loop, in `compile_constraints.
+py`) and the runtime consumer that applies them (`_apply_cross_table_
+placeholder_correlations`, `dynamosa.py`) BOTH only ever visited a
+record's own TOP-LEVEL `variable_resolution` entries -- neither recursed
+into a `substituted_decision` node's own nested `free_variable_
+resolutions`. `attendancePercentage`'s own top-level node is an
+arithmetic `expression`, never itself an `exists`/`derived_aggregate`, so
+`compute_cross_table_placeholder_correlations`'s own kind-check always
+short-circuited to empty for it -- the ACTUAL `derived_aggregate` nodes
+carrying the placeholders (`lecturesAttended`/`lecturesHeldForOffering`)
+were simply never reached at all. Confirmed directly: neither node had
+`cross_table_placeholders` attached anywhere in the compiled corpus.
+`_decision_subject_tables_referenced` (a DIFFERENT function) already
+correctly recurses into `substituted_decision` -- which is WHY this
+decision's own `decision_subject` resolved correctly in the first place,
+while the SEPARATE correlation pass, missing the same recursion, left
+`decision_subject`'s own hop-wiring with no correlated value to read.
+
+**Fixed**: both the compile-time `_attach_correlations` pass and the
+runtime `_apply_cross_table_placeholder_correlations`'s own `visit`
+recurse into `substituted_decision` the same way `_decision_subject_
+tables_referenced` already does -- attaching/applying `cross_table_
+placeholders` on the REAL nested node the placeholder actually lives on,
+never the outer arithmetic node.
+
+Verified via a fresh full recompile, diffed record-by-record (174
+records, semantic diff confirmed surgical -- only the 2 targeted
+`Attendance Eligibility For Final Exam::Rule_1`/`Rule_2` records'
+`variable_resolution` changed). Full regression suite passing (`candidate
+.py`/`mutation.py` self-tests, `test_spec_cases.py`, `test_drd_chaining_
+synthetic.py` -- including `test_substituted_decision_expression`, which
+directly exercises this code path -- `test_serialized_field_roundtrip.
+py`). Verified directly against the actual archived individual: a
+correctly-correlated `COURSE_REGISTRATION`/`COURSE_OFFER` subject row now
+gets built, both sharing the SAME real, offset `OFFER_ID` value the
+record's own scenario actually used. Not yet re-run through the full
+validator as of this entry -- confirmed via a direct, targeted simulation
+against the existing (stale) archive.
+
+## FIX IMPLEMENTED, NOT YET RE-RUN (2026-09-26) — `_build_decision_subject_row`'s own hop-target lookup, scoped to focal rows only, manufactured a SECOND, colliding row when a record already owned a real one that just wasn't registered as focal -- a UNIVERSAL crash for FLEX2 (77/77 individuals, 0% validated)
+
+First time FLEX2 got this session's own rule-by-rule tracing treatment
+(`per_individual_archive_coverage.py --mode optimized`, using the fresh
+archive from the new `rerun_flex2_only.py`): EVERY SINGLE one of 77
+archived individuals failed to materialize, all with the identical
+`IntegrityError: UNIQUE constraint failed: COURSE_OFFER.OFFER_ID` --
+`Claimed: 77` (also visibly wrong vs. `Total: 50`, a separate, pre-
+existing counting quirk for decisions with DRD fan-out variants, not
+investigated this round) and `Validated: 0`.
+
+**Root cause**: `_build_decision_subject_row`'s own hop-wiring (extracted
+2026-09-26, used by both the merge path and the per-individual tool)
+looks for an existing target row ONLY in `rec_focal` (`rec_focal.get(hop
+['to_table'])`) before deciding it needs to synthesize a fresh one. But a
+record CAN already own a real, fully-populated row on that exact table --
+just never registered as this record's own FOCAL row (built via some
+other leaf/mechanism that adds it straight to the candidate without going
+through focal registration). Confirmed directly, via the actual archived
+individual for `Summer Semester Registration::Rule_4`: its own `COURSE_
+OFFER` row (real `EMP_ID`/`SEM_ID`/`COURSE_ID`/`CAMP_ID`/`SECTION_ID`,
+tagged with this exact record's own owner) already existed in the
+candidate -- `rec_focal` just never pointed at it, so the function
+manufactured a SECOND, minimal row (`{'__owner__': rid, 'OFFER_ID': ...}`)
+for the SAME owner on the SAME table. Both land on the IDENTICAL,
+un-offset PK value (a table's per-owner offset is applied once already,
+keyed by owner -- a second row for the same owner gets no further offset
+to distinguish it), a real `UNIQUE constraint failed` the moment both
+exist in the same materialized database.
+
+**Fixed**: before synthesizing a fresh row, also check the WHOLE
+candidate for any row already tagged with this record's own `_OWNER_KEY`
+on the hop's target table -- reuse it if found (registering it into
+`rec_focal` too, so later steps see it consistently). Not a new
+mechanism: `_offset_rows_by_owner`/`merge_archive_candidate`'s own
+`get_copy` already treat "every row tagged with this owner" as the
+correct scope for a record's own data; only this one lookup had narrowed
+it to focal-only.
+
+Verified directly against the actual archived individual: the
+`COURSE_OFFER` collision is gone (0 duplicate `OFFER_ID` values across
+324 rows, post-repair). Full regression suite passing (`candidate.py`/
+`mutation.py` self-tests, `test_spec_cases.py` -- including its own
+`drd_executor.py` acceptance test against real OpenMRS data, confirming
+this shared `dynamosa.py` change doesn't disturb the already-working
+OpenMRS/jBilling cases -- `test_drd_chaining_synthetic.py`, `test_
+serialized_field_roundtrip.py`).
+
+**Re-run result (2026-09-26): RESOLVED, confirmed** -- FLEX2 went from
+`Total 50 / Claimed 77 / Validated 0` (0.0%) to `Total 50 / Claimed 77 /
+Validated 36` (72.0%), confirming the fix works broadly, not just for the
+one record traced above.
+
+**A second, related bug found in the SAME re-run**: `Claimed: 77` is
+still visibly wrong against `Total: 50` -- `_print_summary_line`'s own
+`claimed` count summed raw archive ENTRIES (one per record_id) rather
+than deduplicating by trailing rule_id, so a decision with DRD fan-out
+variants (e.g. `Course Registration Eligibility::Rule_3::via::Course Load
+Limit::Rule_1+Academic Warning Status::Rule_1+...`, several distinct
+record_ids all sharing the SAME trailing rule_id) was counted once PER
+VARIANT, while `Total`/`Validated` both correctly count once per distinct
+rule. Fixed: `claimed` now deduplicates by trailing rule_id first, then
+counts, matching every other column's own convention -- corrected count:
+`Claimed: 43` (not 77). With the corrected number: `43 claimed, 36
+validated, 7 genuinely claimed-but-unverified` (`Attendance Eligibility
+For Final Exam::Rule_1`/`Rule_2`, `Credit Transfer Exemption::Rule_1`/
+`Rule_2`, `Graduation Eligibility::Rule_1`-`Rule_5`, `Summer Semester
+Registration::Rule_2`/`Rule_3` -- none individually traced yet) PLUS 4
+rules (`Course Load Limit::Rule_1`-`Rule_4`) validated despite NEVER being
+independently claimed at `fitness=0.0` on their own -- confirmed via
+`decision_trace`, only ever reached as part of resolving a CHAINED/
+substituted decision's own upstream free variable, never standalone (same
+general shape as jBilling's own cross-individual side-effect
+verification, not a new bug). Not yet re-run again to confirm the
+corrected `Claimed` print, since the fix is a pure reporting/counting
+change with no effect on search or verification themselves.
+
 ## SCOPE CHANGE, on the user's own explicit request (2026-09-26) — 9 of jBilling's remaining unvalidated rules moved to `pending_investigation/`, `Ageing Step Config Validation::Rule_2`/`Rule_5` deliberately kept active
 
 After this session's own catA/catB/catC fixes, jBilling's real combined

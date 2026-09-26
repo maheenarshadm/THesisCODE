@@ -21,9 +21,23 @@ whatever archive already exists).
 # OpenMRS only (doesn't touch the other 3 archives)
 & "./.venv/Scripts/python.exe" generator/rerun_openmrs_only.py
 
+# jBilling only
+& "./.venv/Scripts/python.exe" generator/rerun_jbilling_only.py
+
+# FLEX2 only
+& "./.venv/Scripts/python.exe" generator/rerun_flex2_only.py
+
 # Spree, FLEX2, jBilling only (doesn't touch OpenMRS's archive)
 & "./.venv/Scripts/python.exe" generator/rerun_others_only.py
 ```
+
+A **pure compile-time** fix (`decision_subject`, `cross_table_
+placeholders`, out-of-scope moves) only needs a fresh VALIDATOR run
+against the EXISTING archive — no search re-run needed, since the search
+never reads either field during evaluation. A fix inside `candidate.py`'s
+or `mutation.py`'s own construction/mutation logic (or anything the search
+DOES read) needs a fresh search re-run first. When in doubt, both is
+always safe, just slower.
 
 Each overwrites the matching, git-tracked
 `generator/experiment_runs/<CaseStudy>__dynamosa_nsga2__budget1x__seed0.pkl`
@@ -80,6 +94,19 @@ one at a time and paste results back):
 & "./.venv/Scripts/python.exe" validation_oracle/tests/per_individual_archive_coverage.py --case-study FLEX2 --archive-pickle generator/experiment_runs/FLEX2__dynamosa_nsga2__budget1x__seed0.pkl --out-dir validation_oracle/tests/per_individual_out/FLEX2 --mode optimized
 
 & "./.venv/Scripts/python.exe" validation_oracle/tests/per_individual_archive_coverage.py --case-study jBilling --archive-pickle generator/experiment_runs/jBilling__dynamosa_nsga2__budget1x__seed0.pkl --not-persisted-json validation_oracle/tests/jbilling_not_persisted.json --out-dir validation_oracle/tests/per_individual_out/jBilling --mode optimized
+```
+
+**jBilling's `Order Period Already Invoiced` needs a SECOND run with a
+DIFFERENT, still-fixed override** (2026-09-26) -- `Rule_1` needs the
+OPPOSITE `candidateDateProvided` assumption from its own siblings, which
+one single override file can never satisfy at once (this is by design,
+not a bug — see `KNOWN_ISSUES.md`'s catB entry). Run into a SEPARATE
+`--out-dir` so the first run's own results aren't overwritten, then union
+the two runs' own verified-rule sets by hand for jBilling's real combined
+picture:
+
+```powershell
+& "./.venv/Scripts/python.exe" validation_oracle/tests/per_individual_archive_coverage.py --case-study jBilling --archive-pickle generator/experiment_runs/jBilling__dynamosa_nsga2__budget1x__seed0.pkl --not-persisted-json validation_oracle/tests/jbilling_not_persisted_rule1.json --out-dir validation_oracle/tests/per_individual_out/jBilling_rule1 --mode optimized
 ```
 
 Then combine into one table across all 4:

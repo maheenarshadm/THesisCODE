@@ -871,9 +871,20 @@ def _apply_cross_table_placeholder_correlations(candidate, rec_focal, rec_scenar
     `rec_scenario` is this record's own (already offset, where
     applicable) scenario dict. Mutates `candidate` (via `add_row`) and
     `rec_focal` in place; returns nothing."""
-    for node in r.get('variable_resolution', {}).values():
+    def visit(node):
         if not isinstance(node, dict):
-            continue
+            return
+        # A `substituted_decision`'s own nested `free_variable_
+        # resolutions` can EACH carry their own `cross_table_
+        # placeholders` (compile_constraints.py's own matching recursion
+        # fix, 2026-09-26) -- recurse the same way, or a correlation
+        # attached to one of them (the real `derived_aggregate`/`exists`
+        # node the placeholder actually lives on, never the outer
+        # arithmetic `expression` node) is silently never applied here.
+        if node.get('kind') == 'substituted_decision':
+            for child in node.get('free_variable_resolutions', {}).values():
+                visit(child)
+            return
         for placeholder, source in (node.get('cross_table_placeholders') or {}).items():
             value = rec_scenario.get(placeholder)
             if value is None:
@@ -884,13 +895,39 @@ def _apply_cross_table_placeholder_correlations(candidate, rec_focal, rec_scenar
                 target_focal = candidate.add_row(source['table'], {_OWNER_KEY: rid})
                 rec_focal[source['table']] = target_focal
             target_focal[source['column']] = value
-            if source['column'].upper() in _own_solo_unique_columns_for(schema, source['table']):
-                for other_row in candidate.rows(source['table']):
-                    if other_row is not target_focal and other_row.get(source['column']) == value:
-                        other_row[source['column']] = _fresh_key_value(candidate, source['table'], source['column'])
+            _bump_colliding_rows(candidate, schema, source['table'], source['column'], value, target_focal)
+
+    for node in r.get('variable_resolution', {}).values():
+        visit(node)
 
 
-def _build_decision_subject_row(candidate, rec_focal, r, rid):
+def _bump_colliding_rows(candidate, schema, table, column, value, keep_row):
+    """If `column` is a genuine PK/UNIQUE key for `table` and some OTHER
+    row (never `keep_row` itself) already holds the identical `value`,
+    that other row is bumped to a fresh, collision-safe value instead --
+    shared by `_apply_cross_table_placeholder_correlations` and
+    `_build_decision_subject_row` (extracted 2026-09-26, both independently
+    hit the same real collision shape: two DIFFERENT records legitimately
+    landing on the same real value for unrelated reasons -- DRD chaining
+    reusing an upstream case's own scenario value, or a correlated
+    placeholder colliding with an existing row -- then each building their
+    OWN separate, distinctly-owned row on the SAME table). Without a
+    `schema` (no caller currently omits one, but kept optional for the
+    same backward-compatible reason `_build_decision_subject_row`'s own
+    `schema=None` default exists), this is skipped -- no collision check
+    is safer than a wrong one, and the ORIGINAL `UNIQUE constraint failed`
+    this is meant to prevent was never worse than not attempting the
+    check at all."""
+    if schema is None:
+        return
+    if column.upper() not in _own_solo_unique_columns_for(schema, table):
+        return
+    for other_row in candidate.rows(table):
+        if other_row is not keep_row and other_row.get(column) == value:
+            other_row[column] = _fresh_key_value(candidate, table, column)
+
+
+def _build_decision_subject_row(candidate, rec_focal, r, rid, schema=None):
     """The decision's own real DMN subject row (2026-09-24, extracted into
     a shared function 2026-09-26) -- `compile_constraints.py`'s own
     `decision_subject` field (a generator-owned port of `validation_oracle/
@@ -940,7 +977,34 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
         target_focal = rec_focal.get(hop['to_table']) or next(
             (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
         if target_focal is None:
-            # This record's own construction never built a dedicated row
+            # A real, universal-crash bug found tracing FLEX2 (2026-09-26,
+            # `Summer Semester Registration`): this record's own
+            # construction CAN already own a real, fully-populated row on
+            # the hop's target table -- just never registered as this
+            # record's own FOCAL row (e.g. built by a leaf that adds the
+            # row to the candidate directly without ever calling the
+            # focal-registration path). Checking ONLY `rec_focal` here
+            # missed it and manufactured a SECOND, minimal row for the
+            # SAME owner on the SAME table -- both landing on the
+            # IDENTICAL un-offset PK value (this table's own per-owner
+            # offset is applied once, earlier, keyed by owner; a second
+            # row for the same owner gets no additional offset to
+            # distinguish it), a real `UNIQUE constraint failed` at
+            # materialization time. Confirmed directly: `COURSE_OFFER`
+            # already had this record's own real row (`EMP_ID`/`SEM_ID`/
+            # `COURSE_ID`/`CAMP_ID`/`SECTION_ID` all set) sitting in the
+            # candidate, owned by this exact `rid`, this check just never
+            # looked for it. Reusing an already-owned row here (never
+            # aliased into `rec_focal` before, but genuinely this
+            # record's own) is not a new mechanism -- `_offset_rows_by_
+            # owner`/`merge_archive_candidate`'s own `get_copy` already
+            # treat "every row tagged with this owner" as the correct
+            # scope for a record's own data; only THIS specific lookup had
+            # narrowed it to focal-only.
+            target_focal = next((row for row in candidate.rows(hop['to_table'])
+                                  if row.get(_OWNER_KEY) == rid), None)
+        if target_focal is None:
+            # This record's own construction never built ANY row at all
             # for a table the subject needs to link through -- e.g. a
             # rule whose own leaves never touch it at all. Synthesize a
             # fresh, minimal row instead of leaving this hop unresolved:
@@ -949,7 +1013,7 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
             # FKs) -- the same discipline already applied to every other
             # row this pass builds, not a new mechanism.
             target_focal = candidate.add_row(hop['to_table'], {_OWNER_KEY: rid})
-            rec_focal[hop['to_table']] = target_focal
+        rec_focal[hop['to_table']] = target_focal
 
         existing_from_value = subject_focal.get(hop['from_column'])
         if existing_from_value is not None:
@@ -979,6 +1043,8 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
             if target_focal.get(hop['to_column']) != existing_from_value:
                 target_focal[hop['to_column']] = existing_from_value
                 wired_any = True
+                _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'],
+                                      existing_from_value, target_focal)
             continue
         pk_value = target_focal.get(hop['to_column'])
         if pk_value is None:
@@ -992,6 +1058,23 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
             target_focal[hop['to_column']] = pk_value
         subject_focal[hop['from_column']] = pk_value
         wired_any = True
+        # A real collision found tracing FLEX2 (2026-09-26, `Academic
+        # Warning Status`/chained `Course Registration Eligibility::...
+        # ::via::...Academic Warning Status...` records sharing ONE
+        # shared-population individual): DRD chaining deliberately reuses
+        # the SAME upstream case's own already-offset scenario values, so
+        # TWO DIFFERENT records' own subject rows can legitimately share
+        # the identical `hop['from_column']` value -- each independently
+        # builds its OWN separate, distinctly-owned `target_focal` row
+        # here (correct: they're genuinely different real records), but
+        # both then land on the IDENTICAL `to_column` PK/UNIQUE value, a
+        # real `UNIQUE constraint failed` at materialization time. Unlike
+        # `_apply_cross_table_placeholder_correlations`'s own identical
+        # collision case (already handled there), this function had no
+        # such check at all. Bumps the OTHER, colliding row -- never
+        # `target_focal` itself, whose own value is what every OTHER fact
+        # on THIS record already correlates against.
+        _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'], pk_value, target_focal)
     if resolvable and is_new and (subject_focal or wired_any):
         subject_focal[_OWNER_KEY] = rid
         candidate.add_row(subject['table'], subject_focal)
@@ -1884,7 +1967,7 @@ def _merge_archive_candidate_impl(archive, records, case_study, include_all_rows
         # hop onto the subject row REGARDLESS of whether that row already
         # existed, skipping only a hop whose own FK column the subject
         # row already has a real value for (never overwritten).
-        _build_decision_subject_row(merged, merged_rec_focal, r, rid)
+        _build_decision_subject_row(merged, merged_rec_focal, r, rid, schema)
         merged_focal_maps[rid] = merged_rec_focal
 
     repair_candidate(merged, case_study)

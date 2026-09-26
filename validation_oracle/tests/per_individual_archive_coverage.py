@@ -107,7 +107,7 @@ from drd_executor import DecisionRunner, run_decision  # noqa: E402
 from out_of_scope_rules import is_out_of_scope  # noqa: E402
 
 
-def _build_decision_subject_rows_for_individual(candidate, focal_maps, records_by_id):
+def _build_decision_subject_rows_for_individual(candidate, focal_maps, records_by_id, schema=None):
     """Calls `dynamosa._build_decision_subject_row` once per record this
     individual has its own focal rows for -- the SAME junction-row
     synthesis `merge_archive_candidate` already does (compile_constraints.
@@ -131,7 +131,7 @@ def _build_decision_subject_rows_for_individual(candidate, focal_maps, records_b
     for rid, rec_focal in focal_maps.items():
         r = records_by_id.get(rid)
         if r is not None:
-            _build_decision_subject_row(candidate, rec_focal, r, rid)
+            _build_decision_subject_row(candidate, rec_focal, r, rid, schema)
 
 
 def _apply_cross_table_placeholder_correlations_for_individual(candidate, focal_maps, scenario_maps,
@@ -414,8 +414,18 @@ def _print_summary_line(case_study, records, archive, validated_rule_ids):
     # support COLLECT) -- filtering here just makes this table's own two
     # columns consistent with each other, using the SAME scope definition
     # for both, not a claim about which underlying number was "wrong."
-    claimed = sum(1 for rid, (fitness, _ind) in archive.items()
-                  if fitness == 0.0 and rid.split('::')[-1] not in out_of_scope)
+    # A second real bug, found running this against FLEX2 (2026-09-26):
+    # summing raw archive ENTRIES (one per record_id) rather than
+    # deduplicating by trailing rule_id let `claimed` exceed `total_rules`
+    # outright (77 vs 50) -- a decision with DRD fan-out variants (e.g.
+    # FLEX2's own `Course Registration Eligibility::Rule_3::via::...`,
+    # several distinct record_ids all sharing the SAME trailing rule_id)
+    # is counted once per VARIANT here, while `total_rules`/`in_scope`/
+    # `validated` all count once per distinct RULE. A rule is "claimed"
+    # if ANY of its variants reached fitness=0.0, not once per variant
+    # that did.
+    claimed = len({rid.split('::')[-1] for rid, (fitness, _ind) in archive.items()
+                   if fitness == 0.0} - out_of_scope)
     validated = len(validated_rule_ids)
     pct_all = (validated / total_rules * 100) if total_rules else 0.0
     pct_in_scope = (validated / in_scope * 100) if in_scope else 0.0
@@ -470,7 +480,7 @@ def run(case_study, archive_pickle_path, out_dir, algorithm='dynamosa_nsga2',
             _offset_rows_by_owner(work_candidate, schema, records_index, case_study)
             _apply_cross_table_placeholder_correlations_for_individual(
                 work_candidate, work_focal_maps, work_scenario_maps, records_by_id, records_index, schema)
-            _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id)
+            _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id, schema)
             repair_candidate(work_candidate, case_study)
 
             db_path = os.path.join(dbs_dir, tag + '.db')
@@ -680,7 +690,7 @@ def run_optimized(case_study, archive_pickle_path, out_dir, algorithm='dynamosa_
             _offset_rows_by_owner(work_candidate, schema, records_index, case_study)
             _apply_cross_table_placeholder_correlations_for_individual(
                 work_candidate, work_focal_maps, work_scenario_maps, records_by_id, records_index, schema)
-            _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id)
+            _build_decision_subject_rows_for_individual(work_candidate, work_focal_maps, records_by_id, schema)
             repair_candidate(work_candidate, case_study)
 
             db_path = os.path.join(dbs_dir, tag + '.db')

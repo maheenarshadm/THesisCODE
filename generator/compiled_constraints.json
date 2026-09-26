@@ -4708,7 +4708,32 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -5057,7 +5082,32 @@
   "feasibility": "unknown",
   "grounded_upstream_branches": [
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -5279,6 +5329,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -5395,7 +5449,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -5691,6 +5770,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -5807,7 +5890,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -6167,6 +6275,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -6283,7 +6395,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -6744,6 +6881,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -6860,7 +7001,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_2",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -7417,6 +7583,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -7533,7 +7703,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_3",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -7839,6 +8034,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -7955,7 +8154,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -8335,6 +8559,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -8451,7 +8679,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -8895,6 +9148,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -9011,7 +9268,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -9519,6 +9801,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -9635,7 +9921,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -10207,6 +10518,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -10323,7 +10638,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
@@ -10959,6 +11299,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -11075,7 +11419,32 @@
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -11329,6 +11698,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -11421,7 +11794,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
@@ -11759,6 +12157,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -11851,7 +12253,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_1"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -12179,6 +12606,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -12271,7 +12702,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
@@ -12683,6 +13139,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -12775,7 +13235,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_2"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -13167,6 +13652,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -13259,7 +13748,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_1",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
@@ -13735,6 +14249,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -13827,7 +14345,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_3"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -14320,6 +14863,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -14412,7 +14959,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_2",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
@@ -14952,6 +15524,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -15044,7 +15620,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_4"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -15633,6 +16234,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -15725,7 +16330,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_3",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
@@ -16329,6 +16959,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -16421,7 +17055,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_5"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
@@ -17089,6 +17748,10 @@
      "student": {
       "table": "COURSE_REGISTRATION",
       "column": "ROLL_NO"
+     },
+     "semester": {
+      "table": "SEMESTER",
+      "column": "SEM_ID"
      }
     }
    },
@@ -17181,7 +17844,32 @@
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6",
    "Course Load Limit::Decision_CourseLoadLimit_Rule_4",
    "Academic Warning Status::Decision_AcademicWarningStatus_Rule_6"
-  ]
+  ],
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "SEMESTER": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "SEM_ID",
+      "to_table": "SEMESTER",
+      "to_column": "SEM_ID"
+     }
+    ],
+    "STUDENT_PROGRAM": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "ROLL_NO",
+      "to_table": "STUDENT_PROGRAM",
+      "to_column": "ROLL_NO"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_1",
@@ -18239,7 +18927,24 @@
    "D_DEPT_TYPE"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_2",
@@ -18358,7 +19063,24 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_3",
@@ -18492,7 +19214,24 @@
    "STUDENT_PROGRAM"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "COURSE_REGISTRATION",
+   "pk_columns": [
+    "OFFER_ID",
+    "ROLL_NO"
+   ],
+   "joins": {
+    "COURSE": [
+     {
+      "from_table": "COURSE_REGISTRATION",
+      "from_column": "COURSE_ID",
+      "to_table": "COURSE",
+      "to_column": "COURSE_ID"
+     }
+    ]
+   }
+  }
  },
  {
   "record_id": "FLEX2::Attendance Eligibility For Final Exam::Decision_AttendanceEligibility_Rule_1",
@@ -18559,7 +19298,17 @@
       "table": "STUDENT_ATTENDANCE",
       "filter_text": "ROLL_NO = <student> AND ATTEND_FLAG = 'Y' AND LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)",
       "source_text": "COUNT(STUDENT_ATTENDANCE) WHERE ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
-      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+      "cross_table_placeholders": {
+       "student": {
+        "table": "COURSE_REGISTRATION",
+        "column": "ROLL_NO"
+       },
+       "this course offering": {
+        "table": "COURSE_OFFER",
+        "column": "OFFER_ID"
+       }
+      }
      },
      "lecturesHeldForOffering": {
       "kind": "derived_aggregate",
@@ -18567,7 +19316,13 @@
       "table": "LECTURE",
       "filter_text": "OFFER_ID = <this course offering>",
       "source_text": "COUNT(LECTURE) WHERE OFFER_ID = <this course offering>",
-      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+      "cross_table_placeholders": {
+       "this course offering": {
+        "table": "COURSE_OFFER",
+        "column": "OFFER_ID"
+       }
+      }
      }
     }
    }
@@ -18700,7 +19455,17 @@
       "table": "STUDENT_ATTENDANCE",
       "filter_text": "ROLL_NO = <student> AND ATTEND_FLAG = 'Y' AND LECTURE_ID IN (SELECT LECTURE_ID FROM LECTURE WHERE OFFER_ID = <this course offering>)",
       "source_text": "COUNT(STUDENT_ATTENDANCE) WHERE ROLL_NO=<student> AND LECTURE_ID IN (LECTURE for that OFFER_ID) AND ATTEND_FLAG='Y'",
-      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+      "cross_table_placeholders": {
+       "student": {
+        "table": "COURSE_REGISTRATION",
+        "column": "ROLL_NO"
+       },
+       "this course offering": {
+        "table": "COURSE_OFFER",
+        "column": "OFFER_ID"
+       }
+      }
      },
      "lecturesHeldForOffering": {
       "kind": "derived_aggregate",
@@ -18708,7 +19473,13 @@
       "table": "LECTURE",
       "filter_text": "OFFER_ID = <this course offering>",
       "source_text": "COUNT(LECTURE) WHERE OFFER_ID = <this course offering>",
-      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate"
+      "notes": "ground truth labeled this 'direct'; text describes an aggregate, treated as derived_aggregate",
+      "cross_table_placeholders": {
+       "this course offering": {
+        "table": "COURSE_OFFER",
+        "column": "OFFER_ID"
+       }
+      }
      }
     }
    }

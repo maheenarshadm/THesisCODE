@@ -1582,6 +1582,31 @@ def _decision_subject_tables_referenced(cs, record):
             # `all_tables` at all).
             tables.add(node['table'])
             return
+        if kind == 'derived_join_count':
+            # Mirrors validation_oracle/subject_table.py's own
+            # `_TABLE_EXTRACTORS['derived_join_count']` exactly (`{n[
+            # 'registration_table']}` only) -- found 2026-09-26 tracing
+            # why `Credit Transfer Exemption` still got no `decision_
+            # subject`: `collect_tables_from_resolution`'s own generic
+            # `derived_join_count` handling adds BOTH `prereq_table` AND
+            # `registration_table` unconditionally, but `prereq_table`
+            # (`COURSE_PREREQ`) is queried via a raw, UNCORRELATED scan
+            # (`db_resolver.resolve`'s own `derived_join_count` branch:
+            # `SELECT COUNT(*) FROM "prereq_table" p WHERE NOT EXISTS
+            # (...)`, no WHERE binding on `p` from the subject at all) --
+            # the SAME "self-contained, no join path needed" shape
+            # `derived_aggregate`/`exists` are already exempted for above,
+            # just never extended to this kind. Confirmed real: `COURSE_
+            # PREREQ` is genuinely one-to-many per course (a real,
+            # disclosed backward-join gap this project's own scope
+            # decisions already exclude elsewhere), so requiring it here
+            # made root-picking find ZERO qualifying candidates at all --
+            # `registration_table` alone (`COURSE_REGISTRATION`) is the
+            # correct requirement, matching the validator's own resolution
+            # exactly (`COURSE_REGISTRATION -> COURSE`, confirmed via
+            # `subject_table_for_decision`).
+            tables.add(node['registration_table'])
+            return
         collect_tables_from_resolution(node, tables)
 
     for node in record.get('variable_resolution', {}).values():
@@ -2569,17 +2594,43 @@ def compile_case_study(cs, mapping_source='ground_truth'):
         # (`compute_subject_hop_placeholder_correlations`, needs
         # `subject`, hence computed here rather than in an earlier,
         # subject-agnostic pass).
+        def _attach_correlations(node, decision_name):
+            if not isinstance(node, dict):
+                return
+            # A `substituted_decision`'s own top-level node is never
+            # itself an `exists`/`derived_aggregate` (it's an arithmetic
+            # `expression` over free variables) -- the SAME check
+            # `compute_cross_table_placeholder_correlations` already makes
+            # internally always short-circuits it to empty. Found real,
+            # not hypothetical (2026-09-26, FLEX2's own `Attendance
+            # Eligibility For Final Exam::attendancePercentage`): its OWN
+            # `lecturesAttended`/`lecturesHeldForOffering` free variables
+            # -- the ACTUAL `derived_aggregate` nodes carrying the
+            # `<student>`/`<this course offering>` placeholders -- were
+            # never visited at all, so NEITHER ever got its own
+            # `cross_table_placeholders` attached, even though
+            # `_decision_subject_tables_referenced` (a DIFFERENT function,
+            # already correctly recursive) resolved this decision's own
+            # `decision_subject` using exactly those same nested nodes --
+            # leaving `decision_subject`'s own hop-wiring with nothing to
+            # correlate against, either. Recursing here the same way
+            # closes both gaps at once (the hop-wiring reads whichever
+            # real, offset value ends up on the correlated table).
+            if node.get('kind') == 'substituted_decision':
+                for child in node.get('free_variable_resolutions', {}).values():
+                    _attach_correlations(child, decision_name)
+                return
+            correlations = compute_cross_table_placeholder_correlations(cs, decision_name, node)
+            correlations.update({
+                k: v for k, v in compute_subject_hop_placeholder_correlations(subject, node).items()
+                if k not in correlations
+            })
+            if correlations:
+                node['cross_table_placeholders'] = correlations
+
         for r in decision_records:
             for node in r.get('variable_resolution', {}).values():
-                if not isinstance(node, dict):
-                    continue
-                correlations = compute_cross_table_placeholder_correlations(cs, r['decision_name'], node)
-                correlations.update({
-                    k: v for k, v in compute_subject_hop_placeholder_correlations(subject, node).items()
-                    if k not in correlations
-                })
-                if correlations:
-                    node['cross_table_placeholders'] = correlations
+                _attach_correlations(node, r['decision_name'])
 
     return records, blocked
 

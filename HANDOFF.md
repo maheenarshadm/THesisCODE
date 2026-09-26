@@ -1,5 +1,111 @@
 # Project handoff
 
+## Latest continuation — 2026-09-26, part 2 (Claude, FLEX2 got the same claimed-vs-verified treatment for the first time this session — went from a universal 0% crash to 72–78% validated, 5 more real bugs found and fixed)
+
+Direct continuation of the entry just below (which covered OpenMRS and
+jBilling). This entry covers FLEX2, done in the SAME session, right
+after jBilling. Full root-cause writeups for every item are in
+`validation_oracle/KNOWN_ISSUES.md` (search for "FLEX2").
+
+**Starting point**: FLEX2 had never been run through `per_individual_
+archive_coverage.py --mode optimized` this session. First attempt: **every
+single one of 77 archived individuals crashed at materialization**
+(`Total 50 / Claimed 77 / Validated 0`, 0.0%) — a genuinely broken
+starting point, not a small gap.
+
+**Five real bugs found and fixed, in sequence, each verified via a fresh
+re-run before moving to the next**:
+
+1. **Universal crash, `_build_decision_subject_row`'s hop-target lookup
+   was focal-only.** A record could already own a real, fully-populated
+   row on a hop's target table -- just never registered as its own FOCAL
+   row (built via some other leaf/mechanism). The old lookup, checking
+   only `rec_focal`, manufactured a SECOND, colliding row for the SAME
+   owner on the SAME table every time. Fixed: also check the whole
+   candidate for any row already tagged with this record's own owner
+   before synthesizing a fresh one. **0% -> 36/50 (72.0%) immediately.**
+
+2. **`cross_table_placeholders` computation/consumption never recursed
+   into a `substituted_decision`'s own nested `free_variable_
+   resolutions`.** `Attendance Eligibility For Final Exam::attendance
+   Percentage` is a `substituted_decision` (an arithmetic expression over
+   two nested `derived_aggregate` free variables); a placeholder living
+   on one of THOSE never got correlated onto a real row, because both
+   the compile-time pass and the runtime consumer only ever visited
+   TOP-LEVEL `variable_resolution` entries. Fixed both to recurse the
+   same way `_decision_subject_tables_referenced` already did.
+
+3. **`_construct_subquery_parent` never tagged the row it creates with
+   `_OWNER_KEY`.** Harmless at SEED time (a later pass re-tags
+   everything), but a real gap at MUTATION time (no such later pass
+   exists there) -- a row built mid-search for a `COLUMN IN (SELECT ...)`
+   conjunct stayed permanently untagged and un-offset, drifting apart
+   from the correlated subject row the moment IT got offset. Fixed by
+   threading `owner_id` through and tagging when given. (2 and 3
+   together: `Attendance Eligibility For Final Exam::Rule_1`/`Rule_2`
+   confirmed verifying; **36 -> 37 -> 38/50.**)
+
+4. **`_decision_subject_tables_referenced` required a join path to
+   `derived_join_count`'s own `prereq_table` too**, but that table is
+   queried via a raw, uncorrelated scan needing no join at all (the
+   validator's own extractor already knew this; the generator's own port
+   didn't). Left `Credit Transfer Exemption` (and, as a genuine bonus,
+   `Course Registration Eligibility` -- 26 more records, same shape) with
+   ZERO qualifying subject-root candidates. Fixed by special-casing this
+   kind to require only `registration_table`, matching the validator
+   exactly.
+
+5. **Newly enabling `decision_subject` for two decisions at once (fix 4)
+   exposed a SECOND collision bug**: `_build_decision_subject_row` had NO
+   collision-check at all (unlike its own sibling function). DRD chaining
+   deliberately reuses an upstream case's own scenario values, so two
+   DIFFERENT records can legitimately need the SAME real value on a hop
+   target -- each independently builds its OWN separately-owned row,
+   landing on the identical PK. Fixed by extracting a shared `_bump_
+   colliding_rows` helper (folding in the sibling function's own existing,
+   analogous check) and calling it from both places. This ALSO surfaced a
+   THIRD, deeper, pre-existing latent bug from earlier THIS SAME session's
+   own cat1 self-correlation fix (see the entry below): its "register this
+   row as the self-table's own anchor" fallback assumed `self_table`
+   always equals the row's own destination table -- true for the
+   ORIGINAL motivating case (a fact self-correlating against its own
+   table) but wrong for `semestersElapsed` (`self_table='STUDENT_
+   PROGRAM'`, while the row being built is `STUDENT_SEMESTER`). Fixed by
+   threading an explicit `table` parameter through `_row_from_filter_
+   conjuncts` (both `candidate.py`'s and `mutation.py`'s independent
+   copies) and only aliasing when the two genuinely match; otherwise a
+   real, separate row is built for `self_table`. **38 -> 39 -> 36/50**
+   (the last number is a fresh re-run's own natural variance, not a
+   regression -- the SEM_ID crash this fix targets is confirmed gone,
+   0 errors from it in the re-run that produced 36).
+
+**One more bug found, NOT fixed (flagged only)**: `OperationalError: table
+PROGRAM_COURSE has no column named CREDIT_HRS` (3 individuals,
+`Course Replacement Eligibility::Rule_5`/`Academic Warning Status::
+Rule_3`/`Grade Points and Interpretation::Rule_4`). `PROGRAM_COURSE`
+genuinely has no such column -- `degreeTotalCredits`'s own `SUM` over the
+joined `PROGRAM_COURSE, COURSE` FROM-list is putting `CREDIT_HRS` on the
+wrong side of that join somewhere in its seed/mutation construction.
+Pre-existing, unrelated to the 5 fixes above, not investigated.
+
+**Also created**: `generator/rerun_flex2_only.py` (mirrors `rerun_
+openmrs_only.py`/`rerun_jbilling_only.py`'s own convention).
+
+**Current FLEX2 state**: 36/50 (72.0%) confirmed, real, honestly-verified.
+Remaining claimed-but-unverified: `Credit Transfer Exemption::Rule_2`,
+`Graduation Eligibility::Rule_1`-`Rule_5` (all 5 -- note `Rule_1`/`Rule_3`
+use `semestersElapsed`, the SAME fact fix #5 targeted, but the decision
+still shows zero verified after the fix; worth checking whether it's even
+CLAIMED now, not yet done). `Summer Semester Registration::Rule_2`/`Rule_3`
+were also on the original gap list but not separately re-checked after
+these fixes.
+
+**Next steps, in order**: (1) check why `Graduation Eligibility` still
+shows zero verified rules even after the `semestersElapsed` fix; (2) trace
+`Credit Transfer Exemption::Rule_2` specifically; (3) the `PROGRAM_COURSE.
+CREDIT_HRS` bug above, whenever picked up; (4) Spree has not had this
+same rule-by-rule tracing treatment at all this session.
+
 ## Latest continuation — 2026-09-26 (Claude, systematic claimed-vs-verified gap-closing across OpenMRS and jBilling — 9 real fixes, one deliberate scope trim, both case studies re-run and re-confirmed)
 
 Continuation of the running "why does the search claim coverage the

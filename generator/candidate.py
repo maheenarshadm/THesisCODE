@@ -443,7 +443,7 @@ def _fresh_id_value(candidate, table):
     return (max(existing) + 1) if existing else 1
 
 
-def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
+def _construct_subquery_parent(match, candidate, focal, scenario, self_table, owner_id=None):
     """Given an `_IN_SUBQUERY_RE` match, builds (or reuses) a real row in
     the subquery's own table satisfying whatever of its WHERE clause is
     mechanically bindable, and returns the value the OUTER column should
@@ -454,7 +454,29 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
     `generator/aggregate_self_table.py`), is resolved to that table's
     OWN focal row's real id -- assigning one now, via `_fresh_id_value`,
     if it doesn't have one yet, so this row and any sibling leaf that
-    later reads the SAME focal row agree on one real identity."""
+    later reads the SAME focal row agree on one real identity.
+
+    `owner_id`, when given, tags the row this call creates with
+    `_OWNER_KEY` -- a real bug found tracing FLEX2's own `lecturesAttended`
+    (2026-09-26, part of a `substituted_decision`'s own nested
+    `free_variable_resolutions`): this function NEVER tagged the parent
+    row it built (e.g. a `LECTURE` row for `lecturesHeldForOffering`'s
+    own subquery), regardless of caller. Harmless at SEED time (`_seed_
+    shared_population`'s own post-processing loop unconditionally re-tags
+    every row `build_seed_candidate` returns before merging it into the
+    shared base candidate, whatever tag -- or lack of one -- this function
+    left on it), but a REAL gap at MUTATION time: `mutation.py`'s own
+    `_apply_row_count_mutation`, called mid-search on an individual
+    already split off from that shared base, has no such later re-tagging
+    step -- a row created here during mutation stayed permanently
+    untagged, invisible to `_offset_rows_by_owner`'s own per-owner
+    offsetting (which deliberately leaves genuinely-untagged rows alone)
+    and left BEHIND at its original, un-offset value the moment the
+    correlated subject row it was supposed to match got offset instead.
+    Confirmed real: the archived individual for `Attendance Eligibility
+    For Final Exam::Rule_1` had 30 such untagged `LECTURE` rows, all
+    landing on the identical `LECTURE_ID` (no owner tag also meant no
+    solo-unique-column dedup ever applied to them either)."""
     if candidate is None:
         return None
     outer_col, select_col, inner_table, inner_where = match.groups()
@@ -494,6 +516,8 @@ def _construct_subquery_parent(match, candidate, focal, scenario, self_table):
     # key ('id') the real schema doesn't have at all, and the read-side
     # match (looking for the REAL key) would then never find it either.
     inner_row[select_col] = _fresh_id_value(candidate, inner_table)
+    if owner_id is not None:
+        inner_row[_OWNER_KEY] = owner_id
     candidate.add_row(inner_table, inner_row)
     return inner_row[select_col]
 
@@ -678,7 +702,7 @@ def _mechanical_filter_predicate(filter_text, scenario, candidate=None, self_row
     return predicate, skipped
 
 
-def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None, self_table=None):
+def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None, self_table=None, table=None):
     """The construction mirror of `_mechanical_filter_predicate`: builds
     a real row dict satisfying every mechanically-recognized `COLUMN =
     VALUE`/`COLUMN = <placeholder>` conjunct in `filter_text`, the exact
@@ -774,10 +798,42 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
                 row[col] = fresh
                 if self_row is not None:
                     self_row[colon_m.group(1)] = fresh
-                else:
+                elif table is not None and self_table.upper() == table.upper():
+                    # `row` (the one THIS call is building) only doubles
+                    # as `self_table`'s own anchor when they're genuinely
+                    # the SAME table (the original motivating case: a
+                    # fact self-correlating against its OWN table, e.g.
+                    # `concept_id = :concept_id` on `concept_name` itself).
+                    # A real, separate bug found tracing FLEX2's own
+                    # `semestersElapsed` (2026-09-26): `self_table` can be
+                    # an EXPLICIT override naming a DIFFERENT table than
+                    # the one this row is being built for (`STUDENT_
+                    # PROGRAM`, while this row is a `STUDENT_SEMESTER`
+                    # row) -- aliasing it in unconditionally registered a
+                    # `STUDENT_SEMESTER`-shaped row as `STUDENT_PROGRAM`'s
+                    # own focal entry, which `_build_decision_subject_row`/
+                    # materialize.py then tried to INSERT into `STUDENT_
+                    # PROGRAM` under `STUDENT_SEMESTER`'s own column names
+                    # -- a real `OperationalError: table STUDENT_PROGRAM
+                    # has no column named SEM_ID`. Without `table` (a
+                    # caller that hasn't threaded it through), this
+                    # aliasing is skipped entirely -- safer than guessing
+                    # whether it's the same table.
                     row[colon_m.group(1)] = fresh
                     focal[self_table.upper()] = row
                     self_row = row
+                else:
+                    # `self_table` names a DIFFERENT table this call has no
+                    # row for yet -- write the fresh value into a genuine,
+                    # dedicated row for THAT table instead of misusing this
+                    # one, registering it as `self_table`'s own focal entry
+                    # so later rows built by this SAME objective correctly
+                    # find and reuse it via the ordinary self-reference
+                    # path above.
+                    self_row = focal.setdefault(self_table.upper(), {})
+                    if candidate is not None and self_row not in candidate.rows(self_table):
+                        candidate.add_row(self_table, self_row)
+                    self_row[colon_m.group(1)] = fresh
             continue
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
@@ -1319,7 +1375,8 @@ def build_seed_candidate(record, today=20000):
             seed_count = known_constant(record['case_study'], var) or 3
             for i in range(1, seed_count + 1):
                 row = _row_from_filter_conjuncts(node.get('filter_text'), scenario,
-                                                  candidate, focal, node.get('self_table') or tables[0])
+                                                  candidate, focal, node.get('self_table') or tables[0],
+                                                  table=tables[0])
                 # no artificial distinguishing key needed -- these are
                 # still 3 separate row objects in the list even with
                 # identical content, and a fake 'X' column would only
@@ -1379,7 +1436,8 @@ def build_seed_candidate(record, today=20000):
                 # same fix).
                 if node.get('filter_text'):
                     candidate.add_row(table, _row_from_filter_conjuncts(
-                        node['filter_text'], scenario, candidate, focal, node.get('self_table') or table))
+                        node['filter_text'], scenario, candidate, focal, node.get('self_table') or table,
+                        table=table))
                 else:
                     candidate.add_row(table, {})
         elif kind == 'raw_sql_boolean':
