@@ -927,6 +927,34 @@ def _bump_colliding_rows(candidate, schema, table, column, value, keep_row):
             other_row[column] = _fresh_key_value(candidate, table, column)
 
 
+def _rename_owned_fk_refs(candidate, schema, table, column, old_value, new_value, rid, skip_row):
+    """After `_build_decision_subject_row` conforms `table.column` on one
+    of record `rid`'s own rows from `old_value` to `new_value`, any OTHER
+    row of the SAME record whose real, schema-declared FK (`fk_columns`)
+    pointed at `table.column = old_value` is moved to `new_value` too --
+    a rename, not an overwrite, so the record's own internal references
+    can't dangle (2026-09-26, added with multi-hop wiring: conforming
+    `concept_numeric.concept_id` must not strand a same-record row still
+    pointing at the old concept id). Rows owned by other records are
+    never touched. No-op without a `schema`."""
+    if schema is None:
+        return
+
+    def col_key(row, name):
+        return next((k for k in row if k.upper() == name.upper()), None)
+
+    for ref_table, info in schema.items():
+        for fk in (info or {}).get('fk_columns') or []:
+            if fk['ref_table'].upper() != table.upper() or fk['ref_column'].upper() != column.upper():
+                continue
+            for row in candidate.rows(ref_table):
+                if row is skip_row or row.get(_OWNER_KEY) != rid:
+                    continue
+                k = col_key(row, fk['column'])
+                if k is not None and row[k] == old_value:
+                    row[k] = new_value
+
+
 def _build_decision_subject_row(candidate, rec_focal, r, rid, schema=None):
     """The decision's own real DMN subject row (2026-09-24, extracted into
     a shared function 2026-09-26) -- `compile_constraints.py`'s own
@@ -964,117 +992,158 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid, schema=None):
     resolvable = bool(subject['joins'])
     wired_any = False
     for target_table, hops in subject['joins'].items():
-        # Deliberately narrow scope, disclosed rather than silently
-        # guessed: only a SINGLE hop from the subject to each other table
-        # this record needs (the confirmed real shape for every decision
-        # this applies to so far) is attempted -- a genuine multi-hop
-        # chain would need a fresh intermediate row this pass does not
-        # attempt to synthesize, so it's skipped instead of half-built.
-        if len(hops) != 1:
-            resolvable = False
-            break
-        hop = hops[0]
-        target_focal = rec_focal.get(hop['to_table']) or next(
-            (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
-        if target_focal is None:
-            # A real, universal-crash bug found tracing FLEX2 (2026-09-26,
-            # `Summer Semester Registration`): this record's own
-            # construction CAN already own a real, fully-populated row on
-            # the hop's target table -- just never registered as this
-            # record's own FOCAL row (e.g. built by a leaf that adds the
-            # row to the candidate directly without ever calling the
-            # focal-registration path). Checking ONLY `rec_focal` here
-            # missed it and manufactured a SECOND, minimal row for the
-            # SAME owner on the SAME table -- both landing on the
-            # IDENTICAL un-offset PK value (this table's own per-owner
-            # offset is applied once, earlier, keyed by owner; a second
-            # row for the same owner gets no additional offset to
-            # distinguish it), a real `UNIQUE constraint failed` at
-            # materialization time. Confirmed directly: `COURSE_OFFER`
-            # already had this record's own real row (`EMP_ID`/`SEM_ID`/
-            # `COURSE_ID`/`CAMP_ID`/`SECTION_ID` all set) sitting in the
-            # candidate, owned by this exact `rid`, this check just never
-            # looked for it. Reusing an already-owned row here (never
-            # aliased into `rec_focal` before, but genuinely this
-            # record's own) is not a new mechanism -- `_offset_rows_by_
-            # owner`/`merge_archive_candidate`'s own `get_copy` already
-            # treat "every row tagged with this owner" as the correct
-            # scope for a record's own data; only THIS specific lookup had
-            # narrowed it to focal-only.
-            target_focal = next((row for row in candidate.rows(hop['to_table'])
-                                  if row.get(_OWNER_KEY) == rid), None)
-        if target_focal is None:
-            # This record's own construction never built ANY row at all
-            # for a table the subject needs to link through -- e.g. a
-            # rule whose own leaves never touch it at all. Synthesize a
-            # fresh, minimal row instead of leaving this hop unresolved:
-            # `repair_candidate`, called right after this, fills in
-            # whatever else it still needs (NOT NULL columns, its own
-            # FKs) -- the same discipline already applied to every other
-            # row this pass builds, not a new mechanism.
-            target_focal = candidate.add_row(hop['to_table'], {_OWNER_KEY: rid})
-        rec_focal[hop['to_table']] = target_focal
-
-        existing_from_value = subject_focal.get(hop['from_column'])
-        if existing_from_value is not None:
-            # A real, confirmed bug (2026-09-26, OpenMRS's own `Identifier
-            # Location Requirement`/`Identifier Format Validity`): the
-            # subject row and the target row can EACH already have their
-            # own independently-set value here (`identifier_type=
-            # 40000001` vs `patient_identifier_type_id=40000002`, e.g.) --
-            # two different leaves, or two different repair passes, having
-            # nothing to do with each other, both landing on "some real
-            # number" without ever correlating. The OLD rule here
-            # ("subject already has a value -- never overwritten") assumed
-            # "has a value" means "has the RIGHT value," which silently
-            # left a genuine mismatch uncorrected -- the real join this
-            # decision's own subject depends on then simply never matches
-            # at verification time, regardless of what either row's own
-            # OTHER facts say. Fixed: if the target's own to_column
-            # already agrees with the subject's own from_column, nothing
-            # to do (the common, correct case); if they DISAGREE, force
-            # the TARGET to conform to the SUBJECT, never the reverse --
-            # `target_focal` is this record's own dedicated, private focal
-            # row for `hop['to_table']` (never shared with any other
-            # record's own focal), so overwriting its own key column here
-            # can't dangle any OTHER record's own reference to it, while
-            # the subject's own row identity is what every OTHER fact on
-            # THIS record already correlates against and must stay fixed.
-            if target_focal.get(hop['to_column']) != existing_from_value:
-                target_focal[hop['to_column']] = existing_from_value
+        # Every hop of the chain is walked, carrying the row reached so
+        # far (`from_row`, starting at the subject row) forward -- each
+        # hop links `from_row[from_column]` to this record's own row on
+        # `to_table` exactly as the single-hop case always did. Found
+        # 2026-09-26 (OpenMRS `Numeric Absolute Range Validity`/`Numeric
+        # Interpretation Classification`): `obs -> concept ->
+        # concept_numeric` is 2 hops, so this used to skip it entirely,
+        # and the search's own `obs.concept_id=1` vs `concept_numeric.
+        # concept_id=2..9` never got linked -- verification then depended
+        # on the search happening to write matching ids. A composite-key
+        # hop (`from_columns`, not yet emitted by compile_constraints.py)
+        # is handled separately just below.
+        from_row = subject_focal
+        for hop in hops:
+            if 'from_columns' in hop:
+                # Composite-key hop (2026-09-26; compile_constraints.py's
+                # `_composite_backward_edges_for`, e.g. FLEX2 COURSE_
+                # REGISTRATION (SEM_ID, ROLL_NO) -> STUDENT_SEMESTER). The
+                # target's key is fully determined by `from_row`'s own FK
+                # values; nothing to link if any is unset. A row already
+                # holding that exact key (any owner) IS the linked row --
+                # reused rather than duplicated (`_bump_colliding_rows`
+                # only handles single-column keys); otherwise this
+                # record's own row on the table (focal -> owned -> new)
+                # takes the key.
+                def _ci(row, col):
+                    return next((v for k, v in row.items() if k.upper() == col.upper()), None)
+                values = [_ci(from_row, c) for c in hop['from_columns']]
+                if any(v is None for v in values):
+                    break
+                target_focal = next((row for row in candidate.rows(hop['to_table'])
+                                     if all(_ci(row, c) == v for c, v in zip(hop['to_columns'], values))), None)
+                if target_focal is None:
+                    target_focal = (rec_focal.get(hop['to_table']) or next(
+                        (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
+                        or next((row for row in candidate.rows(hop['to_table'])
+                                 if row.get(_OWNER_KEY) == rid), None)
+                        or candidate.add_row(hop['to_table'], {_OWNER_KEY: rid}))
+                    for c, v in zip(hop['to_columns'], values):
+                        k = next((k for k in target_focal if k.upper() == c.upper()), c)
+                        target_focal[k] = v
+                rec_focal[hop['to_table']] = target_focal
                 wired_any = True
-                _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'],
-                                      existing_from_value, target_focal)
-            continue
-        pk_value = target_focal.get(hop['to_column'])
-        if pk_value is None:
-            # The referenced row's own PK was never set by search/seeding.
-            # Assigned HERE instead, synchronously, so the new junction
-            # row's own FK can actually reference the real, final value --
-            # reuses `mutation.py`'s own `_fresh_key_value` (already
-            # collision-safe against everything in `candidate` so far),
-            # not a fresh ad hoc scheme.
-            pk_value = _fresh_key_value(candidate, hop['to_table'], hop['to_column'])
-            target_focal[hop['to_column']] = pk_value
-        subject_focal[hop['from_column']] = pk_value
-        wired_any = True
-        # A real collision found tracing FLEX2 (2026-09-26, `Academic
-        # Warning Status`/chained `Course Registration Eligibility::...
-        # ::via::...Academic Warning Status...` records sharing ONE
-        # shared-population individual): DRD chaining deliberately reuses
-        # the SAME upstream case's own already-offset scenario values, so
-        # TWO DIFFERENT records' own subject rows can legitimately share
-        # the identical `hop['from_column']` value -- each independently
-        # builds its OWN separate, distinctly-owned `target_focal` row
-        # here (correct: they're genuinely different real records), but
-        # both then land on the IDENTICAL `to_column` PK/UNIQUE value, a
-        # real `UNIQUE constraint failed` at materialization time. Unlike
-        # `_apply_cross_table_placeholder_correlations`'s own identical
-        # collision case (already handled there), this function had no
-        # such check at all. Bumps the OTHER, colliding row -- never
-        # `target_focal` itself, whose own value is what every OTHER fact
-        # on THIS record already correlates against.
-        _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'], pk_value, target_focal)
+                from_row = target_focal
+                continue
+            target_focal = rec_focal.get(hop['to_table']) or next(
+                (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
+            if target_focal is None:
+                # A real, universal-crash bug found tracing FLEX2 (2026-09-26,
+                # `Summer Semester Registration`): this record's own
+                # construction CAN already own a real, fully-populated row on
+                # the hop's target table -- just never registered as this
+                # record's own FOCAL row (e.g. built by a leaf that adds the
+                # row to the candidate directly without ever calling the
+                # focal-registration path). Checking ONLY `rec_focal` here
+                # missed it and manufactured a SECOND, minimal row for the
+                # SAME owner on the SAME table -- both landing on the
+                # IDENTICAL un-offset PK value (this table's own per-owner
+                # offset is applied once, earlier, keyed by owner; a second
+                # row for the same owner gets no additional offset to
+                # distinguish it), a real `UNIQUE constraint failed` at
+                # materialization time. Confirmed directly: `COURSE_OFFER`
+                # already had this record's own real row (`EMP_ID`/`SEM_ID`/
+                # `COURSE_ID`/`CAMP_ID`/`SECTION_ID` all set) sitting in the
+                # candidate, owned by this exact `rid`, this check just never
+                # looked for it. Reusing an already-owned row here (never
+                # aliased into `rec_focal` before, but genuinely this
+                # record's own) is not a new mechanism -- `_offset_rows_by_
+                # owner`/`merge_archive_candidate`'s own `get_copy` already
+                # treat "every row tagged with this owner" as the correct
+                # scope for a record's own data; only THIS specific lookup had
+                # narrowed it to focal-only.
+                target_focal = next((row for row in candidate.rows(hop['to_table'])
+                                      if row.get(_OWNER_KEY) == rid), None)
+            if target_focal is None:
+                # This record's own construction never built ANY row at all
+                # for a table the subject needs to link through -- e.g. a
+                # rule whose own leaves never touch it at all. Synthesize a
+                # fresh, minimal row instead of leaving this hop unresolved:
+                # `repair_candidate`, called right after this, fills in
+                # whatever else it still needs (NOT NULL columns, its own
+                # FKs) -- the same discipline already applied to every other
+                # row this pass builds, not a new mechanism.
+                target_focal = candidate.add_row(hop['to_table'], {_OWNER_KEY: rid})
+            rec_focal[hop['to_table']] = target_focal
+
+            existing_from_value = from_row.get(hop['from_column'])
+            if existing_from_value is not None:
+                # A real, confirmed bug (2026-09-26, OpenMRS's own `Identifier
+                # Location Requirement`/`Identifier Format Validity`): the
+                # subject row and the target row can EACH already have their
+                # own independently-set value here (`identifier_type=
+                # 40000001` vs `patient_identifier_type_id=40000002`, e.g.) --
+                # two different leaves, or two different repair passes, having
+                # nothing to do with each other, both landing on "some real
+                # number" without ever correlating. The OLD rule here
+                # ("subject already has a value -- never overwritten") assumed
+                # "has a value" means "has the RIGHT value," which silently
+                # left a genuine mismatch uncorrected -- the real join this
+                # decision's own subject depends on then simply never matches
+                # at verification time, regardless of what either row's own
+                # OTHER facts say. Fixed: if the target's own to_column
+                # already agrees with the subject's own from_column, nothing
+                # to do (the common, correct case); if they DISAGREE, force
+                # the TARGET to conform to the SUBJECT, never the reverse --
+                # `target_focal` is this record's own dedicated, private focal
+                # row for `hop['to_table']` (never shared with any other
+                # record's own focal), so overwriting its own key column here
+                # can't dangle any OTHER record's own reference to it, while
+                # the subject's own row identity is what every OTHER fact on
+                # THIS record already correlates against and must stay fixed.
+                if target_focal.get(hop['to_column']) != existing_from_value:
+                    old_value = target_focal.get(hop['to_column'])
+                    target_focal[hop['to_column']] = existing_from_value
+                    wired_any = True
+                    _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'],
+                                          existing_from_value, target_focal)
+                    if old_value is not None:
+                        _rename_owned_fk_refs(candidate, schema, hop['to_table'], hop['to_column'],
+                                              old_value, existing_from_value, rid, target_focal)
+                from_row = target_focal
+                continue
+            pk_value = target_focal.get(hop['to_column'])
+            if pk_value is None:
+                # The referenced row's own PK was never set by search/seeding.
+                # Assigned HERE instead, synchronously, so the new junction
+                # row's own FK can actually reference the real, final value --
+                # reuses `mutation.py`'s own `_fresh_key_value` (already
+                # collision-safe against everything in `candidate` so far),
+                # not a fresh ad hoc scheme.
+                pk_value = _fresh_key_value(candidate, hop['to_table'], hop['to_column'])
+                target_focal[hop['to_column']] = pk_value
+            from_row[hop['from_column']] = pk_value
+            wired_any = True
+            # A real collision found tracing FLEX2 (2026-09-26, `Academic
+            # Warning Status`/chained `Course Registration Eligibility::...
+            # ::via::...Academic Warning Status...` records sharing ONE
+            # shared-population individual): DRD chaining deliberately reuses
+            # the SAME upstream case's own already-offset scenario values, so
+            # TWO DIFFERENT records' own subject rows can legitimately share
+            # the identical `hop['from_column']` value -- each independently
+            # builds its OWN separate, distinctly-owned `target_focal` row
+            # here (correct: they're genuinely different real records), but
+            # both then land on the IDENTICAL `to_column` PK/UNIQUE value, a
+            # real `UNIQUE constraint failed` at materialization time. Unlike
+            # `_apply_cross_table_placeholder_correlations`'s own identical
+            # collision case (already handled there), this function had no
+            # such check at all. Bumps the OTHER, colliding row -- never
+            # `target_focal` itself, whose own value is what every OTHER fact
+            # on THIS record already correlates against.
+            _bump_colliding_rows(candidate, schema, hop['to_table'], hop['to_column'], pk_value, target_focal)
+            from_row = target_focal
     if resolvable and is_new and (subject_focal or wired_any):
         subject_focal[_OWNER_KEY] = rid
         candidate.add_row(subject['table'], subject_focal)

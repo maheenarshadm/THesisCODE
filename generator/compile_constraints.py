@@ -1758,7 +1758,9 @@ def compute_subject_hop_placeholder_correlations(subject, node):
     hops_by_from_column = {}
     for hops in subject['joins'].values():
         for hop in hops:
-            if hop['from_table'].upper() == subject['table'].upper():
+            # A composite-key hop (`from_columns`, 2026-09-26) has no
+            # single from_column to key on -- skipped, not misread.
+            if hop['from_table'].upper() == subject['table'].upper() and 'from_column' in hop:
                 hops_by_from_column[hop['from_column'].upper()] = hop
     for column, placeholder in _PLACEHOLDER_CONJUNCT_RE.findall(filter_text):
         hop = hops_by_from_column.get(column.upper())
@@ -1880,7 +1882,60 @@ def _build_subject_join_path(cs, raw_schema, root, target, allowed_tables):
                 return new_path
             visited.add(nxt)
             queue.append((nxt, new_path))
+        # Composite-key hop (2026-09-26): a port of schema_utility.
+        # build_join_path's own composite step, same restrictions -- only
+        # from the ROOT itself, only to a target no single-column edge
+        # already reached (see that function's own comment for the
+        # spurious-junction ambiguity the root-only rule prevents).
+        # Needed for FLEX2's `STUDENT_PROGRAM -> BATCH_PROGRAM` (`BATCH_NO`,
+        # `PROG_ID`) and `COURSE_REGISTRATION -> STUDENT_SEMESTER`
+        # (`SEM_ID`, `ROLL_NO`), which this BFS could never express.
+        if current != root:
+            continue
+        for edge in _composite_backward_edges_for(raw_schema, current):
+            nxt = edge['ref_table']
+            if nxt not in allowed or nxt in visited or nxt in by_target:
+                continue
+            hop = {'from_table': current, 'from_columns': edge['columns'],
+                   'to_table': nxt, 'to_columns': edge['ref_columns']}
+            new_path = path + [hop]
+            if nxt == target:
+                return new_path
+            visited.add(nxt)
+            queue.append((nxt, new_path))
     return None
+
+
+def _composite_backward_edges_for(raw_schema, table):
+    """Port of `validation_oracle/schema_utility.py`'s own
+    `composite_backward_edges` (duplicated, not imported, per this
+    section's own docstring): tables T whose COMPOSITE PK (>= 2 columns)
+    is fully reconstructible from `table`'s own single-column FK values,
+    because each of T's PK columns FKs to the same (ref_table,
+    ref_column) some column of `table` already FKs to. Returns
+    [{'columns', 'ref_table', 'ref_columns'}] in T's own PK order."""
+    table = _canonical_table_name(raw_schema, table)
+    source_targets = {(e['ref_table'], e['ref_column']): e['column'] for e in _fk_edges_for(raw_schema, table)}
+    found = []
+    for other_name in raw_schema:
+        other = _canonical_table_name(raw_schema, other_name)
+        if other == table:
+            continue
+        pk = _pk_columns_for(raw_schema, other)
+        if len(pk) < 2:
+            continue
+        other_targets = {e['column']: (e['ref_table'], e['ref_column']) for e in _fk_edges_for(raw_schema, other)}
+        matched = []
+        for pk_col in pk:
+            target = other_targets.get(pk_col)
+            source_column = source_targets.get(target) if target else None
+            if source_column is None:
+                matched = None
+                break
+            matched.append(source_column)
+        if matched and len(set(matched)) == len(matched):
+            found.append({'columns': matched, 'ref_table': other, 'ref_columns': pk})
+    return found
 
 
 def _pick_subject_root(cs, raw_schema, all_tables, closure_tables, override=None):
@@ -1896,6 +1951,49 @@ def _pick_subject_root(cs, raw_schema, all_tables, closure_tables, override=None
             raise ValueError(f"Stale subject-root override {override!r}; qualifying roots: {sorted(candidates)}")
         return override
     return candidates[0] if len(candidates) == 1 else None
+
+
+def _upstream_decisions_of(node, out):
+    if not isinstance(node, dict):
+        return
+    if node.get('kind') == 'literal_via_upstream_branch' and node.get('from_decision'):
+        out.add(node['from_decision'])
+    for child in (node.get('free_variable_resolutions') or {}).values():
+        _upstream_decisions_of(child, out)
+
+
+def _with_upstream_subject_joins(cs, subject, decision_records, own_subjects, raw_schema, closure):
+    """`subject` plus a join to each UPSTREAM decision's own subject table
+    (a `literal_via_upstream_branch` node's `from_decision`), when that
+    table isn't already the root or joined, and a path exists. The
+    validator locates the upstream case the same way (`drd_executor.
+    DecisionRunner.upstream_subject_value`: a `build_join_path` from the
+    downstream subject to the upstream subject, over every decision's
+    fk_closure), so the generator must build that linking row too -- found
+    2026-09-26: FLEX2 `Course Registration Eligibility::Rule_3`'s 11
+    variants all chain through `Course Load Limit` (subject STUDENT_
+    SEMESTER), yet no generated DB ever had a STUDENT_SEMESTER row
+    matching a COURSE_REGISTRATION row, since no input of the downstream
+    decision reads that table. Root-picking is untouched (upstream tables
+    are added only AFTER the root is chosen); returns a NEW dict."""
+    upstream = set()
+    for r in decision_records:
+        for node in r.get('variable_resolution', {}).values():
+            _upstream_decisions_of(node, upstream)
+    joins = dict(subject['joins'])
+    for name in sorted(upstream):
+        up = own_subjects.get(name)
+        if not up:
+            continue
+        table = _canonical_table_name(raw_schema, up['table'])
+        if table == _canonical_table_name(raw_schema, subject['table']) or table in joins:
+            continue
+        path = _build_subject_join_path(cs, raw_schema, subject['table'], table, closure)
+        if path:
+            joins[table] = path
+    if joins == subject['joins']:
+        return subject
+    return {**subject, 'joins': joins}
 
 
 def compute_decision_subject(cs, decision_records, raw_schema):
@@ -2625,13 +2723,23 @@ def compile_case_study(cs, mapping_source='ground_truth'):
     records_by_decision_name = {}
     for r in records:
         records_by_decision_name.setdefault(r['decision_name'], []).append(r)
+    def _subject_input(decision_records):
+        return [r for r in decision_records
+                if (r['case_study'], r['rule_id']) not in _DECISION_SUBJECT_EXCLUDED_RULES]
+
+    # Every decision's OWN subject first, so a chained decision can join
+    # to its upstream decisions' subject tables below.
+    own_subjects = {name: compute_decision_subject(cs, _subject_input(recs), raw_schema)
+                    for name, recs in records_by_decision_name.items()}
+    all_closure = {t for r in records for t in r.get('fk_closure_tables', [])}
     for decision_records in records_by_decision_name.values():
-        subject_input = [r for r in decision_records
-                          if (r['case_study'], r['rule_id']) not in _DECISION_SUBJECT_EXCLUDED_RULES]
-        subject = compute_decision_subject(cs, subject_input, raw_schema)
+        subject_input = _subject_input(decision_records)
+        subject = own_subjects[decision_records[0]['decision_name']]
         if subject is not None:
+            stored = _with_upstream_subject_joins(cs, subject, subject_input, own_subjects,
+                                                  raw_schema, all_closure)
             for r in subject_input:
-                r['decision_subject'] = subject
+                r['decision_subject'] = stored
 
         # Filter_text placeholder correlations (2026-09-24/25) --
         # attached directly to the node that needs it, not the record,

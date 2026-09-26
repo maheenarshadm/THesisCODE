@@ -1,5 +1,110 @@
 # Validation oracle — known issues tracker
 
+## RESOLVED, confirmed via re-run (2026-09-26, late: user's Spree validator run `21/21 in scope (100.0%)`, matching Claude's check) — Spree `One-Use-Per-User Promotion Eligibility` (all 3 claimed, 0 verified): `self` in `priorPromotionUsageCount` bound to the wrong table
+
+Traced with `run_decision` errors visible: every one of the 22 current
+Spree DBs raised `NotImplementedError: filter_text placeholder <user_id>
+binds to column 'user_id', not present on the subject row` -- the whole
+decision was skipped, even the catch-all `rule_3`.
+
+**Root cause**: `priorPromotionUsageCount` is `COUNT(spree_discounts)
+WHERE order_id IN (SELECT id FROM spree_orders WHERE user_id = <user_id>
+AND completed_at IS NOT NULL AND id != self)` -- "discounts on this
+user's OTHER completed orders". It had no `self_table`, so both sides
+defaulted `self` to the counted table, the subject became
+`spree_discounts`, and `<user_id>` (a spree_orders column) couldn't bind.
+**Fixed** with a disclosed entry in `generator/aggregate_self_table.py`
+(`('Spree', 'priorPromotionUsageCount'): 'spree_orders'`) -- same
+mechanism and evidence standard as the existing `adjustedCreditsCount`
+entry: `self` is compared against `spree_orders.id`, `<user_id>` is a
+spree_orders column, and the decision's only other fact (`customer
+Present`) reads `spree_orders.user_id`. Subject now `spree_orders` on
+both sides (the validator derives it from `self_table` via the earlier
+`subject_table.py` fix).
+
+Semantic diff: exactly the 3 `One-Use-Per-User` records changed. Checked
+by Claude against the EXISTING Spree archive (validator-only effect for
+the verified count): all 3 rules verify (`rule_1` 70 cases, `rule_2` 2,
+`rule_3` 458); full tool, scratch out-dir: `21/21 in scope (100%)`, was
+18, 0 errors, nothing lost. Regression suite passing (172/174). Note:
+the search's own fitness for `rule_2` now binds `self` differently, so
+the archive's CLAIMS were made under the old binding; a fresh Spree
+search would make the claimed side consistent, but is not needed for
+the verified count.
+
+## RESOLVED, confirmed via re-run (2026-09-26, late: user's FLEX2 validator run `47/50 (94.0%)`, matching Claude's check) — composite-key and upstream-subject wiring: FLEX2 `Course Registration Eligibility::Rule_3` never had the STUDENT_SEMESTER row its chained `Course Load Limit` case lives on
+
+Part 2 of the subject-wiring work (Part 1, multi-hop, is the entry
+below). Three pieces, generator only -- the validator already handled
+both shapes and is untouched:
+
+1. `compile_constraints.py` `_build_subject_join_path`: new
+   `_composite_backward_edges_for` (a port of `schema_utility.
+   composite_backward_edges`) and the same root-only composite step as
+   `schema_utility.build_join_path`, emitting `{from_columns, to_columns}`
+   hops. `compute_subject_hop_placeholder_correlations` now skips
+   composite hops instead of reading a missing `from_column`.
+2. New `_with_upstream_subject_joins`: after each decision's OWN subject
+   is computed (new pre-pass; root-picking unchanged), a chained decision
+   also joins to each upstream decision's subject table (`literal_via_
+   upstream_branch.from_decision`), over every decision's fk_closure --
+   the same route `drd_executor.DecisionRunner.upstream_subject_value`
+   takes. Placeholder correlations still use the decision's own subject;
+   only the stored `decision_subject` gains the extra joins.
+3. `dynamosa._build_decision_subject_row`: a composite hop takes every
+   key column from the row reached so far; an existing row with that
+   exact key (any owner) is reused rather than duplicated.
+
+Semantic diff (record-id keyed): exactly 29 records changed, all
+`decision_subject` -- `Course Registration Eligibility` (24) gains
+`STUDENT_SEMESTER` via `(SEM_ID, ROLL_NO)`; `Graduation Eligibility` (5)
+goes from `None` to `STUDENT_PROGRAM -> BATCH_PROGRAM` via `(BATCH_NO,
+PROG_ID)`, now matching the validator's own subject. Out-of-scope records
+kept out.
+
+**Checked by Claude (NOT the user's confirmation)**: the 11 archived
+`Rule_3` individuals rebuilt directly -- `Rule_3` verifies in all 11,
+with 87-219 `COURSE_REGISTRATION` rows linked to a `STUDENT_SEMESTER`
+row each (was 0). Full fixed tool on the current FLEX2 archive, scratch
+out-dir: `47/50 (94.0%)` (was 46), 0 errors, gained `Course Registration
+Eligibility::Rule_3`, nothing lost. Regression suite passing (172/174).
+Validator-only effect: needs FLEX2 (and, for Part 1, OpenMRS) validator
+re-runs, no search.
+
+## RESOLVED, confirmed via re-run (2026-09-26, late: user's OpenMRS validator run `53/55 (96.4%)`, matching Claude's check) — multi-hop subject wiring: OpenMRS's 6 Numeric rules depended on the search happening to write matching `concept_id`s
+
+Follow-up to the OpenMRS 51 -> 47 investigation below. `_build_decision_
+subject_row` (`dynamosa.py`) skipped every subject join longer than one
+hop; `obs -> concept -> concept_numeric` is 2 hops, so each Numeric
+record's `obs.concept_id` (always `1` in the archive) was never linked to
+its own `concept_numeric.concept_id` (`2`..`9`), and no `concept` row
+existed at all.
+
+**Fixed**: the builder now walks every hop, carrying the row reached so
+far forward (starting at the subject row); each hop reuses the existing
+single-hop logic (this record's focal row -> any row it owns -> a fresh
+minimal row; the downstream row conforms to the upstream one, as
+before). New `_rename_owned_fk_refs`: when conforming changes a key from
+`old` to `new`, this record's OWN rows whose real schema FK
+(`fk_columns`) pointed at the old key are moved too -- a rename, not an
+overwrite; other records' rows are never touched. Composite-key hops
+still skipped (Part 2). Corpus survey: only 3 decisions have a multi-hop
+subject join, all OpenMRS (`Numeric Absolute Range Validity`, `Numeric
+Interpretation Classification`, `Numeric Precision Validity`) -- FLEX2/
+jBilling/Spree cannot change from this.
+
+**Checked by Claude (NOT the user's confirmation)**: fixed tool on the
+current OpenMRS archive, scratch out-dir: `Validated 53/55 (96.4%)` (was
+47), 0 errors, nothing lost; gained `Numeric Absolute Range Validity::
+Rule_1`/`Rule_2`, `Numeric Interpretation Classification::Rule_1`-
+`Rule_4`. Every CLAIMED OpenMRS rule now verifies; the 2 remaining are
+the 2 never claimed (`Identifier Format And Check Digit Validity::
+Rule_1`, `Identifier Uniqueness Check::Rule_2`). Regression suite passing.
+(`generator/test_decision_subject.py` fails 3 of 5 -- PRE-EXISTING,
+identical on the committed code: stale calls with outdated signatures.)
+Validator-only effect (the builder runs inside the per-individual tool):
+needs an OpenMRS validator re-run, no search.
+
 ## RESOLVED, confirmed via re-run (2026-09-26, late) — `--mode optimized` silently dropped chained (DRD) verifications once their UPSTREAM decision was fully verified
 
 **User re-run of all four validators with the fixed tool (no search

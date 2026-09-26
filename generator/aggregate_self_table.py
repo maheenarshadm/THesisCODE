@@ -43,6 +43,19 @@ _SELF_REFERENCE_TABLE = {
     # the aggregate's own `node['table']` when no override is given here)
     # is already correct.
     ('FLEX2', 'semestersElapsed'): 'STUDENT_PROGRAM',
+    # Spree's `priorPromotionUsageCount` (One-Use-Per-User Promotion
+    # Eligibility, 2026-09-26): `COUNT(spree_discounts) WHERE order_id IN
+    # (SELECT id FROM spree_orders WHERE user_id = <user_id> AND
+    # completed_at IS NOT NULL AND id != self)` -- "discounts on this
+    # user's OTHER completed orders". `self` is compared against
+    # `spree_orders.id` inside that subquery, `<user_id>` is a spree_orders
+    # column, and the decision's only other fact (`customerPresent`) reads
+    # `spree_orders.user_id` -- the case being judged is an ORDER. Without
+    # this, `self` defaulted to the counted table (spree_discounts), the
+    # subject became spree_discounts, and the validator raised on every
+    # case ("<user_id> ... not present on the subject row") -- all 3
+    # rules, even the catch-all `rule_3`, unverifiable.
+    ('Spree', 'priorPromotionUsageCount'): 'spree_orders',
 }
 
 
