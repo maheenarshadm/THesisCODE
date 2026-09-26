@@ -894,11 +894,30 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
             continue  # a SQL tautology guard (e.g. "1=1"), never a real column -- see candidate.py's own mirror fix
         colon_m = re.fullmatch(r':([A-Za-z_]\w*)', raw_val)
         if colon_m:
+            found = False
             if self_row is not None:
                 for key in (colon_m.group(1), colon_m.group(1).upper(), colon_m.group(1).lower()):
                     if key in self_row:
                         row[col] = self_row[key]
+                        found = True
                         break
+            if not found and candidate is not None and focal is not None and self_table is not None:
+                # Genuine self-correlation chicken-and-egg -- see
+                # candidate.py's own mirror fix (2026-09-26) for the full
+                # writeup (OpenMRS's `Concept Fully-Specified-Name
+                # Presence Requirement`, `concept_id = :concept_id`
+                # correlating `concept_name` against itself). Same fix
+                # here, independently, per this function's own docstring
+                # ("the parsing rules must stay identical, so any change
+                # to one belongs in the other too").
+                fresh = _fresh_key_value(candidate, self_table, colon_m.group(1))
+                row[col] = fresh
+                if self_row is not None:
+                    self_row[colon_m.group(1)] = fresh
+                else:
+                    row[colon_m.group(1)] = fresh
+                    focal[self_table.upper()] = row
+                    self_row = row
             continue
         ph = re.fullmatch(r'<([^>]+)>', raw_val)
         if ph:
@@ -906,13 +925,29 @@ def _row_from_filter_conjuncts(filter_text, scenario, owner_id=None, candidate=N
                 row[col] = scenario[ph.group(1)]
         else:
             v = raw_val.strip("'\"")
-            try:
-                v = int(v)
-            except ValueError:
+            # Boolean literals first -- a real, confirmed bug (2026-09-26,
+            # OpenMRS's own `Concept Fully-Specified-Name Presence
+            # Requirement`), fixed in candidate.py's own mirror the same
+            # day but MISSED here at first -- this function is this
+            # project's OWN documented "kept independent, not imported"
+            # duplicate, so a fix to one is not a fix to both unless
+            # applied to each explicitly. `voided = false` used to fall
+            # through int()/float() (both raise ValueError on "false") to
+            # the plain-string branch, storing the literal STRING 'false'
+            # instead of a real boolean -- a `WHERE voided = false` (real
+            # SQL) can never match a stored TEXT 'false'. Case-insensitive
+            # (FEEL/DMN's own convention), checked before the numeric
+            # coercions since "false"/"true" would never parse as either.
+            if v.lower() in ('true', 'false'):
+                v = (v.lower() == 'true')
+            else:
                 try:
-                    v = float(v)
+                    v = int(v)
                 except ValueError:
-                    pass
+                    try:
+                        v = float(v)
+                    except ValueError:
+                        pass
             row[col] = v
     return row
 

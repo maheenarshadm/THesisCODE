@@ -25706,7 +25706,14 @@
    "users"
   ],
   "cross_variable_reference": false,
-  "feasibility": "unknown"
+  "feasibility": "unknown",
+  "decision_subject": {
+   "table": "concept_numeric",
+   "pk_columns": [
+    "concept_id"
+   ],
+   "joins": {}
+  }
  },
  {
   "record_id": "OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_1",

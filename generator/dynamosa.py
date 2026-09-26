@@ -941,7 +941,25 @@ def _deep_copy_individual(individual):
             id_to_copy[id(row)] = row_copy
     new_focal_maps = {}
     for rid, rec_focal in focal_maps.items():
-        new_focal_maps[rid] = {table: id_to_copy[id(row)] for table, row in rec_focal.items()}
+        new_rec_focal = {}
+        for table, row in rec_focal.items():
+            copy = id_to_copy.get(id(row))
+            if copy is not None:
+                new_rec_focal[table] = copy
+            # else: this focal row is no longer in the candidate at all --
+            # a real, confirmed scenario (2026-09-26): a row-count
+            # mutation can DECREASE a count later in the search and remove
+            # the very row `_row_from_filter_conjuncts`'s own self
+            # -correlation fix (candidate.py/mutation.py, same day)
+            # registered into `focal` as the new self-reference anchor,
+            # leaving `focal` pointing at a row `candidate.as_dict()` no
+            # longer has. `focal` is best-effort bookkeeping for reuse,
+            # never the source of truth for what's actually in the
+            # candidate -- dropping a stale entry here is honest (a later
+            # reader that needs this table's own focal row will simply not
+            # find one, same as if this objective never touched it), never
+            # a silent wrong guess at a row that no longer exists.
+        new_focal_maps[rid] = new_rec_focal
     new_scenario_maps = {rid: dict(scenario) for rid, scenario in scenario_maps.items()}
     return (new_candidate, new_focal_maps, new_scenario_maps)
 

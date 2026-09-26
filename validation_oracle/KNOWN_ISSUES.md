@@ -1,5 +1,248 @@
 # Validation oracle — known issues tracker
 
+## 2026-09-26 — full-pass classification of every OpenMRS rule still unverified after today's 5 fixes
+
+Systematic, one-by-one trace of all 28 rules left unverified in OpenMRS
+after the archive-immutability/boolean-literal/decision_subject-port/
+drd_executor fixes above. Every single one accounted for -- 5 real root
+causes (4 already logged separately above/below, one new) plus one
+genuine search-coverage gap (not a code bug) plus one already-fixed stale
+-data bug (patched this same pass).
+
+**cat1 -- self-correlated aggregate/exists over the SAME table its own
+subject lives on** (5 rules, see this file's own dedicated OPEN entry
+below): `Concept Fully-Specified-Name Presence Requirement::Rule_1`,
+`Concept Fully-Specified-Name Uniqueness Per Locale::Rule_1`, `Concept
+Locale-Preferred-Name Uniqueness::Rule_1`, `Concept Short-Name Uniqueness
+Per Locale::Rule_1`, `Preferred Identifier Requirement::Rule_1`.
+
+**cat2 -- `compute_decision_subject`'s forward-FK-only limitation** (6
+rules, see this file's own dedicated OPEN entry below): `Numeric Absolute
+Range Validity::Rule_1`/`Rule_2`, `Numeric Interpretation
+Classification::Rule_1`-`Rule_4`.
+
+**cat3 -- `classify_derived()` silently drops a real ground-truth
+formula** (9 rules, see this file's own dedicated OPEN entry above):
+`Concept Preferred Name Validity::Rule_2`-`Rule_5` (`isIndexTerm`/
+`isShortName`), `Obs Value Required By Datatype::Rule_2`-`Rule_6`
+(`isObsGroup`).
+
+**cat4 -- NEW today: `exists`-kind fact with NO `filter_text` at all,
+collapsing a real correlated condition into a crude "does any row exist"
+check** (2 rules): `Identifier Uniqueness Check::Rule_3`/`Rule_4` --
+`inUseByAnotherPatient`/`duplicateWithinSamePatient` both have real,
+specific self-join semantics in their own `notes` (`pi2.identifier=this.
+identifier AND pi2.patient_id<>this.patient_id AND pi2.voided=false`,
+etc.) but compile with `candidate_columns` and no `filter_text`, so
+`db_resolver`/`candidate.py`'s own exists-without-filter_text path just
+checks "does ANY row with a non-null value in these columns exist,"
+completely ignoring the real correlation. Would need
+`classify_derived`/its own upstream extraction to build a real
+`filter_text` with a `<>`-self-reference conjunct (the predicate
+machinery already has SOME support for this shape --
+`_NEQ_COLON_SELF_REF_RE` -- just needs the compiled node to actually
+carry one). Not fixed this round.
+
+**cat5 -- NEW today: `_build_decision_subject_row`'s own "never
+overwrite an existing value" rule leaves a genuine cross-table mismatch
+uncorrected** (4 rules): `Identifier Location Requirement::Rule_2`/
+`Rule_3`, `Identifier Format Validity::Rule_2`/`Rule_3`. All four have a
+correctly-resolved `decision_subject` (`patient_identifier` -> `patient_
+identifier_type` via `identifier_type`/`patient_identifier_type_id`), and
+the wiring mechanism DOES run -- but since both sides of the join
+INDEPENDENTLY already have a non-null value (the search built both rows
+separately, each with its own placeholder key), the wiring code's own
+documented safety rule ("skipping only a hop whose own FK column the
+subject row already has a real value for -- never overwritten") means it
+never corrects the mismatch. Confirmed directly, post-wiring:
+`identifier_type=40000001` vs `patient_identifier_type_id=40000002` for
+`Rule_2`, still mismatched after the full pipeline runs. This is
+different from cat2 (no `decision_subject` at all) and from the
+CONCEPT_NUMERIC/OBS mismatch found earlier today in `Numeric Absolute
+Range Validity` (same shape, but THAT decision has no `decision_subject`
+to even attempt wiring with) -- here the mechanism exists, runs, and
+still can't fix it, because "already has a value" and "has the RIGHT
+value" are being treated as the same thing. A real fix would need the
+wiring to detect a genuine MISMATCH (not just absence) and correct it --
+which one side to trust becomes a real design question (the SUBJECT row
+was almost always built first/more deliberately for its own objective, so
+probably the joined-TO row's own FK should adjust to match the subject,
+not the reverse -- not yet decided, not yet implemented).
+
+**Also found, NOT a code bug**: `Identifier Format Validity::Rule_1`'s
+own archived "best" individual has `fitness=0.5`, not `0.0` -- the search
+never actually solved this objective at all. Genuinely nothing to fix in
+the validator or generator; this is the search algorithm's own
+optimization performance, a different category of gap entirely from
+everything above.
+
+**Already fixed this same pass**: `Numeric Precision Validity::Rule_1`'s
+own `decision_subject` was stale (`null`), left over from BEFORE its
+siblings `Rule_2`/`Rule_3` were moved to `pending_investigation/` earlier
+today -- moving those left this record's own field un-recomputed. A fresh
+`compute_decision_subject` call (now that only this record remains for
+the decision) resolves cleanly (`concept_numeric`, single table, no join
+needed). Patched directly (verified via a `record_id`-keyed diff: exactly
+1 record changed, nothing else). **Take-away for next time a rule is
+moved to `out_of_scope/`: check whether any of its own siblings' own
+`decision_subject` needs recomputing too, not just the moved rule's own
+data** -- a full-corpus staleness scan (comparing every decision's
+current `decision_subject` against `compute_decision_subject` recomputed
+fresh) found only this one instance today, but the check itself is cheap
+and worth repeating after any future `compiled_constraints.json` edit.
+
+## OPEN — `classify_derived()`'s pattern coverage gap, two more confirmed instances (found 2026-09-26, NOT YET FIXED)
+
+Same root cause already documented in `validation_oracle/out_of_scope/
+pending_investigation/README.md`'s own category 3 (`yearsSinceBirthdate`/
+`valueNumericHasFraction`, both already moved out) -- ground truth names a
+real formula/fact in its own `notes`, but `compile_constraints.py`'s
+`classify_derived()` has no pattern for it, so it silently falls through
+to a bare `schema_column` reading the WRONG raw value. Two more confirmed
+via a full-corpus scan (2026-09-26), still IN the active corpus, not yet
+moved or fixed:
+
+- **OpenMRS `Concept Preferred Name Validity` -- `isIndexTerm`/
+  `isShortName`** (affects `Rule_2`, `Rule_3`, `Rule_4`, `Rule_5`): both
+  compile as bare `schema_column: concept_name.concept_name_type`, but
+  their own notes are `concept_name_type = 'INDEX_TERM'` /
+  `concept_name_type = 'SHORT'` -- a derived boolean (does the raw column
+  equal that literal?), not the raw column value itself. `concept_name_type
+  = True` (comparing a string against a boolean) can essentially never
+  correctly evaluate.
+- **OpenMRS `Obs Value Required By Datatype` -- `isObsGroup`** (affects
+  `Rule_2` through `Rule_6`, 5 rules): compiles as bare `schema_column:
+  obs.obs_group_id`, but its own notes are `EXISTS child obs rows with
+  obs_group_id = this.obs_id (self-referencing FK)` -- a self-referencing
+  EXISTS check (do OTHER obs rows point back at this one?), not a read of
+  this row's OWN `obs_group_id`.
+
+Neither has been moved to `pending_investigation/` yet (unlike the first
+two instances) -- holding here until the user decides whether to move
+these too or fix `classify_derived()` properly now that it's 4 confirmed
+instances, not 2.
+
+## OPEN — `compute_decision_subject`'s forward-FK-only algorithm can't wire two sibling tables that both point INTO a shared third table (found 2026-09-26, NOT YET FIXED)
+
+Found tracing OpenMRS's `Numeric Absolute Range Validity::Rule_1` (still
+unverified). Confirmed real, not hypothetical: the raw archived
+individual has `OBS.concept_id = 1` and `CONCEPT_NUMERIC.concept_id = 2`
+— two independently-built rows the search never correlates, because
+nothing wires them together.
+
+**Why**: this decision's subject needs `obs.concept_id -> concept.
+concept_id <- concept_numeric.concept_id` -- BOTH `obs` and
+`concept_numeric` have a real, forward FK into `concept`, but neither has
+a forward FK to the OTHER. The validator's own `subject_table_for_
+decision` (`validation_oracle/subject_table.py`) resolves this fine
+(confirmed directly: `resolved: {'Numeric Absolute Range Validity':
+('obs', ['obs_id'], {'concept_numeric': [obs->concept, concept->
+concept_numeric]})}`), because its join-path search supports the
+backward hop (`concept` -> `concept_numeric`, walked in reverse from
+`concept_numeric`'s own forward FK). The generator's own port,
+`compile_constraints.py`'s `compute_decision_subject`, does NOT -- its
+own section-4b docstring already discloses this exact scope limit:
+"Forward FK edges only... no port of `schema_utility.functional_backward_
+edges`'s shared-PK-subtype backward traversal. A decision needing that to
+find a unique root simply gets no `decision_subject` here." Confirmed:
+this record's own `decision_subject` field is `null`.
+
+**Not a new bug, a previously-disclosed limitation finally being hit
+concretely** -- the docstring names exactly this shape as excluded before
+today, just without a confirmed real instance until now. Fixing it means
+extending `compute_decision_subject`'s own root-finding to walk a FK
+edge backward when a forward-only search finds no root (mirroring
+`schema_utility.functional_backward_edges`, already proven correct on the
+validator side) -- a real, scoped port, not a guess, but not attempted
+this round. Likely affects other decisions with the same "two siblings,
+shared forward-FK parent, no direct edge between them" shape -- not yet
+surveyed for how widespread.
+
+## RESOLVED (2026-09-26, later same day) — self-correlated `derived_aggregate`/`exists` over the SAME table its own subject lives on never gets its own correlating column set
+
+Found tracing OpenMRS's `Concept Fully-Specified-Name Presence Requirement::
+Rule_1` (still unverified after the archive-immutability + boolean-literal
+fixes both confirmed working correctly on this exact rule).
+
+**The bug**: `fullySpecifiedNameCount`'s own `filter_text` is
+`concept_id = :concept_id AND concept_name_type = 'FULLY_SPECIFIED' AND
+voided = false` -- a SELF-correlation (`:concept_id`, a colon self-
+reference) against the SAME table (`concept_name`) the aggregate counts
+over. This decision's own subject (no `decision_subject` -- `all_tables`
+comes back empty, so `subject_table_for_decision` falls back to the
+aggregate's own table) IS `concept_name` itself, one row at a time.
+
+`candidate.py`'s `_row_from_filter_conjuncts` resolves a colon self-
+reference by copying the value off `self_row` (`focal.get(self_table)`,
+`self_table` defaulting to the aggregate's own table when not given). But
+for the VERY FIRST `concept_name` row this objective ever builds,
+`self_row` doesn't have `concept_id` set either -- nothing has. So the
+self-reference conjunct is silently skipped (this function's own honest
+"can't resolve, don't guess" convention), and `concept_id` never gets set
+on ANY of the rows this objective builds. Confirmed directly: 3 real,
+correctly-typed `concept_name` rows (`voided=False`, `concept_name_type=
+'FULLY_SPECIFIED'`, post the boolean-literal fix), NONE with `concept_id`
+set, even after `repair_candidate` (the schema extraction marks
+`concept_name.concept_id` nullable -- `null_false: False` -- so repair
+correctly leaves a nullable FK alone, per its own documented contract;
+not a repair bug).
+
+**Consequence**: with `concept_id` NULL on both the subject row and every
+candidate row, the real SQL correlation `concept_id = :concept_id`
+becomes `NULL = NULL`, never true -- `fullySpecifiedNameCount` is always
+independently verified as 0, regardless of how many real matching rows
+the search built. Explains why `Rule_2` (`count = 0`) always verifies and
+`Rule_1` (`count >= 1`) never can, structurally, no matter what data
+exists. Same shape confirmed affecting at least 3 more decisions (all
+still in the active corpus, all currently unverified): `Concept Fully-
+Specified-Name Uniqueness Per Locale`, `Concept Locale-Preferred-Name
+Uniqueness`, `Concept Short-Name Uniqueness Per Locale` -- every one has
+a `derived_aggregate` filter_text self-correlating `concept_id` against
+`concept_name`, the same table.
+
+**Fix, implemented and verified**: when a colon self-reference's own
+target column isn't resolvable from `self_row` (`_self_row_value` returns
+`found=False`) AND the self-referenced table is the SAME table currently
+being constructed, allocate a fresh value (a small, locally-duplicated
+`_fresh_value_for_self_correlation` in `candidate.py`, since it can't
+import `mutation.py`'s own `_fresh_key_value` -- circular import; reuses
+that same one directly in `mutation.py`'s own independent copy) instead
+of skipping the conjunct -- then writes that value into `focal[self_table]`
+(registering the row itself as the new self-reference anchor if none
+existed yet) so every LATER row this same objective builds correctly
+picks it up via the existing self-reference path, giving every row the
+SAME shared `concept_id`.
+
+**Applied to BOTH independently-maintained copies** (`candidate.py`'s own
+`_row_from_filter_conjuncts` AND `mutation.py`'s own, per this project's
+own "kept independent, not imported, but the parsing rules must stay
+identical" discipline) -- fixing `mutation.py`'s copy also caught a
+SEPARATE, real gap: it still had the OLD, unfixed boolean-literal bug
+(the `voided = false` -> string-not-boolean issue documented separately
+in this file), since only `candidate.py`'s copy was fixed earlier the
+same day.
+
+**A second, real bug surfaced by this fix, also fixed**: `dynamosa.py`'s
+own `_deep_copy_individual` (the archive-immutability fix, same day)
+crashed (`KeyError` on `id_to_copy[id(row)]`) the first time this fix ran
+against a real search -- a row-count mutation can DECREASE a count later
+in the search and remove the very row this fix registered into `focal` as
+the self-correlation anchor, leaving `focal` pointing at a row no longer
+in the candidate at all. Fixed by making the focal-copying loop drop a
+stale entry instead of crashing (`focal` is best-effort bookkeeping, never
+the source of truth for what's actually in the candidate).
+
+**Verified against a real, fresh OpenMRS search re-run, not just unit
+tests**: all 5 predicted rules flipped from unverified to verified --
+`Concept Fully-Specified-Name Presence Requirement::Rule_1`, `Concept
+Fully-Specified-Name Uniqueness Per Locale::Rule_1`, `Concept Locale-
+Preferred-Name Uniqueness::Rule_1`, `Concept Short-Name Uniqueness Per
+Locale::Rule_1`, `Preferred Identifier Requirement::Rule_1`. OpenMRS's own
+per-individual `Validated` count moved to 38 (up from 34 before this
+fix). Full regression suite (`candidate.py`, `mutation.py`, `fitness.py`,
+`dynamosa.py` self-tests, plus the `validation_oracle` test suite) passing
+throughout.
+
 ## 2026-09-26 (later same day) — 39 rules physically moved out of the active corpus, into `validation_oracle/out_of_scope/`
 
 On the user's own explicit request, following the "which rules never

@@ -277,6 +277,19 @@ def _self_row_value(self_row, column):
     return None, False
 
 
+def _fresh_value_for_self_correlation(candidate, table, column):
+    """A numeric value guaranteed not to collide with any existing value
+    of `column` across `table`'s current rows -- a local, deliberately
+    duplicated copy of `mutation.py`'s own `_fresh_key_value` (candidate.py
+    can't import it: mutation.py already imports FROM candidate.py, so the
+    reverse would be circular). Used ONLY by `_row_from_filter_conjuncts`'s
+    own genuine self-correlation fallback, below -- see that function's
+    own docstring for the real bug this closes."""
+    existing = {r.get(column) for r in candidate.rows(table)
+                if isinstance(r.get(column), (int, float)) and not isinstance(r.get(column), bool)}
+    return (max(existing) + 1) if existing else 1
+
+
 def _top_level_and_conjuncts(filter_text):
     """Splits `filter_text` on 'AND', but only at paren-depth 0. A naive
     `re.split(r'\\bAND\\b', ...)` doesn't know an 'AND' inside a
@@ -727,6 +740,39 @@ def _row_from_filter_conjuncts(filter_text, scenario, candidate=None, focal=None
             self_value, found = _self_row_value(self_row, colon_m.group(1))
             if found:
                 row[col] = self_value
+            elif candidate is not None and focal is not None and self_table is not None:
+                # Genuine self-correlation chicken-and-egg (2026-09-26,
+                # OpenMRS's own `Concept Fully-Specified-Name Presence
+                # Requirement`): the self-referenced column isn't on
+                # `self_row` because NOTHING has ever set it for this
+                # objective yet -- there's no OTHER row to copy the value
+                # FROM, since this fact self-correlates against its own
+                # table (`self_table` defaults to the aggregate's own
+                # `table` when the compiled node names no override).
+                # Confirmed real: 3 real, correctly-typed CONCEPT_NAME
+                # rows, none with `concept_id` set, because `concept_id
+                # = :concept_id`'s own self-reference had nothing to
+                # resolve against on the very first row built -- silently
+                # skipping (the old behavior) left EVERY row this
+                # objective ever builds without the one column its own
+                # COUNT needs to correlate on, so the real, materialized
+                # COUNT is always 0 regardless of how much matching data
+                # exists. Allocate a fresh, real value instead -- then
+                # write it into `self_row` (or, if none exists yet,
+                # register THIS row as the new `self_row`) so every LATER
+                # row this SAME objective builds picks up and reuses the
+                # identical value via the ordinary self-reference path
+                # above, matching the real intent ("these N rows are N
+                # names for the same concept"), not N independently
+                # -repaired, uncorrelated values.
+                fresh = _fresh_value_for_self_correlation(candidate, self_table, colon_m.group(1))
+                row[col] = fresh
+                if self_row is not None:
+                    self_row[colon_m.group(1)] = fresh
+                else:
+                    row[colon_m.group(1)] = fresh
+                    focal[self_table.upper()] = row
+                    self_row = row
             continue
         ph = _PLACEHOLDER_RE.fullmatch(raw_val)
         if ph:
