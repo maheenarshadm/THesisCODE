@@ -27,21 +27,52 @@ formula** (9 rules, see this file's own dedicated OPEN entry above):
 `isShortName`), `Obs Value Required By Datatype::Rule_2`-`Rule_6`
 (`isObsGroup`).
 
-**cat4 -- NEW today: `exists`-kind fact with NO `filter_text` at all,
-collapsing a real correlated condition into a crude "does any row exist"
-check** (2 rules): `Identifier Uniqueness Check::Rule_3`/`Rule_4` --
-`inUseByAnotherPatient`/`duplicateWithinSamePatient` both have real,
-specific self-join semantics in their own `notes` (`pi2.identifier=this.
-identifier AND pi2.patient_id<>this.patient_id AND pi2.voided=false`,
-etc.) but compile with `candidate_columns` and no `filter_text`, so
-`db_resolver`/`candidate.py`'s own exists-without-filter_text path just
-checks "does ANY row with a non-null value in these columns exist,"
-completely ignoring the real correlation. Would need
-`classify_derived`/its own upstream extraction to build a real
-`filter_text` with a `<>`-self-reference conjunct (the predicate
-machinery already has SOME support for this shape --
-`_NEQ_COLON_SELF_REF_RE` -- just needs the compiled node to actually
-carry one). Not fixed this round.
+**cat4 -- PARTIALLY RESOLVED (later the same day): `exists`-kind fact with
+NO `filter_text` at all, collapsing a real correlated condition into a
+crude "does any row exist" check** (2 rules): `Identifier Uniqueness
+Check::Rule_3`/`Rule_4` -- `inUseByAnotherPatient`/`duplicateWithinSamePatient`
+both have real, specific self-join semantics in their own `notes`
+(`pi2.identifier=this.identifier AND pi2.patient_id<>this.patient_id AND
+pi2.voided=false`, etc.) but compiled with `candidate_columns` and no
+`filter_text`, so `db_resolver`/`candidate.py`'s own exists-without-
+filter_text path just checked "does ANY row with a non-null value in these
+columns exist," completely ignoring the real correlation.
+
+**`inUseByAnotherPatient` fixed**: its own ground-truth notes ARE a
+complete, literal, real SQL `EXISTS(SELECT 1 FROM patient_identifier pi2
+WHERE ...)` statement -- new `classify_derived` extractor
+(`_try_extract_self_join_exists_recipe`, `compile_constraints.py`)
+recognizes this exact shape (a self-join against `this.COLUMN`, never the
+reverse) and compiles it to a real `exists`+`filter_text` node
+(`identifier = :identifier AND identifier_type = :identifier_type AND
+patient_id != :patient_id AND voided = false`), reusing the SAME
+`:col`/`!=:col` self-reference machinery already proven correct elsewhere
+(`_mechanical_filter_predicate`'s read side, `_row_from_filter_conjuncts`'s
+write side) -- not a new mechanism, a new way to produce the same,
+already-tested node shape. Deliberately NOT routed through the existing
+`raw_sql_boolean` escape hatch -- confirmed by reading `candidate.py`'s own
+`_raw_sql_boolean_value`: it only substitutes `<placeholder>` scenario
+values, with no `this.column` self-reference support at all, so a bare
+`EXISTS(...this.identifier...)` would fail as real SQL there (no table
+literally named `this`). Patched into `compiled_constraints.json` (3
+records: `Rule_2`/`Rule_3`/`Rule_4`, semantic diff confirmed surgical --
+only `variable_resolution` changed). Full regression suite passing. Needs
+a fresh search re-run to take effect (changes what row-construction the
+search itself needs to satisfy this fact) -- not yet re-run/re-verified
+against real data as of this entry.
+
+**`duplicateWithinSamePatient` NOT fixed** -- its own ground-truth notes
+are genuinely vague prose ("self-join over the same patient_id per
+PatientIdentifierValidator L112-130 (globally-unique type, or same/null
+location match)"), not a literal SQL statement, and the real condition
+depends conditionally on a THIRD variable (`uniquenessBehavior`'s own
+value) -- not safely auto-extractable without guessing which behavior
+applies when. Left exactly as before (bare "any row exists" check),
+matching this project's own "never guess" discipline. `Rule_3`'s own
+condition needs BOTH facts (`inUseByAnotherPatient=False AND
+duplicateWithinSamePatient=True`), so it may still not verify correctly
+even with the other half fixed -- `Rule_4` only needs `inUseByAnotherPatient
+=False`, unaffected by this gap.
 
 **cat5 -- RESOLVED (later the same day): `_build_decision_subject_row`'s
 own "never overwrite an existing value" rule left a genuine cross-table

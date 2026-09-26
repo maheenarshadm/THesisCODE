@@ -534,6 +534,67 @@ def _try_extract_raw_sql_boolean(text):
     return {'kind': 'raw_sql_boolean', 'sql_template': m.group(1).strip(), 'tables': tables}
 
 
+# A correlated self-join EXISTS, written out as real, literal SQL in the
+# ground truth's own notes (2026-09-26, OpenMRS's own `inUseByAnotherPatient`:
+# "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.
+# identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id
+# <>this.patient_id AND pi2.voided=false)"). Deliberately NOT routed through
+# `raw_sql_boolean` (the general "bespoke SQL" escape hatch just above) --
+# confirmed by reading `candidate.py`'s own `_raw_sql_boolean_value`: it only
+# ever substitutes `<placeholder>` scenario values into `sql_template`, with
+# NO handling for a `this.column` self-reference at all, so a bare `EXISTS(
+# ... this.identifier ...)` would fail as real SQL (no table literally named
+# `this`). This shape instead compiles to the SAME `exists`+`filter_text`
+# node this project's OTHER self-correlated facts already use, reusing
+# machinery already proven correct on both the read side
+# (`_mechanical_filter_predicate`'s own `:col`/`!=:col` self-reference
+# handling) and the write side (`_row_from_filter_conjuncts`'s own `:col`
+# handling, now including today's self-correlation fix) -- not a new
+# mechanism, just a new way to produce the SAME, already-tested node shape.
+# `this.COLUMN = value`/`this.COLUMN <> value` (rather than the aliased
+# table's own column compared against `this`) is NOT this shape -- FEEL/DMN
+# ground truth in this project always correlates the aliased OTHER row
+# against `this`, never the reverse, so only that direction is recognized;
+# anything else aborts the whole extraction (see this function's own
+# per-conjunct check) rather than silently guessing which side is "self."
+_EXISTS_SELF_JOIN_RE = re.compile(
+    r'EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s+WHERE\s+(.+?)\)\s*$',
+    re.I | re.S)
+_EXISTS_SELF_JOIN_CONJUNCT_RE = re.compile(
+    r"^\s*([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)\s*(<>|!=|=)\s*"
+    r"(?:this\.([A-Za-z_][A-Za-z0-9_]*)|'([^']*)'|([A-Za-z_]+|-?\d+))\s*$",
+    re.I)
+
+
+def _try_extract_self_join_exists_recipe(text):
+    if not text:
+        return None
+    m = _EXISTS_SELF_JOIN_RE.search(text)
+    if not m:
+        return None
+    table, alias, where = m.group(1), m.group(2), m.group(3)
+    filter_parts = []
+    columns = []
+    for conjunct in re.split(r'\bAND\b', where, flags=re.I):
+        cm = _EXISTS_SELF_JOIN_CONJUNCT_RE.match(conjunct.strip())
+        if not cm:
+            return None  # a conjunct shape this extractor doesn't recognize -- abort, never half-build
+        alias_prefix, col, op, this_col, str_lit, other = cm.groups()
+        if alias_prefix.lower() != alias.lower():
+            return None  # a reference to a table OTHER than the aliased self-join target -- out of this shape's scope
+        columns.append(col)
+        norm_op = '!=' if op in ('<>', '!=') else '='
+        if this_col is not None:
+            filter_parts.append(f'{col} {norm_op} :{this_col}')
+        elif str_lit is not None:
+            filter_parts.append(f"{col} {norm_op} '{str_lit}'")
+        else:
+            filter_parts.append(f'{col} {norm_op} {other}')
+    return {'kind': 'exists', 'candidate_tables': [table],
+            'candidate_columns': [{'table': table, 'column': c} for c in columns],
+            'filter_text': ' AND '.join(filter_parts)}
+
+
 # A second escape hatch, found necessary while building mutation.py
 # (2026-09-11): semesterType was mapped as a plain schema_column
 # passthrough of SEMESTER.TITLE, but the DMN rules that consume it
@@ -663,6 +724,11 @@ def classify_derived(row):
     if raw_sql:
         raw_sql['notes'] = notes
         return raw_sql
+
+    self_join = _try_extract_self_join_exists_recipe(notes) or _try_extract_self_join_exists_recipe(raw)
+    if self_join:
+        self_join['notes'] = notes
+        return self_join
 
     # "joined via X.Y" is checked before the plain existence check below,
     # not after -- several facts' notes contain both ("joined via

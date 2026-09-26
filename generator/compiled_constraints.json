@@ -28829,8 +28829,13 @@
      {
       "table": "patient_identifier",
       "column": "patient_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "voided"
      }
     ],
+    "filter_text": "identifier = :identifier AND identifier_type = :identifier_type AND patient_id != :patient_id AND voided = false",
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    },
    "uniquenessBehavior": {
@@ -28993,8 +28998,13 @@
      {
       "table": "patient_identifier",
       "column": "patient_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "voided"
      }
     ],
+    "filter_text": "identifier = :identifier AND identifier_type = :identifier_type AND patient_id != :patient_id AND voided = false",
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    },
    "uniquenessBehavior": {
@@ -29189,8 +29199,13 @@
      {
       "table": "patient_identifier",
       "column": "patient_id"
+     },
+     {
+      "table": "patient_identifier",
+      "column": "voided"
      }
     ],
+    "filter_text": "identifier = :identifier AND identifier_type = :identifier_type AND patient_id != :patient_id AND voided = false",
     "notes": "EXISTS(SELECT 1 FROM patient_identifier pi2 WHERE pi2.identifier=this.identifier AND pi2.identifier_type=this.identifier_type AND pi2.patient_id<>this.patient_id AND pi2.voided=false)"
    },
    "uniquenessBehavior": {
