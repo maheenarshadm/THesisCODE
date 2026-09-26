@@ -43,9 +43,9 @@ machinery already has SOME support for this shape --
 `_NEQ_COLON_SELF_REF_RE` -- just needs the compiled node to actually
 carry one). Not fixed this round.
 
-**cat5 -- NEW today: `_build_decision_subject_row`'s own "never
-overwrite an existing value" rule leaves a genuine cross-table mismatch
-uncorrected** (4 rules): `Identifier Location Requirement::Rule_2`/
+**cat5 -- RESOLVED (later the same day): `_build_decision_subject_row`'s
+own "never overwrite an existing value" rule left a genuine cross-table
+mismatch uncorrected** (4 rules): `Identifier Location Requirement::Rule_2`/
 `Rule_3`, `Identifier Format Validity::Rule_2`/`Rule_3`. All four have a
 correctly-resolved `decision_subject` (`patient_identifier` -> `patient_
 identifier_type` via `identifier_type`/`patient_identifier_type_id`), and
@@ -62,12 +62,22 @@ CONCEPT_NUMERIC/OBS mismatch found earlier today in `Numeric Absolute
 Range Validity` (same shape, but THAT decision has no `decision_subject`
 to even attempt wiring with) -- here the mechanism exists, runs, and
 still can't fix it, because "already has a value" and "has the RIGHT
-value" are being treated as the same thing. A real fix would need the
-wiring to detect a genuine MISMATCH (not just absence) and correct it --
-which one side to trust becomes a real design question (the SUBJECT row
-was almost always built first/more deliberately for its own objective, so
-probably the joined-TO row's own FK should adjust to match the subject,
-not the reverse -- not yet decided, not yet implemented).
+value" were being treated as the same thing.
+
+**Fixed**: `_build_decision_subject_row` now checks whether the target's
+own `to_column` already agrees with the subject's own `from_column`;
+if they disagree, the TARGET is forced to conform to the SUBJECT (never
+the reverse) -- `target_focal` is this record's own dedicated, private
+focal row for that table (never shared with any other record's own
+focal), so overwriting its own key column here can't dangle any OTHER
+record's own reference to it, while the subject's own row identity is
+what every OTHER fact on this record already correlates against and must
+stay fixed. Verified directly against the real failing case:
+`identifier_type`/`patient_identifier_type_id` both `40000001` post-fix
+(previously `40000001`/`40000002`), `Rule_2` now verifies `True`.
+Regression-checked against the earlier-fixed Spree case (fresh subject,
+no mismatch to correct) -- unaffected, still verifies correctly. Full
+regression suite passing throughout.
 
 **Also found, NOT a code bug**: `Identifier Format Validity::Rule_1`'s
 own archived "best" individual has `fitness=0.5`, not `0.0` -- the search

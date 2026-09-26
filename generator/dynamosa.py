@@ -868,8 +868,6 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
             resolvable = False
             break
         hop = hops[0]
-        if subject_focal.get(hop['from_column']) is not None:
-            continue  # already has a real value -- never overwritten
         target_focal = rec_focal.get(hop['to_table']) or next(
             (v for k, v in rec_focal.items() if k.upper() == hop['to_table'].upper()), None)
         if target_focal is None:
@@ -883,6 +881,36 @@ def _build_decision_subject_row(candidate, rec_focal, r, rid):
             # row this pass builds, not a new mechanism.
             target_focal = candidate.add_row(hop['to_table'], {_OWNER_KEY: rid})
             rec_focal[hop['to_table']] = target_focal
+
+        existing_from_value = subject_focal.get(hop['from_column'])
+        if existing_from_value is not None:
+            # A real, confirmed bug (2026-09-26, OpenMRS's own `Identifier
+            # Location Requirement`/`Identifier Format Validity`): the
+            # subject row and the target row can EACH already have their
+            # own independently-set value here (`identifier_type=
+            # 40000001` vs `patient_identifier_type_id=40000002`, e.g.) --
+            # two different leaves, or two different repair passes, having
+            # nothing to do with each other, both landing on "some real
+            # number" without ever correlating. The OLD rule here
+            # ("subject already has a value -- never overwritten") assumed
+            # "has a value" means "has the RIGHT value," which silently
+            # left a genuine mismatch uncorrected -- the real join this
+            # decision's own subject depends on then simply never matches
+            # at verification time, regardless of what either row's own
+            # OTHER facts say. Fixed: if the target's own to_column
+            # already agrees with the subject's own from_column, nothing
+            # to do (the common, correct case); if they DISAGREE, force
+            # the TARGET to conform to the SUBJECT, never the reverse --
+            # `target_focal` is this record's own dedicated, private focal
+            # row for `hop['to_table']` (never shared with any other
+            # record's own focal), so overwriting its own key column here
+            # can't dangle any OTHER record's own reference to it, while
+            # the subject's own row identity is what every OTHER fact on
+            # THIS record already correlates against and must stay fixed.
+            if target_focal.get(hop['to_column']) != existing_from_value:
+                target_focal[hop['to_column']] = existing_from_value
+                wired_any = True
+            continue
         pk_value = target_focal.get(hop['to_column'])
         if pk_value is None:
             # The referenced row's own PK was never set by search/seeding.
