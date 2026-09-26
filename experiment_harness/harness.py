@@ -118,6 +118,17 @@ def _sha256(path):
     return h.hexdigest()
 
 
+def corpus_hash(path=COMPILED_PATH):
+    """sha256 of the corpus's JSON CONTENT (canonical form), not its raw
+    bytes: git checks the file out with CRLF line endings on Windows and LF
+    on macOS/Linux, so a byte hash differs between machines holding the
+    identical corpus (found running a second machine, 2026-09-27)."""
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    canon = json.dumps(data, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+    return hashlib.sha256(canon.encode('utf-8')).hexdigest()
+
+
 def _git_commit():
     try:
         out = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True)
@@ -706,7 +717,7 @@ def cmd_calibrate(a):
         calib[cs] = {'budget_1x': budget, 'population_size': POPULATION_SIZE,
                      'generations': CALIBRATION_GENERATIONS, 'seeds': per_seed,
                      'median_runtime_seconds': statistics.median(p['runtime_seconds'] for p in per_seed),
-                     'compiled_constraints_sha256': _sha256(COMPILED_PATH),
+                     'compiled_constraints_sha256': corpus_hash(),
                      'git_commit': _git_commit(),
                      'calibrated_at': datetime.datetime.now().isoformat(timespec='seconds')}
         with open(path, 'w', encoding='utf-8') as f:
@@ -738,7 +749,7 @@ def _write_config(a, calib):
               'population_size': POPULATION_SIZE, 'seed_rule': 'seed = 1000 * budget_multiplier + rep',
               'budget_1x': {cs: calib[cs]['budget_1x'] for cs in a.case_studies},
               'not_persisted_files': {cs: NOT_PERSISTED_FILES[cs] for cs in a.case_studies},
-              'compiled_constraints_sha256': _sha256(COMPILED_PATH), 'git_commit': _git_commit(),
+              'compiled_constraints_sha256': corpus_hash(), 'git_commit': _git_commit(),
               'written_at': datetime.datetime.now().isoformat(timespec='seconds')}
     for cs in a.case_studies:
         if calib[cs].get('compiled_constraints_sha256') != config['compiled_constraints_sha256']:
