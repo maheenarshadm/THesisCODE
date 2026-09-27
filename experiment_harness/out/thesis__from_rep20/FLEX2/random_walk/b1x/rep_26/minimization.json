@@ -1,0 +1,52 @@
+{
+  "archive": {
+    "pool": 70,
+    "greedy": 3,
+    "min": 3,
+    "optimal": true,
+    "min_members": [
+      1,
+      22,
+      41
+    ],
+    "greedy_members": [
+      1,
+      22,
+      41
+    ]
+  },
+  "final": {
+    "pool": 30,
+    "greedy": 4,
+    "min": 3,
+    "optimal": true,
+    "min_members": [
+      80,
+      84,
+      93
+    ],
+    "greedy_members": [
+      71,
+      77,
+      79,
+      93
+    ]
+  },
+  "union": {
+    "pool": 100,
+    "greedy": 4,
+    "min": 3,
+    "optimal": true,
+    "min_members": [
+      12,
+      41,
+      93
+    ],
+    "greedy_members": [
+      1,
+      11,
+      22,
+      79
+    ]
+  }
+}

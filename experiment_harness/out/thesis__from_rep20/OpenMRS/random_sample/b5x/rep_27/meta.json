@@ -1,0 +1,35 @@
+{
+  "case_study": "OpenMRS",
+  "setup": "random_sample",
+  "budget_multiplier": 5,
+  "rep": 27,
+  "seed": 5027,
+  "budget_evaluations": 1039600,
+  "evaluations_used": 1039600,
+  "stopped_because": "budget",
+  "iterations": 18901,
+  "population_size": null,
+  "runtime_seconds": 305.0,
+  "claimed_records_archive": 48,
+  "finished_at": "2026-09-27T07:05:39",
+  "distinct_individuals_validated": 14,
+  "archive_individuals_validated": 14,
+  "final_individuals_validated": null,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 14,
+      "greedy": 4,
+      "min": 3,
+      "optimal": true
+    },
+    "union": {
+      "pool": 14,
+      "greedy": 4,
+      "min": 3,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 4.3
+}

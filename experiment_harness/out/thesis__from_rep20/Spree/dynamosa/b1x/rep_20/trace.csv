@@ -1,0 +1,22 @@
+evaluations,record_id
+5,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2
+8,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2
+11,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2
+15,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3
+19,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3
+22,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3
+888,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3
+903,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2
+965,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1
+995,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3
+1051,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2
+1076,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2
+1093,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4
+1178,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1
+1201,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2
+1243,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3
+1351,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1
+1411,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1
+1458,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1
+3069,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1
+3635,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1

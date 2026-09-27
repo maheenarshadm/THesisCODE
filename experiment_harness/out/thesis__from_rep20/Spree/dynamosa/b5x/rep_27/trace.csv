@@ -1,0 +1,22 @@
+evaluations,record_id
+5,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2
+8,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2
+11,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2
+15,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3
+19,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3
+22,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3
+823,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2
+863,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1
+883,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2
+901,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2
+918,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3
+938,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1
+979,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1
+1009,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3
+1020,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1
+1428,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1
+1443,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3
+3142,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4
+3209,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1
+3433,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2
+3620,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1

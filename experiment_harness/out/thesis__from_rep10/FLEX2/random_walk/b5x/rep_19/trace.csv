@@ -1,0 +1,67 @@
+evaluations,record_id
+5,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+11,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_3::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+19,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+43,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_2
+49,FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_2
+52,FLEX2::Attendance Eligibility For Final Exam::Decision_AttendanceEligibility_Rule_2
+69,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_2
+75,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_3
+2352,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_1
+2944,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_1
+3296,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_10
+3389,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+3597,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_3
+3903,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_1
+6595,FLEX2::Credit Transfer Exemption::Decision_CreditTransferExemption_Rule_3
+6743,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_3
+7369,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_2
+7535,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_14
+7938,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+8076,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_1
+9236,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_1
+10916,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_7
+13479,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+14402,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+14613,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_8
+17074,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_5
+18402,FLEX2::Summer Semester Registration::Decision_SummerSemesterRegistration_Rule_4
+20983,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+22551,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_15
+27160,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_4
+27781,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_9
+29472,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_6
+29578,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_2::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+31376,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_2+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+42597,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+43155,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+43305,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+53835,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+56659,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_12
+58737,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_11
+59523,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2
+75238,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+75776,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_1::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2
+89557,FLEX2::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6
+94581,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+100115,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+100324,FLEX2::Graduation Eligibility::Decision_GraduationEligibility_Rule_3
+103688,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_5
+118382,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_1+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2
+126062,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2
+152873,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+181092,FLEX2::Grade Points and Interpretation::Decision_GradePointsAndInterpretation_Rule_13
+183123,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6
+188387,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_4
+194747,FLEX2::Course Load Limit::Decision_CourseLoadLimit_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+227102,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+259984,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_1+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_1
+271760,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+426473,FLEX2::Course Replacement Eligibility::Decision_CourseReplacementEligibility_Rule_6
+460650,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_3+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_3
+469663,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+560051,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6
+714829,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_4+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_4
+734313,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_6+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_6
+839324,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_3::via::Course Load Limit::Decision_CourseLoadLimit_Rule_3+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5+Academic Warning Status::Decision_AcademicWarningStatus_Rule_5
+986096,FLEX2::Course Registration Eligibility::Decision_CourseRegistrationEligibility_Rule_4::via::Academic Warning Status::Decision_AcademicWarningStatus_Rule_2+Course Load Limit::Decision_CourseLoadLimit_Rule_4+Academic Warning Status::Decision_AcademicWarningStatus_Rule_2

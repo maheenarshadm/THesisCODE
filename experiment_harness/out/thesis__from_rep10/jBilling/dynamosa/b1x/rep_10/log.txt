@@ -1,0 +1,87 @@
+
+=== 2026-09-27T00:17:52 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_10 jBilling dynamosa 1 10 1010 78970
+search done: 78970/78970 evaluations, 40 iterations, 19/20 records claimed, 4.1s
+
+=== 2026-09-27T00:17:56 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_10 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1009, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 569, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 155, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:25:14 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_10 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:27:51 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_10 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:29:15 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_10 jBilling full
+full validation: 17 distinct individuals (12 in archive, 6 in final)
+  individual 1/17: 12 rule(s)
+  individual 2/17: 13 rule(s)
+  individual 3/17: 12 rule(s)
+  individual 4/17: 17 rule(s)
+  individual 5/17: 12 rule(s)
+  individual 6/17: 12 rule(s)
+  individual 7/17: 14 rule(s)
+  individual 8/17: 12 rule(s)
+  individual 9/17: 14 rule(s)
+  individual 10/17: 14 rule(s)
+  individual 11/17: 12 rule(s)
+  individual 12/17: 13 rule(s)
+  individual 13/17: 17 rule(s)
+  individual 14/17: 17 rule(s)
+  individual 15/17: 17 rule(s)
+  individual 16/17: 17 rule(s)
+  individual 17/17: 17 rule(s)
+validated: archive 18, final 17, union 18 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 6, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 17, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.7s)

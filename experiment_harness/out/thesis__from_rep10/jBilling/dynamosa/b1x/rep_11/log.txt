@@ -1,0 +1,111 @@
+
+=== 2026-09-27T00:17:57 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_11 jBilling dynamosa 1 11 1011 78970
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1007, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 232, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 190, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1460, in _dynamosa_generations
+    fitness_vectors = [[evaluate_objective(r, ind[0], ind[1], ind[2], table_cache)
+                        ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 306, in evaluate_objective
+    return branch_fitness(record, genome)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 445, in branch_fitness
+    own_conjuncts = {_canonical(c) for c in _top_level_conjuncts(record['condition'])}
+                     ~~~~~~~~~~^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 470, in _canonical
+    return json.dumps(node, sort_keys=True)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 242, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py", line 205, in encode
+    return ''.join(chunks)
+           ~~~~~~~^^^^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:25:14 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_11 jBilling dynamosa 1 11 1011 78970
+search done: 78970/78970 evaluations, 40 iterations, 19/20 records claimed, 4.5s
+
+=== 2026-09-27T00:25:19 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_11 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:27:51 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_11 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:29:15 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b1x/rep_11 jBilling full
+full validation: 19 distinct individuals (12 in archive, 8 in final)
+  individual 1/19: 12 rule(s)
+  individual 2/19: 13 rule(s)
+  individual 3/19: 12 rule(s)
+  individual 4/19: 17 rule(s)
+  individual 5/19: 12 rule(s)
+  individual 6/19: 12 rule(s)
+  individual 7/19: 15 rule(s)
+  individual 8/19: 12 rule(s)
+  individual 9/19: 14 rule(s)
+  individual 10/19: 14 rule(s)
+  individual 11/19: 12 rule(s)
+  individual 12/19: 13 rule(s)
+  individual 13/19: 17 rule(s)
+  individual 14/19: 17 rule(s)
+  individual 15/19: 17 rule(s)
+  individual 16/19: 17 rule(s)
+  individual 17/19: 17 rule(s)
+  individual 18/19: 17 rule(s)
+  individual 19/19: 17 rule(s)
+validated: archive 18, final 17, union 18 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 8, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 19, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.8s)

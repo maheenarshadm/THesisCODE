@@ -1,0 +1,22 @@
+evaluations,record_id
+5,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2
+8,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2
+11,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2
+15,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3
+19,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3
+22,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3
+864,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1
+893,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2
+1024,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1
+1089,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3
+1103,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1
+1127,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3
+1164,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2
+1229,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1
+1483,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1
+3122,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1
+5284,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3
+5447,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2
+5512,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1
+5607,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2
+16437,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4

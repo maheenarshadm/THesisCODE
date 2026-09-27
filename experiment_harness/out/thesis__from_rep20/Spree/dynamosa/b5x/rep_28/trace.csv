@@ -1,0 +1,22 @@
+evaluations,record_id
+5,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2
+8,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2
+11,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2
+15,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3
+19,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3
+22,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3
+807,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1
+818,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2
+867,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1
+962,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2
+971,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1
+1079,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_2
+1254,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_1
+3025,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_2
+3123,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3
+3143,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1
+3258,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3
+3589,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_1
+5414,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_1
+9535,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3
+9605,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4

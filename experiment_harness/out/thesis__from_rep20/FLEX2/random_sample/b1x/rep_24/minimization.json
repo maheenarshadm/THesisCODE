@@ -1,0 +1,42 @@
+{
+  "archive": {
+    "pool": 32,
+    "greedy": 5,
+    "min": 5,
+    "optimal": true,
+    "min_members": [
+      3,
+      14,
+      15,
+      17,
+      26
+    ],
+    "greedy_members": [
+      3,
+      14,
+      15,
+      17,
+      26
+    ]
+  },
+  "union": {
+    "pool": 32,
+    "greedy": 5,
+    "min": 5,
+    "optimal": true,
+    "min_members": [
+      3,
+      14,
+      15,
+      17,
+      26
+    ],
+    "greedy_members": [
+      3,
+      14,
+      15,
+      17,
+      26
+    ]
+  }
+}

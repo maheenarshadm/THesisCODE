@@ -1,0 +1,17 @@
+evaluations,record_id
+5,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_2
+8,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_2
+11,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_2
+15,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_3
+19,Spree::Promotion Tiered Percent Discount Selection::Decision_PromotionTieredPercentSelection_rule_3
+22,Spree::Price List Volume Adjustment Tier Selection::Decision_PriceListAdjustmentTierSelection_rule_3
+26,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_1
+28,Spree::First-Order Promotion Eligibility::Decision_FirstOrderPromotionEligibility_rule_3
+31,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_3
+35,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_1
+45,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_1
+51,Spree::One-Use-Per-User Promotion Eligibility::Decision_OneUsePerUserEligibility_rule_1
+56,Spree::Promotion Temporal Availability::Decision_PromotionTemporalAvailability_rule_3
+58,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_2
+112,Spree::Promotion Customer Group Eligibility::Decision_PromotionCustomerGroupEligibility_rule_2
+126,Spree::Promotion Usage Limit Exceeded::Decision_PromotionUsageLimitExceeded_rule_4

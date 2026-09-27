@@ -1,0 +1,78 @@
+{
+  "archive": {
+    "pool": 38,
+    "greedy": 16,
+    "min": 16,
+    "optimal": true,
+    "min_members": [
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      14,
+      18,
+      20,
+      21,
+      24,
+      25,
+      28,
+      30,
+      34
+    ],
+    "greedy_members": [
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      14,
+      18,
+      20,
+      21,
+      24,
+      25,
+      28,
+      30,
+      34
+    ]
+  },
+  "final": {
+    "pool": 30,
+    "greedy": 4,
+    "min": 3,
+    "optimal": true,
+    "min_members": [
+      54,
+      57,
+      59
+    ],
+    "greedy_members": [
+      40,
+      41,
+      57,
+      61
+    ]
+  },
+  "union": {
+    "pool": 68,
+    "greedy": 4,
+    "min": 3,
+    "optimal": true,
+    "min_members": [
+      54,
+      57,
+      59
+    ],
+    "greedy_members": [
+      6,
+      41,
+      57,
+      61
+    ]
+  }
+}

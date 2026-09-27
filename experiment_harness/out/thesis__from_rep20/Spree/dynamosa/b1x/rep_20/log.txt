@@ -1,0 +1,33 @@
+
+=== 2026-09-27T06:23:42 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep20/Spree/dynamosa/b1x/rep_20 Spree dynamosa 1 20 1020 86297
+search done: 86297/86297 evaluations, 39 iterations, 21/22 records claimed, 5.5s
+
+=== 2026-09-27T06:23:48 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep20/Spree/dynamosa/b1x/rep_20 Spree full
+full validation: 26 distinct individuals (16 in archive, 10 in final)
+  individual 1/26: 12 rule(s)
+  individual 2/26: 13 rule(s)
+  individual 3/26: 13 rule(s)
+  individual 4/26: 13 rule(s)
+  individual 5/26: 15 rule(s)
+  individual 6/26: 13 rule(s)
+  individual 7/26: 15 rule(s)
+  individual 8/26: 14 rule(s)
+  individual 9/26: 13 rule(s)
+  individual 10/26: 13 rule(s)
+  individual 11/26: 14 rule(s)
+  individual 12/26: 13 rule(s)
+  individual 13/26: 14 rule(s)
+  individual 14/26: 14 rule(s)
+  individual 15/26: 14 rule(s)
+  individual 16/26: 14 rule(s)
+  individual 17/26: 20 rule(s)
+  individual 18/26: 20 rule(s)
+  individual 19/26: 20 rule(s)
+  individual 20/26: 20 rule(s)
+  individual 21/26: 20 rule(s)
+  individual 22/26: 20 rule(s)
+  individual 23/26: 20 rule(s)
+  individual 24/26: 20 rule(s)
+  individual 25/26: 20 rule(s)
+  individual 26/26: 20 rule(s)
+validated: archive 21, final 20, union 21 of 21 in-scope rules; suite size {'archive': {'pool': 16, 'greedy': 7, 'min': 7, 'optimal': True}, 'final': {'pool': 10, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 26, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.7s)

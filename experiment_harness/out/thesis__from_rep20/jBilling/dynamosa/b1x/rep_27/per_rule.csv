@@ -1,0 +1,21 @@
+rule_id,decision,in_scope,num_records,claimed_archive,claimed_final,claimed_union,verified_archive,verified_final,verified_union
+Decision_AgeingStatusChangeOrderAction_Rule_4,Ageing Status Change Order Action,True,1,True,True,True,True,True,True
+Decision_AgeingStepAdvancement_Rule_1,Ageing Step Advancement,True,1,True,True,True,True,True,True
+Decision_AgeingStepAdvancement_Rule_2,Ageing Step Advancement,True,1,True,True,True,True,True,True
+Decision_AgeingStepConfigValidation_Rule_1,Ageing Step Config Validation,True,1,True,True,True,True,True,True
+Decision_AgeingStepConfigValidation_Rule_2,Ageing Step Config Validation,True,1,False,False,False,False,False,False
+Decision_AgeingStepConfigValidation_Rule_5,Ageing Step Config Validation,True,1,False,False,False,False,False,False
+Decision_BlacklistFilterEnabled_Rule_1,Blacklist Filter Enabled,True,1,True,True,True,True,True,True
+Decision_CurrencyExchangeRateSource_Rule_2,Currency Exchange Rate Source,True,1,True,True,True,False,True,True
+Decision_CurrencyExchangeRateSource_Rule_3,Currency Exchange Rate Source,True,1,True,True,True,True,True,True
+Decision_CycleStartSource_Rule_1,Cycle Start Source,True,1,True,True,True,True,True,True
+Decision_CycleStartSource_Rule_2,Cycle Start Source,True,1,True,True,True,True,True,True
+Decision_CycleStartSource_Rule_3,Cycle Start Source,True,1,True,True,True,True,True,True
+Decision_InvoiceOverdue_Rule_1,Invoice Overdue Check,True,1,True,True,True,True,True,True
+Decision_InvoiceOverdue_Rule_2,Invoice Overdue Check,True,1,True,True,True,True,True,True
+Decision_OrderPeriodAlreadyInvoiced_Rule_1,Order Period Already Invoiced,True,1,True,True,True,True,True,True
+Decision_OrderPeriodAlreadyInvoiced_Rule_2,Order Period Already Invoiced,True,1,True,True,True,True,True,True
+Decision_OrderPeriodAlreadyInvoiced_Rule_4,Order Period Already Invoiced,True,1,True,True,True,True,True,True
+Decision_TaxCalculationMode_Rule_1,Tax Calculation Mode,True,1,True,True,True,True,True,True
+Decision_TaxCalculationMode_Rule_2,Tax Calculation Mode,True,1,True,True,True,True,True,True
+Decision_TaxCalculationNeeded_Rule_2,Tax Calculation Needed,True,1,True,True,True,True,True,True

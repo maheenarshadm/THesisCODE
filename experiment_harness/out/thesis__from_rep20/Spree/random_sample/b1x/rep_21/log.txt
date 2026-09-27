@@ -1,0 +1,17 @@
+
+=== 2026-09-27T06:25:19 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep20/Spree/random_sample/b1x/rep_21 Spree random_sample 1 21 1021 86297
+search done: 86297/86297 evaluations, 3922 iterations, 16/22 records claimed, 24.2s
+
+=== 2026-09-27T06:25:44 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep20/Spree/random_sample/b1x/rep_21 Spree full
+full validation: 10 distinct individuals (10 in archive, 0 in final)
+  individual 1/10: 13 rule(s)
+  individual 2/10: 12 rule(s)
+  individual 3/10: 13 rule(s)
+  individual 4/10: 12 rule(s)
+  individual 5/10: 14 rule(s)
+  individual 6/10: 12 rule(s)
+  individual 7/10: 14 rule(s)
+  individual 8/10: 12 rule(s)
+  individual 9/10: 13 rule(s)
+  individual 10/10: 14 rule(s)
+validated: archive 16, final -, union 16 of 21 in-scope rules; suite size {'archive': {'pool': 10, 'greedy': 2, 'min': 2, 'optimal': True}, 'union': {'pool': 10, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.4s)

@@ -1,0 +1,110 @@
+
+=== 2026-09-27T00:17:56 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b10x/rep_10 jBilling random_sample 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1007, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 232, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 197, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 95, in _random_individual
+    apply_mutation(r, candidate, focal_maps[rid], scenario, var_name, node, value,
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   genome.get(var_name), owner_id=rid)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 1205, in apply_mutation
+    touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal, owner_id=owner_id)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 1063, in _apply_row_count_mutation
+    row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
+                                      candidate, focal, self_table, table=table)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 937, in _row_from_filter_conjuncts
+    colon_m = re.fullmatch(r':([A-Za-z_]\w*)', raw_val)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/re/__init__.py", line 172, in fullmatch
+    return _compile(pattern, flags).fullmatch(string)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:25:14 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b10x/rep_10 jBilling random_sample 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 208, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 85, in _random_individual
+    genome = derive_genome(r, candidate, focal, scenario, owner_id=rid)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1275, in derive_genome
+    walk(var, node)
+    ~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1272, in walk
+    genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings, owner_id=owner_id)
+                       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1119, in derive_value
+    predicate, _skipped = _mechanical_filter_predicate(node['filter_text'], scenario, candidate, None)
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 634, in _mechanical_filter_predicate
+    m = _SIMPLE_EQ_CONJUNCT_RE.match(c_stripped)
+KeyboardInterrupt
+
+=== 2026-09-27T00:27:51 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b10x/rep_10 jBilling random_sample 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 208, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 95, in _random_individual
+    apply_mutation(r, candidate, focal_maps[rid], scenario, var_name, node, value,
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   genome.get(var_name), owner_id=rid)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 1216, in apply_mutation
+    _repair_row(candidate, table, row, record['case_study'])
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 637, in _repair_row
+    v = pr.get(ref_col, pr.get(ref_col.upper(), pr.get(ref_col.lower())))
+                                                       ~~~~~~~~~~~~~^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:29:15 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b10x/rep_10 jBilling random_sample 10 10 10010 789700
+search done: 789700/789700 evaluations, 39485 iterations, 17/20 records claimed, 199.9s
+
+=== 2026-09-27T00:32:35 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b10x/rep_10 jBilling full
+full validation: 10 distinct individuals (10 in archive, 0 in final)
+  individual 1/10: 12 rule(s)
+  individual 2/10: 13 rule(s)
+  individual 3/10: 15 rule(s)
+  individual 4/10: 13 rule(s)
+  individual 5/10: 14 rule(s)
+  individual 6/10: 15 rule(s)
+  individual 7/10: 15 rule(s)
+  individual 8/10: 14 rule(s)
+  individual 9/10: 14 rule(s)
+  individual 10/10: 15 rule(s)
+validated: archive 17, final -, union 17 of 20 in-scope rules; suite size {'archive': {'pool': 10, 'greedy': 2, 'min': 2, 'optimal': True}, 'union': {'pool': 10, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.4s)

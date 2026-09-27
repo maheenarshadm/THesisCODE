@@ -1,0 +1,76 @@
+
+=== 2026-09-27T04:03:43 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_16 FLEX2 random_sample 10 16 10016 3015320
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 208, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 95, in _random_individual
+    apply_mutation(r, candidate, focal_maps[rid], scenario, var_name, node, value,
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   genome.get(var_name), owner_id=rid)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 1205, in apply_mutation
+    touched = _apply_row_count_mutation(node, value, candidate, scenario, current, focal, owner_id=owner_id)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 1154, in _apply_row_count_mutation
+    row = _row_from_filter_conjuncts(node.get('filter_text'), scenario, owner_id,
+                                      candidate, focal, self_table, table=table)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 921, in _row_from_filter_conjuncts
+    outer_val = _construct_subquery_parent(m_sub, candidate, focal, scenario, self_table, owner_id=owner_id)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 529, in _construct_subquery_parent
+    inner_row[select_col] = _fresh_id_value(candidate, inner_table, select_col)
+                            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 453, in _fresh_id_value
+    if isinstance(value(r), (int, float)) and not isinstance(value(r), bool)}
+                  ~~~~~^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 451, in value
+    return next((v for k, v in r.items() if k.upper() == column.upper()), None)
+                               ~~~~~~~^^
+KeyboardInterrupt
+
+=== 2026-09-27T05:47:17 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_16 FLEX2 random_sample 10 16 10016 3015320
+search done: 3015320/3015320 evaluations, 39160 iterations, 60/77 records claimed, 7169.8s
+
+=== 2026-09-27T07:46:47 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_16 FLEX2 full
+full validation: 30 distinct individuals (30 in archive, 0 in final)
+  individual 1/30: 33 rule(s)
+  individual 2/30: 33 rule(s)
+  individual 3/30: 36 rule(s)
+  individual 4/30: 31 rule(s)
+  individual 5/30: 10 rule(s)
+  individual 6/30: 33 rule(s)
+  individual 7/30: 31 rule(s)
+  individual 8/30: 33 rule(s)
+  individual 9/30: 37 rule(s)
+  individual 10/30: 32 rule(s)
+  individual 11/30: 32 rule(s)
+  individual 12/30: 33 rule(s)
+  individual 13/30: 38 rule(s)
+  individual 14/30: 36 rule(s)
+  individual 15/30: 36 rule(s)
+  individual 16/30: 32 rule(s)
+  individual 17/30: 36 rule(s)
+  individual 18/30: 35 rule(s)
+  individual 19/30: 36 rule(s)
+  individual 20/30: 29 rule(s)
+  individual 21/30: 33 rule(s)
+  individual 22/30: 34 rule(s)
+  individual 23/30: 33 rule(s)
+  individual 24/30: 35 rule(s)
+  individual 25/30: 34 rule(s)
+  individual 26/30: 35 rule(s)
+  individual 27/30: 33 rule(s)
+  individual 28/30: 36 rule(s)
+  individual 29/30: 30 rule(s)
+  individual 30/30: 35 rule(s)
+validated: archive 47, final -, union 47 of 50 in-scope rules; suite size {'archive': {'pool': 30, 'greedy': 5, 'min': 5, 'optimal': True}, 'union': {'pool': 30, 'greedy': 5, 'min': 5, 'optimal': True}} (0 errors, 131.3s)

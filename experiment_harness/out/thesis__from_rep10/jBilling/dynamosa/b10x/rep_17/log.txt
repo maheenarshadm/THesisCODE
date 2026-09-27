@@ -1,0 +1,32 @@
+
+=== 2026-09-27T00:34:27 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_17 jBilling dynamosa 10 17 10017 789700
+search done: 789700/789700 evaluations, 406 iterations, 19/20 records claimed, 43.5s
+
+=== 2026-09-27T00:35:11 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_17 jBilling full
+full validation: 25 distinct individuals (12 in archive, 13 in final)
+  individual 1/25: 12 rule(s)
+  individual 2/25: 13 rule(s)
+  individual 3/25: 12 rule(s)
+  individual 4/25: 17 rule(s)
+  individual 5/25: 12 rule(s)
+  individual 6/25: 12 rule(s)
+  individual 7/25: 16 rule(s)
+  individual 8/25: 12 rule(s)
+  individual 9/25: 14 rule(s)
+  individual 10/25: 15 rule(s)
+  individual 11/25: 14 rule(s)
+  individual 12/25: 13 rule(s)
+  individual 13/25: 17 rule(s)
+  individual 14/25: 17 rule(s)
+  individual 15/25: 17 rule(s)
+  individual 16/25: 17 rule(s)
+  individual 17/25: 17 rule(s)
+  individual 18/25: 17 rule(s)
+  individual 19/25: 17 rule(s)
+  individual 20/25: 17 rule(s)
+  individual 21/25: 17 rule(s)
+  individual 22/25: 17 rule(s)
+  individual 23/25: 17 rule(s)
+  individual 24/25: 17 rule(s)
+  individual 25/25: 17 rule(s)
+validated: archive 18, final 17, union 18 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 13, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 25, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.5s)

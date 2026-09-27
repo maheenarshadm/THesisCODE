@@ -1,0 +1,74 @@
+
+=== 2026-09-27T05:29:05 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b5x/rep_19 FLEX2 random_sample 5 19 5019 1507660
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 208, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 85, in _random_individual
+    genome = derive_genome(r, candidate, focal, scenario, owner_id=rid)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1275, in derive_genome
+    walk(var, node)
+    ~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1272, in walk
+    genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings, owner_id=owner_id)
+                       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1182, in derive_value
+    if _row_get(rr, node['registration_roll_column']) != roll_no:
+       ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 166, in _row_get
+    def _row_get(row, column, table_for_error=None):
+    
+KeyboardInterrupt
+
+=== 2026-09-27T05:47:17 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b5x/rep_19 FLEX2 random_sample 5 19 5019 1507660
+search done: 1507660/1507660 evaluations, 19580 iterations, 60/77 records claimed, 3391.5s
+
+=== 2026-09-27T06:43:48 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b5x/rep_19 FLEX2 full
+full validation: 35 distinct individuals (35 in archive, 0 in final)
+  individual 1/35: 33 rule(s)
+  individual 2/35: 34 rule(s)
+  individual 3/35: 34 rule(s)
+  individual 4/35: 10 rule(s)
+  individual 5/35: 36 rule(s)
+  individual 6/35: 25 rule(s)
+  individual 7/35: 34 rule(s)
+  individual 8/35: 34 rule(s)
+  individual 9/35: 36 rule(s)
+  individual 10/35: 36 rule(s)
+  individual 11/35: 35 rule(s)
+  individual 12/35: 34 rule(s)
+  individual 13/35: 34 rule(s)
+  individual 14/35: 34 rule(s)
+  individual 15/35: 34 rule(s)
+  individual 16/35: 33 rule(s)
+  individual 17/35: 33 rule(s)
+  individual 18/35: 34 rule(s)
+  individual 19/35: 34 rule(s)
+  individual 20/35: 33 rule(s)
+  individual 21/35: 30 rule(s)
+  individual 22/35: 38 rule(s)
+  individual 23/35: 32 rule(s)
+  individual 24/35: 35 rule(s)
+  individual 25/35: 34 rule(s)
+  individual 26/35: 35 rule(s)
+  individual 27/35: 31 rule(s)
+  individual 28/35: 34 rule(s)
+  individual 29/35: 36 rule(s)
+  individual 30/35: 31 rule(s)
+  individual 31/35: 32 rule(s)
+  individual 32/35: 32 rule(s)
+  individual 33/35: 37 rule(s)
+  individual 34/35: 35 rule(s)
+  individual 35/35: 34 rule(s)
+validated: archive 47, final -, union 47 of 50 in-scope rules; suite size {'archive': {'pool': 35, 'greedy': 4, 'min': 4, 'optimal': True}, 'union': {'pool': 35, 'greedy': 4, 'min': 4, 'optimal': True}} (0 errors, 199.4s)

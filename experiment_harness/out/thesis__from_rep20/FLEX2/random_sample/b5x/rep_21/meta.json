@@ -1,0 +1,35 @@
+{
+  "case_study": "FLEX2",
+  "setup": "random_sample",
+  "budget_multiplier": 5,
+  "rep": 21,
+  "seed": 5021,
+  "budget_evaluations": 1507660,
+  "evaluations_used": 1507660,
+  "stopped_because": "budget",
+  "iterations": 19580,
+  "population_size": null,
+  "runtime_seconds": 3072.64,
+  "claimed_records_archive": 60,
+  "finished_at": "2026-09-27T08:39:22",
+  "distinct_individuals_validated": 31,
+  "archive_individuals_validated": 31,
+  "final_individuals_validated": null,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 31,
+      "greedy": 5,
+      "min": 5,
+      "optimal": true
+    },
+    "union": {
+      "pool": 31,
+      "greedy": 5,
+      "min": 5,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 134.5
+}

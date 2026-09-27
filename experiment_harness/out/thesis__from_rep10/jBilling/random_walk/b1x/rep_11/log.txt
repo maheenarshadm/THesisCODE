@@ -1,0 +1,91 @@
+
+=== 2026-09-27T00:25:19 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b1x/rep_11 jBilling random_walk 1 11 1011 78970
+search done: 78970/78970 evaluations, 130 iterations, 17/20 records claimed, 5.7s
+
+=== 2026-09-27T00:25:24 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b1x/rep_11 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:27:51 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b1x/rep_11 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:29:16 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b1x/rep_11 jBilling full
+full validation: 42 distinct individuals (12 in archive, 30 in final)
+  individual 1/42: 12 rule(s)
+  individual 2/42: 13 rule(s)
+  individual 3/42: 12 rule(s)
+  individual 4/42: 12 rule(s)
+  individual 5/42: 12 rule(s)
+  individual 6/42: 12 rule(s)
+  individual 7/42: 15 rule(s)
+  individual 8/42: 15 rule(s)
+  individual 9/42: 14 rule(s)
+  individual 10/42: 15 rule(s)
+  individual 11/42: 12 rule(s)
+  individual 12/42: 13 rule(s)
+  individual 13/42: 14 rule(s)
+  individual 14/42: 15 rule(s)
+  individual 15/42: 14 rule(s)
+  individual 16/42: 14 rule(s)
+  individual 17/42: 12 rule(s)
+  individual 18/42: 12 rule(s)
+  individual 19/42: 14 rule(s)
+  individual 20/42: 14 rule(s)
+  individual 21/42: 14 rule(s)
+  individual 22/42: 14 rule(s)
+  individual 23/42: 13 rule(s)
+  individual 24/42: 13 rule(s)
+  individual 25/42: 15 rule(s)
+  individual 26/42: 13 rule(s)
+  individual 27/42: 14 rule(s)
+  individual 28/42: 14 rule(s)
+  individual 29/42: 14 rule(s)
+  individual 30/42: 14 rule(s)
+  individual 31/42: 15 rule(s)
+  individual 32/42: 14 rule(s)
+  individual 33/42: 13 rule(s)
+  individual 34/42: 14 rule(s)
+  individual 35/42: 14 rule(s)
+  individual 36/42: 14 rule(s)
+  individual 37/42: 15 rule(s)
+  individual 38/42: 15 rule(s)
+  individual 39/42: 17 rule(s)
+  individual 40/42: 16 rule(s)
+  individual 41/42: 13 rule(s)
+  individual 42/42: 14 rule(s)
+validated: archive 17, final 17, union 17 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 3, 'min': 2, 'optimal': True}, 'final': {'pool': 30, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 42, 'greedy': 1, 'min': 1, 'optimal': True}} (0 errors, 1.6s)

@@ -1,0 +1,56 @@
+rule_id,decision,in_scope,num_records,claimed_archive,claimed_final,claimed_union,verified_archive,verified_final,verified_union
+Decision_BirthdateValidity_Rule_1,Birthdate Validity,True,1,False,False,False,True,True,True
+Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_1,Concept Fully-Specified-Name Presence Requirement,True,1,True,True,True,True,True,True
+Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_2,Concept Fully-Specified-Name Presence Requirement,True,1,True,True,True,True,True,True
+Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_1,Concept Fully-Specified-Name Uniqueness Per Locale,True,1,True,True,True,True,True,True
+Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_2,Concept Fully-Specified-Name Uniqueness Per Locale,True,1,True,True,True,True,True,True
+Decision_ConceptLocalePreferredNameUniqueness_Rule_1,Concept Locale-Preferred-Name Uniqueness,True,1,True,True,True,True,True,True
+Decision_ConceptLocalePreferredNameUniqueness_Rule_2,Concept Locale-Preferred-Name Uniqueness,True,1,True,True,True,True,True,True
+Decision_ConceptPreferredNameValidity_Rule_1,Concept Preferred Name Validity,True,1,True,True,True,True,True,True
+Decision_ConceptPreferredNameValidity_Rule_2,Concept Preferred Name Validity,True,1,True,True,True,True,True,True
+Decision_ConceptPreferredNameValidity_Rule_3,Concept Preferred Name Validity,True,1,True,True,True,True,True,True
+Decision_ConceptPreferredNameValidity_Rule_4,Concept Preferred Name Validity,True,1,True,True,True,True,True,True
+Decision_ConceptPreferredNameValidity_Rule_5,Concept Preferred Name Validity,True,1,True,False,True,True,True,True
+Decision_ConceptShortNameUniquenessPerLocale_Rule_1,Concept Short-Name Uniqueness Per Locale,True,1,True,True,True,True,True,True
+Decision_ConceptShortNameUniquenessPerLocale_Rule_2,Concept Short-Name Uniqueness Per Locale,True,1,True,True,True,True,True,True
+Decision_DeathRecordConsistency_Rule_1,Death Record Consistency,True,1,True,True,True,True,True,True
+Decision_DeathRecordConsistency_Rule_2,Death Record Consistency,True,1,True,True,True,True,True,True
+Decision_DeathRecordConsistency_Rule_3,Death Record Consistency,True,1,True,True,True,True,True,True
+Decision_DeathRecordConsistency_Rule_4,Death Record Consistency,True,1,True,True,True,True,True,True
+Decision_DeathRecordConsistency_Rule_5,Death Record Consistency,True,1,True,True,True,True,True,True
+Decision_IdentifierFormatAndCheckDigitValidity_Rule_1,Identifier Format Validity,True,1,False,False,False,False,False,False
+Decision_IdentifierFormatAndCheckDigitValidity_Rule_2,Identifier Format Validity,True,1,True,True,True,True,True,True
+Decision_IdentifierFormatAndCheckDigitValidity_Rule_3,Identifier Format Validity,True,1,True,False,True,True,False,True
+Decision_IdentifierFormatAndCheckDigitValidity_Rule_4,Identifier Format Validity,True,1,True,True,True,True,True,True
+Decision_IdentifierLocationRequirement_Rule_1,Identifier Location Requirement,True,1,True,True,True,True,True,True
+Decision_IdentifierLocationRequirement_Rule_2,Identifier Location Requirement,True,1,True,True,True,True,True,True
+Decision_IdentifierLocationRequirement_Rule_3,Identifier Location Requirement,True,1,True,True,True,True,True,True
+Decision_IdentifierUniquenessCheck_Rule_1,Identifier Uniqueness Check,True,1,True,True,True,True,True,True
+Decision_IdentifierUniquenessCheck_Rule_2,Identifier Uniqueness Check,True,1,False,False,False,False,False,False
+Decision_IdentifierUniquenessCheck_Rule_3,Identifier Uniqueness Check,True,1,True,True,True,True,True,True
+Decision_NumericAbsoluteRangeValidity_Rule_1,Numeric Absolute Range Validity,True,1,True,True,True,True,True,True
+Decision_NumericAbsoluteRangeValidity_Rule_2,Numeric Absolute Range Validity,True,1,True,True,True,True,True,True
+Decision_NumericAbsoluteRangeValidity_Rule_3,Numeric Absolute Range Validity,True,1,True,True,True,True,True,True
+Decision_NumericInterpretationClassification_Rule_1,Numeric Interpretation Classification,True,1,True,True,True,True,True,True
+Decision_NumericInterpretationClassification_Rule_2,Numeric Interpretation Classification,True,1,True,True,True,True,True,True
+Decision_NumericInterpretationClassification_Rule_3,Numeric Interpretation Classification,True,1,True,True,True,True,True,True
+Decision_NumericInterpretationClassification_Rule_4,Numeric Interpretation Classification,True,1,True,False,True,True,True,True
+Decision_NumericInterpretationClassification_Rule_5,Numeric Interpretation Classification,True,1,True,False,True,True,True,True
+Decision_NumericPrecisionValidity_Rule_1,Numeric Precision Validity,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_1,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_2,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_3,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_4,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_5,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_ObsValueRequiredByDatatype_Rule_6,Obs Value Required By Datatype,True,1,True,True,True,True,True,True
+Decision_OrderScheduledDateUrgencyConsistency_Rule_1,Order Scheduled Date Urgency Consistency,True,1,True,True,True,True,True,True
+Decision_OrderScheduledDateUrgencyConsistency_Rule_2,Order Scheduled Date Urgency Consistency,True,1,True,True,True,True,True,True
+Decision_OrderScheduledDateUrgencyConsistency_Rule_3,Order Scheduled Date Urgency Consistency,True,1,True,True,True,True,True,True
+Decision_OrderScheduledDateUrgencyConsistency_Rule_4,Order Scheduled Date Urgency Consistency,True,1,True,True,True,True,True,True
+Decision_PatientStateDateValidity_Rule_1,Patient State Date Validity,True,1,True,True,True,True,True,True
+Decision_PatientStateDateValidity_Rule_2,Patient State Date Validity,True,1,True,True,True,True,True,True
+Decision_PatientStateDateValidity_Rule_3,Patient State Date Validity,True,1,True,True,True,True,True,True
+Decision_PatientStateDateValidity_Rule_4,Patient State Date Validity,True,1,True,True,True,True,True,True
+Decision_PreferredIdentifierRequirement_Rule_1,Preferred Identifier Requirement,True,1,True,True,True,True,True,True
+Decision_PreferredIdentifierRequirement_Rule_2,Preferred Identifier Requirement,True,1,True,True,True,True,True,True
+Decision_PreferredIdentifierRequirement_Rule_3,Preferred Identifier Requirement,True,1,True,True,True,True,True,True

@@ -1,0 +1,41 @@
+{
+  "case_study": "jBilling",
+  "setup": "dynamosa",
+  "budget_multiplier": 10,
+  "rep": 21,
+  "seed": 10021,
+  "budget_evaluations": 789700,
+  "evaluations_used": 789700,
+  "stopped_because": "budget",
+  "iterations": 406,
+  "population_size": 30,
+  "runtime_seconds": 62.69,
+  "claimed_records_archive": 19,
+  "finished_at": "2026-09-27T06:17:08",
+  "distinct_individuals_validated": 21,
+  "archive_individuals_validated": 12,
+  "final_individuals_validated": 10,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 12,
+      "greedy": 2,
+      "min": 2,
+      "optimal": true
+    },
+    "final": {
+      "pool": 10,
+      "greedy": 1,
+      "min": 1,
+      "optimal": true
+    },
+    "union": {
+      "pool": 21,
+      "greedy": 2,
+      "min": 2,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 0.4
+}

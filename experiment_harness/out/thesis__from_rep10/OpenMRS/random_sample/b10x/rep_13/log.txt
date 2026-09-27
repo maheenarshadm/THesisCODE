@@ -1,0 +1,23 @@
+
+=== 2026-09-27T00:52:32 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/OpenMRS/random_sample/b10x/rep_13 OpenMRS random_sample 10 13 10013 2079200
+search done: 2079200/2079200 evaluations, 37803 iterations, 48/55 records claimed, 571.0s
+
+=== 2026-09-27T01:02:04 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/OpenMRS/random_sample/b10x/rep_13 OpenMRS full
+full validation: 16 distinct individuals (16 in archive, 0 in final)
+  individual 1/16: 27 rule(s)
+  individual 2/16: 31 rule(s)
+  individual 3/16: 40 rule(s)
+  individual 4/16: 34 rule(s)
+  individual 5/16: 40 rule(s)
+  individual 6/16: 39 rule(s)
+  individual 7/16: 42 rule(s)
+  individual 8/16: 39 rule(s)
+  individual 9/16: 37 rule(s)
+  individual 10/16: 34 rule(s)
+  individual 11/16: 38 rule(s)
+  individual 12/16: 40 rule(s)
+  individual 13/16: 36 rule(s)
+  individual 14/16: 39 rule(s)
+  individual 15/16: 39 rule(s)
+  individual 16/16: 39 rule(s)
+validated: archive 53, final -, union 53 of 55 in-scope rules; suite size {'archive': {'pool': 16, 'greedy': 5, 'min': 4, 'optimal': True}, 'union': {'pool': 16, 'greedy': 5, 'min': 4, 'optimal': True}} (0 errors, 4.5s)

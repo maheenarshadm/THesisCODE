@@ -1,0 +1,49 @@
+{
+  "experiment": "thesis",
+  "output_folder": "thesis__from_rep20",
+  "reps": 10,
+  "first_rep": 20,
+  "case_studies": [
+    "jBilling",
+    "Spree",
+    "OpenMRS",
+    "FLEX2"
+  ],
+  "setups": [
+    "dynamosa",
+    "random_walk",
+    "random_sample"
+  ],
+  "budgets": [
+    1,
+    5,
+    10
+  ],
+  "population_size": 30,
+  "seed_rule": "seed = 1000 * budget_multiplier + rep",
+  "budget_1x": {
+    "jBilling": 78970,
+    "Spree": 86297,
+    "OpenMRS": 207920,
+    "FLEX2": 301532
+  },
+  "not_persisted_files": {
+    "jBilling": [
+      "jbilling_not_persisted.json",
+      "jbilling_not_persisted_rule1.json"
+    ],
+    "Spree": [
+      "spree_not_persisted.json"
+    ],
+    "OpenMRS": [
+      "openmrs_not_persisted.json"
+    ],
+    "FLEX2": [
+      "flex2_not_persisted.json"
+    ]
+  },
+  "compiled_constraints_sha256": "57ee26c6b8b41f0af57177c08165018b8654f18de2762993ac49f359d9ab78b8",
+  "git_commit": "6fe41d4b137a7b3a93ff67abcdcd19d037ad224a",
+  "written_at": "2026-09-27T06:15:49",
+  "history": []
+}

@@ -1,0 +1,122 @@
+
+=== 2026-09-27T00:25:14 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_11 jBilling dynamosa 10 11 10011 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 201, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1423, in _dynamosa_generations
+    c1, c2, _f1, _f2, fm1, fm2, sm1, sm2 = crossover(
+                                           ~~~~~~~~~^
+        p1_c, p2_c, case_study, rng, focal_maps1=p1_fm, focal_maps2=p2_fm,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        scenario_maps1=p1_sm, scenario_maps2=p2_sm)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/crossover.py", line 156, in crossover
+    build(from_parent1), build(inverted))
+    ~~~~~^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/crossover.py", line 144, in build
+    rows_copy, focal_copy, per_record_copy = copy.deepcopy(
+                                             ~~~~~~~~~~~~~^
+        (source.rows(table), source_focal.get(table), per_record_entries))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/copy.py", line 137, in deepcopy
+    y = copier(x, memo)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/copy.py", line 202, in _deepcopy_tuple
+    y = [deepcopy(a, memo) for a in x]
+         ~~~~~~~~^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/copy.py", line 137, in deepcopy
+    y = copier(x, memo)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/copy.py", line 197, in _deepcopy_list
+    append(deepcopy(a, memo))
+           ~~~~~~~~^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/copy.py", line 125, in deepcopy
+    d = id(x)
+KeyboardInterrupt
+
+=== 2026-09-27T00:27:51 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_11 jBilling dynamosa 10 11 10011 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 201, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1462, in _dynamosa_generations
+    fronts = fast_non_dominated_sort(fitness_vectors)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 505, in fast_non_dominated_sort
+    elif _dominates(fitness_vectors[q], fitness_vectors[p]):
+         ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 491, in _dominates
+    return all(x <= y for x, y in zip(a, b)) and any(x < y for x, y in zip(a, b))
+                                                 ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 491, in <genexpr>
+    return all(x <= y for x, y in zip(a, b)) and any(x < y for x, y in zip(a, b))
+                                                     ^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:29:16 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_11 jBilling dynamosa 10 11 10011 789700
+search done: 789700/789700 evaluations, 406 iterations, 19/20 records claimed, 86.2s
+
+=== 2026-09-27T00:30:43 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_11 jBilling full
+full validation: 25 distinct individuals (12 in archive, 14 in final)
+  individual 1/25: 12 rule(s)
+  individual 2/25: 13 rule(s)
+  individual 3/25: 12 rule(s)
+  individual 4/25: 17 rule(s)
+  individual 5/25: 12 rule(s)
+  individual 6/25: 12 rule(s)
+  individual 7/25: 14 rule(s)
+  individual 8/25: 12 rule(s)
+  individual 9/25: 14 rule(s)
+  individual 10/25: 14 rule(s)
+  individual 11/25: 12 rule(s)
+  individual 12/25: 13 rule(s)
+  individual 13/25: 17 rule(s)
+  individual 14/25: 17 rule(s)
+  individual 15/25: 17 rule(s)
+  individual 16/25: 17 rule(s)
+  individual 17/25: 17 rule(s)
+  individual 18/25: 17 rule(s)
+  individual 19/25: 17 rule(s)
+  individual 20/25: 17 rule(s)
+  individual 21/25: 17 rule(s)
+  individual 22/25: 17 rule(s)
+  individual 23/25: 17 rule(s)
+  individual 24/25: 17 rule(s)
+  individual 25/25: 17 rule(s)
+validated: archive 18, final 17, union 18 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 14, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 25, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.9s)

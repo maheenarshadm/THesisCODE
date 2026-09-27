@@ -1,0 +1,41 @@
+{
+  "case_study": "Spree",
+  "setup": "dynamosa",
+  "budget_multiplier": 5,
+  "rep": 16,
+  "seed": 5016,
+  "budget_evaluations": 431485,
+  "evaluations_used": 431485,
+  "stopped_because": "budget",
+  "iterations": 202,
+  "population_size": 30,
+  "runtime_seconds": 25.94,
+  "claimed_records_archive": 21,
+  "finished_at": "2026-09-27T00:41:23",
+  "distinct_individuals_validated": 23,
+  "archive_individuals_validated": 16,
+  "final_individuals_validated": 7,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 16,
+      "greedy": 7,
+      "min": 7,
+      "optimal": true
+    },
+    "final": {
+      "pool": 7,
+      "greedy": 1,
+      "min": 1,
+      "optimal": true
+    },
+    "union": {
+      "pool": 23,
+      "greedy": 1,
+      "min": 1,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 0.6
+}

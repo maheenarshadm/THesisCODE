@@ -1,0 +1,16 @@
+
+=== 2026-09-27T00:29:59 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b5x/rep_11 jBilling random_sample 5 11 5011 394850
+search done: 394850/394850 evaluations, 19742 iterations, 17/20 records claimed, 102.6s
+
+=== 2026-09-27T00:31:42 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b5x/rep_11 jBilling full
+full validation: 9 distinct individuals (9 in archive, 0 in final)
+  individual 1/9: 12 rule(s)
+  individual 2/9: 15 rule(s)
+  individual 3/9: 15 rule(s)
+  individual 4/9: 13 rule(s)
+  individual 5/9: 15 rule(s)
+  individual 6/9: 15 rule(s)
+  individual 7/9: 16 rule(s)
+  individual 8/9: 15 rule(s)
+  individual 9/9: 15 rule(s)
+validated: archive 17, final -, union 17 of 20 in-scope rules; suite size {'archive': {'pool': 9, 'greedy': 2, 'min': 2, 'optimal': True}, 'union': {'pool': 9, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.5s)

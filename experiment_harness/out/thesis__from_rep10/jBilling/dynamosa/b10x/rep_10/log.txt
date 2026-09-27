@@ -1,0 +1,143 @@
+
+=== 2026-09-27T00:17:52 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_10 jBilling dynamosa 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1007, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 232, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 190, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1423, in _dynamosa_generations
+    c1, c2, _f1, _f2, fm1, fm2, sm1, sm2 = crossover(
+                                           ~~~~~~~~~^
+        p1_c, p2_c, case_study, rng, focal_maps1=p1_fm, focal_maps2=p2_fm,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        scenario_maps1=p1_sm, scenario_maps2=p2_sm)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/crossover.py", line 179, in crossover
+    _repair_row(child, table, row, case_study)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 636, in _repair_row
+    for pr in candidate.rows(ref_table):
+              ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 79, in rows
+    return self._tables.get(table.upper(), [])
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:25:14 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_10 jBilling dynamosa 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 201, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1450, in _dynamosa_generations
+    child_c, child_fm, child_sm, _improved = _mutate_objective(
+                                 ^^^^^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:27:51 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_10 jBilling dynamosa 10 10 10010 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 201, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1460, in _dynamosa_generations
+    fitness_vectors = [[evaluate_objective(r, ind[0], ind[1], ind[2], table_cache)
+                        ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 306, in evaluate_objective
+    return branch_fitness(record, genome)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 449, in branch_fitness
+    suppression = sum(
+        normalize(distance_to_false(_without_shared_conjuncts(row['condition'], own_conjuncts),
+                                    resolution_map, genome))
+        for row in record.get('hit_policy_context', {}).get('earlier_rows', [])
+    )
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 450, in <genexpr>
+    normalize(distance_to_false(_without_shared_conjuncts(row['condition'], own_conjuncts),
+              ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                resolution_map, genome))
+                                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 401, in distance_to_false
+    return _min_distance(lambda c=c: distance_to_false(c, resolution_map, genome) for c in node['clauses'])
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 330, in _min_distance
+    d = term()
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 401, in <lambda>
+    return _min_distance(lambda c=c: distance_to_false(c, resolution_map, genome) for c in node['clauses'])
+    
+KeyboardInterrupt
+
+=== 2026-09-27T00:29:15 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_10 jBilling dynamosa 10 10 10010 789700
+search done: 789700/789700 evaluations, 406 iterations, 19/20 records claimed, 83.5s
+
+=== 2026-09-27T00:30:39 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/dynamosa/b10x/rep_10 jBilling full
+full validation: 16 distinct individuals (12 in archive, 5 in final)
+  individual 1/16: 12 rule(s)
+  individual 2/16: 13 rule(s)
+  individual 3/16: 12 rule(s)
+  individual 4/16: 17 rule(s)
+  individual 5/16: 12 rule(s)
+  individual 6/16: 12 rule(s)
+  individual 7/16: 14 rule(s)
+  individual 8/16: 12 rule(s)
+  individual 9/16: 14 rule(s)
+  individual 10/16: 15 rule(s)
+  individual 11/16: 12 rule(s)
+  individual 12/16: 13 rule(s)
+  individual 13/16: 17 rule(s)
+  individual 14/16: 17 rule(s)
+  individual 15/16: 17 rule(s)
+  individual 16/16: 17 rule(s)
+validated: archive 18, final 17, union 18 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 5, 'greedy': 1, 'min': 1, 'optimal': True}, 'union': {'pool': 16, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.6s)

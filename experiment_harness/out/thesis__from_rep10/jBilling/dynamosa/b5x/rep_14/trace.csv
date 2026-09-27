@@ -1,0 +1,20 @@
+evaluations,record_id
+1,jBilling::Invoice Overdue Check::Decision_InvoiceOverdue_Rule_1
+3,jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_1
+5,jBilling::Ageing Status Change Order Action::Decision_AgeingStatusChangeOrderAction_Rule_4
+6,jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_1
+9,jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_2
+14,jBilling::Blacklist Filter Enabled::Decision_BlacklistFilterEnabled_Rule_1
+15,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_1
+19,jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_1
+825,jBilling::Currency Exchange Rate Source::Decision_CurrencyExchangeRateSource_Rule_3
+857,jBilling::Invoice Overdue Check::Decision_InvoiceOverdue_Rule_2
+906,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_1
+952,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_3
+973,jBilling::Tax Calculation Needed::Decision_TaxCalculationNeeded_Rule_2
+988,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_4
+1287,jBilling::Order Period Already Invoiced::Decision_OrderPeriodAlreadyInvoiced_Rule_2
+2931,jBilling::Cycle Start Source::Decision_CycleStartSource_Rule_2
+2975,jBilling::Tax Calculation Mode::Decision_TaxCalculationMode_Rule_2
+7273,jBilling::Ageing Step Advancement::Decision_AgeingStepAdvancement_Rule_2
+91065,jBilling::Ageing Step Config Validation::Decision_AgeingStepConfigValidation_Rule_2

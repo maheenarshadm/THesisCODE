@@ -1,0 +1,41 @@
+{
+  "case_study": "FLEX2",
+  "setup": "dynamosa",
+  "budget_multiplier": 1,
+  "rep": 15,
+  "seed": 1015,
+  "budget_evaluations": 301532,
+  "evaluations_used": 301532,
+  "stopped_because": "budget",
+  "iterations": 40,
+  "population_size": 30,
+  "runtime_seconds": 113.81,
+  "claimed_records_archive": 76,
+  "finished_at": "2026-09-27T03:14:14",
+  "distinct_individuals_validated": 98,
+  "archive_individuals_validated": 70,
+  "final_individuals_validated": 30,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 70,
+      "greedy": 11,
+      "min": 11,
+      "optimal": true
+    },
+    "final": {
+      "pool": 30,
+      "greedy": 9,
+      "min": 8,
+      "optimal": true
+    },
+    "union": {
+      "pool": 98,
+      "greedy": 8,
+      "min": 7,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 237.7
+}

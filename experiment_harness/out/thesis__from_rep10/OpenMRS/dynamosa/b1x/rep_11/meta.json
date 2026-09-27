@@ -1,0 +1,41 @@
+{
+  "case_study": "OpenMRS",
+  "setup": "dynamosa",
+  "budget_multiplier": 1,
+  "rep": 11,
+  "seed": 1011,
+  "budget_evaluations": 207920,
+  "evaluations_used": 207920,
+  "stopped_because": "budget",
+  "iterations": 39,
+  "population_size": 30,
+  "runtime_seconds": 14.25,
+  "claimed_records_archive": 53,
+  "finished_at": "2026-09-27T00:46:26",
+  "distinct_individuals_validated": 68,
+  "archive_individuals_validated": 38,
+  "final_individuals_validated": 30,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 38,
+      "greedy": 16,
+      "min": 16,
+      "optimal": true
+    },
+    "final": {
+      "pool": 30,
+      "greedy": 10,
+      "min": 9,
+      "optimal": true
+    },
+    "union": {
+      "pool": 68,
+      "greedy": 10,
+      "min": 9,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 16.1
+}

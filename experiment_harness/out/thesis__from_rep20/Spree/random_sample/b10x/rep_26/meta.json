@@ -1,0 +1,35 @@
+{
+  "case_study": "Spree",
+  "setup": "random_sample",
+  "budget_multiplier": 10,
+  "rep": 26,
+  "seed": 10026,
+  "budget_evaluations": 862970,
+  "evaluations_used": 862970,
+  "stopped_because": "budget",
+  "iterations": 39225,
+  "population_size": null,
+  "runtime_seconds": 241.23,
+  "claimed_records_archive": 16,
+  "finished_at": "2026-09-27T06:35:54",
+  "distinct_individuals_validated": 10,
+  "archive_individuals_validated": 10,
+  "final_individuals_validated": null,
+  "validation_mode": "full",
+  "suite_size": {
+    "archive": {
+      "pool": 10,
+      "greedy": 2,
+      "min": 2,
+      "optimal": true
+    },
+    "union": {
+      "pool": 10,
+      "greedy": 2,
+      "min": 2,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 0.4
+}

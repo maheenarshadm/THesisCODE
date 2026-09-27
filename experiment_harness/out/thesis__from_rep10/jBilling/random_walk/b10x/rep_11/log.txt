@@ -1,0 +1,154 @@
+
+=== 2026-09-27T00:25:26 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b10x/rep_11 jBilling random_walk 10 11 10011 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 204, in _run_algorithm
+    return random_baseline.run_random_search(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             generations=None, rng=rng, max_evaluations=budget,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             trace=trace)
+                                             ^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 139, in run_random_search
+    _random_search_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               mutations_per_child, dynamic_gating, trace,
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               max_evaluations is not None, state)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 195, in _random_search_generations
+    update_archive(ind)
+    ~~~~~~~~~~~~~~^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 164, in update_archive
+    f = evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 306, in evaluate_objective
+    return branch_fitness(record, genome)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 449, in branch_fitness
+    suppression = sum(
+        normalize(distance_to_false(_without_shared_conjuncts(row['condition'], own_conjuncts),
+                                    resolution_map, genome))
+        for row in record.get('hit_policy_context', {}).get('earlier_rows', [])
+    )
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 450, in <genexpr>
+    normalize(distance_to_false(_without_shared_conjuncts(row['condition'], own_conjuncts),
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 490, in _without_shared_conjuncts
+    rest = [c for c in conjuncts if _canonical(c) not in own_conjuncts]
+                                    ~~~~~~~~~~^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/fitness.py", line 470, in _canonical
+    return json.dumps(node, sort_keys=True)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 238, in dumps
+    return cls(
+           ~~~^
+        skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        check_circular=check_circular, allow_nan=allow_nan, indent=indent,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        separators=separators, default=default, sort_keys=sort_keys,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        **kw).encode(obj)
+        ^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py", line 105, in __init__
+    def __init__(self, *, skipkeys=False, ensure_ascii=True,
+    
+KeyboardInterrupt
+
+=== 2026-09-27T00:27:51 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b10x/rep_11 jBilling random_walk 10 11 10011 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 204, in _run_algorithm
+    return random_baseline.run_random_search(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             generations=None, rng=rng, max_evaluations=budget,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             trace=trace)
+                                             ^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 139, in run_random_search
+    _random_search_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               mutations_per_child, dynamic_gating, trace,
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               max_evaluations is not None, state)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 195, in _random_search_generations
+    update_archive(ind)
+    ~~~~~~~~~~~~~~^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 164, in update_archive
+    f = evaluate_objective(r, candidate, focal_maps, scenario_maps, table_cache)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 305, in evaluate_objective
+    genome = derive_genome(record, candidate, focal, scenario, owner_id=record['record_id'])
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1275, in derive_genome
+    walk(var, node)
+    ~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1272, in walk
+    genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings, owner_id=owner_id)
+                       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1136, in derive_value
+    predicate, _skipped = _mechanical_filter_predicate(node.get('filter_text'), scenario, candidate, self_row)
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 571, in _mechanical_filter_predicate
+    conjuncts = _top_level_and_conjuncts(filter_text)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 356, in _top_level_and_conjuncts
+    elif depth == 0 and text[i:i + 3].upper() == 'AND' \
+                        ~~~~~~~~~~~~~~~~~~~^^
+KeyboardInterrupt
+
+=== 2026-09-27T00:29:18 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b10x/rep_11 jBilling random_walk 10 11 10011 789700
+search done: 789700/789700 evaluations, 1315 iterations, 17/20 records claimed, 91.7s
+
+=== 2026-09-27T00:30:50 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_walk/b10x/rep_11 jBilling full
+full validation: 42 distinct individuals (12 in archive, 30 in final)
+  individual 1/42: 12 rule(s)
+  individual 2/42: 14 rule(s)
+  individual 3/42: 13 rule(s)
+  individual 4/42: 14 rule(s)
+  individual 5/42: 13 rule(s)
+  individual 6/42: 12 rule(s)
+  individual 7/42: 14 rule(s)
+  individual 8/42: 15 rule(s)
+  individual 9/42: 14 rule(s)
+  individual 10/42: 14 rule(s)
+  individual 11/42: 12 rule(s)
+  individual 12/42: 13 rule(s)
+  individual 13/42: 15 rule(s)
+  individual 14/42: 14 rule(s)
+  individual 15/42: 16 rule(s)
+  individual 16/42: 12 rule(s)
+  individual 17/42: 11 rule(s)
+  individual 18/42: 14 rule(s)
+  individual 19/42: 12 rule(s)
+  individual 20/42: 14 rule(s)
+  individual 21/42: 13 rule(s)
+  individual 22/42: 14 rule(s)
+  individual 23/42: 14 rule(s)
+  individual 24/42: 12 rule(s)
+  individual 25/42: 15 rule(s)
+  individual 26/42: 13 rule(s)
+  individual 27/42: 14 rule(s)
+  individual 28/42: 14 rule(s)
+  individual 29/42: 15 rule(s)
+  individual 30/42: 14 rule(s)
+  individual 31/42: 15 rule(s)
+  individual 32/42: 13 rule(s)
+  individual 33/42: 14 rule(s)
+  individual 34/42: 15 rule(s)
+  individual 35/42: 14 rule(s)
+  individual 36/42: 16 rule(s)
+  individual 37/42: 14 rule(s)
+  individual 38/42: 13 rule(s)
+  individual 39/42: 16 rule(s)
+  individual 40/42: 14 rule(s)
+  individual 41/42: 14 rule(s)
+  individual 42/42: 14 rule(s)
+validated: archive 17, final 17, union 17 of 20 in-scope rules; suite size {'archive': {'pool': 12, 'greedy': 2, 'min': 2, 'optimal': True}, 'final': {'pool': 30, 'greedy': 2, 'min': 2, 'optimal': True}, 'union': {'pool': 42, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 1.8s)

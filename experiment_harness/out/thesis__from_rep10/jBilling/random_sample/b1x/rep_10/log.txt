@@ -1,0 +1,84 @@
+
+=== 2026-09-27T00:17:52 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b1x/rep_10 jBilling random_sample 1 10 1010 78970
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1007, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 232, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 197, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 85, in _random_individual
+    genome = derive_genome(r, candidate, focal, scenario, owner_id=rid)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1275, in derive_genome
+    walk(var, node)
+    ~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 1272, in walk
+    genome[var_name] = derive_value(var_name, node, candidate, focal, scenario, warnings, owner_id=owner_id)
+                       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/candidate.py", line 954, in derive_value
+    kind = node.get('kind')
+KeyboardInterrupt
+
+=== 2026-09-27T00:25:14 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b1x/rep_10 jBilling random_sample 1 10 1010 78970
+search done: 78970/78970 evaluations, 3948 iterations, 17/20 records claimed, 11.7s
+
+=== 2026-09-27T00:25:26 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b1x/rep_10 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:27:51 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b1x/rep_10 jBilling full
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1020, in <module>
+    job_validate(sys.argv[2], sys.argv[3], sys.argv[4], '--keep-dbs' in sys.argv)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 580, in job_validate
+    by_rule, out_of_scope = _scope(case_study, records)
+                            ~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 166, in _scope
+    from summarize_coverage import _mechanical_out_of_scope
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/summarize_coverage.py", line 33, in <module>
+    from coverage import run_coverage  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../coverage.py", line 35, in <module>
+    from drd_executor import DecisionRunner, run_decision, _rules_with_conditions
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../drd_executor.py", line 23, in <module>
+    from db_resolver import resolve, UnresolvableForCase
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py", line 37, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+
+=== 2026-09-27T00:29:15 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/jBilling/random_sample/b1x/rep_10 jBilling full
+full validation: 7 distinct individuals (7 in archive, 0 in final)
+  individual 1/7: 12 rule(s)
+  individual 2/7: 14 rule(s)
+  individual 3/7: 15 rule(s)
+  individual 4/7: 14 rule(s)
+  individual 5/7: 16 rule(s)
+  individual 6/7: 14 rule(s)
+  individual 7/7: 15 rule(s)
+validated: archive 17, final -, union 17 of 20 in-scope rules; suite size {'archive': {'pool': 7, 'greedy': 2, 'min': 2, 'optimal': True}, 'union': {'pool': 7, 'greedy': 2, 'min': 2, 'optimal': True}} (0 errors, 0.4s)

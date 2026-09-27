@@ -1,0 +1,80 @@
+
+=== 2026-09-27T04:59:47 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_18 FLEX2 random_sample 10 18 10018 3015320
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 208, in _run_algorithm
+    return random_sampling.run_random_sampling(records, case_study, max_evaluations=budget,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               rng=rng, trace=trace)
+                                               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 132, in run_random_sampling
+    update_archive(_random_individual(base, records, case_study, table_cache, rng))
+                   ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 91, in _random_individual
+    value = _sample_value_for(r, var_name, node, genome.get(var_name), case_study, rng)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_sampling.py", line 71, in _sample_value_for
+    options = candidate_values(record, var_name, node, current, case_study,
+                               step=rng.randint(1, _MAX_STEP))
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 256, in candidate_values
+    domain = enumerable_domain(record, var_name)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 237, in enumerable_domain
+    _collect_domain_facts(row['condition'], var_name, True, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 180, in _collect_domain_facts
+    _collect_domain_facts(child, var_name, negated, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 177, in _collect_domain_facts
+    _collect_domain_facts(node[key], var_name, negated, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 179, in _collect_domain_facts
+    for child in node.get(key, []):
+                 ~~~~~~~~^^^^^^^^^
+KeyboardInterrupt
+
+=== 2026-09-27T05:47:17 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_18 FLEX2 random_sample 10 18 10018 3015320
+search done: 3015320/3015320 evaluations, 39160 iterations, 60/77 records claimed, 7060.0s
+
+=== 2026-09-27T07:44:57 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep10/FLEX2/random_sample/b10x/rep_18 FLEX2 full
+full validation: 36 distinct individuals (36 in archive, 0 in final)
+  individual 1/36: 34 rule(s)
+  individual 2/36: 33 rule(s)
+  individual 3/36: 30 rule(s)
+  individual 4/36: 34 rule(s)
+  individual 5/36: 10 rule(s)
+  individual 6/36: 34 rule(s)
+  individual 7/36: 36 rule(s)
+  individual 8/36: 34 rule(s)
+  individual 9/36: 38 rule(s)
+  individual 10/36: 34 rule(s)
+  individual 11/36: 36 rule(s)
+  individual 12/36: 34 rule(s)
+  individual 13/36: 33 rule(s)
+  individual 14/36: 29 rule(s)
+  individual 15/36: 36 rule(s)
+  individual 16/36: 34 rule(s)
+  individual 17/36: 33 rule(s)
+  individual 18/36: 30 rule(s)
+  individual 19/36: 36 rule(s)
+  individual 20/36: 33 rule(s)
+  individual 21/36: 34 rule(s)
+  individual 22/36: 33 rule(s)
+  individual 23/36: 35 rule(s)
+  individual 24/36: 33 rule(s)
+  individual 25/36: 36 rule(s)
+  individual 26/36: 35 rule(s)
+  individual 27/36: 34 rule(s)
+  individual 28/36: 34 rule(s)
+  individual 29/36: 36 rule(s)
+  individual 30/36: 33 rule(s)
+  individual 31/36: 33 rule(s)
+  individual 32/36: 34 rule(s)
+  individual 33/36: 34 rule(s)
+  individual 34/36: 34 rule(s)
+  individual 35/36: 31 rule(s)
+  individual 36/36: 33 rule(s)
+validated: archive 47, final -, union 47 of 50 in-scope rules; suite size {'archive': {'pool': 36, 'greedy': 5, 'min': 5, 'optimal': True}, 'union': {'pool': 36, 'greedy': 5, 'min': 5, 'optimal': True}} (0 errors, 168.4s)

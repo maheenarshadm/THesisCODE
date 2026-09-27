@@ -1,0 +1,53 @@
+evaluations,record_id
+1,OpenMRS::Concept Locale-Preferred-Name Uniqueness::Decision_ConceptLocalePreferredNameUniqueness_Rule_1
+3,OpenMRS::Concept Fully-Specified-Name Uniqueness Per Locale::Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_1
+5,OpenMRS::Concept Short-Name Uniqueness Per Locale::Decision_ConceptShortNameUniquenessPerLocale_Rule_1
+7,OpenMRS::Concept Fully-Specified-Name Presence Requirement::Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_1
+9,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_1
+15,OpenMRS::Numeric Precision Validity::Decision_NumericPrecisionValidity_Rule_1
+18,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_3
+19,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_1
+27,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_4
+30,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_2
+33,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_1
+36,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_1
+41,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_3
+44,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_3
+48,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_2
+54,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_3
+1841,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_3
+2499,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_1
+2923,OpenMRS::Concept Fully-Specified-Name Presence Requirement::Decision_ConceptFullySpecifiedNamePresenceRequirement_Rule_2
+3567,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_1
+4252,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_2
+4443,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_2
+4489,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_2
+4539,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_1
+4710,OpenMRS::Preferred Identifier Requirement::Decision_PreferredIdentifierRequirement_Rule_3
+4897,OpenMRS::Concept Locale-Preferred-Name Uniqueness::Decision_ConceptLocalePreferredNameUniqueness_Rule_2
+6341,OpenMRS::Numeric Absolute Range Validity::Decision_NumericAbsoluteRangeValidity_Rule_1
+6694,OpenMRS::Identifier Uniqueness Check::Decision_IdentifierUniquenessCheck_Rule_1
+7776,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_3
+8673,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_3
+8935,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_2
+9015,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_4
+11106,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_5
+11713,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_2
+13278,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_5
+13815,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_2
+13960,OpenMRS::Identifier Format Validity::Decision_IdentifierFormatAndCheckDigitValidity_Rule_4
+14682,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_1
+16427,OpenMRS::Identifier Location Requirement::Decision_IdentifierLocationRequirement_Rule_2
+28105,OpenMRS::Patient State Date Validity::Decision_PatientStateDateValidity_Rule_4
+31327,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_4
+31472,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_4
+33334,OpenMRS::Concept Fully-Specified-Name Uniqueness Per Locale::Decision_ConceptFullySpecifiedNameUniquenessPerLocale_Rule_2
+34626,OpenMRS::Order Scheduled Date Urgency Consistency::Decision_OrderScheduledDateUrgencyConsistency_Rule_3
+36146,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_3
+37860,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_2
+50668,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_5
+72276,OpenMRS::Concept Short-Name Uniqueness Per Locale::Decision_ConceptShortNameUniquenessPerLocale_Rule_2
+104253,OpenMRS::Concept Preferred Name Validity::Decision_ConceptPreferredNameValidity_Rule_5
+125614,OpenMRS::Death Record Consistency::Decision_DeathRecordConsistency_Rule_3
+138952,OpenMRS::Numeric Interpretation Classification::Decision_NumericInterpretationClassification_Rule_4
+331059,OpenMRS::Obs Value Required By Datatype::Decision_ObsValueRequiredByDatatype_Rule_6
