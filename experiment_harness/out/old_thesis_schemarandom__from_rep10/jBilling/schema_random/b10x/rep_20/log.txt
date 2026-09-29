@@ -1,0 +1,123 @@
+
+=== 2026-09-29T12:28:42 _generate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep10/jBilling/schema_random/b10x/rep_20 jBilling 10 20 10020 789700 0
+  100/39485 databases, 15/20 in-scope rules verified, 0 failed, 2s
+  200/39485 databases, 15/20 in-scope rules verified, 0 failed, 4s
+  300/39485 databases, 15/20 in-scope rules verified, 0 failed, 5s
+  400/39485 databases, 15/20 in-scope rules verified, 0 failed, 7s
+  500/39485 databases, 15/20 in-scope rules verified, 0 failed, 9s
+  600/39485 databases, 15/20 in-scope rules verified, 0 failed, 11s
+  700/39485 databases, 15/20 in-scope rules verified, 0 failed, 13s
+  800/39485 databases, 15/20 in-scope rules verified, 0 failed, 14s
+  900/39485 databases, 15/20 in-scope rules verified, 0 failed, 16s
+  1000/39485 databases, 15/20 in-scope rules verified, 0 failed, 18s
+  1100/39485 databases, 15/20 in-scope rules verified, 0 failed, 20s
+  1200/39485 databases, 15/20 in-scope rules verified, 0 failed, 21s
+  1300/39485 databases, 15/20 in-scope rules verified, 0 failed, 23s
+  1400/39485 databases, 15/20 in-scope rules verified, 0 failed, 25s
+  1500/39485 databases, 15/20 in-scope rules verified, 0 failed, 27s
+  1600/39485 databases, 15/20 in-scope rules verified, 0 failed, 29s
+  1700/39485 databases, 15/20 in-scope rules verified, 0 failed, 30s
+  1800/39485 databases, 15/20 in-scope rules verified, 0 failed, 32s
+  1900/39485 databases, 15/20 in-scope rules verified, 0 failed, 34s
+  2000/39485 databases, 15/20 in-scope rules verified, 0 failed, 36s
+  2100/39485 databases, 15/20 in-scope rules verified, 0 failed, 38s
+  2200/39485 databases, 15/20 in-scope rules verified, 0 failed, 39s
+  2300/39485 databases, 15/20 in-scope rules verified, 0 failed, 41s
+  2400/39485 databases, 15/20 in-scope rules verified, 0 failed, 43s
+  2500/39485 databases, 15/20 in-scope rules verified, 0 failed, 45s
+  2600/39485 databases, 15/20 in-scope rules verified, 0 failed, 46s
+  2700/39485 databases, 15/20 in-scope rules verified, 0 failed, 48s
+  2800/39485 databases, 15/20 in-scope rules verified, 0 failed, 50s
+  2900/39485 databases, 15/20 in-scope rules verified, 0 failed, 52s
+  3000/39485 databases, 15/20 in-scope rules verified, 0 failed, 54s
+  3100/39485 databases, 15/20 in-scope rules verified, 0 failed, 55s
+  3200/39485 databases, 15/20 in-scope rules verified, 0 failed, 57s
+  3300/39485 databases, 15/20 in-scope rules verified, 0 failed, 59s
+  3400/39485 databases, 15/20 in-scope rules verified, 0 failed, 61s
+  3500/39485 databases, 15/20 in-scope rules verified, 0 failed, 63s
+  3600/39485 databases, 15/20 in-scope rules verified, 0 failed, 64s
+  3700/39485 databases, 15/20 in-scope rules verified, 0 failed, 66s
+  3800/39485 databases, 15/20 in-scope rules verified, 0 failed, 68s
+  3900/39485 databases, 15/20 in-scope rules verified, 0 failed, 70s
+  4000/39485 databases, 15/20 in-scope rules verified, 0 failed, 72s
+  4100/39485 databases, 15/20 in-scope rules verified, 0 failed, 73s
+  4200/39485 databases, 15/20 in-scope rules verified, 0 failed, 75s
+  4300/39485 databases, 15/20 in-scope rules verified, 0 failed, 77s
+  4400/39485 databases, 15/20 in-scope rules verified, 0 failed, 79s
+  4500/39485 databases, 15/20 in-scope rules verified, 0 failed, 80s
+  4600/39485 databases, 15/20 in-scope rules verified, 0 failed, 82s
+  4700/39485 databases, 15/20 in-scope rules verified, 0 failed, 84s
+  4800/39485 databases, 15/20 in-scope rules verified, 0 failed, 86s
+  4900/39485 databases, 15/20 in-scope rules verified, 0 failed, 88s
+  5000/39485 databases, 15/20 in-scope rules verified, 0 failed, 89s
+  5100/39485 databases, 15/20 in-scope rules verified, 0 failed, 91s
+  5200/39485 databases, 15/20 in-scope rules verified, 0 failed, 93s
+  5300/39485 databases, 15/20 in-scope rules verified, 0 failed, 95s
+  5400/39485 databases, 15/20 in-scope rules verified, 0 failed, 97s
+  5500/39485 databases, 15/20 in-scope rules verified, 0 failed, 98s
+  5600/39485 databases, 15/20 in-scope rules verified, 0 failed, 100s
+  5700/39485 databases, 15/20 in-scope rules verified, 0 failed, 102s
+  5800/39485 databases, 15/20 in-scope rules verified, 0 failed, 104s
+  5900/39485 databases, 15/20 in-scope rules verified, 0 failed, 105s
+  6000/39485 databases, 15/20 in-scope rules verified, 0 failed, 107s
+  6100/39485 databases, 15/20 in-scope rules verified, 0 failed, 109s
+  6200/39485 databases, 15/20 in-scope rules verified, 0 failed, 111s
+  6300/39485 databases, 15/20 in-scope rules verified, 0 failed, 113s
+  6400/39485 databases, 15/20 in-scope rules verified, 0 failed, 114s
+  6500/39485 databases, 15/20 in-scope rules verified, 0 failed, 116s
+  6600/39485 databases, 15/20 in-scope rules verified, 0 failed, 118s
+  6700/39485 databases, 15/20 in-scope rules verified, 0 failed, 120s
+  6800/39485 databases, 15/20 in-scope rules verified, 0 failed, 122s
+  6900/39485 databases, 15/20 in-scope rules verified, 0 failed, 123s
+  7000/39485 databases, 15/20 in-scope rules verified, 0 failed, 125s
+  7100/39485 databases, 15/20 in-scope rules verified, 0 failed, 127s
+  7200/39485 databases, 15/20 in-scope rules verified, 0 failed, 129s
+  7300/39485 databases, 15/20 in-scope rules verified, 0 failed, 131s
+  7400/39485 databases, 15/20 in-scope rules verified, 0 failed, 132s
+  7500/39485 databases, 15/20 in-scope rules verified, 0 failed, 134s
+  7600/39485 databases, 15/20 in-scope rules verified, 0 failed, 136s
+  7700/39485 databases, 15/20 in-scope rules verified, 0 failed, 138s
+  7800/39485 databases, 15/20 in-scope rules verified, 0 failed, 139s
+  7900/39485 databases, 15/20 in-scope rules verified, 0 failed, 141s
+  8000/39485 databases, 15/20 in-scope rules verified, 0 failed, 143s
+  8100/39485 databases, 15/20 in-scope rules verified, 0 failed, 145s
+  8200/39485 databases, 15/20 in-scope rules verified, 0 failed, 147s
+  8300/39485 databases, 15/20 in-scope rules verified, 0 failed, 148s
+  8400/39485 databases, 15/20 in-scope rules verified, 0 failed, 150s
+  8500/39485 databases, 15/20 in-scope rules verified, 0 failed, 152s
+  8600/39485 databases, 15/20 in-scope rules verified, 0 failed, 154s
+  8700/39485 databases, 15/20 in-scope rules verified, 0 failed, 156s
+  8800/39485 databases, 15/20 in-scope rules verified, 0 failed, 157s
+  8900/39485 databases, 15/20 in-scope rules verified, 0 failed, 159s
+  9000/39485 databases, 15/20 in-scope rules verified, 0 failed, 161s
+  9100/39485 databases, 15/20 in-scope rules verified, 0 failed, 163s
+  9200/39485 databases, 15/20 in-scope rules verified, 0 failed, 164s
+  9300/39485 databases, 15/20 in-scope rules verified, 0 failed, 166s
+  9400/39485 databases, 15/20 in-scope rules verified, 0 failed, 168s
+  9500/39485 databases, 15/20 in-scope rules verified, 0 failed, 170s
+  9600/39485 databases, 15/20 in-scope rules verified, 0 failed, 172s
+  9700/39485 databases, 15/20 in-scope rules verified, 0 failed, 173s
+  9800/39485 databases, 15/20 in-scope rules verified, 0 failed, 175s
+  9900/39485 databases, 15/20 in-scope rules verified, 0 failed, 177s
+  10000/39485 databases, 15/20 in-scope rules verified, 0 failed, 179s
+  10100/39485 databases, 15/20 in-scope rules verified, 0 failed, 181s
+  10200/39485 databases, 15/20 in-scope rules verified, 0 failed, 182s
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 617, in <module>
+    main()
+    ~~~~^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 591, in main
+    job_generate(d, cs, int(k), int(rep), int(seed), int(budget), int(cap) or None)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 389, in job_generate
+    cand = random_database(case_study, rng)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 234, in random_database
+    row[col] = _random_value(kind, rng)
+               ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 181, in _random_value
+    return ''.join(rng.choices(PRINTABLE, k=length))
+                   ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/random.py", line 473, in choices
+    return [population[floor(random() * n)] for i in _repeat(None, k)]
+                       ~~~~~^^^^^^^^^^^^^^
+KeyboardInterrupt

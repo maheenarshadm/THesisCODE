@@ -1,0 +1,16 @@
+evaluations,database_index,rule_id
+20,0,Decision_AgeingStatusChangeOrderAction_Rule_4
+20,0,Decision_AgeingStepAdvancement_Rule_2
+20,0,Decision_AgeingStepConfigValidation_Rule_1
+20,0,Decision_BlacklistFilterEnabled_Rule_1
+20,0,Decision_CurrencyExchangeRateSource_Rule_3
+20,0,Decision_CycleStartSource_Rule_1
+20,0,Decision_InvoiceOverdue_Rule_2
+20,0,Decision_OrderPeriodAlreadyInvoiced_Rule_1
+20,0,Decision_OrderPeriodAlreadyInvoiced_Rule_4
+20,0,Decision_TaxCalculationMode_Rule_1
+60,2,Decision_InvoiceOverdue_Rule_1
+80,3,Decision_CycleStartSource_Rule_2
+80,3,Decision_OrderPeriodAlreadyInvoiced_Rule_2
+100,4,Decision_TaxCalculationMode_Rule_2
+920,45,Decision_CycleStartSource_Rule_3

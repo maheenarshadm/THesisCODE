@@ -1,0 +1,159 @@
+
+=== 2026-09-29T12:27:28 _generate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep10/jBilling/schema_random/b10x/rep_19 jBilling 10 19 10019 789700 0
+  100/39485 databases, 15/20 in-scope rules verified, 0 failed, 2s
+  200/39485 databases, 15/20 in-scope rules verified, 0 failed, 4s
+  300/39485 databases, 15/20 in-scope rules verified, 0 failed, 5s
+  400/39485 databases, 15/20 in-scope rules verified, 0 failed, 7s
+  500/39485 databases, 15/20 in-scope rules verified, 0 failed, 9s
+  600/39485 databases, 15/20 in-scope rules verified, 0 failed, 11s
+  700/39485 databases, 15/20 in-scope rules verified, 0 failed, 13s
+  800/39485 databases, 15/20 in-scope rules verified, 0 failed, 14s
+  900/39485 databases, 15/20 in-scope rules verified, 0 failed, 16s
+  1000/39485 databases, 15/20 in-scope rules verified, 0 failed, 18s
+  1100/39485 databases, 15/20 in-scope rules verified, 0 failed, 20s
+  1200/39485 databases, 15/20 in-scope rules verified, 0 failed, 22s
+  1300/39485 databases, 15/20 in-scope rules verified, 0 failed, 23s
+  1400/39485 databases, 15/20 in-scope rules verified, 0 failed, 25s
+  1500/39485 databases, 15/20 in-scope rules verified, 0 failed, 27s
+  1600/39485 databases, 15/20 in-scope rules verified, 0 failed, 29s
+  1700/39485 databases, 15/20 in-scope rules verified, 0 failed, 31s
+  1800/39485 databases, 15/20 in-scope rules verified, 0 failed, 32s
+  1900/39485 databases, 15/20 in-scope rules verified, 0 failed, 34s
+  2000/39485 databases, 15/20 in-scope rules verified, 0 failed, 36s
+  2100/39485 databases, 15/20 in-scope rules verified, 0 failed, 38s
+  2200/39485 databases, 15/20 in-scope rules verified, 0 failed, 40s
+  2300/39485 databases, 15/20 in-scope rules verified, 0 failed, 41s
+  2400/39485 databases, 15/20 in-scope rules verified, 0 failed, 43s
+  2500/39485 databases, 15/20 in-scope rules verified, 0 failed, 45s
+  2600/39485 databases, 15/20 in-scope rules verified, 0 failed, 47s
+  2700/39485 databases, 15/20 in-scope rules verified, 0 failed, 49s
+  2800/39485 databases, 15/20 in-scope rules verified, 0 failed, 50s
+  2900/39485 databases, 15/20 in-scope rules verified, 0 failed, 52s
+  3000/39485 databases, 15/20 in-scope rules verified, 0 failed, 54s
+  3100/39485 databases, 15/20 in-scope rules verified, 0 failed, 56s
+  3200/39485 databases, 15/20 in-scope rules verified, 0 failed, 58s
+  3300/39485 databases, 15/20 in-scope rules verified, 0 failed, 59s
+  3400/39485 databases, 15/20 in-scope rules verified, 0 failed, 61s
+  3500/39485 databases, 15/20 in-scope rules verified, 0 failed, 63s
+  3600/39485 databases, 15/20 in-scope rules verified, 0 failed, 65s
+  3700/39485 databases, 15/20 in-scope rules verified, 0 failed, 67s
+  3800/39485 databases, 15/20 in-scope rules verified, 0 failed, 68s
+  3900/39485 databases, 15/20 in-scope rules verified, 0 failed, 70s
+  4000/39485 databases, 15/20 in-scope rules verified, 0 failed, 72s
+  4100/39485 databases, 15/20 in-scope rules verified, 0 failed, 74s
+  4200/39485 databases, 15/20 in-scope rules verified, 0 failed, 76s
+  4300/39485 databases, 15/20 in-scope rules verified, 0 failed, 78s
+  4400/39485 databases, 15/20 in-scope rules verified, 0 failed, 79s
+  4500/39485 databases, 15/20 in-scope rules verified, 0 failed, 81s
+  4600/39485 databases, 15/20 in-scope rules verified, 0 failed, 83s
+  4700/39485 databases, 15/20 in-scope rules verified, 0 failed, 85s
+  4800/39485 databases, 15/20 in-scope rules verified, 0 failed, 87s
+  4900/39485 databases, 15/20 in-scope rules verified, 0 failed, 88s
+  5000/39485 databases, 15/20 in-scope rules verified, 0 failed, 90s
+  5100/39485 databases, 15/20 in-scope rules verified, 0 failed, 92s
+  5200/39485 databases, 15/20 in-scope rules verified, 0 failed, 94s
+  5300/39485 databases, 15/20 in-scope rules verified, 0 failed, 96s
+  5400/39485 databases, 15/20 in-scope rules verified, 0 failed, 97s
+  5500/39485 databases, 15/20 in-scope rules verified, 0 failed, 99s
+  5600/39485 databases, 15/20 in-scope rules verified, 0 failed, 101s
+  5700/39485 databases, 15/20 in-scope rules verified, 0 failed, 103s
+  5800/39485 databases, 15/20 in-scope rules verified, 0 failed, 105s
+  5900/39485 databases, 15/20 in-scope rules verified, 0 failed, 106s
+  6000/39485 databases, 15/20 in-scope rules verified, 0 failed, 108s
+  6100/39485 databases, 15/20 in-scope rules verified, 0 failed, 110s
+  6200/39485 databases, 15/20 in-scope rules verified, 0 failed, 112s
+  6300/39485 databases, 15/20 in-scope rules verified, 0 failed, 114s
+  6400/39485 databases, 15/20 in-scope rules verified, 0 failed, 115s
+  6500/39485 databases, 15/20 in-scope rules verified, 0 failed, 117s
+  6600/39485 databases, 15/20 in-scope rules verified, 0 failed, 119s
+  6700/39485 databases, 15/20 in-scope rules verified, 0 failed, 121s
+  6800/39485 databases, 15/20 in-scope rules verified, 0 failed, 123s
+  6900/39485 databases, 15/20 in-scope rules verified, 0 failed, 124s
+  7000/39485 databases, 15/20 in-scope rules verified, 0 failed, 126s
+  7100/39485 databases, 15/20 in-scope rules verified, 0 failed, 128s
+  7200/39485 databases, 15/20 in-scope rules verified, 0 failed, 130s
+  7300/39485 databases, 15/20 in-scope rules verified, 0 failed, 132s
+  7400/39485 databases, 15/20 in-scope rules verified, 0 failed, 133s
+  7500/39485 databases, 15/20 in-scope rules verified, 0 failed, 135s
+  7600/39485 databases, 15/20 in-scope rules verified, 0 failed, 137s
+  7700/39485 databases, 15/20 in-scope rules verified, 0 failed, 139s
+  7800/39485 databases, 15/20 in-scope rules verified, 0 failed, 141s
+  7900/39485 databases, 15/20 in-scope rules verified, 0 failed, 142s
+  8000/39485 databases, 15/20 in-scope rules verified, 0 failed, 144s
+  8100/39485 databases, 15/20 in-scope rules verified, 0 failed, 146s
+  8200/39485 databases, 15/20 in-scope rules verified, 0 failed, 148s
+  8300/39485 databases, 15/20 in-scope rules verified, 0 failed, 150s
+  8400/39485 databases, 15/20 in-scope rules verified, 0 failed, 151s
+  8500/39485 databases, 15/20 in-scope rules verified, 0 failed, 153s
+  8600/39485 databases, 15/20 in-scope rules verified, 0 failed, 155s
+  8700/39485 databases, 15/20 in-scope rules verified, 0 failed, 157s
+  8800/39485 databases, 15/20 in-scope rules verified, 0 failed, 159s
+  8900/39485 databases, 15/20 in-scope rules verified, 0 failed, 161s
+  9000/39485 databases, 15/20 in-scope rules verified, 0 failed, 162s
+  9100/39485 databases, 15/20 in-scope rules verified, 0 failed, 164s
+  9200/39485 databases, 15/20 in-scope rules verified, 0 failed, 166s
+  9300/39485 databases, 15/20 in-scope rules verified, 0 failed, 168s
+  9400/39485 databases, 15/20 in-scope rules verified, 0 failed, 170s
+  9500/39485 databases, 15/20 in-scope rules verified, 0 failed, 171s
+  9600/39485 databases, 15/20 in-scope rules verified, 0 failed, 173s
+  9700/39485 databases, 15/20 in-scope rules verified, 0 failed, 175s
+  9800/39485 databases, 15/20 in-scope rules verified, 0 failed, 177s
+  9900/39485 databases, 15/20 in-scope rules verified, 0 failed, 179s
+  10000/39485 databases, 15/20 in-scope rules verified, 0 failed, 180s
+  10100/39485 databases, 15/20 in-scope rules verified, 0 failed, 182s
+  10200/39485 databases, 15/20 in-scope rules verified, 0 failed, 184s
+  10300/39485 databases, 15/20 in-scope rules verified, 0 failed, 186s
+  10400/39485 databases, 15/20 in-scope rules verified, 0 failed, 188s
+  10500/39485 databases, 15/20 in-scope rules verified, 0 failed, 189s
+  10600/39485 databases, 15/20 in-scope rules verified, 0 failed, 191s
+  10700/39485 databases, 15/20 in-scope rules verified, 0 failed, 193s
+  10800/39485 databases, 15/20 in-scope rules verified, 0 failed, 195s
+  10900/39485 databases, 15/20 in-scope rules verified, 0 failed, 197s
+  11000/39485 databases, 15/20 in-scope rules verified, 0 failed, 198s
+  11100/39485 databases, 15/20 in-scope rules verified, 0 failed, 200s
+  11200/39485 databases, 15/20 in-scope rules verified, 0 failed, 202s
+  11300/39485 databases, 15/20 in-scope rules verified, 0 failed, 204s
+  11400/39485 databases, 15/20 in-scope rules verified, 0 failed, 206s
+  11500/39485 databases, 15/20 in-scope rules verified, 0 failed, 207s
+  11600/39485 databases, 15/20 in-scope rules verified, 0 failed, 209s
+  11700/39485 databases, 15/20 in-scope rules verified, 0 failed, 211s
+  11800/39485 databases, 15/20 in-scope rules verified, 0 failed, 213s
+  11900/39485 databases, 15/20 in-scope rules verified, 0 failed, 215s
+  12000/39485 databases, 15/20 in-scope rules verified, 0 failed, 217s
+  12100/39485 databases, 15/20 in-scope rules verified, 0 failed, 218s
+  12200/39485 databases, 15/20 in-scope rules verified, 0 failed, 220s
+  12300/39485 databases, 15/20 in-scope rules verified, 0 failed, 222s
+  12400/39485 databases, 15/20 in-scope rules verified, 0 failed, 224s
+  12500/39485 databases, 15/20 in-scope rules verified, 0 failed, 226s
+  12600/39485 databases, 15/20 in-scope rules verified, 0 failed, 227s
+  12700/39485 databases, 15/20 in-scope rules verified, 0 failed, 229s
+  12800/39485 databases, 15/20 in-scope rules verified, 0 failed, 231s
+  12900/39485 databases, 15/20 in-scope rules verified, 0 failed, 233s
+  13000/39485 databases, 15/20 in-scope rules verified, 0 failed, 235s
+  13100/39485 databases, 15/20 in-scope rules verified, 0 failed, 236s
+  13200/39485 databases, 15/20 in-scope rules verified, 0 failed, 238s
+  13300/39485 databases, 15/20 in-scope rules verified, 0 failed, 240s
+  13400/39485 databases, 15/20 in-scope rules verified, 0 failed, 242s
+  13500/39485 databases, 15/20 in-scope rules verified, 0 failed, 244s
+  13600/39485 databases, 15/20 in-scope rules verified, 0 failed, 245s
+  13700/39485 databases, 15/20 in-scope rules verified, 0 failed, 247s
+  13800/39485 databases, 15/20 in-scope rules verified, 0 failed, 249s
+  13900/39485 databases, 15/20 in-scope rules verified, 0 failed, 251s
+  14000/39485 databases, 15/20 in-scope rules verified, 0 failed, 253s
+  14100/39485 databases, 15/20 in-scope rules verified, 0 failed, 255s
+  14200/39485 databases, 15/20 in-scope rules verified, 0 failed, 256s
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 617, in <module>
+    main()
+    ~~~~^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 591, in main
+    job_generate(d, cs, int(k), int(rep), int(seed), int(budget), int(cap) or None)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 389, in job_generate
+    cand = random_database(case_study, rng)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 201, in random_database
+    info = _table_info(schema, table)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/schema_random.py", line 120, in _table_info
+    return schema.get(table) or schema.get(table.upper()) or schema.get(table.lower()) or {}
+           ~~~~~~~~~~^^^^^^^
+KeyboardInterrupt

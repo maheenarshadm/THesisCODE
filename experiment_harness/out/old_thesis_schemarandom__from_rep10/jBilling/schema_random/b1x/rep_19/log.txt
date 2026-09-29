@@ -1,0 +1,46 @@
+
+=== 2026-09-29T12:26:34 _generate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep10/jBilling/schema_random/b1x/rep_19 jBilling 1 19 1019 78970 0
+  100/3948 databases, 15/20 in-scope rules verified, 0 failed, 2s
+  200/3948 databases, 15/20 in-scope rules verified, 0 failed, 4s
+  300/3948 databases, 15/20 in-scope rules verified, 0 failed, 5s
+  400/3948 databases, 15/20 in-scope rules verified, 0 failed, 7s
+  500/3948 databases, 15/20 in-scope rules verified, 0 failed, 9s
+  600/3948 databases, 15/20 in-scope rules verified, 0 failed, 11s
+  700/3948 databases, 15/20 in-scope rules verified, 0 failed, 13s
+  800/3948 databases, 15/20 in-scope rules verified, 0 failed, 14s
+  900/3948 databases, 15/20 in-scope rules verified, 0 failed, 16s
+  1000/3948 databases, 15/20 in-scope rules verified, 0 failed, 18s
+  1100/3948 databases, 15/20 in-scope rules verified, 0 failed, 20s
+  1200/3948 databases, 15/20 in-scope rules verified, 0 failed, 21s
+  1300/3948 databases, 15/20 in-scope rules verified, 0 failed, 23s
+  1400/3948 databases, 15/20 in-scope rules verified, 0 failed, 25s
+  1500/3948 databases, 15/20 in-scope rules verified, 0 failed, 27s
+  1600/3948 databases, 15/20 in-scope rules verified, 0 failed, 29s
+  1700/3948 databases, 15/20 in-scope rules verified, 0 failed, 30s
+  1800/3948 databases, 15/20 in-scope rules verified, 0 failed, 32s
+  1900/3948 databases, 15/20 in-scope rules verified, 0 failed, 34s
+  2000/3948 databases, 15/20 in-scope rules verified, 0 failed, 36s
+  2100/3948 databases, 15/20 in-scope rules verified, 0 failed, 38s
+  2200/3948 databases, 15/20 in-scope rules verified, 0 failed, 39s
+  2300/3948 databases, 15/20 in-scope rules verified, 0 failed, 41s
+  2400/3948 databases, 15/20 in-scope rules verified, 0 failed, 43s
+  2500/3948 databases, 15/20 in-scope rules verified, 0 failed, 45s
+  2600/3948 databases, 15/20 in-scope rules verified, 0 failed, 46s
+  2700/3948 databases, 15/20 in-scope rules verified, 0 failed, 48s
+  2800/3948 databases, 15/20 in-scope rules verified, 0 failed, 50s
+  2900/3948 databases, 15/20 in-scope rules verified, 0 failed, 52s
+  3000/3948 databases, 15/20 in-scope rules verified, 0 failed, 54s
+  3100/3948 databases, 15/20 in-scope rules verified, 0 failed, 55s
+  3200/3948 databases, 15/20 in-scope rules verified, 0 failed, 57s
+  3300/3948 databases, 15/20 in-scope rules verified, 0 failed, 59s
+  3400/3948 databases, 15/20 in-scope rules verified, 0 failed, 61s
+  3500/3948 databases, 15/20 in-scope rules verified, 0 failed, 62s
+  3600/3948 databases, 15/20 in-scope rules verified, 0 failed, 64s
+  3700/3948 databases, 15/20 in-scope rules verified, 0 failed, 66s
+  3800/3948 databases, 15/20 in-scope rules verified, 0 failed, 68s
+  3900/3948 databases, 15/20 in-scope rules verified, 0 failed, 70s
+  3948/3948 databases, 15/20 in-scope rules verified, 0 failed, 70s
+generation done: 3948 databases (0 failed), 15/20 in-scope rules verified, pool 4, 70.5s (0.0179s/db)
+
+=== 2026-09-29T12:27:45 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep10/jBilling/schema_random/b1x/rep_19 jBilling
+validated: 15 of 20 in-scope rules, pool 4, suite min 3 (greedy 3, optimal True), 0 errors, 0.0s

@@ -1,0 +1,66 @@
+{
+  "experiment": "thesis",
+  "output_folder": "thesis_schemarandom__from_rep10",
+  "reps": 20,
+  "first_rep": 10,
+  "case_studies": [
+    "jBilling",
+    "Spree",
+    "OpenMRS",
+    "FLEX2"
+  ],
+  "setups": [
+    "schema_random"
+  ],
+  "budgets": [
+    1,
+    5,
+    10
+  ],
+  "seed_rule": "seed = 1000 * budget_multiplier + rep",
+  "budget_1x": {
+    "jBilling": 78970,
+    "Spree": 86297,
+    "OpenMRS": 207920,
+    "FLEX2": 301532
+  },
+  "not_persisted_files": {
+    "jBilling": [
+      "jbilling_not_persisted.json",
+      "jbilling_not_persisted_rule1.json"
+    ],
+    "Spree": [
+      "spree_not_persisted.json"
+    ],
+    "OpenMRS": [
+      "openmrs_not_persisted.json"
+    ],
+    "FLEX2": [
+      "flex2_not_persisted.json"
+    ]
+  },
+  "generator_settings": {
+    "values": "uniform over the full domain of the declared column type",
+    "integer_types": "smallint 16-bit, integer 32-bit, bigint 64-bit signed",
+    "oracle_number_without_precision": "64-bit signed integer range (largest SQLite can store)",
+    "numeric_decimal": "declared (precision, scale); (10, 0) when not declared",
+    "floating_point": "double: full IEEE double range; float/real: full IEEE single range",
+    "date_datetime_timestamp": "calendar years 1-9999, as day numbers since 1970-01-01",
+    "time": "seconds of the day, 0-86399",
+    "text": "printable ASCII, length 0..declared length (char: exactly declared length), 255 when no length is declared",
+    "boolean": "true / false",
+    "binary": "random bytes, length 0..declared length (255 default)",
+    "rows_per_table": [
+      1,
+      5
+    ],
+    "null_probability_nullable_columns": 0.1,
+    "single_column_primary_keys": "sequential 1..n (unique by construction)",
+    "foreign_keys": "value of a random existing parent row (parents generated first)",
+    "budget_charge_per_database": "number of compiled objectives of the case study"
+  },
+  "max_databases": 0,
+  "compiled_constraints_sha256": "57ee26c6b8b41f0af57177c08165018b8654f18de2762993ac49f359d9ab78b8",
+  "git_commit": "fc5b3c3f2953b04a9c174c3a8d5ac876ea6dcb6d",
+  "written_at": "2026-09-29T12:06:44"
+}
