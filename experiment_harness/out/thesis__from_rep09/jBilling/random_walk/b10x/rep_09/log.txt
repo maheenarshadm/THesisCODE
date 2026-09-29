@@ -1,0 +1,48 @@
+
+=== 2026-09-30T01:01:25 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep09/jBilling/random_walk/b10x/rep_09 jBilling random_walk 10 9 10009 789700
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 204, in _run_algorithm
+    return random_baseline.run_random_search(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             generations=None, rng=rng, max_evaluations=budget,
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                             trace=trace)
+                                             ^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 139, in run_random_search
+    _random_search_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               mutations_per_child, dynamic_gating, trace,
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               max_evaluations is not None, state)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 189, in _random_search_generations
+    cand, fm, sm = _random_mutate_lineage(r, cand, fm, sm, table_cache, rng)
+                   ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/random_baseline.py", line 110, in _random_mutate_lineage
+    new_candidate, new_focal_maps, new_scenario_maps = copy.deepcopy((candidate, focal_maps, scenario_maps))
+                                                       ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 131, in deepcopy
+    y = copier(x, memo)
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 182, in _deepcopy_tuple
+    y = [deepcopy(a, memo) for a in x]
+         ~~~~~~~~^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 131, in deepcopy
+    y = copier(x, memo)
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 202, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+                             ~~~~~~~~^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 131, in deepcopy
+    y = copier(x, memo)
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 202, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+      ~~~~~~~~^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/copy.py", line 110, in deepcopy
+    def deepcopy(x, memo=None, _nil=[]):
+    
+KeyboardInterrupt

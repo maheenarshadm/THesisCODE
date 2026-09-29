@@ -1,0 +1,23 @@
+rule_id,decision,in_scope,num_records,claimed_archive,claimed_final,claimed_union,verified_archive,verified_final,verified_union
+Decision_FirstOrderPromotionEligibility_rule_1,First-Order Promotion Eligibility,True,1,,,,,,True
+Decision_FirstOrderPromotionEligibility_rule_2,First-Order Promotion Eligibility,True,1,,,,,,True
+Decision_FirstOrderPromotionEligibility_rule_3,First-Order Promotion Eligibility,True,1,,,,,,False
+Decision_OneUsePerUserEligibility_rule_1,One-Use-Per-User Promotion Eligibility,True,1,,,,,,True
+Decision_OneUsePerUserEligibility_rule_2,One-Use-Per-User Promotion Eligibility,True,1,,,,,,True
+Decision_OneUsePerUserEligibility_rule_3,One-Use-Per-User Promotion Eligibility,True,1,,,,,,False
+Decision_PriceListAdjustmentTierSelection_rule_1,Price List Volume Adjustment Tier Selection,True,1,,,,,,True
+Decision_PriceListAdjustmentTierSelection_rule_2,Price List Volume Adjustment Tier Selection,True,1,,,,,,False
+Decision_PriceListAdjustmentTierSelection_rule_3,Price List Volume Adjustment Tier Selection,True,1,,,,,,True
+Decision_PromotionCustomerGroupEligibility_rule_1,Promotion Customer Group Eligibility,True,1,,,,,,True
+Decision_PromotionCustomerGroupEligibility_rule_2,Promotion Customer Group Eligibility,True,1,,,,,,True
+Decision_PromotionCustomerGroupEligibility_rule_4,Promotion Customer Group Eligibility,False,1,,,,,,False
+Decision_PromotionTemporalAvailability_rule_1,Promotion Temporal Availability,True,1,,,,,,True
+Decision_PromotionTemporalAvailability_rule_2,Promotion Temporal Availability,True,1,,,,,,True
+Decision_PromotionTemporalAvailability_rule_3,Promotion Temporal Availability,True,1,,,,,,True
+Decision_PromotionTieredPercentSelection_rule_1,Promotion Tiered Percent Discount Selection,True,1,,,,,,True
+Decision_PromotionTieredPercentSelection_rule_2,Promotion Tiered Percent Discount Selection,True,1,,,,,,False
+Decision_PromotionTieredPercentSelection_rule_3,Promotion Tiered Percent Discount Selection,True,1,,,,,,True
+Decision_PromotionUsageLimitExceeded_rule_1,Promotion Usage Limit Exceeded,True,1,,,,,,True
+Decision_PromotionUsageLimitExceeded_rule_2,Promotion Usage Limit Exceeded,True,1,,,,,,True
+Decision_PromotionUsageLimitExceeded_rule_3,Promotion Usage Limit Exceeded,True,1,,,,,,False
+Decision_PromotionUsageLimitExceeded_rule_4,Promotion Usage Limit Exceeded,True,1,,,,,,True

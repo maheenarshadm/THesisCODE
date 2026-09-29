@@ -1,0 +1,51 @@
+rule_id,decision,in_scope,num_records,claimed_archive,claimed_final,claimed_union,verified_archive,verified_final,verified_union
+Decision_AcademicWarningStatus_Rule_1,Academic Warning Status,True,1,,,,,,False
+Decision_AcademicWarningStatus_Rule_2,Academic Warning Status,True,1,,,,,,False
+Decision_AcademicWarningStatus_Rule_3,Academic Warning Status,True,1,,,,,,False
+Decision_AcademicWarningStatus_Rule_4,Academic Warning Status,True,1,,,,,,False
+Decision_AcademicWarningStatus_Rule_5,Academic Warning Status,True,1,,,,,,False
+Decision_AcademicWarningStatus_Rule_6,Academic Warning Status,True,1,,,,,,False
+Decision_AttendanceEligibility_Rule_1,Attendance Eligibility For Final Exam,True,1,,,,,,False
+Decision_AttendanceEligibility_Rule_2,Attendance Eligibility For Final Exam,True,1,,,,,,True
+Decision_CourseLoadLimit_Rule_1,Course Load Limit,True,3,,,,,,False
+Decision_CourseLoadLimit_Rule_2,Course Load Limit,True,1,,,,,,False
+Decision_CourseLoadLimit_Rule_3,Course Load Limit,True,1,,,,,,False
+Decision_CourseLoadLimit_Rule_4,Course Load Limit,True,6,,,,,,False
+Decision_CourseRegistrationEligibility_Rule_1,Course Registration Eligibility,True,1,,,,,,True
+Decision_CourseRegistrationEligibility_Rule_2,Course Registration Eligibility,True,1,,,,,,False
+Decision_CourseRegistrationEligibility_Rule_3,Course Registration Eligibility,True,11,,,,,,False
+Decision_CourseRegistrationEligibility_Rule_4,Course Registration Eligibility,True,11,,,,,,False
+Decision_CourseReplacementEligibility_Rule_1,Course Replacement Eligibility,True,1,,,,,,False
+Decision_CourseReplacementEligibility_Rule_2,Course Replacement Eligibility,True,1,,,,,,True
+Decision_CourseReplacementEligibility_Rule_3,Course Replacement Eligibility,True,1,,,,,,True
+Decision_CourseReplacementEligibility_Rule_4,Course Replacement Eligibility,True,1,,,,,,False
+Decision_CourseReplacementEligibility_Rule_5,Course Replacement Eligibility,True,1,,,,,,False
+Decision_CourseReplacementEligibility_Rule_6,Course Replacement Eligibility,True,1,,,,,,False
+Decision_CreditTransferExemption_Rule_1,Credit Transfer Exemption,True,1,,,,,,True
+Decision_CreditTransferExemption_Rule_2,Credit Transfer Exemption,True,1,,,,,,True
+Decision_CreditTransferExemption_Rule_3,Credit Transfer Exemption,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_1,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_10,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_11,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_12,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_13,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_14,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_15,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_2,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_3,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_4,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_5,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_6,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_7,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GradePointsAndInterpretation_Rule_8,Grade Points and Interpretation,True,1,,,,,,True
+Decision_GradePointsAndInterpretation_Rule_9,Grade Points and Interpretation,True,1,,,,,,False
+Decision_GraduationEligibility_Rule_1,Graduation Eligibility,True,1,,,,,,True
+Decision_GraduationEligibility_Rule_2,Graduation Eligibility,True,1,,,,,,True
+Decision_GraduationEligibility_Rule_3,Graduation Eligibility,True,1,,,,,,True
+Decision_GraduationEligibility_Rule_4,Graduation Eligibility,True,1,,,,,,False
+Decision_GraduationEligibility_Rule_5,Graduation Eligibility,True,1,,,,,,False
+Decision_SummerSemesterRegistration_Rule_1,Summer Semester Registration,True,1,,,,,,False
+Decision_SummerSemesterRegistration_Rule_2,Summer Semester Registration,True,1,,,,,,True
+Decision_SummerSemesterRegistration_Rule_3,Summer Semester Registration,True,1,,,,,,True
+Decision_SummerSemesterRegistration_Rule_4,Summer Semester Registration,True,1,,,,,,True
+Decision_SummerSemesterRegistration_Rule_5,Summer Semester Registration,True,1,,,,,,False

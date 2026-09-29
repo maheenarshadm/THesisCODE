@@ -1,0 +1,945 @@
+
+=== 2026-09-29T22:32:53 _generate thesis_schemarandom__from_rep19 OpenMRS 28 10028 0 prefix 1 207920 5 1039600 10 2079200
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 62
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 110
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  100/37803 databases, 29/55 in-scope rules verified, 0 failed, 9s
+  200/37803 databases, 29/55 in-scope rules verified, 0 failed, 18s
+  300/37803 databases, 29/55 in-scope rules verified, 0 failed, 27s
+  400/37803 databases, 29/55 in-scope rules verified, 0 failed, 37s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 25
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  500/37803 databases, 29/55 in-scope rules verified, 0 failed, 47s
+  600/37803 databases, 29/55 in-scope rules verified, 0 failed, 57s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 26
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  700/37803 databases, 29/55 in-scope rules verified, 0 failed, 67s
+  800/37803 databases, 29/55 in-scope rules verified, 0 failed, 77s
+  900/37803 databases, 29/55 in-scope rules verified, 0 failed, 86s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 6
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 38
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 93
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 109
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1000/37803 databases, 29/55 in-scope rules verified, 0 failed, 96s
+  1100/37803 databases, 29/55 in-scope rules verified, 0 failed, 105s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 59
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1200/37803 databases, 29/55 in-scope rules verified, 0 failed, 115s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 39
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1300/37803 databases, 29/55 in-scope rules verified, 0 failed, 124s
+  1400/37803 databases, 29/55 in-scope rules verified, 0 failed, 134s
+  1500/37803 databases, 29/55 in-scope rules verified, 0 failed, 144s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 13
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1600/37803 databases, 29/55 in-scope rules verified, 0 failed, 153s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 35
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 79
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 42
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 19
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1700/37803 databases, 29/55 in-scope rules verified, 0 failed, 163s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 40
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1800/37803 databases, 29/55 in-scope rules verified, 0 failed, 173s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 136
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 128
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  1900/37803 databases, 29/55 in-scope rules verified, 0 failed, 184s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 90
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 143
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2000/37803 databases, 29/55 in-scope rules verified, 0 failed, 195s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 3
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2100/37803 databases, 29/55 in-scope rules verified, 0 failed, 205s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 15
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 117
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2200/37803 databases, 29/55 in-scope rules verified, 0 failed, 215s
+  2300/37803 databases, 29/55 in-scope rules verified, 0 failed, 226s
+  2400/37803 databases, 29/55 in-scope rules verified, 0 failed, 236s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 69
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 29
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2500/37803 databases, 29/55 in-scope rules verified, 0 failed, 246s
+  2600/37803 databases, 29/55 in-scope rules verified, 0 failed, 256s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 115
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2700/37803 databases, 29/55 in-scope rules verified, 0 failed, 267s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 59
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 7
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 18
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  2800/37803 databases, 29/55 in-scope rules verified, 0 failed, 278s
+  2900/37803 databases, 29/55 in-scope rules verified, 0 failed, 290s
+  3000/37803 databases, 29/55 in-scope rules verified, 0 failed, 301s
+  3100/37803 databases, 29/55 in-scope rules verified, 0 failed, 311s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 55
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 86
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  3200/37803 databases, 29/55 in-scope rules verified, 0 failed, 321s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 79
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 138
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 121
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 72
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  3300/37803 databases, 29/55 in-scope rules verified, 0 failed, 332s
+  3400/37803 databases, 29/55 in-scope rules verified, 0 failed, 343s
+  3500/37803 databases, 29/55 in-scope rules verified, 0 failed, 354s
+  3600/37803 databases, 29/55 in-scope rules verified, 0 failed, 365s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 57
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  3700/37803 databases, 29/55 in-scope rules verified, 0 failed, 376s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 91
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 43
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+b1x written: 3780 databases (0 failed so far), 29/55 in-scope rules verified, pool 10, 384.4s (0.1017s/db)
+  3800/37803 databases, 29/55 in-scope rules verified, 0 failed, 386s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 77
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  3900/37803 databases, 29/55 in-scope rules verified, 0 failed, 398s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 10
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4000/37803 databases, 29/55 in-scope rules verified, 0 failed, 409s
+  4100/37803 databases, 29/55 in-scope rules verified, 0 failed, 419s
+  4200/37803 databases, 29/55 in-scope rules verified, 0 failed, 428s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 64
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 47
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4300/37803 databases, 29/55 in-scope rules verified, 0 failed, 438s
+  4400/37803 databases, 29/55 in-scope rules verified, 0 failed, 447s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 42
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4500/37803 databases, 29/55 in-scope rules verified, 0 failed, 456s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 98
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4600/37803 databases, 29/55 in-scope rules verified, 0 failed, 465s
+  4700/37803 databases, 29/55 in-scope rules verified, 0 failed, 474s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 91
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 80
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4800/37803 databases, 29/55 in-scope rules verified, 0 failed, 484s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 57
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  4900/37803 databases, 29/55 in-scope rules verified, 0 failed, 493s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 123
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5000/37803 databases, 29/55 in-scope rules verified, 0 failed, 502s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 24
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5100/37803 databases, 29/55 in-scope rules verified, 0 failed, 511s
+  5200/37803 databases, 29/55 in-scope rules verified, 0 failed, 520s
+  5300/37803 databases, 29/55 in-scope rules verified, 0 failed, 529s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 88
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5400/37803 databases, 29/55 in-scope rules verified, 0 failed, 538s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 35
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5500/37803 databases, 29/55 in-scope rules verified, 0 failed, 547s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 132
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5600/37803 databases, 29/55 in-scope rules verified, 0 failed, 556s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 76
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 103
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  5700/37803 databases, 29/55 in-scope rules verified, 0 failed, 565s
+  5800/37803 databases, 29/55 in-scope rules verified, 0 failed, 574s
+  5900/37803 databases, 29/55 in-scope rules verified, 0 failed, 583s
+  6000/37803 databases, 29/55 in-scope rules verified, 0 failed, 592s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 74
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  6100/37803 databases, 29/55 in-scope rules verified, 0 failed, 601s
+  6200/37803 databases, 29/55 in-scope rules verified, 0 failed, 610s
+  6300/37803 databases, 29/55 in-scope rules verified, 0 failed, 619s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 33
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 77
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  6400/37803 databases, 29/55 in-scope rules verified, 0 failed, 628s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 50
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  6500/37803 databases, 29/55 in-scope rules verified, 0 failed, 637s
+  6600/37803 databases, 29/55 in-scope rules verified, 0 failed, 646s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 36
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 70
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  6700/37803 databases, 29/55 in-scope rules verified, 0 failed, 655s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 9
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  6800/37803 databases, 29/55 in-scope rules verified, 0 failed, 664s
+  6900/37803 databases, 29/55 in-scope rules verified, 0 failed, 673s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 52
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7000/37803 databases, 29/55 in-scope rules verified, 0 failed, 682s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 9
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 65
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7100/37803 databases, 29/55 in-scope rules verified, 0 failed, 691s
+  7200/37803 databases, 29/55 in-scope rules verified, 0 failed, 700s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 19
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7300/37803 databases, 29/55 in-scope rules verified, 0 failed, 709s
+  7400/37803 databases, 29/55 in-scope rules verified, 0 failed, 718s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 83
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7500/37803 databases, 29/55 in-scope rules verified, 0 failed, 727s
+  7600/37803 databases, 29/55 in-scope rules verified, 0 failed, 736s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 28
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 96
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7700/37803 databases, 29/55 in-scope rules verified, 0 failed, 745s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 70
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7800/37803 databases, 29/55 in-scope rules verified, 0 failed, 754s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 5
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 135
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  7900/37803 databases, 29/55 in-scope rules verified, 0 failed, 763s
+  8000/37803 databases, 29/55 in-scope rules verified, 0 failed, 772s
+  8100/37803 databases, 29/55 in-scope rules verified, 0 failed, 781s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 31
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 34
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 55
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  8200/37803 databases, 29/55 in-scope rules verified, 0 failed, 790s
+  8300/37803 databases, 29/55 in-scope rules verified, 0 failed, 799s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 24
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  8400/37803 databases, 29/55 in-scope rules verified, 0 failed, 808s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 68
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  8500/37803 databases, 29/55 in-scope rules verified, 0 failed, 817s
+  8600/37803 databases, 29/55 in-scope rules verified, 0 failed, 826s
+  8700/37803 databases, 29/55 in-scope rules verified, 0 failed, 835s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 101
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  8800/37803 databases, 29/55 in-scope rules verified, 0 failed, 844s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 79
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  8900/37803 databases, 29/55 in-scope rules verified, 0 failed, 853s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 82
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9000/37803 databases, 29/55 in-scope rules verified, 0 failed, 862s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 54
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9100/37803 databases, 29/55 in-scope rules verified, 0 failed, 871s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 118
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 131
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 50
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9200/37803 databases, 29/55 in-scope rules verified, 0 failed, 880s
+  9300/37803 databases, 29/55 in-scope rules verified, 0 failed, 889s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 1
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9400/37803 databases, 29/55 in-scope rules verified, 0 failed, 898s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 126
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 12
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9500/37803 databases, 29/55 in-scope rules verified, 0 failed, 907s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 56
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9600/37803 databases, 29/55 in-scope rules verified, 0 failed, 916s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 119
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  9700/37803 databases, 29/55 in-scope rules verified, 0 failed, 925s
+  9800/37803 databases, 29/55 in-scope rules verified, 0 failed, 935s
+  9900/37803 databases, 29/55 in-scope rules verified, 0 failed, 943s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 58
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 17
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  10000/37803 databases, 29/55 in-scope rules verified, 0 failed, 952s
+  10100/37803 databases, 29/55 in-scope rules verified, 0 failed, 961s
+  10200/37803 databases, 29/55 in-scope rules verified, 0 failed, 970s
+  10300/37803 databases, 29/55 in-scope rules verified, 0 failed, 979s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 174
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  10400/37803 databases, 29/55 in-scope rules verified, 0 failed, 988s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 62
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 89
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 46
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 70
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  10500/37803 databases, 29/55 in-scope rules verified, 0 failed, 997s
+  10600/37803 databases, 29/55 in-scope rules verified, 0 failed, 1006s
+  10700/37803 databases, 29/55 in-scope rules verified, 0 failed, 1014s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 2
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  10800/37803 databases, 29/55 in-scope rules verified, 0 failed, 1023s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 5
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  10900/37803 databases, 29/55 in-scope rules verified, 0 failed, 1032s
+  11000/37803 databases, 29/55 in-scope rules verified, 0 failed, 1041s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 124
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  11100/37803 databases, 29/55 in-scope rules verified, 0 failed, 1050s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 39
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  11200/37803 databases, 29/55 in-scope rules verified, 0 failed, 1059s
+  11300/37803 databases, 29/55 in-scope rules verified, 0 failed, 1068s
+  11400/37803 databases, 29/55 in-scope rules verified, 0 failed, 1077s
+  11500/37803 databases, 29/55 in-scope rules verified, 0 failed, 1086s
+  11600/37803 databases, 29/55 in-scope rules verified, 0 failed, 1094s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 84
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  11700/37803 databases, 29/55 in-scope rules verified, 0 failed, 1104s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 29
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 22
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  11800/37803 databases, 29/55 in-scope rules verified, 0 failed, 1113s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 19
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 46
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  11900/37803 databases, 29/55 in-scope rules verified, 0 failed, 1123s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 52
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 34
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12000/37803 databases, 29/55 in-scope rules verified, 0 failed, 1132s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 48
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12100/37803 databases, 29/55 in-scope rules verified, 0 failed, 1142s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 59
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12200/37803 databases, 29/55 in-scope rules verified, 0 failed, 1151s
+  12300/37803 databases, 29/55 in-scope rules verified, 0 failed, 1161s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 8
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12400/37803 databases, 29/55 in-scope rules verified, 0 failed, 1171s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 21
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 81
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 99
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 44
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12500/37803 databases, 29/55 in-scope rules verified, 0 failed, 1180s
+  12600/37803 databases, 29/55 in-scope rules verified, 0 failed, 1190s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 33
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12700/37803 databases, 29/55 in-scope rules verified, 0 failed, 1199s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 77
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  12800/37803 databases, 29/55 in-scope rules verified, 0 failed, 1209s
+  12900/37803 databases, 29/55 in-scope rules verified, 0 failed, 1218s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 68
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13000/37803 databases, 29/55 in-scope rules verified, 0 failed, 1229s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 56
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13100/37803 databases, 29/55 in-scope rules verified, 0 failed, 1249s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 69
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 117
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13200/37803 databases, 29/55 in-scope rules verified, 0 failed, 1277s
+  13300/37803 databases, 29/55 in-scope rules verified, 0 failed, 1305s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 142
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13400/37803 databases, 29/55 in-scope rules verified, 0 failed, 1333s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 17
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13500/37803 databases, 29/55 in-scope rules verified, 0 failed, 1364s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 60
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 61
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13600/37803 databases, 29/55 in-scope rules verified, 0 failed, 1395s
+  13700/37803 databases, 29/55 in-scope rules verified, 0 failed, 1428s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 77
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13800/37803 databases, 29/55 in-scope rules verified, 0 failed, 1461s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 57
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 190
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  13900/37803 databases, 29/55 in-scope rules verified, 0 failed, 1495s
+  14000/37803 databases, 29/55 in-scope rules verified, 0 failed, 1532s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 60
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 16
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  14100/37803 databases, 29/55 in-scope rules verified, 0 failed, 1573s
+  14200/37803 databases, 29/55 in-scope rules verified, 0 failed, 1606s
+  14300/37803 databases, 29/55 in-scope rules verified, 0 failed, 1639s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 184
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  14400/37803 databases, 29/55 in-scope rules verified, 0 failed, 1673s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 78
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  14500/37803 databases, 29/55 in-scope rules verified, 0 failed, 1705s
+  14600/37803 databases, 29/55 in-scope rules verified, 0 failed, 1739s
+  14700/37803 databases, 29/55 in-scope rules verified, 0 failed, 1772s
+  14800/37803 databases, 29/55 in-scope rules verified, 0 failed, 1803s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 31
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  14900/37803 databases, 29/55 in-scope rules verified, 0 failed, 1837s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 91
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  15000/37803 databases, 29/55 in-scope rules verified, 0 failed, 1869s
+  15100/37803 databases, 29/55 in-scope rules verified, 0 failed, 1902s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 68
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  15200/37803 databases, 29/55 in-scope rules verified, 0 failed, 1935s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 36
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  15300/37803 databases, 29/55 in-scope rules verified, 0 failed, 1967s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 87
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  15400/37803 databases, 29/55 in-scope rules verified, 0 failed, 1998s
+  15500/37803 databases, 29/55 in-scope rules verified, 0 failed, 2031s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 185
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  15600/37803 databases, 29/55 in-scope rules verified, 0 failed, 2063s
+  15700/37803 databases, 29/55 in-scope rules verified, 0 failed, 2101s
+  15800/37803 databases, 29/55 in-scope rules verified, 0 failed, 2134s
+  15900/37803 databases, 29/55 in-scope rules verified, 0 failed, 2165s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 60
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 105
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  16000/37803 databases, 29/55 in-scope rules verified, 0 failed, 2196s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 93
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 128
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  16100/37803 databases, 29/55 in-scope rules verified, 0 failed, 2233s
+  16200/37803 databases, 29/55 in-scope rules verified, 0 failed, 2271s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 55
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 181
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  16300/37803 databases, 29/55 in-scope rules verified, 0 failed, 2311s
+  16400/37803 databases, 29/55 in-scope rules verified, 0 failed, 2343s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 94
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  16500/37803 databases, 29/55 in-scope rules verified, 0 failed, 2375s
+  16600/37803 databases, 29/55 in-scope rules verified, 0 failed, 2405s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 96
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 43
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 140
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  16700/37803 databases, 29/55 in-scope rules verified, 0 failed, 2436s
+  16800/37803 databases, 29/55 in-scope rules verified, 0 failed, 2465s
+  16900/37803 databases, 29/55 in-scope rules verified, 0 failed, 2494s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 30
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  17000/37803 databases, 29/55 in-scope rules verified, 0 failed, 2523s
+  17100/37803 databases, 29/55 in-scope rules verified, 0 failed, 2550s
+  17200/37803 databases, 29/55 in-scope rules verified, 0 failed, 2578s
+  17300/37803 databases, 29/55 in-scope rules verified, 0 failed, 2605s
+  17400/37803 databases, 29/55 in-scope rules verified, 0 failed, 2632s
+  17500/37803 databases, 29/55 in-scope rules verified, 0 failed, 2659s
+  17600/37803 databases, 29/55 in-scope rules verified, 0 failed, 2687s
+  17700/37803 databases, 29/55 in-scope rules verified, 0 failed, 2715s
+  17800/37803 databases, 29/55 in-scope rules verified, 0 failed, 2742s
+  17900/37803 databases, 29/55 in-scope rules verified, 0 failed, 2769s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 106
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 24
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  18000/37803 databases, 29/55 in-scope rules verified, 0 failed, 2797s
+  18100/37803 databases, 29/55 in-scope rules verified, 0 failed, 2824s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 188
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 27
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 38
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  18200/37803 databases, 29/55 in-scope rules verified, 0 failed, 2852s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 14
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  18300/37803 databases, 29/55 in-scope rules verified, 0 failed, 2865s
+  18400/37803 databases, 29/55 in-scope rules verified, 0 failed, 2874s
+  18500/37803 databases, 29/55 in-scope rules verified, 0 failed, 2883s
+  18600/37803 databases, 29/55 in-scope rules verified, 0 failed, 2893s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 40
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 94
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  18700/37803 databases, 29/55 in-scope rules verified, 0 failed, 2903s
+  18800/37803 databases, 29/55 in-scope rules verified, 0 failed, 2913s
+  18900/37803 databases, 29/55 in-scope rules verified, 0 failed, 2922s
+b5x written: 18901 databases (0 failed so far), 29/55 in-scope rules verified, pool 10, 2922.2s (0.1546s/db)
+  19000/37803 databases, 29/55 in-scope rules verified, 0 failed, 2932s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 96
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  19100/37803 databases, 29/55 in-scope rules verified, 0 failed, 2942s
+  19200/37803 databases, 29/55 in-scope rules verified, 0 failed, 2952s
+  19300/37803 databases, 29/55 in-scope rules verified, 0 failed, 2961s
+  19400/37803 databases, 29/55 in-scope rules verified, 0 failed, 2971s
+  19500/37803 databases, 29/55 in-scope rules verified, 0 failed, 2980s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 48
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 104
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  19600/37803 databases, 29/55 in-scope rules verified, 0 failed, 2990s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 29
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  19700/37803 databases, 29/55 in-scope rules verified, 0 failed, 2999s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 38
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 49
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  19800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3015s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 52
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 63
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  19900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3041s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 97
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3057s
+  20100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3067s
+  20200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3077s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 73
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3086s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 161
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3096s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 73
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 12
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3108s
+  20600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3125s
+  20700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3148s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 46
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3170s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 50
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 89
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  20900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3193s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 37
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3205s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 33
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 94
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3224s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 49
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3246s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 75
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3269s
+  21400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3292s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 20
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3309s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 127
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3324s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 151
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  21700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3334s
+  21800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3344s
+  21900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3354s
+  22000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3364s
+  22100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3374s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 13
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  22200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3386s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 71
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 23
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 207
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  22300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3398s
+  22400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3415s
+  22500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3431s
+  22600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3447s
+  22700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3459s
+  22800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3469s
+  22900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3479s
+  23000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3489s
+  23100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3499s
+  23200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3510s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 139
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 53
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 100
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  23300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3521s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 69
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  23400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3530s
+  23500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3539s
+  23600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3548s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 162
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 153
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  23700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3558s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 47
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 63
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 67
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  23800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3567s
+  23900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3576s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 4
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 69
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  24000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3585s
+  24100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3594s
+  24200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3603s
+  24300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3612s
+  24400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3621s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 85
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  24500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3631s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 92
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 95
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 25
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  24600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3640s
+  24700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3649s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 112
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  24800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3658s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 148
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  24900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3667s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 138
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  25000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3676s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 25
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  25100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3687s
+  25200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3709s
+  25300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3732s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 199
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  25400/37803 databases, 29/55 in-scope rules verified, 0 failed, 3755s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 213
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  25500/37803 databases, 29/55 in-scope rules verified, 0 failed, 3782s
+  25600/37803 databases, 29/55 in-scope rules verified, 0 failed, 3806s
+  25700/37803 databases, 29/55 in-scope rules verified, 0 failed, 3834s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 48
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  25800/37803 databases, 29/55 in-scope rules verified, 0 failed, 3844s
+  25900/37803 databases, 29/55 in-scope rules verified, 0 failed, 3854s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 65
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  26000/37803 databases, 29/55 in-scope rules verified, 0 failed, 3865s
+  26100/37803 databases, 29/55 in-scope rules verified, 0 failed, 3887s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 114
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  26200/37803 databases, 29/55 in-scope rules verified, 0 failed, 3896s
+  26300/37803 databases, 29/55 in-scope rules verified, 0 failed, 3906s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 58
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  26400/37803 databases, 30/55 in-scope rules verified, 0 failed, 3916s
+  26500/37803 databases, 30/55 in-scope rules verified, 0 failed, 3926s
+  26600/37803 databases, 30/55 in-scope rules verified, 0 failed, 3935s
+  26700/37803 databases, 30/55 in-scope rules verified, 0 failed, 3945s
+  26800/37803 databases, 30/55 in-scope rules verified, 0 failed, 3954s
+  26900/37803 databases, 30/55 in-scope rules verified, 0 failed, 3964s
+  27000/37803 databases, 30/55 in-scope rules verified, 0 failed, 3975s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 66
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  27100/37803 databases, 30/55 in-scope rules verified, 0 failed, 3990s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 64
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  27200/37803 databases, 30/55 in-scope rules verified, 0 failed, 4004s
+  27300/37803 databases, 30/55 in-scope rules verified, 0 failed, 4018s
+  27400/37803 databases, 30/55 in-scope rules verified, 0 failed, 4033s
+  27500/37803 databases, 30/55 in-scope rules verified, 0 failed, 4049s
+  27600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4064s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 160
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  27700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4080s
+  27800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4095s
+  27900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4113s
+  28000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4130s
+  28100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4145s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 172
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  28200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4161s
+  28300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4178s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 62
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 23
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  28400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4195s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 67
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  28500/37803 databases, 31/55 in-scope rules verified, 0 failed, 4212s
+  28600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4229s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 46
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  28700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4247s
+  28800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4264s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 142
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  28900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4282s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 155
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4299s
+  29100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4317s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 24
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4335s
+  29300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4353s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 85
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4371s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 126
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 109
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 26
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29500/37803 databases, 31/55 in-scope rules verified, 0 failed, 4388s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 22
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 19
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4405s
+  29700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4422s
+  29800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4439s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 64
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  29900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4456s
+  30000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4473s
+  30100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4489s
+  30200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4506s
+  30300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4523s
+  30400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4539s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 134
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  30500/37803 databases, 31/55 in-scope rules verified, 0 failed, 4557s
+  30600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4573s
+  30700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4590s
+  30800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4607s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 97
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  30900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4623s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 122
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4637s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 30
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4652s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 36
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 133
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 91
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4667s
+  31300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4682s
+  31400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4696s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 98
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31500/37803 databases, 31/55 in-scope rules verified, 0 failed, 4711s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 153
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4725s
+  31700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4740s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 73
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4754s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 67
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 55
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  31900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4769s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 86
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4784s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 72
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 11
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4799s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 143
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4814s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 206
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4828s
+  32400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4843s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 20
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 40
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32500/37803 databases, 31/55 in-scope rules verified, 0 failed, 4858s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 28
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32600/37803 databases, 31/55 in-scope rules verified, 0 failed, 4873s
+  32700/37803 databases, 31/55 in-scope rules verified, 0 failed, 4888s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 18
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  32800/37803 databases, 31/55 in-scope rules verified, 0 failed, 4903s
+  32900/37803 databases, 31/55 in-scope rules verified, 0 failed, 4918s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 42
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33000/37803 databases, 31/55 in-scope rules verified, 0 failed, 4934s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 89
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 37
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 20
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33100/37803 databases, 31/55 in-scope rules verified, 0 failed, 4949s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 233
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33200/37803 databases, 31/55 in-scope rules verified, 0 failed, 4965s
+  33300/37803 databases, 31/55 in-scope rules verified, 0 failed, 4981s
+  33400/37803 databases, 31/55 in-scope rules verified, 0 failed, 4997s
+  33500/37803 databases, 31/55 in-scope rules verified, 0 failed, 5013s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 112
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 35
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33600/37803 databases, 31/55 in-scope rules verified, 0 failed, 5031s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 125
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33700/37803 databases, 31/55 in-scope rules verified, 0 failed, 5049s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 76
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 63
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33800/37803 databases, 31/55 in-scope rules verified, 0 failed, 5067s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 34
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 24
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  33900/37803 databases, 31/55 in-scope rules verified, 0 failed, 5086s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 42
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34000/37803 databases, 31/55 in-scope rules verified, 0 failed, 5104s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 62
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 93
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34100/37803 databases, 31/55 in-scope rules verified, 0 failed, 5122s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 41
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34200/37803 databases, 31/55 in-scope rules verified, 0 failed, 5138s
+  34300/37803 databases, 31/55 in-scope rules verified, 0 failed, 5154s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 141
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34400/37803 databases, 31/55 in-scope rules verified, 0 failed, 5170s
+  34500/37803 databases, 31/55 in-scope rules verified, 0 failed, 5186s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 142
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34600/37803 databases, 31/55 in-scope rules verified, 0 failed, 5203s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 16
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34700/37803 databases, 31/55 in-scope rules verified, 0 failed, 5220s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 113
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  34800/37803 databases, 31/55 in-scope rules verified, 0 failed, 5237s
+  34900/37803 databases, 31/55 in-scope rules verified, 0 failed, 5253s
+  35000/37803 databases, 31/55 in-scope rules verified, 0 failed, 5271s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 98
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  35100/37803 databases, 31/55 in-scope rules verified, 0 failed, 5289s
+  35200/37803 databases, 31/55 in-scope rules verified, 0 failed, 5304s
+  35300/37803 databases, 31/55 in-scope rules verified, 0 failed, 5319s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set intersection at position 41
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  35400/37803 databases, 31/55 in-scope rules verified, 0 failed, 5335s
+  35500/37803 databases, 31/55 in-scope rules verified, 0 failed, 5350s
+  35600/37803 databases, 31/55 in-scope rules verified, 0 failed, 5365s
+  35700/37803 databases, 31/55 in-scope rules verified, 0 failed, 5380s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 196
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 197
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  35800/37803 databases, 31/55 in-scope rules verified, 0 failed, 5395s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 18
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  35900/37803 databases, 31/55 in-scope rules verified, 0 failed, 5411s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 4
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  36000/37803 databases, 31/55 in-scope rules verified, 0 failed, 5429s
+  36100/37803 databases, 31/55 in-scope rules verified, 0 failed, 5445s
+  36200/37803 databases, 31/55 in-scope rules verified, 0 failed, 5460s
+  36300/37803 databases, 31/55 in-scope rules verified, 0 failed, 5477s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 118
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  36400/37803 databases, 31/55 in-scope rules verified, 0 failed, 5493s
+  36500/37803 databases, 31/55 in-scope rules verified, 0 failed, 5512s
+  36600/37803 databases, 31/55 in-scope rules verified, 0 failed, 5530s
+  36700/37803 databases, 31/55 in-scope rules verified, 0 failed, 5547s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 134
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set union at position 44
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  36800/37803 databases, 31/55 in-scope rules verified, 0 failed, 5564s
+  36900/37803 databases, 31/55 in-scope rules verified, 0 failed, 5581s
+  37000/37803 databases, 31/55 in-scope rules verified, 0 failed, 5597s
+  37100/37803 databases, 31/55 in-scope rules verified, 0 failed, 5614s
+  37200/37803 databases, 31/55 in-scope rules verified, 0 failed, 5630s
+  37300/37803 databases, 31/55 in-scope rules verified, 0 failed, 5646s
+  37400/37803 databases, 31/55 in-scope rules verified, 0 failed, 5661s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set difference at position 4
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  37500/37803 databases, 31/55 in-scope rules verified, 0 failed, 5677s
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 98
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible set symmetric difference at position 35
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+  37600/37803 databases, 31/55 in-scope rules verified, 0 failed, 5693s
+  37700/37803 databases, 31/55 in-scope rules verified, 0 failed, 5709s
+  37800/37803 databases, 31/55 in-scope rules verified, 0 failed, 5726s
+  37803/37803 databases, 31/55 in-scope rules verified, 0 failed, 5726s
+b10x written: 37803 databases (0 failed so far), 31/55 in-scope rules verified, pool 12, 5726.0s (0.1515s/db)
+
+=== 2026-09-30T00:08:22 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep19/OpenMRS/schema_random/b10x/rep_28 OpenMRS
+validated: 31 of 55 in-scope rules, pool 12, suite min 7 (greedy 8, optimal True), 0 errors, 0.9s

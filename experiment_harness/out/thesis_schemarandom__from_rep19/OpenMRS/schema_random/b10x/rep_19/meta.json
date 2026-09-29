@@ -1,0 +1,60 @@
+{
+  "case_study": "OpenMRS",
+  "setup": "schema_random",
+  "budget_multiplier": 10,
+  "rep": 19,
+  "seed": 10019,
+  "mode": "prefix",
+  "stream_budget_multiplier": 10,
+  "budget_evaluations": 2079200,
+  "objectives": 55,
+  "databases_generated": 37803,
+  "evaluations_used": 2079165,
+  "capped_by_max_databases": false,
+  "stopped_because": "budget",
+  "iterations": 37803,
+  "population_size": null,
+  "runtime_seconds": 4174.94,
+  "seconds_per_database": 0.1104,
+  "failed_databases": 0,
+  "generation_errors": [],
+  "unevaluable_decisions": {
+    "Identifier Format Validity: PatternError": 33643
+  },
+  "pool_size": 9,
+  "generator_settings": {
+    "values": "uniform over the full domain of the declared column type",
+    "integer_types": "smallint 16-bit, integer 32-bit, bigint 64-bit signed",
+    "oracle_number_without_precision": "64-bit signed integer range (largest SQLite can store)",
+    "numeric_decimal": "declared (precision, scale); (10, 0) when not declared",
+    "floating_point": "double: full IEEE double range; float/real: full IEEE single range",
+    "date_datetime_timestamp": "calendar years 1-9999, as day numbers since 1970-01-01",
+    "time": "seconds of the day, 0-86399",
+    "text": "printable ASCII, length 0..declared length (char: exactly declared length), 255 when no length is declared",
+    "boolean": "true / false",
+    "binary": "random bytes, length 0..declared length (255 default)",
+    "rows_per_table": [
+      1,
+      5
+    ],
+    "null_probability_nullable_columns": 0.1,
+    "single_column_primary_keys": "sequential 1..n (unique by construction)",
+    "foreign_keys": "value of a random existing parent row (parents generated first)",
+    "budget_charge_per_database": "number of compiled objectives of the case study"
+  },
+  "finished_at": "2026-09-29T22:32:16",
+  "validation_mode": "full",
+  "unevaluable_decisions_in_pool_check": {
+    "Identifier Format Validity: PatternError": 7
+  },
+  "suite_size": {
+    "union": {
+      "pool": 9,
+      "greedy": 7,
+      "min": 7,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 0.3
+}

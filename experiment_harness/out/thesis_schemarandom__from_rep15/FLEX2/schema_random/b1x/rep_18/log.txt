@@ -1,0 +1,4 @@
+generated as the first 3916 databases of the b10x stream (seed 10018); generation log: ../../b10x/rep_18/log.txt
+
+=== 2026-09-29T18:03:42 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep15/FLEX2/schema_random/b1x/rep_18 FLEX2
+validated: 12 of 50 in-scope rules, pool 3, suite min 2 (greedy 2, optimal True), 0 errors, 0.1s

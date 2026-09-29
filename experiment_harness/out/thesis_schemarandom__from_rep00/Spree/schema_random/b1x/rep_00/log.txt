@@ -1,0 +1,4 @@
+generated as the first 3922 databases of the b10x stream (seed 10000); generation log: ../../b10x/rep_00/log.txt
+
+=== 2026-09-29T21:21:13 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep00/Spree/schema_random/b1x/rep_00 Spree
+validated: 16 of 21 in-scope rules, pool 4, suite min 3 (greedy 3, optimal True), 0 errors, 0.1s

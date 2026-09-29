@@ -1,0 +1,54 @@
+
+=== 2026-09-30T01:01:25 _search /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis__from_rep09/jBilling/dynamosa/b5x/rep_09 jBilling dynamosa 5 9 5009 394850
+Traceback (most recent call last):
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 1018, in <module>
+    job_search(d, cs, setup, int(k), int(rep), int(seed), int(budget))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 243, in job_search
+    archive, history, population = _run_algorithm(setup, records, case_study, budget, seed, trace)
+                                   ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/harness.py", line 201, in _run_algorithm
+    return dynamosa.run_dynamosa(records, case_study, population_size=POPULATION_SIZE,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 generations=None, rng=rng, max_evaluations=budget, trace=trace)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1345, in run_dynamosa
+    return _run_dynamosa_loop(records, case_study, population_size, generations, rng,
+                              mutations_per_child, kick_probability, dynamic_gating,
+                              use_local_burst, trace, max_evaluations is not None)
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1360, in _run_dynamosa_loop
+    _dynamosa_generations(records, case_study, population_size, generations, rng,
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          mutations_per_child, kick_probability, dynamic_gating,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          use_local_burst, trace, state)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 1450, in _dynamosa_generations
+    child_c, child_fm, child_sm, _improved = _mutate_objective(
+                                             ~~~~~~~~~~~~~~~~~^
+        r, child_c, child_fm, child_sm, table_cache, rng,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kick_probability=kick_probability)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/dynamosa.py", line 430, in _mutate_objective
+    value, _best_fitness, improved = best_value_for(record, genome, var_name, node, record['case_study'])
+                                     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 510, in best_value_for
+    if not _numeric_step_eligible(record, var_name, node, current):
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 446, in _numeric_step_eligible
+    if enumerable_domain(record, var_name):
+       ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 237, in enumerable_domain
+    _collect_domain_facts(row['condition'], var_name, True, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 180, in _collect_domain_facts
+    _collect_domain_facts(child, var_name, negated, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 177, in _collect_domain_facts
+    _collect_domain_facts(node[key], var_name, negated, hit, avoid)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/generator/mutation.py", line 176, in _collect_domain_facts
+    if key in node:
+       ^^^^^^^^^^^
+KeyboardInterrupt

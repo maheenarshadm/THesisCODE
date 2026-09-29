@@ -1,0 +1,4 @@
+generated as the first 3780 databases of the b10x stream (seed 10005); generation log: ../../b10x/rep_05/log.txt
+
+=== 2026-09-29T22:59:02 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep00/OpenMRS/schema_random/b1x/rep_05 OpenMRS
+validated: 29 of 55 in-scope rules, pool 8, suite min 7 (greedy 7, optimal True), 0 errors, 1.3s

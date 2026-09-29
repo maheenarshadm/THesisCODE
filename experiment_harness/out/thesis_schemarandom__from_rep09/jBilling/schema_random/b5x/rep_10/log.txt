@@ -1,0 +1,4 @@
+generated as the first 19742 databases of the b10x stream (seed 10010); generation log: ../../b10x/rep_10/log.txt
+
+=== 2026-09-30T01:32:53 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep09/jBilling/schema_random/b5x/rep_10 jBilling
+validated: 15 of 20 in-scope rules, pool 3, suite min 3 (greedy 3, optimal True), 0 errors, 0.1s

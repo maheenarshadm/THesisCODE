@@ -1,0 +1,6 @@
+generated as the first 3780 databases of the b10x stream (seed 10016); generation log: ../../b10x/rep_16/log.txt
+
+=== 2026-09-29T17:10:25 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep15/OpenMRS/schema_random/b1x/rep_16 OpenMRS
+/Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/validation_oracle/tests/../db_resolver.py:398: FutureWarning: Possible nested set at position 35
+  matched = bool(pattern and value_str is not None and re.fullmatch(pattern, str(value_str)))
+validated: 29 of 55 in-scope rules, pool 8, suite min 5 (greedy 5, optimal True), 0 errors, 0.2s

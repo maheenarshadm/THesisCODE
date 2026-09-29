@@ -1,0 +1,13 @@
+evaluations,database_index,rule_id
+77,0,Decision_AttendanceEligibility_Rule_2
+77,0,Decision_CourseRegistrationEligibility_Rule_1
+77,0,Decision_CourseReplacementEligibility_Rule_2
+77,0,Decision_CreditTransferExemption_Rule_2
+77,0,Decision_CreditTransferExemption_Rule_3
+77,0,Decision_GraduationEligibility_Rule_1
+77,0,Decision_GraduationEligibility_Rule_2
+77,0,Decision_SummerSemesterRegistration_Rule_2
+77,0,Decision_SummerSemesterRegistration_Rule_4
+154,1,Decision_CreditTransferExemption_Rule_1
+154,1,Decision_GraduationEligibility_Rule_3
+1155,14,Decision_SummerSemesterRegistration_Rule_3

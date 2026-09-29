@@ -1,0 +1,24 @@
+{
+  "union": {
+    "pool": 10,
+    "greedy": 6,
+    "min": 6,
+    "optimal": true,
+    "min_members": [
+      0,
+      2,
+      4,
+      5,
+      8,
+      9
+    ],
+    "greedy_members": [
+      0,
+      2,
+      4,
+      5,
+      8,
+      9
+    ]
+  }
+}
