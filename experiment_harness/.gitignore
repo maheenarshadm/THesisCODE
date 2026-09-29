@@ -15,3 +15,6 @@ out/**/archive/individuals.pkl
 out/**/final/individuals.pkl
 out/**/dbs/
 out/**/*.db
+
+# schema_random.py: the kept databases of each run (re-creatable from the seed)
+out/**/pool/
