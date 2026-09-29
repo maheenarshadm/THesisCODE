@@ -1,7 +1,7 @@
 {
   "experiment": "thesis",
   "output_folder": "thesis_schemarandom__from_rep10",
-  "reps": 20,
+  "reps": 5,
   "first_rep": 10,
   "case_studies": [
     "jBilling",
@@ -62,6 +62,6 @@
   },
   "max_databases": 0,
   "compiled_constraints_sha256": "57ee26c6b8b41f0af57177c08165018b8654f18de2762993ac49f359d9ab78b8",
-  "git_commit": "b92468aee92f10ad5dd401bdf6f72d19ad786800",
-  "written_at": "2026-09-29T12:33:35"
+  "git_commit": "0b3f364bf79993999cfd6620665b7f026cca69ca (uncommitted changes present)",
+  "written_at": "2026-09-29T15:11:46"
 }
