@@ -25,7 +25,14 @@ Same protocol as harness.py:
              objective -- what random_sample pays per sample -- so a run
              generates floor(k*B / #objectives) databases, the same number
              random_sample generates within the same budget.
-  seeds      seed = 1000 * budget_multiplier + rep (separate run per budget)
+  seeds      --mode prefix (default): ONE stream per (case study, rep), seed =
+             1000 * max_budget + rep, generated up to the largest budget; the
+             smaller budgets are its first floor(k*B / #objectives) databases.
+             Databases are independent (no memory, no feedback), so a prefix
+             is distributed exactly like a separate run of that size, at ~60%
+             of the cost of separate runs (10 instead of 1+5+10 units).
+             --mode separate: one run per budget, seed = 1000 * k + rep, as
+             harness.py does for the search-based setups.
   validator  same validator, same not_persisted override files (coverage =
              union over the files, as for jBilling)
   suite      every database that verified at least one new rule when it was
@@ -51,6 +58,7 @@ Output (same layout as harness.py, so merge/summarize/stats can pick it up):
 Usage (from the repo root, with .venv's python):
   schema_random.py run    --name thesis --reps 20 --first-rep 10 [--workers 4]
                           [--case-studies ...] [--budgets 1 5 10]
+                          [--mode prefix|separate]   (default prefix)
                           [--max-databases N]   (smoke tests only: caps a run)
   schema_random.py status --name thesis --first-rep 10
 Everything is resumable: generation and validation each leave a marker file.
@@ -366,14 +374,29 @@ def _verify(ctx, conn, case_study, decisions, names, overrides, decision_errors=
     return rules
 
 
-def job_generate(run_dir, case_study, k, rep, seed, budget, max_databases):
+def _write_generation(run_dir, meta, pool, trace):
+    os.makedirs(os.path.join(run_dir, 'pool'), exist_ok=True)
+    with open(os.path.join(run_dir, 'pool', 'databases.pkl'), 'wb') as f:
+        pickle.dump(pool, f)
+    H._write_csv(os.path.join(run_dir, 'trace.csv'), ['evaluations', 'database_index', 'rule_id'], trace)
+    with open(os.path.join(run_dir, 'meta.json'), 'w', encoding='utf-8') as f:
+        json.dump(meta, f, indent=2)
+    open(os.path.join(run_dir, 'SEARCH_DONE'), 'w').close()
+
+
+def job_generate(out_name, case_study, rep, seed, targets, max_databases, mode):
+    """One random stream of databases for (case_study, rep). `targets` =
+    [(k, budget_evaluations), ...]; at each target's database count the
+    stream so far is written as that budget's run folder (prefix mode: all
+    budgets from one stream; separate mode: a single target)."""
     records = H._load_records(case_study)
     by_rule, oos = H._scope(case_study, records)
     in_scope = set(by_rule) - oos
     n_obj = len(records)
-    n_db = budget // n_obj
-    if max_databases:
-        n_db = min(n_db, max_databases)
+    targets = sorted(targets)
+    counts = {k: (min(b // n_obj, max_databases) if max_databases else b // n_obj) for k, b in targets}
+    n_db = max(counts.values())
+    kmax = targets[-1][0]
     ctx, decisions, overrides, rules_of = _validator_context(case_study)
     ddl = _ddl_script(case_study)
     random.seed(seed)
@@ -396,41 +419,45 @@ def job_generate(run_dir, case_study, k, rep, seed, budget, max_databases):
                 conn.close()
         except Exception as e:  # noqa: BLE001 -- one bad database must not abort the run
             failures += 1
+            found = set()
             if len(errors) < 20:
                 errors.append(f'database {idx}: {type(e).__name__}: {e}')
                 traceback.print_exc()
-            continue
         if found:
             pool.append({'database_index': idx, 'candidate': cand, 'new_rules': sorted(found)})
             for rid in sorted(found):
                 trace.append({'evaluations': (idx + 1) * n_obj, 'database_index': idx, 'rule_id': rid})
             remaining -= found
         if (idx + 1) % 100 == 0 or idx + 1 == n_db:
-            cov = len(in_scope - remaining)
-            print(f"  {idx + 1}/{n_db} databases, {cov}/{len(in_scope)} in-scope rules verified, "
-                  f"{failures} failed, {time.time() - t0:.0f}s", flush=True)
-    runtime = time.time() - t0
-
-    os.makedirs(os.path.join(run_dir, 'pool'), exist_ok=True)
-    with open(os.path.join(run_dir, 'pool', 'databases.pkl'), 'wb') as f:
-        pickle.dump(pool, f)
-    H._write_csv(os.path.join(run_dir, 'trace.csv'), ['evaluations', 'database_index', 'rule_id'], trace)
-    meta = {
-        'case_study': case_study, 'setup': SETUP, 'budget_multiplier': k, 'rep': rep, 'seed': seed,
-        'budget_evaluations': budget, 'objectives': n_obj, 'databases_generated': n_db,
-        'evaluations_used': n_db * n_obj, 'capped_by_max_databases': bool(max_databases),
-        'stopped_because': 'budget', 'iterations': n_db, 'population_size': None,
-        'runtime_seconds': round(runtime, 2), 'seconds_per_database': round(runtime / max(n_db, 1), 4),
-        'failed_databases': failures, 'generation_errors': errors,
-        'unevaluable_decisions': decision_errors,
-        'pool_size': len(pool), 'generator_settings': GENERATOR_SETTINGS,
-        'finished_at': datetime.datetime.now().isoformat(timespec='seconds'),
-    }
-    with open(os.path.join(run_dir, 'meta.json'), 'w', encoding='utf-8') as f:
-        json.dump(meta, f, indent=2)
-    open(os.path.join(run_dir, 'SEARCH_DONE'), 'w').close()
-    print(f"generation done: {n_db} databases ({failures} failed), {len(in_scope - remaining)}/{len(in_scope)} "
-          f"in-scope rules verified, pool {len(pool)}, {runtime:.1f}s ({meta['seconds_per_database']}s/db)")
+            print(f"  {idx + 1}/{n_db} databases, {len(in_scope - remaining)}/{len(in_scope)} in-scope rules "
+                  f"verified, {failures} failed, {time.time() - t0:.0f}s", flush=True)
+        for k, budget in targets:
+            if counts[k] != idx + 1:
+                continue
+            runtime = time.time() - t0
+            run_dir = _run_dir(out_name, case_study, k, rep)
+            os.makedirs(run_dir, exist_ok=True)
+            meta = {
+                'case_study': case_study, 'setup': SETUP, 'budget_multiplier': k, 'rep': rep, 'seed': seed,
+                'mode': mode, 'stream_budget_multiplier': kmax,
+                'budget_evaluations': budget, 'objectives': n_obj, 'databases_generated': counts[k],
+                'evaluations_used': counts[k] * n_obj, 'capped_by_max_databases': bool(max_databases),
+                'stopped_because': 'budget', 'iterations': counts[k], 'population_size': None,
+                'runtime_seconds': round(runtime, 2),
+                'seconds_per_database': round(runtime / max(counts[k], 1), 4),
+                'failed_databases': failures, 'generation_errors': list(errors),
+                'unevaluable_decisions': dict(decision_errors),
+                'pool_size': len(pool), 'generator_settings': GENERATOR_SETTINGS,
+                'finished_at': datetime.datetime.now().isoformat(timespec='seconds'),
+            }
+            _write_generation(run_dir, meta, list(pool), list(trace))
+            if k != kmax:
+                with open(os.path.join(run_dir, 'log.txt'), 'a', encoding='utf-8') as log:
+                    log.write(f"generated as the first {counts[k]} databases of the b{kmax}x stream "
+                              f"(seed {seed}); generation log: ../../b{kmax}x/rep_{rep:02d}/log.txt\n")
+            print(f"b{k}x written: {counts[k]} databases ({failures} failed so far), "
+                  f"{len(in_scope - remaining)}/{len(in_scope)} in-scope rules verified, pool {len(pool)}, "
+                  f"{runtime:.1f}s ({meta['seconds_per_database']}s/db)", flush=True)
 
 
 def job_validate(run_dir, case_study):
@@ -518,12 +545,23 @@ def _spawn(args, log_path):
 
 def _write_config(a, out_name, calib):
     exp = os.path.join(H.OUT_ROOT, out_name)
+    path = os.path.join(exp, 'config.json')
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as f:
+            old = json.load(f)
+        old_mode = old.get('mode', 'separate')   # configs written before --mode existed were separate runs
+        if old_mode != a.mode:
+            sys.exit(f"experiment_harness/out/{out_name} already holds --mode {old_mode} runs; mixing modes in "
+                     f"one folder is not allowed. Delete or rename that folder first, then rerun.")
     os.makedirs(exp, exist_ok=True)
     with open(os.path.join(exp, 'calibration.json'), 'w', encoding='utf-8') as f:
         json.dump(calib, f, indent=2)
+    seed_rule = ('prefix: one stream per (case study, rep), seed = 1000 * max(budgets) + rep; smaller budgets '
+                 'are its first floor(k*B / #objectives) databases' if a.mode == 'prefix'
+                 else 'seed = 1000 * budget_multiplier + rep')
     config = {'experiment': a.name, 'output_folder': out_name, 'reps': a.reps, 'first_rep': a.first_rep,
-              'case_studies': a.case_studies, 'setups': [SETUP], 'budgets': a.budgets,
-              'seed_rule': 'seed = 1000 * budget_multiplier + rep',
+              'case_studies': a.case_studies, 'setups': [SETUP], 'budgets': a.budgets, 'mode': a.mode,
+              'seed_rule': seed_rule,
               'budget_1x': {cs: calib[cs]['budget_1x'] for cs in a.case_studies},
               'not_persisted_files': {cs: H.NOT_PERSISTED_FILES[cs] for cs in a.case_studies},
               'generator_settings': GENERATOR_SETTINGS, 'max_databases': a.max_databases,
@@ -533,7 +571,7 @@ def _write_config(a, out_name, calib):
         if calib[cs].get('compiled_constraints_sha256') != config['compiled_constraints_sha256']:
             print(f"WARNING: compiled_constraints.json changed since {cs} was calibrated -- "
                   f"results would not be comparable with the existing experiment.")
-    with open(os.path.join(exp, 'config.json'), 'w', encoding='utf-8') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2)
 
 
@@ -544,28 +582,52 @@ def cmd_run(a):
         sys.exit(f"Not calibrated: {missing}")
     out_name = part_name(a.name, a.first_rep)
     _write_config(a, out_name, calib)
-    jobs = [(cs, k, rep, H._seed_for(k, rep), k * calib[cs]['budget_1x'])
+    budgets = sorted(a.budgets)
+    # One job = one random stream. prefix: all budgets from one stream;
+    # separate: one stream per budget.
+    groups = [budgets] if a.mode == 'prefix' else [[k] for k in budgets]
+    jobs = [(cs, rep, H._seed_for(max(g), rep), [(k, k * calib[cs]['budget_1x']) for k in g])
             for cs in H._by_size(a.case_studies)
-            for rep in range(a.first_rep, a.first_rep + a.reps) for k in a.budgets]
+            for rep in range(a.first_rep, a.first_rep + a.reps) for g in groups]
     todo = []
-    for job in jobs:
-        d = _run_dir(out_name, *job[:3])
-        if not os.path.exists(os.path.join(d, 'VALIDATED')):
-            todo.append((job, d, not os.path.exists(os.path.join(d, 'SEARCH_DONE'))))
-    print(f"Output folder: experiment_harness/out/{out_name}  (repetitions {a.first_rep}-{a.first_rep + a.reps - 1})")
-    print(f"{len(todo)} run(s) to do ({len(jobs) - len(todo)} already finished), {a.workers} worker(s)\n")
+    for cs, rep, seed, targets in jobs:
+        dirs = {k: _run_dir(out_name, cs, k, rep) for k, _b in targets}
+        need_val = [k for k, d in dirs.items() if not os.path.exists(os.path.join(d, 'VALIDATED'))]
+        if need_val:
+            need_gen = any(not os.path.exists(os.path.join(d, 'SEARCH_DONE')) for d in dirs.values())
+            todo.append(((cs, rep, seed, targets), dirs, need_gen, need_val))
+    print(f"Output folder: experiment_harness/out/{out_name}  (repetitions {a.first_rep}-{a.first_rep + a.reps - 1}, "
+          f"--mode {a.mode})")
+    print(f"{len(todo)} job(s) to do ({len(jobs) - len(todo)} already finished), {a.workers} worker(s)\n")
 
     def fn(item):
-        (cs, k, rep, seed, budget), d, need_gen = item
-        os.makedirs(d, exist_ok=True)
-        log = os.path.join(d, 'log.txt')
+        (cs, rep, seed, targets), dirs, need_gen, need_val = item
+        for d in dirs.values():
+            os.makedirs(d, exist_ok=True)
+        kmax = max(dirs)
         if need_gen:
-            rc = _spawn(['_generate', d, cs, str(k), str(rep), str(seed), str(budget), str(a.max_databases or 0)], log)
+            # (Re)generating the stream rewrites every folder of this job, so
+            # every one of them is validated again afterwards.
+            for d in dirs.values():
+                for marker in ('SEARCH_DONE', 'VALIDATED'):
+                    if os.path.exists(os.path.join(d, marker)):
+                        os.remove(os.path.join(d, marker))
+            need_val = sorted(dirs)
+            args = ['_generate', out_name, cs, str(rep), str(seed), str(a.max_databases or 0), a.mode]
+            for k, b in targets:
+                args += [str(k), str(b)]
+            rc = _spawn(args, os.path.join(dirs[kmax], 'log.txt'))
             if rc != 0:
                 return rc
-        return _spawn(['_validate', d, cs], log)
+        for k in need_val:
+            rc = _spawn(['_validate', dirs[k], cs], os.path.join(dirs[k], 'log.txt'))
+            if rc != 0:
+                return rc
+        return 0
 
-    H._execute(todo, a.workers, fn, lambda item: f"{item[0][0]} {SETUP} b{item[0][1]}x rep_{item[0][2]:02d}")
+    H._execute(todo, a.workers, fn,
+               lambda item: f"{item[0][0]} {SETUP} rep_{item[0][1]:02d} "
+                            f"({', '.join(f'b{k}x' for k, _b in item[0][3])})")
 
 
 def cmd_status(a):
@@ -587,8 +649,10 @@ def cmd_status(a):
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == '_generate':
-        d, cs, k, rep, seed, budget, cap = sys.argv[2:9]
-        job_generate(d, cs, int(k), int(rep), int(seed), int(budget), int(cap) or None)
+        out_name, cs, rep, seed, cap, mode = sys.argv[2:8]
+        rest = [int(x) for x in sys.argv[8:]]
+        targets = list(zip(rest[0::2], rest[1::2]))
+        job_generate(out_name, cs, int(rep), int(seed), targets, int(cap) or None, mode)
         return
     if len(sys.argv) > 1 and sys.argv[1] == '_validate':
         job_validate(sys.argv[2], sys.argv[3])
@@ -604,6 +668,9 @@ def main():
     p.add_argument('--case-studies', nargs='+', default=list(H.CASE_STUDIES), choices=H.CASE_STUDIES)
     p.add_argument('--budgets', nargs='+', type=int, default=list(H.BUDGETS))
     p.add_argument('--max-databases', type=int, default=0, help='smoke tests only: cap databases per run')
+    p.add_argument('--mode', choices=['prefix', 'separate'], default='prefix',
+                   help='prefix (default): one stream per (case study, rep) up to the largest budget, smaller '
+                        'budgets read off its prefix. separate: one run per budget (seed 1000*k + rep)')
     p.set_defaults(fn=cmd_run)
     p = sub.add_parser('status')
     p.add_argument('--name', required=True)
