@@ -357,3 +357,45 @@ b5x written: 19612 databases (0 failed so far), 16/21 in-scope rules verified, p
   35300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2557s
   35400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2563s
   35500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2569s
+  35600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2575s
+  35700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2581s
+  35800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2587s
+  35900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2593s
+  36000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2598s
+  36100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2604s
+  36200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2609s
+  36300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2615s
+  36400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2620s
+  36500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2626s
+  36600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2631s
+  36700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2637s
+  36800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2643s
+  36900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2648s
+  37000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2654s
+  37100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2659s
+  37200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2665s
+  37300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2671s
+  37400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2676s
+  37500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2682s
+  37600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2687s
+  37700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2693s
+  37800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2699s
+  37900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2704s
+  38000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2710s
+  38100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2715s
+  38200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2721s
+  38300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2726s
+  38400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2732s
+  38500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2737s
+  38600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2743s
+  38700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2748s
+  38800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2754s
+  38900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2760s
+  39000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2765s
+  39100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2771s
+  39200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2776s
+  39225/39225 databases, 16/21 in-scope rules verified, 0 failed, 2777s
+b10x written: 39225 databases (0 failed so far), 16/21 in-scope rules verified, pool 6, 2777.5s (0.0708s/db)
+
+=== 2026-09-30T02:45:54 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep09/Spree/schema_random/b10x/rep_15 Spree
+validated: 16 of 21 in-scope rules, pool 6, suite min 3 (greedy 3, optimal True), 0 errors, 0.1s

@@ -354,3 +354,48 @@ b5x written: 19612 databases (0 failed so far), 16/21 in-scope rules verified, p
   35000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2516s
   35100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2521s
   35200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2527s
+  35300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2533s
+  35400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2540s
+  35500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2546s
+  35600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2551s
+  35700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2557s
+  35800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2562s
+  35900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2568s
+  36000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2573s
+  36100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2579s
+  36200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2584s
+  36300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2590s
+  36400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2595s
+  36500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2601s
+  36600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2606s
+  36700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2612s
+  36800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2617s
+  36900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2623s
+  37000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2629s
+  37100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2634s
+  37200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2640s
+  37300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2645s
+  37400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2651s
+  37500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2656s
+  37600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2662s
+  37700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2667s
+  37800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2673s
+  37900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2678s
+  38000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2684s
+  38100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2689s
+  38200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2695s
+  38300/39225 databases, 16/21 in-scope rules verified, 0 failed, 2700s
+  38400/39225 databases, 16/21 in-scope rules verified, 0 failed, 2706s
+  38500/39225 databases, 16/21 in-scope rules verified, 0 failed, 2711s
+  38600/39225 databases, 16/21 in-scope rules verified, 0 failed, 2717s
+  38700/39225 databases, 16/21 in-scope rules verified, 0 failed, 2722s
+  38800/39225 databases, 16/21 in-scope rules verified, 0 failed, 2728s
+  38900/39225 databases, 16/21 in-scope rules verified, 0 failed, 2733s
+  39000/39225 databases, 16/21 in-scope rules verified, 0 failed, 2739s
+  39100/39225 databases, 16/21 in-scope rules verified, 0 failed, 2744s
+  39200/39225 databases, 16/21 in-scope rules verified, 0 failed, 2750s
+  39225/39225 databases, 16/21 in-scope rules verified, 0 failed, 2751s
+b10x written: 39225 databases (0 failed so far), 16/21 in-scope rules verified, pool 5, 2751.1s (0.0701s/db)
+
+=== 2026-09-30T02:46:08 _validate /Users/nigarbutt/Documents/GitHub/Maheen/THesisCODE/experiment_harness/out/thesis_schemarandom__from_rep09/Spree/schema_random/b10x/rep_16 Spree
+validated: 16 of 21 in-scope rules, pool 5, suite min 3 (greedy 3, optimal True), 0 errors, 0.1s

@@ -40,5 +40,17 @@
     "foreign_keys": "value of a random existing parent row (parents generated first)",
     "budget_charge_per_database": "number of compiled objectives of the case study"
   },
-  "finished_at": "2026-09-30T02:25:27"
+  "finished_at": "2026-09-30T02:25:27",
+  "validation_mode": "full",
+  "unevaluable_decisions_in_pool_check": {},
+  "suite_size": {
+    "union": {
+      "pool": 6,
+      "greedy": 3,
+      "min": 3,
+      "optimal": true
+    }
+  },
+  "validation_errors": [],
+  "validation_seconds": 0.1
 }
